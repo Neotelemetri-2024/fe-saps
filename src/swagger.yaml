@@ -1,0 +1,241 @@
+openapi: 3.0.0
+info:
+  title: SAPS API (Sistem Akumulasi Poin SKPI)
+  description: Dokumentasi API untuk Sistem Akumulasi Poin SKPI. Backend dibangun menggunakan Express, Prisma, dan MySQL. Mengakomodasi 1-stage validation claim.
+  version: 2.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local Development Server
+
+paths:
+  /api/kegiatan:
+    get:
+      summary: Dapatkan Semua Kegiatan
+      tags: [Kegiatan]
+      responses:
+        '200':
+          description: Berhasil mengambil data kegiatan
+    post:
+      summary: Buat Kegiatan Baru (Draft)
+      tags: [Kegiatan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama:
+                  type: string
+                tanggalMulai:
+                  type: string
+                  format: date-time
+                tanggalSelesai:
+                  type: string
+                  format: date-time
+                kategoriId:
+                  type: integer
+                skalaId:
+                  type: integer
+                penyelenggara:
+                  type: string
+                organisasiId:
+                  type: integer
+                  nullable: true
+                asal:
+                  type: string
+                  enum: [internal, eksternal]
+      responses:
+        '201':
+          description: Berhasil dibuat
+
+  /api/kegiatan/{id}/ajukan:
+    put:
+      summary: Ajukan kegiatan untuk diverifikasi
+      tags: [Kegiatan]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status berubah menjadi diajukan
+
+  /api/partisipasi:
+    post:
+      summary: Mahasiswa Mendaftar Kegiatan
+      tags: [Partisipasi]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mahasiswaId:
+                  type: integer
+                kegiatanId:
+                  type: integer
+      responses:
+        '201':
+          description: Berhasil mendaftar
+
+  /api/partisipasi/{id}/minta-izin:
+    post:
+      summary: Mahasiswa Meminta Izin PA
+      tags: [Partisipasi & Izin PA]
+      parameters:
+        - name: id
+          in: path
+          description: ID Partisipasi
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Berhasil meminta izin
+
+  /api/partisipasi/izin-pa/{id}:
+    put:
+      summary: Dosen PA Menyetujui/Menolak Izin
+      tags: [Partisipasi & Izin PA]
+      parameters:
+        - name: id
+          in: path
+          description: ID Izin PA
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dosenPaId:
+                  type: integer
+                status:
+                  type: string
+                  enum: [disetujui, ditolak]
+                alasan:
+                  type: string
+      responses:
+        '200':
+          description: Berhasil memproses izin
+
+  /api/klaim:
+    post:
+      summary: Mahasiswa Mengajukan Klaim Poin
+      tags: [Klaim Poin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mahasiswaId:
+                  type: integer
+                partisipasiId:
+                  type: integer
+                peranUsulanId:
+                  type: integer
+                bukti:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      tipe:
+                        type: string
+                        enum: [link, pdf]
+                      url:
+                        type: string
+      responses:
+        '201':
+          description: Klaim berhasil diajukan
+
+  /api/klaim/{id}/validasi:
+    put:
+      summary: Validator (UKM/Admin) Memvalidasi Klaim & Sahkan Poin
+      tags: [Klaim Poin]
+      parameters:
+        - name: id
+          in: path
+          description: ID Klaim Poin
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                aktorId:
+                  type: integer
+                keputusan:
+                  type: string
+                  enum: [disetujui, perlu_revisi, ditolak]
+                alasan:
+                  type: string
+                peranVerifId:
+                  type: integer
+                  description: Jika peran beda dengan usulan
+      responses:
+        '200':
+          description: Klaim disetujui, poin masuk ke perolehan
+
+  /api/umum/dashboard/mahasiswa:
+    get:
+      summary: Dashboard Mahasiswa (Progress Poin)
+      tags: [Dashboard]
+      parameters:
+        - name: mahasiswaId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data Dashboard Mahasiswa
+
+  /api/umum/dashboard/dosen-pa:
+    get:
+      summary: Dashboard Dosen PA (List Bimbingan)
+      tags: [Dashboard]
+      parameters:
+        - name: dosenPaId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data list mahasiswa beserta lampu (Merah/Kuning/Hijau)
+
+  /api/umum/portofolio/{mahasiswaId}:
+    get:
+      summary: Cetak CV/Portofolio Poin SKPI Mahasiswa
+      tags: [Umum]
+      parameters:
+        - name: mahasiswaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: CV Mahasiswa
+
+tags:
+  - name: Kegiatan
+  - name: Partisipasi
+  - name: Partisipasi & Izin PA
+  - name: Klaim Poin
+  - name: Dashboard
+  - name: Umum

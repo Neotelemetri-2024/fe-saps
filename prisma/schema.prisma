@@ -1,0 +1,619 @@
+// =================================================================
+//  MyUnand Student Connect — Sistem Informasi Aktivitas Mahasiswa
+//  Prisma Schema — 29 Tabel, MySQL 8.0+
+//  Berdasarkan skema dari Sistem Analis (DBML + SQL + Kamus Data)
+// =================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// =================================================================
+// ENUM
+// =================================================================
+
+enum RoleUser {
+  mahasiswa
+  dosen
+  staff
+  operator_org
+}
+
+enum JabatanStaff {
+  admin_ditmawa
+  pimpinan_ditmawa
+  admin_fakultas
+  pimpinan_fakultas
+}
+
+enum TipeOrg {
+  UKM
+  UKMF
+}
+
+enum StatusKurikulum {
+  draft
+  aktif
+  arsip
+}
+
+enum AsalKegiatan {
+  kurikuler_ukm
+  kurikuler_ukmf
+  universitas
+  eksternal
+}
+
+enum StatusKegiatan {
+  draft
+  diajukan
+  terverifikasi
+  perlu_revisi
+  disetujui
+  ditolak
+  terpublikasi
+  berlangsung
+  selesai
+  diarsipkan
+  dibatalkan
+}
+
+enum TahapApproval {
+  verifikasi
+  approval
+}
+
+enum KeputusanApproval {
+  setuju
+  revisi
+  tolak
+}
+
+enum StatusPartisipasi {
+  terdaftar
+  menunggu_izin_pa
+  disetujui_pa
+  ditolak_pa
+  hadir
+  tidak_hadir
+  dibatalkan
+}
+
+enum StatusIzin {
+  diajukan
+  disetujui
+  ditolak
+}
+
+enum StatusKlaim {
+  draft
+  menunggu_validasi
+  valid
+  perlu_revisi
+  invalid
+  disetujui
+  ditolak
+}
+
+enum StatusPerolehan {
+  sah
+  dikoreksi
+  dibatalkan
+}
+
+enum TipeBukti {
+  pdf
+  link
+}
+
+// =================================================================
+// KELOMPOK 1 · IDENTITAS & ORGANISASI
+// =================================================================
+
+/// 1.1 Daftar induk fakultas — dasar pemisahan scope universitas vs fakultas
+model Fakultas {
+  id   Int    @id @default(autoincrement())
+  nama String @unique @db.VarChar(150)
+
+  programStudi ProgramStudi[]
+  dosen        Dosen[]
+  staff        Staff[]
+  organisasi   Organisasi[]
+
+  @@map("fakultas")
+}
+
+/// 1.2 Program Studi di bawah fakultas
+model ProgramStudi {
+  id         Int    @id @default(autoincrement())
+  fakultasId Int    @map("fakultas_id")
+  nama       String @db.VarChar(150)
+
+  fakultas  Fakultas    @relation(fields: [fakultasId], references: [id])
+  mahasiswa Mahasiswa[]
+
+  @@unique([fakultasId, nama])
+  @@map("program_studi")
+}
+
+/// 1.3 Tabel identitas terpusat — semua aktor (single-table identity)
+model User {
+  id           BigInt   @id @default(autoincrement())
+  nama         String   @db.VarChar(150)
+  email        String   @unique @db.VarChar(190)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  peran        RoleUser
+  aktif        Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relasi 1:1 ke profil
+  dosen             Dosen?
+  mahasiswa         Mahasiswa?
+  staff             Staff?
+  organisasiOperator OrganisasiOperator?
+
+  // Relasi sebagai pelaku
+  kurikulumDibuat      Kurikulum[]          @relation("KurikulumDibuat")
+  kegiatanDibuat       Kegiatan[]           @relation("KegiatanDibuat")
+  kegiatanApproval     KegiatanApproval[]
+  klaimValidasi        KlaimPoin[]          @relation("KlaimValidator")
+  matriksPoinHistori   MatriksPoinHistori[]
+  auditLog             AuditLog[]
+  notifikasi           Notifikasi[]
+
+  @@map("users")
+}
+
+/// 1.4 Profil Dosen PA — perluasan 1:1 dari users
+model Dosen {
+  userId     BigInt  @id @map("user_id")
+  nidn       String? @unique @db.VarChar(20)
+  fakultasId Int?    @map("fakultas_id")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fakultas Fakultas? @relation(fields: [fakultasId], references: [id])
+
+  mahasiswaBimbingan Mahasiswa[] @relation("DosenPAMahasiswa")
+  izinPA             IzinPA[]
+  saranPA            SaranPA[]   @relation("DosenSaran")
+
+  @@map("dosen")
+}
+
+/// 1.5 Profil Mahasiswa — menyimpan tautan ke Dosen PA [BR-016]
+model Mahasiswa {
+  userId    BigInt  @id @map("user_id")
+  nim       String  @unique @db.VarChar(20)
+  prodiId   Int     @map("prodi_id")
+  dosenPaId BigInt? @map("dosen_pa_id")
+  angkatan  Int?    @db.SmallInt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prodi   ProgramStudi  @relation(fields: [prodiId], references: [id])
+  dosenPA Dosen?        @relation("DosenPAMahasiswa", fields: [dosenPaId], references: [userId])
+
+  partisipasi   Partisipasi[]
+  perolehanPoin PerolehanPoin[]
+  saranPA       SaranPA[]       @relation("MahasiswaSaran")
+  cvGenerated   CvGenerated[]
+
+  @@map("mahasiswa")
+}
+
+/// 1.6 Profil staf struktural — Admin/Pimpinan × Ditmawa/Fakultas
+model Staff {
+  userId     BigInt        @id @map("user_id")
+  jabatan    JabatanStaff
+  fakultasId Int?          @map("fakultas_id") // NULL = tingkat universitas (Ditmawa)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fakultas Fakultas? @relation(fields: [fakultasId], references: [id])
+
+  @@map("staff")
+}
+
+/// 1.7 UKM (universitas) dan UKMF (fakultas) — penyelenggara kegiatan internal
+model Organisasi {
+  id         Int     @id @default(autoincrement())
+  nama       String  @db.VarChar(150)
+  tipe       TipeOrg
+  fakultasId Int?    @map("fakultas_id") // Wajib UKMF, NULL untuk UKM
+
+  fakultas Fakultas? @relation(fields: [fakultasId], references: [id])
+
+  operator OrganisasiOperator[]
+  kegiatan Kegiatan[]
+
+  @@map("organisasi")
+}
+
+/// 1.8 Operator organisasi — menjawab "user ini bertindak atas nama UKM mana?"
+model OrganisasiOperator {
+  userId      BigInt @id @map("user_id")
+  organisasiId Int   @map("organisasi_id")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisasi Organisasi @relation(fields: [organisasiId], references: [id])
+
+  @@map("organisasi_operator")
+}
+
+// =================================================================
+// KELOMPOK 2 · KURIKULUM & MATRIKS POIN
+// =================================================================
+
+/// 2.1 Kerangka penilaian berversi — hanya satu boleh aktif [BR-001]
+model Kurikulum {
+  id            Int             @id @default(autoincrement())
+  nama          String          @db.VarChar(150)
+  tahunAkademik String          @map("tahun_akademik") @db.VarChar(9)
+  versi         Int             @default(1)
+  status        StatusKurikulum @default(draft)
+  dibuatOleh    BigInt          @map("dibuat_oleh")
+  activatedAt   DateTime?       @map("activated_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  pembuat     User          @relation("KurikulumDibuat", fields: [dibuatOleh], references: [id])
+  capaian     Capaian[]
+  matriksPoin MatriksPoin[]
+  kegiatan    Kegiatan[]
+
+  @@map("kurikulum")
+}
+
+/// 2.2 Dimensi/keranjang kompetensi (Pondasi, Penguatan, dst.) — paralel [BR-005a]
+model Capaian {
+  id           Int    @id @default(autoincrement())
+  kurikulumId  Int    @map("kurikulum_id")
+  nama         String @db.VarChar(150)
+  jumlahPoin   Int    @map("jumlah_poin") // target poin (penyebut progres)
+  urutan       Int?   @db.SmallInt
+
+  kurikulum  Kurikulum   @relation(fields: [kurikulumId], references: [id], onDelete: Cascade)
+  subCapaian SubCapaian[]
+
+  @@map("capaian")
+}
+
+/// 2.3 Unit terukur di bawah capaian — target tautan kegiatan
+model SubCapaian {
+  id          Int     @id @default(autoincrement())
+  capaianId   Int     @map("capaian_id")
+  nama        String  @db.VarChar(200)
+  bobotPersen Decimal @map("bobot_persen") @db.Decimal(5, 2) // jumlah 100% per capaian [BR-002]
+
+  capaian         Capaian           @relation(fields: [capaianId], references: [id], onDelete: Cascade)
+  kegiatanCapaian KegiatanCapaian[]
+  perolehanDetail PerolehanDetail[]
+
+  @@map("sub_capaian")
+}
+
+/// 2.4 Dimensi ke-1 matriks poin — jenis kegiatan (Kompetisi, Organisasi, dll)
+model MpKategori {
+  id   Int    @id @default(autoincrement())
+  nama String @unique @db.VarChar(80)
+
+  matriksPoin MatriksPoin[]
+  peran       MpPeran[]
+  kegiatan    Kegiatan[]
+
+  @@map("mp_kategori")
+}
+
+/// 2.5 Dimensi ke-2 — skala kegiatan (Internasional, Nasional, dst.)
+model MpSkala {
+  id     Int    @id @default(autoincrement())
+  nama   String @unique @db.VarChar(80)
+  urutan Int    @db.SmallInt // hierarki skala (validasi monotonisitas)
+
+  matriksPoin MatriksPoin[]
+  kegiatan    Kegiatan[]
+
+  @@map("mp_skala")
+}
+
+/// 2.6 Dimensi ke-3 — peran/pencapaian (Juara 1, Peserta, dll)
+model MpPeran {
+  id         Int    @id @default(autoincrement())
+  kategoriId Int    @map("kategori_id")
+  nama       String @db.VarChar(80)
+  urutan     Int    @db.SmallInt
+
+  kategori MpKategori @relation(fields: [kategoriId], references: [id])
+
+  matriksPoin        MatriksPoin[]
+  partisipasiVerif   Partisipasi[]  @relation("PeranVerifikasi")
+  klaimUsulan        KlaimPoin[]    @relation("PeranUsulan")
+
+  @@unique([kategoriId, nama])
+  @@map("mp_peran")
+}
+
+/// 2.7 Rubrik penentu nilai poin — inti perhitungan [BR-030]
+model MatriksPoin {
+  id           BigInt @id @default(autoincrement())
+  kurikulumId  Int    @map("kurikulum_id")
+  kategoriId   Int    @map("kategori_id")
+  skalaId      Int    @map("skala_id")
+  peranId      Int    @map("peran_id")
+  poin         Int
+
+  kurikulum Kurikulum  @relation(fields: [kurikulumId], references: [id])
+  kategori  MpKategori @relation(fields: [kategoriId], references: [id])
+  skala     MpSkala    @relation(fields: [skalaId], references: [id])
+  peran     MpPeran    @relation(fields: [peranId], references: [id])
+
+  histori MatriksPoinHistori[]
+
+  @@unique([kurikulumId, kategoriId, skalaId, peranId])
+  @@map("matriks_poin")
+}
+
+/// 2.8 Riwayat perubahan nilai matriks [BR-031]
+model MatriksPoinHistori {
+  id             BigInt   @id @default(autoincrement())
+  matriksPoinId  BigInt   @map("matriks_poin_id")
+  poinLama       Int?     @map("poin_lama")
+  poinBaru       Int      @map("poin_baru")
+  diubahOleh     BigInt   @map("diubah_oleh")
+  diubahPada     DateTime @default(now()) @map("diubah_pada")
+
+  matriksPoin MatriksPoin @relation(fields: [matriksPoinId], references: [id])
+  pengubah    User        @relation(fields: [diubahOleh], references: [id])
+
+  @@map("matriks_poin_histori")
+}
+
+// =================================================================
+// KELOMPOK 3 · KEGIATAN (SUPPLY)
+// =================================================================
+
+/// 3.1 Katalog kegiatan — satu mesin status, empat asal [BR-006, BR-009]
+model Kegiatan {
+  id              Int            @id @default(autoincrement())
+  nama            String         @db.VarChar(200)
+  kategoriId      Int            @map("kategori_id")
+  skalaId         Int            @map("skala_id")
+  asal            AsalKegiatan
+  deskripsi       String?        @db.Text
+  tanggalMulai    DateTime       @map("tanggal_mulai") @db.Date
+  tanggalSelesai  DateTime       @map("tanggal_selesai") @db.Date
+  lokasi          String?        @db.VarChar(200)
+  kuota           Int?
+  organisasiId    Int?           @map("organisasi_id")
+  penyelenggaraExt String?       @map("penyelenggara_ext") @db.VarChar(200)
+  kurikulumId     Int            @map("kurikulum_id") // pengikat versi [BR-005]
+  dibuatOleh      BigInt         @map("dibuat_oleh")
+  status          StatusKegiatan @default(draft)
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  kategori   MpKategori  @relation(fields: [kategoriId], references: [id])
+  skala      MpSkala     @relation(fields: [skalaId], references: [id])
+  organisasi Organisasi? @relation(fields: [organisasiId], references: [id])
+  kurikulum  Kurikulum   @relation(fields: [kurikulumId], references: [id])
+  pembuat    User        @relation("KegiatanDibuat", fields: [dibuatOleh], references: [id])
+
+  kegiatanCapaian  KegiatanCapaian[]
+  kegiatanApproval KegiatanApproval[]
+  partisipasi      Partisipasi[]
+  perolehanPoin    PerolehanPoin[]
+
+  @@index([status])
+  @@index([kurikulumId])
+  @@map("kegiatan")
+}
+
+/// 3.2 Pemetaan kegiatan → sub capaian beserta alokasi poin [BR-032]
+model KegiatanCapaian {
+  id            BigInt  @id @default(autoincrement())
+  kegiatanId    Int     @map("kegiatan_id")
+  subCapaianId  Int     @map("sub_capaian_id")
+  alokasiPersen Decimal @map("alokasi_persen") @db.Decimal(5, 2) // jumlah = 100% per kegiatan
+
+  kegiatan   Kegiatan   @relation(fields: [kegiatanId], references: [id])
+  subCapaian SubCapaian @relation(fields: [subCapaianId], references: [id])
+
+  @@unique([kegiatanId, subCapaianId])
+  @@map("kegiatan_capaian")
+}
+
+/// 3.3 Jejak keputusan verifikasi & approval — riwayat [BR-026]
+model KegiatanApproval {
+  id         BigInt            @id @default(autoincrement())
+  kegiatanId Int               @map("kegiatan_id")
+  tahap      TahapApproval
+  aktorId    BigInt            @map("aktor_id")
+  keputusan  KeputusanApproval
+  alasan     String?           @db.Text // wajib bila revisi/tolak
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
+  aktor    User     @relation(fields: [aktorId], references: [id])
+
+  @@map("kegiatan_approval")
+}
+
+// =================================================================
+// KELOMPOK 4 · PARTISIPASI & IZIN (DEMAND)
+// =================================================================
+
+/// 4.1 Entity kunci — Mahasiswa ↔ Kegiatan [BR-013]
+model Partisipasi {
+  id            BigInt             @id @default(autoincrement())
+  kegiatanId    Int                @map("kegiatan_id")
+  mahasiswaId   BigInt             @map("mahasiswa_id")
+  status        StatusPartisipasi  @default(terdaftar)
+  kehadiran     Boolean?           // via upload CSV [BR-022]
+  peranVerifId  Int?               @map("peran_verif_id") // hasil crosscheck [BR-030]
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  kegiatan     Kegiatan  @relation(fields: [kegiatanId], references: [id])
+  mahasiswa    Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
+  peranVerif   MpPeran?  @relation("PeranVerifikasi", fields: [peranVerifId], references: [id])
+
+  izinPA    IzinPA[]
+  klaimPoin KlaimPoin?
+
+  @@unique([kegiatanId, mahasiswaId]) // satu partisipasi per kegiatan [BR-020 lapis 1]
+  @@index([mahasiswaId])
+  @@index([status])
+  @@map("partisipasi")
+}
+
+/// 4.2 Keputusan Dosen PA — gate keras [BR-019]
+model IzinPA {
+  id             BigInt    @id @default(autoincrement())
+  partisipasiId  BigInt    @map("partisipasi_id")
+  dosenPaId      BigInt    @map("dosen_pa_id")
+  status         StatusIzin @default(diajukan)
+  alasan         String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  decidedAt      DateTime? @map("decided_at")
+
+  partisipasi Partisipasi @relation(fields: [partisipasiId], references: [id])
+  dosenPA     Dosen       @relation(fields: [dosenPaId], references: [userId])
+
+  @@map("izin_pa")
+}
+
+// =================================================================
+// KELOMPOK 5 · KLAIM & POIN (SETTLEMENT)
+// =================================================================
+
+/// 5.1 Permohonan poin atas partisipasi
+model KlaimPoin {
+  id              BigInt     @id @default(autoincrement())
+  partisipasiId   BigInt     @unique @map("partisipasi_id") // 1 klaim per partisipasi [BR-020 lapis 2]
+  peranUsulanId   Int?       @map("peran_usulan_id") // usulan mahasiswa
+  status          StatusKlaim @default(draft)
+  validatorId     BigInt?    @map("validator_id") // penyelenggara [BR-018]
+  alasan          String?    @db.Text
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  partisipasi   Partisipasi @relation(fields: [partisipasiId], references: [id])
+  peranUsulan   MpPeran?    @relation("PeranUsulan", fields: [peranUsulanId], references: [id])
+  validator     User?       @relation("KlaimValidator", fields: [validatorId], references: [id])
+
+  bukti         Bukti[]
+  perolehanPoin PerolehanPoin?
+
+  @@index([status])
+  @@map("klaim_poin")
+}
+
+/// 5.2 Lampiran pendukung klaim
+model Bukti {
+  id           BigInt   @id @default(autoincrement())
+  klaimPoinId  BigInt   @map("klaim_poin_id")
+  tipe         TipeBukti
+  url          String   @db.VarChar(500)
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+
+  klaimPoin KlaimPoin @relation(fields: [klaimPoinId], references: [id], onDelete: Cascade)
+
+  @@map("bukti")
+}
+
+/// 5.3 Hasil sah dari klaim — objek bernilai tertinggi [BR-020 lapis 3]
+model PerolehanPoin {
+  id           BigInt          @id @default(autoincrement())
+  klaimPoinId  BigInt          @unique @map("klaim_poin_id") // 1:1 dengan klaim
+  mahasiswaId  BigInt          @map("mahasiswa_id")
+  kegiatanId   Int             @map("kegiatan_id")
+  totalPoin    Int             @map("total_poin") // dari lookup matriks [BR-030]
+  status       StatusPerolehan @default(sah)
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  klaimPoin KlaimPoin @relation(fields: [klaimPoinId], references: [id])
+  mahasiswa Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
+  kegiatan  Kegiatan  @relation(fields: [kegiatanId], references: [id])
+
+  detail PerolehanDetail[]
+
+  @@unique([mahasiswaId, kegiatanId]) // lapis 3 anti-klaim-ganda
+  @@index([mahasiswaId])
+  @@map("perolehan_poin")
+}
+
+/// 5.4 Pemecahan poin ke sub capaian sesuai alokasi [BR-032]
+model PerolehanDetail {
+  id              BigInt @id @default(autoincrement())
+  perolehanPoinId BigInt @map("perolehan_poin_id")
+  subCapaianId    Int    @map("sub_capaian_id")
+  poin            Int    // total_poin × alokasi_persen
+
+  perolehanPoin PerolehanPoin @relation(fields: [perolehanPoinId], references: [id], onDelete: Cascade)
+  subCapaian    SubCapaian    @relation(fields: [subCapaianId], references: [id])
+
+  @@index([subCapaianId])
+  @@map("perolehan_detail")
+}
+
+// =================================================================
+// KELOMPOK 6 · LINTAS-CUTTING
+// =================================================================
+
+/// 6.1 Catatan/feedback Dosen PA kepada mahasiswa
+model SaranPA {
+  id          BigInt   @id @default(autoincrement())
+  dosenPaId   BigInt   @map("dosen_pa_id")
+  mahasiswaId BigInt   @map("mahasiswa_id")
+  isi         String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  dosenPA   Dosen     @relation("DosenSaran", fields: [dosenPaId], references: [userId])
+  mahasiswa Mahasiswa @relation("MahasiswaSaran", fields: [mahasiswaId], references: [userId])
+
+  @@map("saran_pa")
+}
+
+/// 6.2 Pesan sistem ke pengguna [BR-028]
+model Notifikasi {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  judul     String   @db.VarChar(200)
+  isi       String?  @db.Text
+  refType   String?  @map("ref_type") @db.VarChar(40) // polymorphic reference
+  refId     BigInt?  @map("ref_id")
+  dibaca    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, dibaca])
+  @@map("notifikasi")
+}
+
+/// 6.3 Jejak setiap transisi status [BR-027]
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  entitas    String   @db.VarChar(40) // nama tabel/objek
+  entitasId  BigInt   @map("entitas_id")
+  aksi       String   @db.VarChar(60)
+  statusLama String?  @map("status_lama") @db.VarChar(40)
+  statusBaru String?  @map("status_baru") @db.VarChar(40)
+  aktorId    BigInt?  @map("aktor_id") // NULL bila oleh Sistem
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  aktor User? @relation(fields: [aktorId], references: [id])
+
+  @@index([entitas, entitasId])
+  @@map("audit_log")
+}
+
+/// 6.4 Arsip CV yang dibangkitkan (UC-43)
+model CvGenerated {
+  id          BigInt   @id @default(autoincrement())
+  mahasiswaId BigInt   @map("mahasiswa_id")
+  filePath    String   @map("file_path") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  mahasiswa Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
+
+  @@map("cv_generated")
+}
