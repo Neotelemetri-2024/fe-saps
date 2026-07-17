@@ -1,0 +1,5 @@
+.app-shell {
+  display: grid;
+  gap: 8px;
+  padding: 24px 0 32px;
+}

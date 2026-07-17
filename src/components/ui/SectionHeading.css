@@ -1,0 +1,19 @@
+.section-heading {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.section-heading__eyebrow {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.section-heading p {
+  max-width: 70ch;
+  color: var(--text);
+}
