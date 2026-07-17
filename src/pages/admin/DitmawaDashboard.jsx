@@ -1,3 +1,4 @@
+import Swal from 'sweetalert2'
 import { CheckCircle, FileText, Trash2, Users, Edit } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
@@ -22,10 +23,47 @@ const columns = [
   {
     key: 'aksi',
     label: 'Aksi',
-    render: () => (
+    render: (row) => (
       <div className="flex gap-2">
-        <button className="rounded p-1 text-blue-600 transition hover:bg-blue-50"><Edit className="h-4 w-4" /></button>
-        <button className="rounded p-1 text-red-600 transition hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+        <button
+          className="rounded p-1 text-blue-600 transition hover:bg-blue-50"
+          onClick={() =>
+            Swal.fire({
+              icon: 'success',
+              title: 'Berhasil!',
+              text: `Kegiatan "${row.kegiatan}" telah diperbarui.`,
+              confirmButtonColor: '#1C4122',
+            })
+          }
+        >
+          <Edit className="h-4 w-4" />
+        </button>
+        <button
+          className="rounded p-1 text-red-600 transition hover:bg-red-50"
+          onClick={() =>
+            Swal.fire({
+              title: 'Hapus kegiatan?',
+              text: `Yakin ingin menghapus "${row.kegiatan}"?`,
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#6b7280',
+              confirmButtonText: 'Ya, hapus!',
+              cancelButtonText: 'Batal',
+            }).then((result) => {
+              if (result.isConfirmed) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Dihapus!',
+                  text: `Kegiatan "${row.kegiatan}" berhasil dihapus.`,
+                  confirmButtonColor: '#1C4122',
+                })
+              }
+            })
+          }
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
     ),
   },

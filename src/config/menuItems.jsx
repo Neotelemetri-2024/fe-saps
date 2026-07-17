@@ -1,3 +1,4 @@
+// src/config/menuItems.jsx
 import {
   LayoutDashboard,
   Users,
@@ -9,24 +10,30 @@ import {
   FileText,
   History,
   UserCircle,
-  LayoutGrid, // Add LayoutGrid
-  UserCheck,  // Add UserCheck
+  LayoutGrid, 
+  UserCheck,  
+  PlusCircle,
+  CheckSquare,
+  Award,
 } from 'lucide-react'
 
 /* ── MAHASISWA ── */
 export const mahasiswaMenu = [
   { path: '/mahasiswa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '#', label: 'Ajukan Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '#', label: 'Riwayat Poin', icon: <History className="h-4 w-4" /> },
-  { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <UserCircle className="h-4 w-4" /> },
+  { path: '/mahasiswa/kegiatan-eksternal', label: 'Ajukan Kegiatan Eksternal', icon: <PlusCircle className="h-4 w-4" /> },
+  { path: '/mahasiswa/persetujuan-dosen', label: 'Persetujuan Dosen', icon: <UserCheck className="h-4 w-4" /> },
+  { path: '/mahasiswa/klaim-poin', label: 'Klaim Poin Capaian', icon: <CheckSquare className="h-4 w-4" /> },
+  { path: '/mahasiswa/riwayat-poin', label: 'Riwayat Poin', icon: <Award className="h-4 w-4" /> },
+  { path: '/mahasiswa/generate-cv', label: 'Generate CV', icon: <FileText className="h-4 w-4" /> },
+  { path: '/mahasiswa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
+  { path: '/mahasiswa/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── DOSEN PA ── */
 export const dosenPAMenu = [
   { path: '/dosen-pa/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" />, end: true },
   { path: '/dosen-pa/mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: <Users className="h-4 w-4" />, end: false },
-  { path: '#', label: 'Persetujuan Mahasiswa', icon: <UserCheck className="h-4 w-4" /> },
+  { path: '/dosen-pa/permintaan-persetujuan', label: 'Persetujuan Mahasiswa', icon: <UserCheck className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
   { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
@@ -54,7 +61,8 @@ export const pimpinanFakultasMenu = [
 /* ── PIMPINAN UTAMA ── */
 export const pimpinanUtamaMenu = [
   { path: '/pimpinan-utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '#', label: 'Laporan', icon: <BarChart3 className="h-4 w-4" /> },
+  { path: '/pimpinan-utama/detail-fakultas', label: 'Detail Fakultas', icon: <BarChart3 className="h-4 w-4" /> },
+  { path: '#', label: 'Laporan', icon: <FileText className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
   { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
 ]
@@ -95,3 +103,17 @@ export const ukmfMenu = [
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
   { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
 ]
+
+// ── OBJEK PEMETAAN UTAMA UNTUK SIDEBAR DINAMIS ──
+// Objek ini berfungsi memetakan string role dari backend ke menu yang sesuai
+export const roleMenus = {
+  mahasiswa: mahasiswaMenu,
+  'dosen-pa': dosenPAMenu,
+  'pimpinan-ditmawa': pimpinanDitmawaMenu,
+  'pimpinan-fakultas': pimpinanFakultasMenu,
+  'pimpinan-utama': pimpinanUtamaMenu,
+  'admin-ditmawa': adminDitmawaMenu,
+  'admin-fakultas': adminFakultasMenu,
+  ukm: ukmMenu,
+  ukmf: ukmfMenu,
+}

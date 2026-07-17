@@ -1,4 +1,5 @@
 import { Download, Clock, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 
 // ---------------------------------------------------------------------------
@@ -39,9 +40,13 @@ const toneStyles = {
 }
 
 function StatBox({ label, value, tone, link, sublabel }) {
+  const navigate = useNavigate()
   const s = toneStyles[tone]
   return (
-    <div className={`rounded-xl border-2 bg-white p-5 shadow-sm ${s.border}`}>
+    <div
+      className={`rounded-xl border-2 bg-white p-5 shadow-sm ${s.border} ${link || label === 'PERLU PERHATIAN' ? 'cursor-pointer' : ''}`}
+      onClick={() => { if (label === 'PERLU PERHATIAN') navigate('/dosen-pa/mahasiswa-perlu-perhatian') }}
+    >
       <p className={`text-xs font-semibold tracking-wide ${s.label}`}>{label}</p>
       <p className={`mt-2 text-3xl font-extrabold ${s.value}`}>
         {value} {sublabel && <span className="align-middle text-sm font-semibold">{sublabel}</span>}

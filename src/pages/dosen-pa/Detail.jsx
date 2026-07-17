@@ -1,122 +1,163 @@
+import React from 'react'
+import { CheckCircle } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import Swal from 'sweetalert2'
 
 const subCapaian = [
-  { kategori: 'Religius', items: [{ label: 'Kegiatan Keagamaan', poin: 50, max: 60 }, { label: 'Aktivitas Rohani', poin: 40, max: 50 }, { label: 'Sosial Keagamaan', poin: 30, max: 40 }] },
-  { kategori: 'Bakti', items: [{ label: 'Bakti Sosial', poin: 45, max: 60 }, { label: 'Pengabdian Masyarakat', poin: 35, max: 50 }, { label: 'Volunteer', poin: 20, max: 40 }] },
-  { kategori: 'Literasi Digital', items: [{ label: 'Kompetensi IT', poin: 60, max: 60 }, { label: 'Media Digital', poin: 45, max: 50 }, { label: 'Inovasi Teknologi', poin: 35, max: 40 }] },
-  { kategori: 'Growth Mindset', items: [{ label: 'Seminar', poin: 40, max: 50 }, { label: 'Workshop', poin: 35, max: 50 }, { label: 'Kompetisi', poin: 35, max: 50 }] },
+  { kategori: 'Religious Character Development (Religius)', items: [{ label: 'Leadership', value: 70 }, { label: 'Global', value: 50 }, { label: 'Social', value: 60 }, { label: 'Entrepreneurship', value: 80 }, { label: 'Critical', value: 75 }] },
 ]
 
-const distribusiTahun = [
-  { tahun: 'Fondasi', pct: 40, items: [{ label: 'Seminar', pct: 40 }, { label: 'Organisasi', pct: 35 }, { label: 'Prestasi', pct: 25 }] },
-  { tahun: 'Penguatan', pct: 35, items: [{ label: 'Seminar', pct: 30 }, { label: 'Organisasi', pct: 40 }, { label: 'Prestasi', pct: 30 }] },
-  { tahun: 'Pemantapan', pct: 20, items: [{ label: 'Seminar', pct: 25 }, { label: 'Organisasi', pct: 35 }, { label: 'Prestasi', pct: 40 }] },
-  { tahun: 'Aktualisasi', pct: 5, items: [{ label: 'Seminar', pct: 20 }, { label: 'Organisasi', pct: 30 }, { label: 'Prestasi', pct: 50 }] },
+const totalPoinData = [
+  { category: 'Fondasi', value: 80 },
+  { category: 'Penguatan', value: 90 },
+  { category: 'Pemantapan', value: 75 },
+  { category: 'Aktualisasi', value: 60 },
+]
+
+const timelineAktivitas = [
+  { event: 'Seminar nasional AI dan Teknologi', date: '5 Juni 2026', status: 'Disetujui Universitas', statusColor: 'bg-green-100 text-green-700' },
+  { event: 'Bakti Sosial Lingkungan Kampus', date: '3 Juni 2026', status: 'Disetujui Fakultas', statusColor: 'bg-green-100 text-green-700' },
+  { event: 'Pelatihan kewirausahaan muda', date: '10 Mei 2026', status: 'Pending', statusColor: 'bg-yellow-100 text-yellow-700' },
+]
+
+const riwayatCatatan = [
+  { message: 'Tingkatkan capaian Social Contribution. Segera ikuti KKN dan kegiatan bakti sebelum akhir semester ini. Progress akademik sudah sangat baik, pertahankan IPK anda.', date: '10 Juli 2026' },
+  { message: 'Ikuti good laboratory practice untuk meningkatkan skill SOP dalam labor', date: '5 Juni 2026' },
 ]
 
 function DosenPADetail() {
+  const handleKirimPesan = () => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Pesan Terkirim!',
+      text: 'Pesan kepada mahasiswa berhasil dikirim.',
+      confirmButtonColor: '#1C4122',
+    })
+  }
+
   return (
-    <DashboardLayout role="dosen-pa" userName="Dr. Ahmad Rizal" userRole="Dosen PA">
+    <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
+        {/* Header Mahasiswa */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <div className="flex items-start gap-6">
-            <div className="flex h-[168px] w-[168px] items-center justify-center rounded-full border-2 border-brand-dark bg-[#f0f4f0] text-5xl font-bold text-brand-dark">SS</div>
+            <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border-2 border-brand-dark bg-[#f0f4f0] text-3xl font-bold text-brand-dark">UA</div>
             <div className="flex-1">
-              <div className="flex items-start justify-between">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-brand-dark">Shafa Salsabilla</h2>
-                  <p className="text-[#616161]">NIM: 2311121063</p>
-                  <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
-                    <div><p className="text-[#616161]">Prodi</p><p className="font-medium text-[#333]">Teknik Mesin</p></div>
-                    <div><p className="text-[#616161]">Angkatan</p><p className="font-medium text-[#333]">23</p></div>
-                    <div><p className="text-[#616161]">IPK</p><p className="font-medium text-[#333]">3.80</p></div>
+                  <h2 className="text-xl font-bold text-brand-dark">Shafa Salsabilla</h2>
+                  <p className="text-sm text-[#616161]">2311121053 • Teknik Mesin</p>
+                  <div className="mt-2 flex gap-4 text-xs">
+                    <span className="rounded-full bg-brand-dark px-3 py-1 text-white font-medium">Angkatan 23</span>
+                    <span className="font-medium text-[#616161]">IPK 3.80</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-brand-dark">470</p>
+                  <p className="text-sm text-[#616161]">/ 550 Poin</p>
                   <ProgressBar value={470} max={550} height={8} color="bg-brand-light" />
-                  <p className="mt-1 text-xs text-[#616161]">85% Syarat Yudisium</p>
+                  <p className="mt-1 text-xs text-[#616161]">85% dari target yudisium</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {subCapaian.map((k) => (
-            <div key={k.kategori} className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-              <p className="mb-3 text-sm font-bold text-brand-dark">{k.kategori}</p>
-              <div className="space-y-2">
-                {k.items.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-xs text-[#333]">{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24"><ProgressBar value={item.poin} max={item.max} height={5} /></div>
-                      <span className="text-xs text-[#616161]">{item.poin}/{item.max}</span>
-                    </div>
+        {/* Sub Capaian & Total Poin per Capaian */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Sub Capaian */}
+          <div className="rounded-xl border border-[#e9ebf8] bg-brand-dark p-6 text-white shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">Sub Capaian</h3>
+              <select className="rounded-md bg-white bg-opacity-20 px-3 py-1 text-sm text-white outline-none">
+                <option>--Pilih Capaian--</option>
+              </select>
+            </div>
+            {subCapaian.map((category, index) => (
+              <div key={index}>
+                <p className="text-sm font-semibold mb-3">{category.kategori}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Radar Chart Placeholder */}
+                  <div className="h-32 w-32 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-xs">
+                    Radar Chart Here
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    {category.items.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-xs">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24">
+                            <ProgressBar value={item.value} max={100} height={5} color="bg-white" />
+                          </div>
+                          <span className="text-xs">{item.value}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Total Poin per Capaian */}
+          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-lg font-bold text-brand-dark">Total Poin per Capaian</h3>
+            <p className="text-sm text-[#616161] mb-4">Distribusi poin mahasiswa di setiap area pengembangan</p>
+            <div className="space-y-3">
+              {totalPoinData.map((item, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <span className="w-24 text-sm text-[#333]">{item.category}</span>
+                  <div className="flex-1">
+                    <ProgressBar value={item.value} max={100} height={8} color="bg-brand-light" />
+                  </div>
+                  <span className="text-sm text-[#616161]">{item.value}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
+        {/* Timeline Aktivitas */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Distribusi Poin per Tahun</h3>
+          <h3 className="mb-4 text-lg font-bold text-brand-dark">Timeline Aktivitas</h3>
           <div className="space-y-4">
-            {distribusiTahun.map((t) => (
-              <div key={t.tahun}>
-                <p className="mb-1 text-sm font-medium text-[#333]">{t.tahun}</p>
-                <div className="flex h-6 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
-                  {t.items.map((item) => (
-                    <div key={item.label} className={`h-full transition-all ${item.label === 'Seminar' ? 'bg-blue-500' : item.label === 'Organisasi' ? 'bg-brand-light' : 'bg-yellow-500'}`} style={{ width: `${item.pct}%` }} />
-                  ))}
+            {timelineAktivitas.map((activity, index) => (
+              <div key={index} className="flex items-center justify-between border-l-2 border-brand-dark pl-4">
+                <div>
+                  <p className="font-medium text-[#333]">{activity.event}</p>
+                  <p className="text-xs text-[#616161]">{activity.date}</p>
                 </div>
-                <div className="mt-1 flex gap-4 text-xs text-[#616161]">
-                  {t.items.map((item) => (
-                    <span key={item.label} className="flex items-center gap-1">
-                      <span className={`inline-block h-2 w-2 rounded-full ${item.label === 'Seminar' ? 'bg-blue-500' : item.label === 'Organisasi' ? 'bg-brand-light' : 'bg-yellow-500'}`} />
-                      {item.label}: {item.pct}%
-                    </span>
-                  ))}
-                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-medium ${activity.statusColor}`}>{activity.status}</span>
               </div>
             ))}
+            <button className="text-sm font-medium text-brand-dark hover:underline">menampilkan semua Timeline Aktivitas</button>
           </div>
         </div>
 
+        {/* Pesan untuk Mahasiswa */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Aktivitas Terbaru</h3>
-          <div className="space-y-4">
-            {[
-              { kegiatan: 'PKM 2026 - Pendanaan', status: 'Disetujui Universitas', tgl: '12 Jul 2026', color: 'text-green-700 bg-green-50' },
-              { kegiatan: 'Seminar Nasional AI', status: 'Disetujui Fakultas', tgl: '10 Jul 2026', color: 'text-blue-700 bg-blue-50' },
-              { kegiatan: 'Lomba Debat Nasional', status: 'Pending', tgl: '8 Jul 2026', color: 'text-yellow-700 bg-yellow-50' },
-            ].map((a, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-[#e9ebf8] p-4">
-                <div><p className="text-sm font-medium text-[#333]">{a.kegiatan}</p><p className="text-xs text-[#616161]">{a.tgl}</p></div>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${a.color}`}>{a.status}</span>
-              </div>
-            ))}
-          </div>
+          <h3 className="mb-4 text-lg font-bold text-brand-dark">Pesan untuk Mahasiswa</h3>
+          <textarea className="w-full rounded-lg border border-[#e9ebf8] p-4 text-sm text-[#333] outline-none" rows={4} placeholder="Tuliskan saran bimbingan akademik dan konseling disini" />
+          <button
+            onClick={handleKirimPesan}
+            className="mt-4 rounded-xl bg-brand-dark px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+          >
+            Kirim Pesan
+          </button>
         </div>
 
+        {/* Riwayat Catatan */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Catatan untuk Mahasiswa</h3>
-          <textarea className="w-full rounded-lg border border-[#e9ebf8] p-4 text-sm text-[#333] outline-none" rows={4} placeholder="Tuliskan saran bimbingan akademik dan konseling di sini..." />
-          <div className="mt-4 space-y-3">
-            {[
-              { dari: 'Dr. Ahmad Rizal', pesan: 'Tingkatkan partisipasi di kegiatan kemahasiswaan', tgl: '10 Jul 2026' },
-              { dari: 'Dr. Ahmad Rizal', pesan: 'Pertahankan IPK dan capaian poin', tgl: '5 Jun 2026' },
-            ].map((c, i) => (
-              <div key={i} className="rounded-lg bg-[#f9fafb] p-3">
-                <p className="text-sm text-[#333]">{c.pesan}</p>
-                <p className="mt-1 text-xs text-[#616161]">{c.dari} - {c.tgl}</p>
+          <h3 className="mb-4 text-lg font-bold text-brand-dark">Riwayat Catatan</h3>
+          <div className="space-y-3">
+            {riwayatCatatan.map((catatan, index) => (
+              <div key={index} className="rounded-lg bg-[#f9fafb] p-3">
+                <p className="text-sm text-[#333]">{catatan.message}</p>
+                <p className="mt-1 text-xs text-[#616161]">{catatan.date}</p>
               </div>
             ))}
           </div>
-          <button className="mt-4 rounded-lg bg-brand-dark px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90">Simpan Catatan</button>
         </div>
       </div>
     </DashboardLayout>

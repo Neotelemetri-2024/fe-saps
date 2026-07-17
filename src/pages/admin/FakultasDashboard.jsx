@@ -1,3 +1,4 @@
+import Swal from 'sweetalert2'
 import { CheckCircle, Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
@@ -19,10 +20,34 @@ const columns = [
   {
     key: 'aksi',
     label: 'Aksi',
-    render: () => (
+    render: (row) => (
       <div className="flex gap-2">
-        <button className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90">Setujui</button>
-        <button className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Tolak</button>
+        <button
+          className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+          onClick={() =>
+            Swal.fire({
+              icon: 'success',
+              title: 'Disetujui!',
+              text: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah disetujui.`,
+              confirmButtonColor: '#1C4122',
+            })
+          }
+        >
+          Setujui
+        </button>
+        <button
+          className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+          onClick={() =>
+            Swal.fire({
+              icon: 'error',
+              title: 'Ditolak!',
+              text: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah ditolak.`,
+              confirmButtonColor: '#1C4122',
+            })
+          }
+        >
+          Tolak
+        </button>
       </div>
     ),
   },
