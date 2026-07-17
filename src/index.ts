@@ -19,6 +19,7 @@ import kegiatanRoutes from './routes/kegiatan.routes';
 import partisipasiRoutes from './routes/partisipasi.routes';
 import klaimRoutes from './routes/klaim.routes';
 import umumRoutes from './routes/umum.routes';
+import organisasiRoutes from './routes/organisasi.routes';
 
 dotenv.config();
 
@@ -29,7 +30,9 @@ const port = process.env.PORT || 3000;
 app.use(helmet());
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    callback(null, true); // Allow all origins during development & testing
+  },
   credentials: true
 }));
 
@@ -76,6 +79,9 @@ app.use('/api/matriks', matriksRoutes);
 
 // Kegiatan & Approval (UKM/UKMF, Admin, Pimpinan)
 app.use('/api/kegiatan', kegiatanRoutes);
+
+// Manajemen Organisasi & Akun UKM (Admin)
+app.use('/api/organisasi', organisasiRoutes);
 
 // Partisipasi, Izin PA, Saran PA (Mahasiswa, Dosen PA)
 app.use('/api/partisipasi', partisipasiRoutes);

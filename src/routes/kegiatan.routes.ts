@@ -9,6 +9,7 @@ import {
   getKegiatanForApproval,
   approvalKegiatan,
   publikasiKegiatan,
+  hapusKegiatan,
 } from '../controllers/kegiatan.controller';
 
 const router = Router();
@@ -22,5 +23,6 @@ router.put('/:id/ajukan', ajukanKegiatan);                 // PUT /api/kegiatan/
 router.put('/:id/verifikasi', verifikasiKegiatan);         // PUT /api/kegiatan/:id/verifikasi
 router.put('/:id/approval', approvalKegiatan);             // PUT /api/kegiatan/:id/approval
 router.put('/:id/publikasi', publikasiKegiatan);           // PUT /api/kegiatan/:id/publikasi
+router.delete('/:id', hapusKegiatan);                      // DELETE /api/kegiatan/:id
 
 export default router;

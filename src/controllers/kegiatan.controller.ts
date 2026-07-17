@@ -436,3 +436,64 @@ export const publikasiKegiatan = async (req: Request, res: Response): Promise<vo
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
+
+// DELETE /api/kegiatan/:id — Hapus Kegiatan (Hanya jika belum berjalan/ada partisipan)
+export const hapusKegiatan = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const aktorId = BigInt(req.body.aktorId || 0);
+
+    const kegiatan = await prisma.kegiatan.findUnique({
+      where: { id: Number(id) },
+      include: { _count: { select: { partisipasi: true } } },
+    });
+
+    if (!kegiatan) {
+      res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan' });
+      return;
+    }
+
+    // Proteksi Keamanan (Aturan Bisnis)
+    const deletableStatuses = ['draft', 'diajukan', 'perlu_revisi', 'ditolak', 'terverifikasi', 'disetujui', 'terpublikasi'];
+    const nonDeletableStatuses = ['berlangsung', 'selesai', 'diarsipkan', 'dibatalkan'];
+
+    if (nonDeletableStatuses.includes(kegiatan.status)) {
+      res.status(400).json({ 
+        success: false, 
+        message: `Kegiatan tidak bisa dihapus karena sudah dalam status '${kegiatan.status}'. Gunakan fitur batalkan/arsipkan.` 
+      });
+      return;
+    }
+
+    // Proteksi Lapis 2: Jika sudah ada mahasiswa yang mendaftar (partisipasi > 0), tidak boleh dihapus!
+    if (kegiatan._count.partisipasi > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Kegiatan tidak bisa dihapus secara permanen karena sudah ada mahasiswa yang mendaftar partisipasi.',
+      });
+      return;
+    }
+
+    // Gunakan transaksi untuk menghapus data terkait yang terhubung (KegiatanCapaian, KegiatanApproval)
+    // Walaupun Cascade OnDelete di Prisma biasa di-setting, ini lebih aman secara eksplisit
+    await prisma.$transaction([
+      prisma.kegiatanApproval.deleteMany({ where: { kegiatanId: Number(id) } }),
+      prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } }),
+      prisma.kegiatan.delete({ where: { id: Number(id) } }),
+    ]);
+
+    await logAudit({
+      entitas: 'kegiatan',
+      entitasId: Number(id),
+      aksi: 'delete',
+      statusLama: kegiatan.status,
+      statusBaru: 'deleted',
+      aktorId,
+    });
+
+    res.json({ success: true, message: 'Kegiatan beserta alokasi capaiannya berhasil dihapus permanen' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server saat menghapus kegiatan' });
+  }
+};

@@ -1,4 +1,6 @@
-openapi: 3.0.0
+const fs = require('fs');
+
+const yaml = `openapi: 3.0.0
 info:
   title: SAPS API (Sistem Akumulasi Poin SKPI)
   description: Dokumentasi API lengkap untuk Sistem Akumulasi Poin SKPI. Mengakomodasi semua role (Mahasiswa, Dosen PA, Admin, Pimpinan).
@@ -336,3 +338,7 @@ paths:
       tags: [5. Dashboard (Semua Role)]
       responses:
         '200': { description: Berhasil }
+\`;
+
+fs.writeFileSync('e:\\\\shevaProgramming\\\\PROJECT SAPS\\\\backend\\\\src\\\\swagger.yaml', yaml);
+console.log('✅ Berhasil memperbarui swagger.yaml dengan seluruh endpoint!');
