@@ -1,6 +1,7 @@
 import { Download, Clock, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import logoUnand from '../../assets/logo_unand.png'
 
 // ---------------------------------------------------------------------------
 // Mock data — swap these for real API data
@@ -208,9 +209,7 @@ function DosenPADashboard() {
               <div className="mt-4 divide-y divide-[#eef0f7]">
                 {permintaanPersetujuan.map((p, i) => (
                   <div key={i} className="flex items-center gap-3 py-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-dark text-xs font-bold text-white">
-                      UA
-                    </div>
+                    <img src={logoUnand} alt="Logo" className="h-10 w-auto object-contain" />
                     <div>
                       <p className="text-sm font-semibold text-brand-dark">{p.nama}</p>
                       <p className="text-xs text-[#616161]">{p.desc}</p>

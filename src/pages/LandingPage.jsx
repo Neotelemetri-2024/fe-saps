@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, BookOpen, Medal, CheckCircle, BarChart3, Users, GraduationCap, Building2, ShieldCheck } from 'lucide-react'
+import logoUnand from '../assets/logo_unand.png'
 
 const features = [
   {
@@ -65,9 +66,8 @@ function LandingPage() {
       <header className="fixed top-0 z-50 w-full bg-brand-darker">
         <div className="mx-auto flex h-[99px] max-w-[1440px] items-center justify-between px-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white text-xl font-bold text-brand-darker">
-              UA
-            </div>
+            <img src={logoUnand} alt="Logo" className="h-[60px] w-auto object-contain" />
+            
             <div>
               <p className="text-lg font-bold leading-tight text-white">
                 MyUnand Student Connect

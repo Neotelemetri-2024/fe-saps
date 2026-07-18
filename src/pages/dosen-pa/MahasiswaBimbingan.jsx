@@ -38,15 +38,15 @@ function MahasiswaBimbingan() {
         <div className="overflow-x-auto rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-[#e9ebf8] bg-[#f9fafb]">
-                <th className="px-4 py-3 font-semibold text-[#333]">Nama</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">NIM</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">Prodi</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">Angktn</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">IPK</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">Poin</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">Status</th>
-                <th className="px-4 py-3 font-semibold text-[#333]">Aksi</th>
+              <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="whitespace-nowrap px-4 py-3">Nama</th>
+                <th className="whitespace-nowrap px-4 py-3">NIM</th>
+                <th className="whitespace-nowrap px-4 py-3">Prodi</th>
+                <th className="whitespace-nowrap px-4 py-3">Angktn</th>
+                <th className="whitespace-nowrap px-4 py-3">IPK</th>
+                <th className="whitespace-nowrap px-4 py-3">Poin</th>
+                <th className="whitespace-nowrap px-4 py-3">Status</th>
+                <th className="whitespace-nowrap px-4 py-3">Aksi</th>
               </tr>
             </thead>
             <tbody>

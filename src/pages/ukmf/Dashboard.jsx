@@ -40,13 +40,13 @@ function UKMFDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-[#e9ebf8] bg-[#f9fafb]">
-                  <th className="px-6 py-3 font-semibold text-[#333]">No</th>
-                  <th className="px-6 py-3 font-semibold text-[#333]">Kegiatan</th>
-                  <th className="px-6 py-3 font-semibold text-[#333]">Jenis</th>
-                  <th className="px-6 py-3 font-semibold text-[#333]">Skala</th>
-                  <th className="px-6 py-3 font-semibold text-[#333]">Tanggal</th>
-                  <th className="px-6 py-3 font-semibold text-[#333]">Status</th>
+                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="whitespace-nowrap px-6 py-3">No</th>
+                  <th className="whitespace-nowrap px-6 py-3">Kegiatan</th>
+                  <th className="whitespace-nowrap px-6 py-3">Jenis</th>
+                  <th className="whitespace-nowrap px-6 py-3">Skala</th>
+                  <th className="whitespace-nowrap px-6 py-3">Tanggal</th>
+                  <th className="whitespace-nowrap px-6 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>

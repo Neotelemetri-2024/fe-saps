@@ -52,14 +52,14 @@ function DetailFakultas() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-[#e9ebf8] text-xs font-semibold uppercase tracking-wide text-[#616161]">
-                  <th className="py-3 pr-4">Peringkat</th>
-                  <th className="py-3 pr-4">Fakultas</th>
-                  <th className="py-3 pr-4 text-right">Organisasi</th>
-                  <th className="py-3 pr-4 text-right">Seminar</th>
-                  <th className="py-3 pr-4 text-right">Prestasi</th>
-                  <th className="py-3 pr-4 text-right">Total Poin</th>
-                  <th className="py-3 text-right">Aksi</th>
+                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="whitespace-nowrap px-4 py-3">Peringkat</th>
+                  <th className="whitespace-nowrap px-4 py-3">Fakultas</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Organisasi</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Seminar</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Prestasi</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Total Poin</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody>

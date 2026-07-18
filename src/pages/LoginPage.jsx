@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import logoUnand from '../assets/logo_unand.png'
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -94,9 +95,7 @@ function LoginPage() {
         {/* Logo - positioned top-right */}
         <div className="flex justify-end pr-[180px] pt-[111px]">
           <div className="flex items-center gap-4">
-            <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-gradient-to-br from-brand-dark to-brand-light text-lg font-bold text-white shadow-md">
-              UA
-            </div>
+            <img src={logoUnand} alt="Logo Universitas Andalas" className="h-[60px] w-[60px] rounded-full object-cover" />
             <div>
               <p className="text-lg font-bold leading-[22px]">
                 <span className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-transparent">

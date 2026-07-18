@@ -3,6 +3,7 @@ import { CheckCircle } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import Swal from 'sweetalert2'
+import logoUnand from '../../assets/logo_unand.png'
 
 const subCapaian = [
   { kategori: 'Religious Character Development (Religius)', items: [{ label: 'Leadership', value: 70 }, { label: 'Global', value: 50 }, { label: 'Social', value: 60 }, { label: 'Entrepreneurship', value: 80 }, { label: 'Critical', value: 75 }] },
@@ -42,7 +43,7 @@ function DosenPADetail() {
         {/* Header Mahasiswa */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <div className="flex items-start gap-6">
-            <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border-2 border-brand-dark bg-[#f0f4f0] text-3xl font-bold text-brand-dark">UA</div>
+            <img src={logoUnand} alt="Logo" className="h-[100px] w-auto object-contain" />
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>

@@ -1,4 +1,5 @@
 import { Plus, Clock } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 
 // ---------------------------------------------------------------------------
@@ -198,6 +199,7 @@ function KegiatanCell({ nama, tanggalInput }) {
 // Main component — nama tetap MahasiswaDashboard, hanya isinya yang diupdate
 // ---------------------------------------------------------------------------
 function MahasiswaDashboard() {
+  const navigate = useNavigate()
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-6">
@@ -230,7 +232,7 @@ function MahasiswaDashboard() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <button className="flex items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+            <button onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')} className="flex items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               <Plus className="h-4 w-4" /> Ajukan Kegiatan Eksternal ( luar universitas)
             </button>
             <div className="flex-1 rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-6 text-center shadow-sm">
@@ -277,7 +279,7 @@ function MahasiswaDashboard() {
         {/* Riwayat Kegiatan Persetujuan Dosen PA */}
         <RiwayatTable
           title="Riwayat Kegiatan Persetujuan Dosen PA"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'STATUS']}
+          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'STATUS', 'AKSI']}
           rows={persetujuanDosen}
           renderRow={(row, i) => (
             <>
@@ -288,6 +290,11 @@ function MahasiswaDashboard() {
               <td className="px-4 py-4 align-top">{row.penyelenggara}</td>
               <td className="px-4 py-4 align-top">{row.tanggal}</td>
               <td className="px-4 py-4 align-top"><StatusBadge status={row.status} /></td>
+              <td className="px-4 py-4 align-top">
+                {row.status === 'Ditolak' ? (
+                  <button className="text-xs font-semibold text-red-600 hover:underline">Lihat Alasan</button>
+                ) : '-'}
+              </td>
             </>
           )}
         />
@@ -295,7 +302,7 @@ function MahasiswaDashboard() {
         {/* Riwayat Kegiatan Pengajuan Eksternal */}
         <RiwayatTable
           title="Riwayat Kegiatan Pengajuan Eksternal"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'SKALA', 'STATUS']}
+          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'SKALA', 'STATUS', 'AKSI']}
           rows={pengajuanEksternal}
           renderRow={(row, i) => (
             <>
@@ -307,6 +314,11 @@ function MahasiswaDashboard() {
               <td className="px-4 py-4 align-top">{row.tanggal}</td>
               <td className="px-4 py-4 align-top">{row.skala}</td>
               <td className="px-4 py-4 align-top"><StatusBadge status={row.status} /></td>
+              <td className="px-4 py-4 align-top">
+                {row.status === 'Ditolak' ? (
+                  <button className="text-xs font-semibold text-red-600 hover:underline">Lihat Alasan</button>
+                ) : '-'}
+              </td>
             </>
           )}
         />
@@ -314,7 +326,7 @@ function MahasiswaDashboard() {
         {/* Riwayat Kegiatan Klaim Poin */}
         <RiwayatTable
           title="Riwayat Kegiatan Klaim Poin"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'BUKTI', 'POIN', 'STATUS']}
+          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'BUKTI', 'POIN', 'STATUS', 'AKSI']}
           rows={klaimPoin}
           renderRow={(row, i) => (
             <>
@@ -327,6 +339,11 @@ function MahasiswaDashboard() {
               <td className="px-4 py-4 align-top">{row.bukti}</td>
               <td className="px-4 py-4 align-top">{row.poin}</td>
               <td className="px-4 py-4 align-top"><StatusBadge status={row.status} /></td>
+              <td className="px-4 py-4 align-top">
+                {row.status === 'Ditolak' ? (
+                  <button className="text-xs font-semibold text-red-600 hover:underline">Lihat Alasan</button>
+                ) : '-'}
+              </td>
             </>
           )}
         />

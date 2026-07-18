@@ -2,6 +2,7 @@ import React from 'react'
 import { Lock, User } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import Swal from 'sweetalert2'
+import logoUnand from '../../assets/logo_unand.png'
 
 function AkunPengaturan() {
   const handleSimpanPerubahan = () => {
@@ -22,9 +23,7 @@ function AkunPengaturan() {
           {/* Header Profil */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <div className="flex items-center gap-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f0f4f0] text-3xl font-bold text-brand-dark">
-                UA
-              </div>
+              <img src={logoUnand} alt="Logo" className="h-20 w-auto object-contain" />
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-brand-dark">AMARA MARSHINTA</h3>
                 <p className="text-sm text-[#616161]">2311121017</p>

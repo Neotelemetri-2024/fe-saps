@@ -1,14 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
+import logoUnand from '../../assets/logo_unand.png'
 
 function Sidebar({ menuItems, userName, userRole }) {
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-[260px] flex-col border-r border-[#e9ebf8] bg-white">
       {/* Logo */}
       <div className="flex items-center gap-3 border-b border-[#e9ebf8] px-5 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-dark to-brand-light text-sm font-bold text-white shadow-md">
-          UA
-        </div>
+        <img src={logoUnand} alt="Logo" className="h-10 w-auto object-contain" />
         <div>
           <p className="text-sm font-bold leading-tight text-brand-dark">
             MyUnand Student Connect
@@ -19,9 +18,9 @@ function Sidebar({ menuItems, userName, userRole }) {
 
       {/* Menu */}
       <nav className="flex-1 overflow-y-auto px-4 py-4">
-        <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-brand-dark">
+        {/* <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-brand-dark">
           Menu Utama
-        </p>
+        </p> */}
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const isHash = item.path === '#'
