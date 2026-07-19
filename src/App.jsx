@@ -16,14 +16,18 @@ import DosenPADetail from './pages/dosen-pa/Detail'
 import PermintaanPersetujuan from './pages/dosen-pa/PermintaanPersetujuan'
 import MahasiswaPerluPerhatian from './pages/dosen-pa/MahasiswaPerluPerhatian'
 import PimpinanDitmawaDashboard from './pages/pimpinan/DitmawaDashboard'
-import PimpinanFakultasDashboard from './pages/pimpinan/FakultasDashboard'
-import PimpinanFakultasPersetujuan from './pages/pimpinan/FakultasPersetujuan'
+import PimpinanFakultasDashboard from './pages/pimpinan-fakultas/FakultasDashboard'
+import PimpinanFakultasPersetujuan from './pages/pimpinan-fakultas/FakultasPersetujuan'
+import PimpinanFakultasVerifikasiUKMF from './pages/pimpinan-fakultas/VerifikasiPengajuanUKMF'
+import DetailVerifikasiUKMF from './pages/pimpinan-fakultas/DetailVerifikasiUKMF'
 import PimpinanUtamaDashboard from './pages/pimpinan-utama/UtamaDashboard'
 import DetailFakultas from './pages/pimpinan-utama/DetailFakultas'
 import DetailFakultasProdi from './pages/pimpinan-utama/DetailFakultasProdi'
-import AdminDitmawaDashboard from './pages/admin/DitmawaDashboard'
+import AdminDitmawaDashboard from './pages/admin-ditmawa/Dashboard'
+import AdminDitmawaVerifikasiKlaim from './pages/admin-ditmawa/VerifikasiKlaimPoin'
 import AdminFakultasDashboard from './pages/admin/FakultasDashboard'
 import UKMDashboard from './pages/ukm/Dashboard'
+import UKMDaftarKegiatan from './pages/ukm/DaftarKegiatan'
 import UKMFDashboard from './pages/ukmf/Dashboard'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -63,6 +67,8 @@ function App() {
       <Route path="pimpinan-fakultas">
         <Route path="dashboard" element={<PimpinanFakultasDashboard />} />
         <Route path="persetujuan" element={<PimpinanFakultasPersetujuan />} />
+        <Route path="verifikasi-pengajuan-ukmf" element={<PimpinanFakultasVerifikasiUKMF />} />
+        <Route path="verifikasi-pengajuan-ukmf/:id" element={<DetailVerifikasiUKMF />} />
       </Route>
 
       {/* Pimpinan Utama */}
@@ -73,13 +79,20 @@ function App() {
       </Route>
 
       {/* Admin Ditmawa */}
-      <Route path="admin-ditmawa/dashboard" element={<AdminDitmawaDashboard />} />
+      {/* Admin Ditmawa */}
+      <Route path="admin-ditmawa">
+        <Route path="dashboard" element={<AdminDitmawaDashboard />} />
+        <Route path="verifikasi-klaim" element={<AdminDitmawaVerifikasiKlaim />} />
+      </Route>
 
       {/* Admin Fakultas */}
       <Route path="admin-fakultas/dashboard" element={<AdminFakultasDashboard />} />
 
       {/* UKM */}
-      <Route path="ukm/dashboard" element={<UKMDashboard />} />
+      <Route path="ukm">
+        <Route path="dashboard" element={<UKMDashboard />} />
+        <Route path="daftar-kegiatan" element={<UKMDaftarKegiatan />} />
+      </Route>
 
       {/* UKMF */}
       <Route path="ukmf/dashboard" element={<UKMFDashboard />} />

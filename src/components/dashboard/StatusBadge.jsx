@@ -3,6 +3,9 @@ const statusConfig = {
   disetujui: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Disetujui' },
   ditolak: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500', label: 'Ditolak' },
   menunggu: { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500', label: 'Menunggu' },
+  'sudah tercatat': { bg: 'bg-green-50', text: 'text-green-800', dot: 'bg-green-500', label: 'sudah tercatat' },
+  'belum tercatat': { bg: 'bg-emerald-50', text: 'text-emerald-800', dot: 'bg-emerald-500', label: 'belum tercatat' },
+  aktif: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Aktif' },
 }
 
 function StatusBadge({ status }) {

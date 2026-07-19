@@ -43,19 +43,35 @@ export const pimpinanDitmawaMenu = [
   { path: '/pimpinan-ditmawa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '#', label: 'Manajemen Kurikulum', icon: <BookOpen className="h-4 w-4" /> },
   { path: '#', label: 'Bobot Poin', icon: <BarChart3 className="h-4 w-4" /> },
-  { path: '#', label: 'Verifikasi', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '#', label: 'Verifikasi Pengajuan UKM', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '#', label: 'Verifikasi Pengajuan Eksternal', icon: <CheckCircle className="h-4 w-4" /> },
+  {
+    path: '#',
+    label: 'Verifikasi',
+    icon: <CheckCircle className="h-4 w-4" />,
+    children: [
+      { path: '#', label: 'Verifikasi Pengajuan UKM' },
+      { path: '#', label: 'Verifikasi Klaim Poin Eksternal' },
+    ],
+  },
+  {
+    path: '#',
+    label: 'Event Global',
+    icon: <FileText className="h-4 w-4" />,
+    children: [
+      { path: '#', label: 'Buat Event' },
+      { path: '#', label: 'Verifikasi kegiatan' },
+    ],
+  },
+  { path: '#', label: 'Manajemen akun UKM', icon: <Users className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
+  { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── PIMPINAN FAKULTAS ── */
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan-fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '/pimpinan-fakultas/persetujuan', label: 'Persetujuan Kegiatan', icon: <CheckCircle className="h-4 w-4" /> },
+  { path: '/pimpinan-fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
+  { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── PIMPINAN UTAMA ── */
@@ -70,12 +86,20 @@ export const pimpinanUtamaMenu = [
 /* ── ADMIN DITMAWA ── */
 export const adminDitmawaMenu = [
   { path: '/admin-ditmawa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '#', label: 'Verifikasi', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '#', label: 'Verifikasi Klaim Poin', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '#', label: 'Verifikasi Pengajuan', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '#', label: 'Manajemen Event Global', icon: <FileText className="h-4 w-4" /> },
+  {
+    path: '#',
+    label: 'Verifikasi',
+    icon: <CheckCircle className="h-4 w-4" />,
+    children: [
+      { path: '/admin-ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin' },
+      { path: '#', label: 'Verifikasi Pengajuan Eksternal' },
+      { path: '#', label: 'Verifikasi Pengajuan UKM' },
+    ],
+  },
+  { path: '#', label: 'Manajemen event Global', icon: <FileText className="h-4 w-4" /> },
+  { path: '#', label: 'Manajemen akun UKM', icon: <Users className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
+  { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN FAKULTAS ── */
@@ -89,10 +113,10 @@ export const adminFakultasMenu = [
 /* ── UKM ── */
 export const ukmMenu = [
   { path: '/ukm/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '#', label: 'Ajukan Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '#', label: 'Riwayat', icon: <History className="h-4 w-4" /> },
+  { path: '/ukm/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <FileText className="h-4 w-4" /> },
+  { path: '#', label: 'Buat Kegiatan', icon: <PlusCircle className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
+  { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── UKMF ── */
