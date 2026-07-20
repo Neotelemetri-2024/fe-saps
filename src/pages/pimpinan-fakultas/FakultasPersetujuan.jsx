@@ -1,4 +1,4 @@
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -24,11 +24,8 @@ const columns = [
         <button
           className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
           onClick={() =>
-            Swal.fire({
-              icon: 'success',
-              title: 'Disetujui!',
-              text: `Pengajuan "${row.kegiatan}" telah disetujui.`,
-              confirmButtonColor: '#1C4122',
+            toast.success('Disetujui!', {
+              description: `Pengajuan "${row.kegiatan}" telah disetujui.`,
             })
           }
         >
@@ -37,11 +34,8 @@ const columns = [
         <button
           className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
           onClick={() =>
-            Swal.fire({
-              icon: 'error',
-              title: 'Ditolak!',
-              text: `Pengajuan "${row.kegiatan}" telah ditolak.`,
-              confirmButtonColor: '#1C4122',
+            toast.error('Ditolak!', {
+              description: `Pengajuan "${row.kegiatan}" telah ditolak.`,
             })
           }
         >

@@ -1,4 +1,4 @@
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import { Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -11,12 +11,8 @@ const klaimData = [
 
 function VerifikasiKlaimPoin() {
   const handleDetail = (item) => {
-    Swal.fire({
-      title: 'Detail dan Verifikasi',
-      html: `<b>${item.mahasiswa}</b><br/>${item.kegiatan}<br/>${item.kategori}`,
-      icon: 'info',
-      confirmButtonText: 'Tutup',
-      confirmButtonColor: '#1C4122',
+    toast.info('Detail dan Verifikasi', {
+      description: `${item.mahasiswa} - ${item.kegiatan} - ${item.kategori}`,
     })
   }
 

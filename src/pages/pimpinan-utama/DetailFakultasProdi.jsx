@@ -195,9 +195,9 @@ function DetailFakultasProdi() {
               <thead>
                 <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
                   <th className="px-4 py-3 text-center w-20">RANKING</th>
-                  <th className="px-4 py-3">PROGRAM STUDI</th>
-                  <th className="px-4 py-3 w-32">TOTAL POIN</th>
-                  <th className="px-4 py-3 w-40">KATEGORI POIN</th>
+                  <th className="px-4 py-3 text-center">PROGRAM STUDI</th>
+                  <th className="px-4 py-3 w-32 text-center">TOTAL POIN</th>
+                  <th className="px-4 py-3 w-40 text-center">KATEGORI POIN</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eef0f7]">

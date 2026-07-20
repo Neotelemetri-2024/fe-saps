@@ -41,12 +41,12 @@ function UKMFDashboard() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="whitespace-nowrap px-6 py-3">No</th>
-                  <th className="whitespace-nowrap px-6 py-3">Kegiatan</th>
-                  <th className="whitespace-nowrap px-6 py-3">Jenis</th>
-                  <th className="whitespace-nowrap px-6 py-3">Skala</th>
-                  <th className="whitespace-nowrap px-6 py-3">Tanggal</th>
-                  <th className="whitespace-nowrap px-6 py-3">Status</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">No</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">Kegiatan</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">Jenis</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">Skala</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">Tanggal</th>
+                  <th className="whitespace-nowrap px-6 py-3 text-center">Status</th>
                 </tr>
               </thead>
               <tbody>

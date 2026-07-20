@@ -39,14 +39,14 @@ function MahasiswaBimbingan() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-                <th className="whitespace-nowrap px-4 py-3">Nama</th>
-                <th className="whitespace-nowrap px-4 py-3">NIM</th>
-                <th className="whitespace-nowrap px-4 py-3">Prodi</th>
-                <th className="whitespace-nowrap px-4 py-3">Angktn</th>
-                <th className="whitespace-nowrap px-4 py-3">IPK</th>
-                <th className="whitespace-nowrap px-4 py-3">Poin</th>
-                <th className="whitespace-nowrap px-4 py-3">Status</th>
-                <th className="whitespace-nowrap px-4 py-3">Aksi</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Nama</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">NIM</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Prodi</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Angktn</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">IPK</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Poin</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Status</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>

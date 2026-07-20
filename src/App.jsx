@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner'
 import { Route, Routes } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -28,13 +29,19 @@ import AdminDitmawaVerifikasiKlaim from './pages/admin-ditmawa/VerifikasiKlaimPo
 import AdminFakultasDashboard from './pages/admin/FakultasDashboard'
 import UKMDashboard from './pages/ukm/Dashboard'
 import UKMDaftarKegiatan from './pages/ukm/DaftarKegiatan'
+import UKMManajemenPeserta from './pages/ukm/ManajemenPeserta'
 import UKMFDashboard from './pages/ukmf/Dashboard'
+import UKMFDaftarKegiatan from './pages/ukmf/DaftarKegiatan'
+import UKMFBuatKegiatan from './pages/ukmf/BuatKegiatan'
+import UKMFFormBuatKegiatan from './pages/ukmf/FormBuatKegiatan'
+import UKMFAkunDanPengaturan from './pages/ukmf/AkunDanPengaturan'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   return (
-    <Routes>
-      {/* Public routes */}
+    <>
+      <Routes>
+        {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
@@ -92,14 +99,23 @@ function App() {
       <Route path="ukm">
         <Route path="dashboard" element={<UKMDashboard />} />
         <Route path="daftar-kegiatan" element={<UKMDaftarKegiatan />} />
+        <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMManajemenPeserta />} />
       </Route>
 
       {/* UKMF */}
-      <Route path="ukmf/dashboard" element={<UKMFDashboard />} />
+      <Route path="ukmf">
+        <Route path="dashboard" element={<UKMFDashboard />} />
+        <Route path="daftar-kegiatan" element={<UKMFDaftarKegiatan />} />
+        <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
+        <Route path="buat-kegiatan/form" element={<UKMFFormBuatKegiatan />} />
+        <Route path="pengaturan" element={<UKMFAkunDanPengaturan />} />
+      </Route>
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+      <Toaster position="top-right" richColors closeButton />
+    </>
   )
 }
 

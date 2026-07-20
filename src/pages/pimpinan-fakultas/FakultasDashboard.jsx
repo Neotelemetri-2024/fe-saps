@@ -163,10 +163,10 @@ function PimpinanFakultasDashboard() {
             <table className="w-full min-w-[600px] text-left text-sm">
               <thead>
                 <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-3">RANKING</th>
-                  <th className="px-4 py-3">PROGRAM STUDI</th>
-                  <th className="px-4 py-3">TOTAL POIN</th>
-                  <th className="px-4 py-3">KATEGORI POIN</th>
+                  <th className="px-4 py-3 text-center">RANKING</th>
+                  <th className="px-4 py-3 text-center">PROGRAM STUDI</th>
+                  <th className="px-4 py-3 text-center">TOTAL POIN</th>
+                  <th className="px-4 py-3 text-center">KATEGORI POIN</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eef0f7]">

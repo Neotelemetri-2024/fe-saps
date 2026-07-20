@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { CheckCircle } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
@@ -33,12 +33,8 @@ function AjukanKegiatanForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Logika pengiriman form ke backend
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
-      confirmButtonColor: '#1C4122',
+    toast.success('Berhasil!', {
+      description: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
     })
   }
 
@@ -91,12 +87,9 @@ function AjukanKegiatanForm() {
                 required
               >
                 <option value="">Pilih jenis kegiatan</option>
-                <option value="prestasi">Prestasi</option>
-                <option value="kompetisi">Kompetisi</option>
-                <option value="organisasi">Organisasi</option>
-                <option value="volunteer">Volunteer</option>
-                <option value="pelatihan">Pelatihan</option>
-                <option value="seminar">Seminar</option>
+                <option value="prestasi">Prestasi/Kompetisi</option>
+                <option value="organisasi">Organisasi/Volunteer</option>
+                <option value="pelatihan">Pelatihan/Seminar</option>
               </select>
             </div>
 
@@ -149,12 +142,10 @@ function AjukanKegiatanForm() {
                   required
                 >
                   <option value="">Pilih peran kegiatan</option>
-                  <option value="ketua">Ketua</option>
-                  <option value="anggota">Anggota</option>
-                  <option value="peserta">Peserta</option>
                   <option value="juara1">Juara 1</option>
                   <option value="juara2">Juara 2</option>
                   <option value="juara3">Juara 3</option>
+                  <option value="peserta">Peserta</option>
                 </select>
               </div>
               <div>
@@ -170,10 +161,13 @@ function AjukanKegiatanForm() {
                   required
                 >
                   <option value="">Pilih skala kegiatan</option>
-                  <option value="lokal">Lokal</option>
-                  <option value="regional">Regional</option>
-                  <option value="nasional">Nasional</option>
                   <option value="internasional">Internasional</option>
+                  <option value="nasional">Nasional</option>
+                  <option value="regional">Regional</option>
+                  <option value="lokal">Internal (UNAND)</option>
+                  
+                  
+                  
                 </select>
               </div>
             </div>
@@ -240,7 +234,7 @@ function AjukanKegiatanForm() {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                className="rounded-xl bg-brand-dark px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+                className="rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
               >
                 Ajukan Sekarang
               </button>

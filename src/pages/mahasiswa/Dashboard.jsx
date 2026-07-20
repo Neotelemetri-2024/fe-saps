@@ -166,7 +166,7 @@ function RiwayatTable({ title, columns, rows, renderRow }) {
           <thead>
             <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
               {columns.map((c) => (
-                <th key={c} className="whitespace-nowrap px-4 py-3">{c}</th>
+                <th key={c} className="whitespace-nowrap px-4 py-3 text-center">{c}</th>
               ))}
             </tr>
           </thead>

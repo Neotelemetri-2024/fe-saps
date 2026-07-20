@@ -1,16 +1,13 @@
 import React from 'react'
 import { Lock, User } from 'lucide-react'
+import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import Swal from 'sweetalert2'
 import logoUnand from '../../assets/logo_unand.png'
 
 function AkunPengaturan() {
   const handleSimpanPerubahan = () => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil Disimpan!',
-      text: 'Perubahan pada informasi pribadi Anda telah disimpan.',
-      confirmButtonColor: '#1C4122',
+    toast.success('Berhasil Disimpan!', {
+      description: 'Perubahan pada informasi pribadi Anda telah disimpan.',
     })
   }
 

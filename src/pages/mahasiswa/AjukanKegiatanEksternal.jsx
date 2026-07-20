@@ -1,5 +1,5 @@
 import { PlusCircle, Search, Filter } from 'lucide-react'
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -27,12 +27,8 @@ const columns = [
       row.status === 'ditolak' ? (
         <button
           onClick={() =>
-            Swal.fire({
-              title: 'Alasan Penolakan',
-              text: row.alasan || 'Tidak ada alasan tercantum.',
-              icon: 'info',
-              confirmButtonText: 'Tutup',
-              confirmButtonColor: '#1C4122',
+            toast.info('Alasan Penolakan', {
+              description: row.alasan || 'Tidak ada alasan tercantum.',
             })
           }
           className="text-sm font-medium text-red-600 underline hover:text-red-800"

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import Swal from 'sweetalert2'
 import { Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -24,8 +23,11 @@ function VerifikasiPengajuanUKMF() {
   useEffect(() => {
     if (location.state?.updatedId) {
       const newStatus = location.state.newStatus
+      const updatedStatus = location.state.updatedStatus || null
       dataCache = dataCache.map((item) =>
-        item.id === location.state.updatedId ? { ...item, status: newStatus } : item
+        item.id === location.state.updatedId
+          ? { ...item, status: newStatus, updatedStatus }
+          : item
       )
       setUkmfData([...dataCache])
       window.history.replaceState({}, '')
@@ -33,7 +35,9 @@ function VerifikasiPengajuanUKMF() {
   }, [location.state])
 
   const handleDetail = (item) => {
-    navigate(`/pimpinan-fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })
+    navigate(`/pimpinan-fakultas/verifikasi-pengajuan-ukmf/${item.id}`, {
+      state: { item: { ...item } },
+    })
   }
 
   return (

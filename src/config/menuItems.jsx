@@ -20,9 +20,9 @@ import {
 /* ── MAHASISWA ── */
 export const mahasiswaMenu = [
   { path: '/mahasiswa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '/mahasiswa/kegiatan-eksternal', label: 'Ajukan Kegiatan Eksternal', icon: <PlusCircle className="h-4 w-4" /> },
   { path: '/mahasiswa/persetujuan-dosen', label: 'Persetujuan Dosen', icon: <UserCheck className="h-4 w-4" /> },
-  { path: '/mahasiswa/klaim-poin', label: 'Klaim Poin Capaian', icon: <CheckSquare className="h-4 w-4" /> },
+  { path: '/mahasiswa/klaim-poin', label: 'Klaim Poin Eksternal', icon: <CheckSquare className="h-4 w-4" /> },
+  { path: '/mahasiswa/kegiatan-eksternal', label: 'Ajukan Kegiatan Eksternal', icon: <PlusCircle className="h-4 w-4" /> },
   { path: '/mahasiswa/riwayat-poin', label: 'Riwayat Poin', icon: <Award className="h-4 w-4" /> },
   { path: '/mahasiswa/generate-cv', label: 'Generate CV', icon: <FileText className="h-4 w-4" /> },
   { path: '/mahasiswa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
@@ -122,10 +122,10 @@ export const ukmMenu = [
 /* ── UKMF ── */
 export const ukmfMenu = [
   { path: '/ukmf/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '#', label: 'Ajukan Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '#', label: 'Riwayat', icon: <History className="h-4 w-4" /> },
-  { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
+  { path: '/ukmf/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <CheckSquare className="h-4 w-4" /> },
+  { path: '/ukmf/buat-kegiatan', label: 'Buat Kegiatan', icon: <PlusCircle className="h-4 w-4" /> },
+  { path: '/ukmf/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
+  { path: '/ukmf/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 // ── OBJEK PEMETAAN UTAMA UNTUK SIDEBAR DINAMIS ──

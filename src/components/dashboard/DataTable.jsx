@@ -5,7 +5,7 @@ function DataTable({ columns, data, renderRow, onEdit, onDelete }) {
         <thead>
           <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
             {columns.map((col) => (
-              <th key={col.key} className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3" style={col.width ? { width: col.width } : {}}>
+              <th key={col.key} className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3 text-left" style={col.width ? { width: col.width } : {}}>
                 {col.label}
               </th>
             ))}

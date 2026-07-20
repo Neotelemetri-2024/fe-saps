@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { Bell, Filter, Plus, Search, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -10,15 +11,17 @@ const stats = [
 ]
 
 const kegiatanSaya = [
-  { nama: 'Workshop desain UI/UX', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 32 },
-  { nama: 'Seminar Kewirausahaan', jenis: 'Seminar', skala: 'Nasional', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 18 },
-  { nama: 'Pelatihan Arduino', jenis: 'Pelatihan', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 73 },
-  { nama: 'Workshop Elektronika dasar', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 32 },
+  { id: 1, nama: 'Workshop desain UI/UX', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 32 },
+  { id: 2, nama: 'Seminar Kewirausahaan', jenis: 'Seminar', skala: 'Nasional', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 18 },
+  { id: 3, nama: 'Pelatihan Arduino', jenis: 'Pelatihan', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 73 },
+  { id: 4, nama: 'Workshop Elektronika dasar', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 32 },
 ]
 
 function DaftarKegiatan() {
+  const navigate = useNavigate()
+
   return (
-    <DashboardLayout role="ukm" userName="Nouval Rafiif Irwan" userRole="Operator UKM">
+    <DashboardLayout role="ukm" userName="Naufal Rafiif Irwan" userRole="Operator UKM">
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -85,7 +88,7 @@ function DaftarKegiatan() {
                 </thead>
                 <tbody>
                   {kegiatanSaya.map((item) => (
-                    <tr key={item.nama} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                    <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                       <td className="px-4 py-4 font-medium text-[#333]">{item.nama}</td>
                       <td className="px-4 py-4 text-[#616161]">{item.jenis}</td>
                       <td className="px-4 py-4 text-[#616161]">{item.skala}</td>
@@ -98,7 +101,10 @@ function DaftarKegiatan() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <button className="rounded-full bg-yellow-400 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-yellow-500">
+                        <button
+                          onClick={() => navigate(`/ukm/daftar-kegiatan/${item.id}/manajemen-peserta`)}
+                          className="rounded-full bg-yellow-400 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-yellow-500"
+                        >
                           Manajemen Peserta
                         </button>
                       </td>

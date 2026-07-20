@@ -2,6 +2,8 @@ const statusConfig = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500', label: 'Pending' },
   disetujui: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Disetujui' },
   ditolak: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500', label: 'Ditolak' },
+  revisi: { bg: 'bg-orange-100', text: 'text-orange-800', dot: 'bg-orange-500', label: 'Revisi' },
+  dipublikasikan: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Dipublikasikan' },
   menunggu: { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500', label: 'Menunggu' },
   'sudah tercatat': { bg: 'bg-green-50', text: 'text-green-800', dot: 'bg-green-500', label: 'sudah tercatat' },
   'belum tercatat': { bg: 'bg-emerald-50', text: 'text-emerald-800', dot: 'bg-emerald-500', label: 'belum tercatat' },

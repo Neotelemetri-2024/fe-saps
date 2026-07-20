@@ -74,14 +74,14 @@ function PimpinanDitmawaDashboard() {
             <table className="w-full min-w-[800px] text-left text-sm">
               <thead>
                 <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-3">No</th>
-                  <th className="px-4 py-3">Nama Kegiatan</th>
-                  <th className="px-4 py-3">Dalam</th>
-                  <th className="px-4 py-3">Tipe</th>
-                  <th className="px-4 py-3">Penyelenggara</th>
-                  <th className="px-4 py-3">Kategori</th>
-                  <th className="px-4 py-3">Peserta</th>
-                  <th className="px-4 py-3">Skala</th>
+                  <th className="px-4 py-3 text-center">No</th>
+                  <th className="px-4 py-3 text-center">Nama Kegiatan</th>
+                  <th className="px-4 py-3 text-center">Dalam</th>
+                  <th className="px-4 py-3 text-center">Tipe</th>
+                  <th className="px-4 py-3 text-center">Penyelenggara</th>
+                  <th className="px-4 py-3 text-center">Kategori</th>
+                  <th className="px-4 py-3 text-center">Peserta</th>
+                  <th className="px-4 py-3 text-center">Skala</th>
                 </tr>
               </thead>
               <tbody>

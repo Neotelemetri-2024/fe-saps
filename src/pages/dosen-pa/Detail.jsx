@@ -1,8 +1,8 @@
 import React from 'react'
 import { CheckCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
-import Swal from 'sweetalert2'
 import logoUnand from '../../assets/logo_unand.png'
 
 const subCapaian = [
@@ -29,11 +29,8 @@ const riwayatCatatan = [
 
 function DosenPADetail() {
   const handleKirimPesan = () => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Pesan Terkirim!',
-      text: 'Pesan kepada mahasiswa berhasil dikirim.',
-      confirmButtonColor: '#1C4122',
+    toast.success('Pesan Terkirim!', {
+      description: 'Pesan kepada mahasiswa berhasil dikirim.',
     })
   }
 

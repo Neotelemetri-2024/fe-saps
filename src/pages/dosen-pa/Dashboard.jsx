@@ -239,13 +239,13 @@ function DosenPADashboard() {
               <table className="w-full min-w-[900px] border-collapse text-sm">
                 <thead>
                   <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="whitespace-nowrap px-4 py-3">NO</th>
-                    <th className="whitespace-nowrap px-4 py-3">MAHASISWA</th>
-                    <th className="whitespace-nowrap px-4 py-3">NIM</th>
-                    <th className="whitespace-nowrap px-4 py-3">IPK</th>
-                    <th className="whitespace-nowrap px-4 py-3">CAPAIAN</th>
-                    <th className="whitespace-nowrap px-4 py-3">STATUS</th>
-                    <th className="whitespace-nowrap px-4 py-3">AKSI</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">NO</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">MAHASISWA</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">NIM</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">IPK</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">CAPAIAN</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">STATUS</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center">AKSI</th>
                   </tr>
                 </thead>
                 <tbody>

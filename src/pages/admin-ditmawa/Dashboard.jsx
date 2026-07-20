@@ -1,7 +1,9 @@
-import Swal from 'sweetalert2'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Download, Edit3, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const stats = [
   { label: 'DISETUJUI', value: 3, border: 'border-brand-dark', valueColor: 'text-brand-dark' },
@@ -17,39 +19,42 @@ const kegiatanTerbaru = [
 ]
 
 function AdminDitmawaDashboard() {
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [selectedItem, setSelectedItem] = useState(null)
+
   const handleEdit = (item) => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Data diperbarui!',
-      text: `Kegiatan "${item.nama}" berhasil diperbarui.`,
-      confirmButtonColor: '#1C4122',
+    toast.success('Data diperbarui!', {
+      description: `Kegiatan "${item.nama}" berhasil diperbarui.`,
     })
   }
 
-  const handleDelete = (item) => {
-    Swal.fire({
-      title: 'Hapus kegiatan?',
-      text: `Yakin ingin menghapus "${item.nama}"?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Ya, hapus',
-      cancelButtonText: 'Batal',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Dihapus!',
-          text: 'Kegiatan berhasil dihapus.',
-          confirmButtonColor: '#1C4122',
-        })
-      }
-    })
+  const handleDeleteClick = (item) => {
+    setSelectedItem(item)
+    setShowConfirmDelete(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (selectedItem) {
+      toast.success('Dihapus!', {
+        description: 'Kegiatan berhasil dihapus.',
+      })
+    }
+    setShowConfirmDelete(false)
+    setSelectedItem(null)
   }
 
   return (
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Hapus kegiatan?"
+        message={selectedItem ? `Yakin ingin menghapus "${selectedItem.nama}"?` : ''}
+        confirmText="Ya, hapus"
+        cancelText="Batal"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => { setShowConfirmDelete(false); setSelectedItem(null) }}
+      />
+
       <div className="space-y-6">
         <div>
           <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
@@ -104,7 +109,7 @@ function AdminDitmawaDashboard() {
                           <button onClick={() => handleEdit(item)} className="rounded p-1 text-brand-dark transition hover:bg-green-50" aria-label="Edit kegiatan">
                             <Edit3 className="h-4 w-4" />
                           </button>
-                          <button onClick={() => handleDelete(item)} className="rounded p-1 text-red-600 transition hover:bg-red-50" aria-label="Hapus kegiatan">
+                          <button onClick={() => handleDeleteClick(item)} className="rounded p-1 text-red-600 transition hover:bg-red-50" aria-label="Hapus kegiatan">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>

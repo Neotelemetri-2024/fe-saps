@@ -1,4 +1,4 @@
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import { CheckCircle, Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
@@ -25,11 +25,8 @@ const columns = [
         <button
           className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
           onClick={() =>
-            Swal.fire({
-              icon: 'success',
-              title: 'Disetujui!',
-              text: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah disetujui.`,
-              confirmButtonColor: '#1C4122',
+            toast.success('Disetujui!', {
+              description: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah disetujui.`,
             })
           }
         >
@@ -38,11 +35,8 @@ const columns = [
         <button
           className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
           onClick={() =>
-            Swal.fire({
-              icon: 'error',
-              title: 'Ditolak!',
-              text: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah ditolak.`,
-              confirmButtonColor: '#1C4122',
+            toast.error('Ditolak!', {
+              description: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah ditolak.`,
             })
           }
         >
@@ -114,7 +108,7 @@ function ClockIcon(props) {
   return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
 }
 function XIcon(props) {
-  return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+  return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="18" x2="6" y2="6" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
 }
 
 export default AdminFakultasDashboard
