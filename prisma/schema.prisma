@@ -92,6 +92,7 @@ enum StatusIzin {
 enum StatusKlaim {
   draft
   menunggu_validasi
+  menunggu_pimpinan
   valid
   perlu_revisi
   invalid
@@ -300,6 +301,7 @@ model MpKategori {
 
   matriksPoin MatriksPoin[]
   peran       MpPeran[]
+  skala       MpSkala[]
   kegiatan    Kegiatan[]
 
   @@map("mp_kategori")
@@ -307,13 +309,17 @@ model MpKategori {
 
 /// 2.5 Dimensi ke-2 — skala kegiatan (Internasional, Nasional, dst.)
 model MpSkala {
-  id     Int    @id @default(autoincrement())
-  nama   String @unique @db.VarChar(80)
-  urutan Int    @db.SmallInt // hierarki skala (validasi monotonisitas)
+  id         Int    @id @default(autoincrement())
+  kategoriId Int    @map("kategori_id")
+  nama       String @db.VarChar(80)
+  urutan     Int    @db.SmallInt // hierarki skala (validasi monotonisitas)
+
+  kategori MpKategori @relation(fields: [kategoriId], references: [id])
 
   matriksPoin MatriksPoin[]
   kegiatan    Kegiatan[]
 
+  @@unique([kategoriId, nama])
   @@map("mp_skala")
 }
 

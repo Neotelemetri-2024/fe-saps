@@ -13,6 +13,7 @@ import path from 'path';
 };
 
 // Import Routes
+import authRoutes from './routes/auth.routes';
 import kurikulumRoutes from './routes/kurikulum.routes';
 import matriksRoutes from './routes/matriks.routes';
 import kegiatanRoutes from './routes/kegiatan.routes';
@@ -20,6 +21,7 @@ import partisipasiRoutes from './routes/partisipasi.routes';
 import klaimRoutes from './routes/klaim.routes';
 import umumRoutes from './routes/umum.routes';
 import organisasiRoutes from './routes/organisasi.routes';
+import pesertaRoutes from './routes/peserta.routes';
 
 dotenv.config();
 
@@ -56,6 +58,7 @@ app.get('/', (req: Request, res: Response) => {
     version: '2.0.0',
     schema: '29 tabel — arsitektur baru',
     endpoints: {
+      auth: '/api/auth',
       kurikulum: '/api/kurikulum',
       matriks: '/api/matriks',
       kegiatan: '/api/kegiatan',
@@ -73,12 +76,18 @@ app.get('/', (req: Request, res: Response) => {
 const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Auth (Login — Publik, tanpa middleware)
+app.use('/api/auth', authRoutes);
+
 // Kurikulum & Matriks Poin (Pimpinan Ditmawa)
 app.use('/api/kurikulum', kurikulumRoutes);
 app.use('/api/matriks', matriksRoutes);
 
 // Kegiatan & Approval (UKM/UKMF, Admin, Pimpinan)
 app.use('/api/kegiatan', kegiatanRoutes);
+
+// Manajemen Peserta Kegiatan (UKM/UKMF, Admin)
+app.use('/api/kegiatan', pesertaRoutes);
 
 // Manajemen Organisasi & Akun UKM (Admin)
 app.use('/api/organisasi', organisasiRoutes);
@@ -96,5 +105,6 @@ app.use('/api/umum', umumRoutes);
 app.listen(port, () => {
   console.log(`[server]: MyUnand Student Connect API v2.0`);
   console.log(`[server]: Running at http://localhost:${port}`);
+  console.log(`[server]: Swagger UI at http://localhost:${port}/api-docs`);
   console.log(`[server]: Schema: 29 tabel (MySQL)`);
 });

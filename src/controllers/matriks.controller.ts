@@ -44,7 +44,7 @@ export const getMatriksPoin = async (req: Request, res: Response) => {
 // POST /api/matriks — Tambah/update entri matriks (upsert) [BR-031]
 export const upsertMatriksPoin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const aktorId = BigInt(req.body.aktorId); // dari JWT nanti
+    const aktorId = BigInt(req.user!.id);
     const data = upsertMatriksSchema.parse(req.body);
 
     // Cek apakah sudah ada
@@ -136,7 +136,7 @@ export const getMatriksHistori = async (req: Request, res: Response) => {
 
 // ==================== MASTER DATA LOOKUP ====================
 
-// GET /api/master/kategori
+// GET /api/matriks/kategori
 export const getKategori = async (req: Request, res: Response) => {
   try {
     const data = await prisma.mpKategori.findMany({ orderBy: { id: 'asc' } });
@@ -147,11 +147,106 @@ export const getKategori = async (req: Request, res: Response) => {
   }
 };
 
+// POST /api/matriks/kategori
+export const createKategori = async (req: Request, res: Response) => {
+  try {
+    const { nama, peran, skala } = req.body; // Peran dan Skala adalah array of string opsional
+    if (!nama) {
+      res.status(400).json({ success: false, message: 'Nama kategori wajib diisi' });
+      return;
+    }
+
+    const data = await prisma.mpKategori.create({ 
+      data: { 
+        nama,
+        peran: peran && Array.isArray(peran) ? {
+          create: peran.map((p: string, idx: number) => ({
+            nama: p,
+            urutan: idx + 1
+          }))
+        } : undefined,
+        skala: skala && Array.isArray(skala) ? {
+          create: skala.map((s: string, idx: number) => ({
+            nama: s,
+            urutan: idx + 1
+          }))
+        } : undefined
+      },
+      include: { peran: true, skala: true }
+    });
+
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// POST /api/matriks/peran
+export const createPeran = async (req: Request, res: Response) => {
+  try {
+    const { kategoriId, nama, urutan } = req.body;
+    if (!kategoriId || !nama) {
+      res.status(400).json({ success: false, message: 'Kategori ID dan Nama Peran wajib diisi' });
+      return;
+    }
+
+    const urutanToUse = urutan || 99; // Default urutan paling akhir jika tidak diisi
+
+    const data = await prisma.mpPeran.create({
+      data: {
+        kategoriId: Number(kategoriId),
+        nama,
+        urutan: Number(urutanToUse)
+      }
+    });
+
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
 // GET /api/master/skala
 export const getSkala = async (req: Request, res: Response) => {
   try {
-    const data = await prisma.mpSkala.findMany({ orderBy: { urutan: 'asc' } });
+    const { kategoriId } = req.query;
+    const where: any = {};
+    if (kategoriId) where.kategoriId = Number(kategoriId);
+
+    const data = await prisma.mpSkala.findMany({ 
+      where,
+      include: { kategori: true },
+      orderBy: [{ kategoriId: 'asc' }, { urutan: 'asc' }] 
+    });
     res.json({ success: true, data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// POST /api/matriks/skala
+export const createSkala = async (req: Request, res: Response) => {
+  try {
+    const { kategoriId, nama, urutan } = req.body;
+    if (!kategoriId || !nama) {
+      res.status(400).json({ success: false, message: 'Kategori ID dan Nama Skala wajib diisi' });
+      return;
+    }
+
+    const urutanToUse = urutan || 99;
+
+    const data = await prisma.mpSkala.create({
+      data: {
+        kategoriId: Number(kategoriId),
+        nama,
+        urutan: Number(urutanToUse)
+      }
+    });
+
+    res.status(201).json({ success: true, data });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });

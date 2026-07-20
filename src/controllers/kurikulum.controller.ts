@@ -21,6 +21,17 @@ const createSubCapaianSchema = z.object({
   bobotPersen: z.number().min(0.01).max(100),
 });
 
+const updateCapaianSchema = z.object({
+  nama: z.string().min(3).optional(),
+  jumlahPoin: z.number().int().positive().optional(),
+  urutan: z.number().int().positive().optional(),
+});
+
+const updateSubCapaianSchema = z.object({
+  nama: z.string().min(3).optional(),
+  bobotPersen: z.number().min(0.01).max(100).optional(),
+});
+
 // ==================== KURIKULUM CRUD ====================
 
 // GET /api/kurikulum — Daftar semua kurikulum
@@ -96,7 +107,7 @@ export const getKurikulumById = async (req: Request, res: Response): Promise<voi
 // POST /api/kurikulum — Buat kurikulum baru (draft)
 export const createKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
-    const dibuatOleh = BigInt(req.body.dibuatOleh); // dari JWT nanti
+    const dibuatOleh = BigInt(req.user!.id);
     const data = createKurikulumSchema.parse(req.body);
 
     const newKurikulum = await prisma.kurikulum.create({
@@ -132,7 +143,7 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
 export const aktivasiKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const aktorId = BigInt(req.body.aktorId);
+    const aktorId = BigInt(req.user!.id);
 
     const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
     if (!kurikulum) {
@@ -172,6 +183,78 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
   }
 };
 
+// PUT /api/kurikulum/:id/non-aktif — Non-aktifkan kurikulum
+export const nonAktifKurikulum = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const aktorId = BigInt(req.user!.id);
+
+    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
+    if (!kurikulum) {
+      res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
+      return;
+    }
+    if (kurikulum.status !== 'aktif') {
+      res.status(400).json({ success: false, message: 'Hanya kurikulum aktif yang bisa dinonaktifkan' });
+      return;
+    }
+
+    const updated = await prisma.kurikulum.update({
+      where: { id: Number(id) },
+      data: { status: 'arsip' },
+    });
+
+    await logAudit({
+      entitas: 'kurikulum',
+      entitasId: updated.id,
+      aksi: 'non_aktif',
+      statusLama: 'aktif',
+      statusBaru: 'arsip',
+      aktorId,
+    });
+
+    res.json({ success: true, data: updated, message: 'Kurikulum berhasil dinonaktifkan' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// DELETE /api/kurikulum/:id — Hapus kurikulum (Hanya jika tidak aktif)
+export const deleteKurikulum = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const aktorId = BigInt(req.user!.id);
+
+    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
+    if (!kurikulum) {
+      res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
+      return;
+    }
+    if (kurikulum.status === 'aktif') {
+      res.status(400).json({ success: false, message: 'Kurikulum aktif TIDAK BOLEH dihapus. Nonaktifkan terlebih dahulu.' });
+      return;
+    }
+
+    await prisma.kurikulum.delete({
+      where: { id: Number(id) },
+    });
+
+    await logAudit({
+      entitas: 'kurikulum',
+      entitasId: BigInt(id),
+      aksi: 'delete',
+      statusLama: kurikulum.status,
+      aktorId,
+    });
+
+    res.json({ success: true, message: 'Kurikulum berhasil dihapus' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (kurikulum mungkin masih terkait dengan data poin mahasiswa)' });
+  }
+};
+
 // ==================== CAPAIAN CRUD ====================
 
 // POST /api/kurikulum/:kurikulumId/capaian
@@ -202,6 +285,58 @@ export const createCapaian = async (req: Request, res: Response): Promise<void> 
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
     }
+  }
+};
+
+// PUT /api/capaian/:id
+export const updateCapaian = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const data = updateCapaianSchema.parse(req.body);
+
+    const updated = await prisma.capaian.update({
+      where: { id: Number(id) },
+      data,
+    });
+    res.json({ success: true, data: updated, message: 'Capaian berhasil diperbarui' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+    } else {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  }
+};
+
+// DELETE /api/capaian/:id
+export const deleteCapaian = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    // Pastikan kurikulum parent bukan 'aktif' (opsional, tapi disarankan)
+    const capaian = await prisma.capaian.findUnique({
+      where: { id: Number(id) },
+      include: { kurikulum: true }
+    });
+
+    if (!capaian) {
+      res.status(404).json({ success: false, message: 'Capaian tidak ditemukan' });
+      return;
+    }
+
+    if (capaian.kurikulum.status === 'aktif') {
+      res.status(400).json({ success: false, message: 'Tidak dapat menghapus capaian pada kurikulum yang sedang aktif' });
+      return;
+    }
+
+    await prisma.capaian.delete({
+      where: { id: Number(id) },
+    });
+    res.json({ success: true, message: 'Capaian berhasil dihapus' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (capaian mungkin memiliki data terkait)' });
   }
 };
 
@@ -249,5 +384,84 @@ export const createSubCapaian = async (req: Request, res: Response): Promise<voi
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
     }
+  }
+};
+
+// PUT /api/sub-capaian/:id
+export const updateSubCapaian = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const data = updateSubCapaianSchema.parse(req.body);
+
+    const subCapaian = await prisma.subCapaian.findUnique({
+      where: { id: Number(id) },
+      include: { capaian: { include: { subCapaian: true } } }
+    });
+
+    if (!subCapaian) {
+      res.status(404).json({ success: false, message: 'Sub Capaian tidak ditemukan' });
+      return;
+    }
+
+    if (data.bobotPersen) {
+      const totalBobotLain = subCapaian.capaian.subCapaian
+        .filter(sc => sc.id !== Number(id))
+        .reduce((sum, sc) => sum + Number(sc.bobotPersen), 0);
+      
+      if (totalBobotLain + data.bobotPersen > 100) {
+        res.status(400).json({
+          success: false,
+          message: `Total bobot melebihi 100%. Saat ini sub capaian lain berjumlah: ${totalBobotLain}%, maks untuk ini: ${100 - totalBobotLain}%`,
+        });
+        return;
+      }
+    }
+
+    const updated = await prisma.subCapaian.update({
+      where: { id: Number(id) },
+      data,
+    });
+    res.json({ success: true, data: updated, message: 'Sub Capaian berhasil diperbarui' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+    } else {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  }
+};
+
+// DELETE /api/sub-capaian/:id
+export const deleteSubCapaian = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const subCapaian = await prisma.subCapaian.findUnique({
+      where: { id: Number(id) },
+      include: { capaian: { include: { kurikulum: true } } }
+    });
+
+    if (!subCapaian) {
+      res.status(404).json({ success: false, message: 'Sub Capaian tidak ditemukan' });
+      return;
+    }
+
+    if (subCapaian.capaian.kurikulum.status === 'aktif') {
+      res.status(400).json({ success: false, message: 'Tidak dapat menghapus sub capaian pada kurikulum yang sedang aktif' });
+      return;
+    }
+
+    await prisma.subCapaian.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Sub Capaian berhasil dihapus. PERINGATAN: Total presentase bobot untuk Capaian ini telah berkurang. Harap sesuaikan presentase sub capaian lainnya atau buat yang baru agar totalnya tetap 100%.' 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (sub capaian mungkin memiliki data terkait)' });
   }
 };

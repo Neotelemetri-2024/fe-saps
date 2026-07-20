@@ -1,26 +1,423 @@
 openapi: 3.0.0
 info:
   title: SAPS API (Sistem Akumulasi Poin SKPI)
-  description: Dokumentasi API lengkap untuk Sistem Akumulasi Poin SKPI. Mengakomodasi semua role (Mahasiswa, Dosen PA, Admin, Pimpinan).
-  version: 2.0.0
+  description: |
+    Dokumentasi API lengkap untuk Sistem Akumulasi Poin SKPI.
+    
+    **Cara menggunakan:**
+    1. Login melalui `POST /api/auth/login` untuk mendapatkan token JWT.
+    2. Klik tombol **Authorize** (🔒) di pojok kanan atas.
+    3. Masukkan token (tanpa "Bearer ") lalu klik Authorize.
+    4. Semua endpoint kini bisa diakses sesuai role akun yang login.
+  version: 2.3.0
 
 servers:
   - url: http://localhost:3000
     description: Local Development Server
 
 tags:
-  - name: 1. Kegiatan (Mahasiswa & UKM)
-  - name: 2. Partisipasi & Izin (Mahasiswa & Dosen PA)
-  - name: 3. Klaim Poin (Mahasiswa & Validator)
-  - name: 4. Kurikulum & Matriks (Pimpinan Ditmawa)
-  - name: 5. Dashboard (Semua Role)
+  - name: "Autentikasi"
+    description: "Login untuk mendapatkan token JWT dan melihat profil."
+  - name: "Role: Pimpinan Ditmawa"
+    description: "Fitur strategis: Menetapkan bobot poin (Matriks), menyetujui kegiatan UKM, dan menyusun Kurikulum."
+  - name: "Role: Pimpinan Fakultas"
+    description: "Fitur strategis: Menyetujui kegiatan yang diajukan oleh UKMF tingkat fakultas."
+  - name: "Role: Admin Ditmawa"
+    description: "Fitur operasional: Manajemen Akun UKM, Verifikasi Kegiatan UKM, dan Verifikasi Klaim Poin Eksternal."
+  - name: "Role: Admin Fakultas"
+    description: "Fitur operasional: Verifikasi Kegiatan UKMF di lingkungan fakultas masing-masing."
+  - name: "Role: Mahasiswa"
+    description: "Fitur pengguna utama: Mengikuti kegiatan, meminta izin PA, dan mengklaim poin SKPI."
+  - name: "Role: Dosen PA"
+    description: "Fitur pembimbing: Memberikan izin kegiatan dan catatan pembinaan kepada mahasiswa bimbingannya."
+  - name: "Role: Operator UKM"
+    description: "Fitur organisasi: Mengajukan event kegiatan (Universitas) dan manajemen pesertanya."
+  - name: "Role: Operator UKMF"
+    description: "Fitur organisasi: Mengajukan event kegiatan (Fakultas) dan manajemen pesertanya."
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Masukkan token JWT yang didapat dari endpoint /api/auth/login"
 
 paths:
-  # ==================== KEGIATAN ====================
+  # =================================================================
+  # AUTENTIKASI
+  # =================================================================
+  /api/auth/login:
+    post:
+      summary: Login — Mendapatkan Token JWT
+      description: "Endpoint publik. Tidak perlu token. Kirim email & password untuk mendapatkan JWT."
+      tags: ["Autentikasi"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: "pimpinan@unand.ac.id" }
+                password: { type: string, example: "rahasia123" }
+      responses:
+        '200':
+          description: Login berhasil, mengembalikan token JWT dan info user
+        '401':
+          description: Email atau password salah
+
+  /api/auth/me:
+    get:
+      summary: Profil User yang Sedang Login
+      description: "Mengembalikan data lengkap user berdasarkan token JWT."
+      tags: ["Autentikasi"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+        '401': { description: Token tidak valid }
+
+  # =================================================================
+  # KURIKULUM & MATRIKS POIN (Pimpinan Ditmawa)
+  # =================================================================
+  /api/kurikulum:
+    get:
+      summary: (Pimpinan) Daftar Semua Kurikulum
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Pimpinan) Buat Kurikulum Baru (Draft)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, tahunAkademik]
+              properties:
+                nama: { type: string, example: "Kurikulum Merdeka 2024" }
+                tahunAkademik: { type: string, example: "2024/2025" }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/kurikulum/{id}:
+    get:
+      summary: (Pimpinan) Detail Kurikulum beserta Capaian dan Sub-Capaiannya
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kurikulum/{kurikulumId}/capaian:
+    post:
+      summary: (Pimpinan) Tambah Capaian Pembelajaran ke dalam Kurikulum
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kurikulumId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, jumlahPoin]
+              properties:
+                nama: { type: string, example: "Kompetensi Kepemimpinan" }
+                jumlahPoin: { type: integer, example: 100 }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/kurikulum/capaian/{capaianId}/sub-capaian:
+    post:
+      summary: (Pimpinan) Tambah Sub-Capaian (Anak dari Capaian)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: capaianId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, bobotPersen]
+              properties:
+                nama: { type: string, example: "Menjadi Ketua Kepanitiaan" }
+                bobotPersen: { type: number, example: 25 }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/kurikulum/aktif:
+    get:
+      summary: Kurikulum yang Sedang Berlaku Saat Ini
+      tags: ["Role: Pimpinan Ditmawa", "Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kurikulum/{id}/aktivasi:
+    put:
+      summary: (Pimpinan) Mengaktifkan Kurikulum
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/matriks:
+    get:
+      summary: (Pimpinan) Lihat Bobot Poin (Prestasi, Organisasi, dll)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kurikulumId
+          in: query
+          schema: { type: integer }
+        - name: kategoriId
+          in: query
+          description: "Filter berdasarkan jenis kegiatan"
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Pimpinan) Edit / Tentukan Poin Matriks
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kurikulumId, kategoriId, skalaId, peranId, poin]
+              properties:
+                kurikulumId: { type: integer, example: 1 }
+                kategoriId: { type: integer, example: 1 }
+                skalaId: { type: integer, example: 1 }
+                peranId: { type: integer, example: 1 }
+                poin: { type: integer, example: 150 }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/matriks/histori/{matriksPoinId}:
+    get:
+      summary: (Pimpinan) Histori Perubahan Poin Matriks
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: matriksPoinId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/matriks/kategori:
+    get:
+      summary: (Pimpinan) Lihat Daftar Jenis Kegiatan (Organisasi, Prestasi, dll)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Pimpinan) Tambah Jenis Kegiatan Baru
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama]
+              properties:
+                nama: { type: string, example: "Kegiatan Sosial" }
+                peran:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Ketua Panitia", "Anggota", "Peserta"]
+                  description: "Daftar nama peran/kolom secara opsional"
+                skala:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Internasional", "Nasional", "Regional"]
+                  description: "Daftar nama skala/baris secara opsional"
+      responses:
+        '201': { description: Berhasil }
+
+  /api/matriks/skala:
+    get:
+      summary: (Pimpinan) Lihat Daftar Skala (Internasional, Nasional, dll)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kategoriId
+          in: query
+          description: "Filter skala berdasarkan jenis kegiatan"
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Pimpinan) Tambah Skala Baru (Baris Matriks)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kategoriId, nama]
+              properties:
+                kategoriId: { type: integer, example: 1 }
+                nama: { type: string, example: "Regional" }
+                urutan: { type: integer, example: 1, description: "Opsional, default ditaruh di akhir" }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/matriks/peran:
+    get:
+      summary: (Pimpinan) Lihat Daftar Peran/Jabatan (Juara 1, Ketua, dll)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kategoriId
+          in: query
+          description: "Filter peran berdasarkan jenis kegiatan"
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Pimpinan) Tambah Peran Baru (Kolom Matriks)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kategoriId, nama]
+              properties:
+                kategoriId: { type: integer, example: 1 }
+                nama: { type: string, example: "Ketua Panitia" }
+                urutan: { type: integer, example: 1, description: "Opsional, default ditaruh di akhir" }
+      responses:
+        '201': { description: Berhasil }
+
+  # =================================================================
+  # MANAJEMEN ORGANISASI / AKUN UKM (Admin Ditmawa)
+  # =================================================================
+  /api/organisasi/akun:
+    post:
+      summary: (Admin) Buat Akun UKM & Organisasi Sekaligus
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, namaOrganisasi, tingkat]
+              properties:
+                email: { type: string, example: "ukm_seni@unand.ac.id" }
+                password: { type: string, example: "rahasia123" }
+                namaOrganisasi: { type: string, example: "UKM Kesenian Universitas Andalas" }
+                tingkat: { type: string, enum: [universitas, fakultas, jurusan] }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/organisasi/akun/{userId}/reset:
+    put:
+      summary: (Admin) Reset Password Akun UKM
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword]
+              properties:
+                newPassword: { type: string, example: "passwordbaru123" }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/organisasi/akun/{userId}:
+    delete:
+      summary: (Admin) Hapus Akun UKM
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # KEGIATAN & EVENT
+  # =================================================================
   /api/kegiatan:
     get:
-      summary: Dapatkan Semua Kegiatan (Katalog)
-      tags: [1. Kegiatan (Mahasiswa & UKM)]
+      summary: Katalog Kegiatan / Daftar Kegiatan Saya
+      description: |
+        Menampilkan daftar kegiatan. Untuk Operator UKM, ini menampilkan kegiatan yang telah dibuat/diajukan oleh UKM-nya.
+        Mendukung filter berdasarkan status, asal, kategori, dan pencarian nama.
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
       parameters:
         - name: status
           in: query
@@ -31,16 +428,23 @@ paths:
       responses:
         '200': { description: Berhasil }
     post:
-      summary: Buat Kegiatan Baru (Draft)
-      tags: [1. Kegiatan (Mahasiswa & UKM)]
+      summary: (Operator UKM / UKMF / Admin) Buat & Kirim Kegiatan
+      description: |
+        Membuat kegiatan baru. Alur approval otomatis tergantung siapa yang membuat:
+        - **Admin Ditmawa** → Langsung `disetujui` (tanpa perlu verifikasi)
+        - **Operator UKM** → Status `diajukan` → Notifikasi ke **Admin Ditmawa** → lalu ke **Pimpinan Ditmawa**
+        - **Operator UKMF** → Status `diajukan` → Notifikasi ke **Admin Fakultas** terkait → lalu ke **Pimpinan Fakultas**
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [nama, kategoriId, skalaId, asal, tanggalMulai, tanggalSelesai]
               properties:
-                dibuatOleh: { type: integer, example: 6 }
                 nama: { type: string, example: "Lomba Web Design" }
                 kategoriId: { type: integer, example: 1 }
                 skalaId: { type: integer, example: 1 }
@@ -59,99 +463,268 @@ paths:
 
   /api/kegiatan/verifikasi:
     get:
-      summary: Daftar Kegiatan Menunggu Verifikasi (Admin Ditmawa)
-      tags: [1. Kegiatan (Mahasiswa & UKM)]
+      summary: (Admin) Daftar Pengajuan Kegiatan dari UKM
+      description: "Menampilkan kegiatan yang diajukan UKM untuk diverifikasi Admin. Mendukung filter, pencarian, dan pagination."
+      tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: "Cari berdasarkan nama kegiatan atau nama UKM"
+          schema: { type: string }
+        - name: kategoriId
+          in: query
+          description: "Filter jenis kegiatan (Kompetisi, Seminar, dll)"
+          schema: { type: integer }
+        - name: skalaId
+          in: query
+          description: "Filter skala (Nasional, Internasional, dll)"
+          schema: { type: integer }
+        - name: status
+          in: query
+          description: "Filter status (diajukan, terverifikasi, perlu_revisi, ditolak, semua)"
+          schema: { type: string }
+        - name: tahun
+          in: query
+          description: "Filter tahun kegiatan"
+          schema: { type: integer, example: 2026 }
+        - name: page
+          in: query
+          description: "Nomor halaman (default: 1)"
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          description: "Jumlah data per halaman (default: 10, max: 50)"
+          schema: { type: integer, default: 10 }
       responses:
-        '200': { description: Berhasil }
+        '200': { description: Berhasil (termasuk objek pagination) }
 
   /api/kegiatan/{id}/verifikasi:
     put:
-      summary: Admin Setuju/Tolak/Revisi Kegiatan
-      tags: [1. Kegiatan (Mahasiswa & UKM)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      summary: (Admin) Setujui / Tolak Kegiatan UKM
+      tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [keputusan]
               properties:
-                aktorId: { type: integer, example: 2 }
                 keputusan: { type: string, enum: [setuju, revisi, tolak], example: "setuju" }
                 alasan: { type: string }
       responses:
         '200': { description: Berhasil }
 
-  /api/kegiatan/{id}/publikasi:
+  /api/kegiatan/approval:
+    get:
+      summary: (Pimpinan) Daftar Kegiatan untuk Verifikasi/Approval Pimpinan
+      description: |
+        Menampilkan kegiatan yang sudah diverifikasi Admin dan siap untuk di-approval Pimpinan.
+        Juga menampilkan kegiatan yang sudah pernah di-approve/tolak untuk riwayat.
+        Mendukung filter, pencarian, dan pagination.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: "Cari berdasarkan nama kegiatan atau nama UKM"
+          schema: { type: string }
+        - name: kategoriId
+          in: query
+          description: "Filter jenis kegiatan (Kompetisi, Seminar, dll)"
+          schema: { type: integer }
+        - name: skalaId
+          in: query
+          description: "Filter skala (Nasional, Internasional, dll)"
+          schema: { type: integer }
+        - name: status
+          in: query
+          description: "Filter status (terverifikasi, disetujui, perlu_revisi, ditolak, semua)"
+          schema: { type: string, example: "terverifikasi" }
+        - name: tahun
+          in: query
+          description: "Filter tahun kegiatan"
+          schema: { type: integer, example: 2026 }
+        - name: page
+          in: query
+          description: "Nomor halaman (default: 1)"
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          description: "Jumlah data per halaman (default: 10, max: 50)"
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: Berhasil (termasuk objek pagination) }
+
+  /api/kegiatan/{id}/approval:
     put:
-      summary: Publikasikan Kegiatan (Bisa dilihat mahasiswa)
-      tags: [1. Kegiatan (Mahasiswa & UKM)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      summary: (Pimpinan) Setujui / Revisi / Tolak Kegiatan
+      description: |
+        Pimpinan memberikan keputusan atas kegiatan yang sudah diverifikasi Admin.
+        Jika revisi/tolak, alasan wajib diisi. Notifikasi otomatis terkirim ke pembuat kegiatan.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [keputusan]
               properties:
-                aktorId: { type: integer }
+                keputusan: { type: string, enum: [setuju, revisi, tolak], example: "setuju" }
+                alasan: { type: string, example: "Kegiatan sesuai dengan visi misi universitas" }
       responses:
         '200': { description: Berhasil }
 
-  # ==================== PARTISIPASI & IZIN PA ====================
+  /api/kegiatan/{id}/publikasi:
+    put:
+      summary: (Operator UKM / Admin) Publish Event agar Tampil di Katalog
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kegiatan/{id}/ajukan:
+    put:
+      summary: (Operator UKM) Ajukan Ulang Kegiatan Setelah Revisi
+      description: |
+        Mengajukan ulang kegiatan yang berstatus `perlu_revisi` ke Admin Ditmawa.
+        Endpoint ini digunakan setelah Operator UKM memperbaiki kegiatan yang diminta revisi.
+        Status berubah kembali menjadi `diajukan`.
+      tags: ["Role: Operator UKM", "Role: Operator UKMF"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Kegiatan berhasil diajukan ke Admin Ditmawa }
+        '400': { description: Kegiatan tidak dalam status draft/perlu_revisi }
+
+  /api/kegiatan/{id}:
+    get:
+      summary: Detail Kegiatan (Capaian, Sub-Capaian, Riwayat Approval)
+      description: "Menampilkan detail lengkap kegiatan beserta Capaian, Sub-Capaian (bobot), dan riwayat verifikasi/approval."
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas", "Role: Admin Ditmawa", "Role: Admin Fakultas", "Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+    delete:
+      summary: (Admin) Hapus Kegiatan
+      tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # PARTISIPASI & IZIN PA
+  # =================================================================
   /api/partisipasi:
     post:
-      summary: Mahasiswa Mendaftar Kegiatan
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
+      summary: (Mahasiswa) Daftar Ikut Kegiatan
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [kegiatanId]
               properties:
-                mahasiswaId: { type: integer, example: 6 }
                 kegiatanId: { type: integer, example: 1 }
       responses:
         '201': { description: Berhasil }
 
   /api/partisipasi/saya:
     get:
-      summary: Histori Kegiatan Mahasiswa
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
-      parameters: [{ name: mahasiswaId, in: query, required: true, schema: { type: integer } }]
+      summary: (Mahasiswa) Riwayat Keikutsertaan
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Berhasil }
 
   /api/partisipasi/{id}/minta-izin:
     post:
-      summary: Mahasiswa Meminta Izin PA
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      summary: (Mahasiswa) Meminta Izin Dosen PA
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       responses:
         '201': { description: Berhasil }
 
   /api/partisipasi/izin-pa:
     get:
-      summary: Daftar Mahasiswa Minta Izin (Dosen PA)
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
-      parameters: [{ name: dosenPaId, in: query, required: true, schema: { type: integer } }]
+      summary: (Dosen PA) Daftar Permintaan Izin Mahasiswa Bimbingan
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Berhasil }
 
   /api/partisipasi/izin-pa/{id}:
     put:
-      summary: Dosen PA Menyetujui/Menolak Izin
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      summary: (Dosen PA) Setujui atau Tolak Izin
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [status]
               properties:
-                dosenPaId: { type: integer, example: 5 }
                 status: { type: string, enum: [disetujui, ditolak] }
                 alasan: { type: string }
       responses:
@@ -159,34 +732,52 @@ paths:
 
   /api/partisipasi/saran-pa:
     post:
-      summary: Dosen PA Memberi Saran
-      tags: [2. Partisipasi & Izin (Mahasiswa & Dosen PA)]
+      summary: (Dosen PA) Berikan Pesan/Saran Pembinaan
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              properties:
-                dosenPaId: { type: integer }
-                mahasiswaId: { type: integer }
-                isi: { type: string }
-      responses:
-        '201': { description: Berhasil }
-
-  # ==================== KLAIM POIN ====================
-  /api/klaim:
-    post:
-      summary: Mahasiswa Mengajukan Klaim Poin
-      tags: [3. Klaim Poin (Mahasiswa & Validator)]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
+              required: [mahasiswaId, isi]
               properties:
                 mahasiswaId: { type: integer, example: 6 }
+                isi: { type: string, example: "Pertahankan prestasi dan aktif berorganisasi!" }
+      responses:
+        '201': { description: Berhasil }
+    get:
+      summary: (Mahasiswa / Dosen) Lihat Riwayat Saran PA
+      tags: ["Role: Mahasiswa", "Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: mahasiswaId
+          in: query
+          description: "ID mahasiswa yang sarannya ingin dilihat"
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # KLAIM POIN
+  # =================================================================
+  /api/klaim:
+    post:
+      summary: (Mahasiswa) Ajukan Klaim Poin (Upload Sertifikat/Prestasi)
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partisipasiId, peranUsulanId, bukti]
+              properties:
                 partisipasiId: { type: integer, example: 1 }
                 peranUsulanId: { type: integer, example: 1 }
                 bukti:
@@ -201,138 +792,469 @@ paths:
 
   /api/klaim/saya:
     get:
-      summary: Histori Klaim Poin Mahasiswa
-      tags: [3. Klaim Poin (Mahasiswa & Validator)]
-      parameters: [{ name: mahasiswaId, in: query, required: true, schema: { type: integer } }]
+      summary: (Mahasiswa) Pantau Status Pengajuan Klaim Poin
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Berhasil }
 
   /api/klaim/validasi:
     get:
-      summary: Daftar Klaim Menunggu Validasi (Penyelenggara/Admin)
-      tags: [3. Klaim Poin (Mahasiswa & Validator)]
-      parameters: [{ name: validatorId, in: query, schema: { type: integer } }]
+      summary: (Operator UKM / Admin) Daftar Klaim Menunggu Validasi Internal
+      description: "Klaim poin dari kegiatan internal UKM yang perlu divalidasi oleh Operator atau Admin."
+      tags: ["Role: Operator UKM", "Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: "Cari berdasarkan nama kegiatan atau nama mahasiswa"
+          schema: { type: string }
+        - name: status
+          in: query
+          description: "Filter status (menunggu_validasi, disetujui, perlu_revisi, ditolak, semua)"
+          schema: { type: string }
+        - name: asal
+          in: query
+          description: "Filter asal kegiatan (kurikuler_ukm, universitas, dll)"
+          schema: { type: string }
+        - name: kategoriId
+          in: query
+          schema: { type: integer }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
       responses:
-        '200': { description: Berhasil }
+        '200': { description: Berhasil (termasuk objek pagination) }
+
+  /api/klaim/verifikasi-eksternal:
+    get:
+      summary: (Pimpinan / Admin) Daftar Klaim Poin Kegiatan Eksternal
+      description: |
+        Menampilkan semua klaim poin dari kegiatan EKSTERNAL (bukan dari UKM).
+        Kolom: Mahasiswa (nama, NIM, prodi), Kegiatan, Kategori, Peran, Tanggal, Info Penyelenggara, Status.
+        Mendukung filter, pencarian, dan pagination.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: "Cari berdasarkan nama mahasiswa, kegiatan, atau penyelenggara"
+          schema: { type: string }
+        - name: kategoriId
+          in: query
+          description: "Filter jenis kegiatan (Kompetisi, Seminar, dll)"
+          schema: { type: integer }
+        - name: skalaId
+          in: query
+          description: "Filter skala (Nasional, Internasional, dll)"
+          schema: { type: integer }
+        - name: status
+          in: query
+          description: "Filter status (menunggu_pimpinan, disetujui, ditolak, semua). Default: menunggu_pimpinan, disetujui, ditolak"
+          schema: { type: string, example: "menunggu_pimpinan" }
+        - name: tahun
+          in: query
+          description: "Filter tahun kegiatan"
+          schema: { type: integer, example: 2026 }
+        - name: page
+          in: query
+          description: "Nomor halaman (default: 1)"
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          description: "Jumlah data per halaman (default: 10, max: 50)"
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: Berhasil (termasuk objek pagination) }
+
+  /api/klaim/validasi-bulk:
+    put:
+      summary: (Pimpinan / Admin) Validasi Klaim Poin Secara Massal (Bulk)
+      description: |
+        Memproses banyak klaim poin sekaligus. Khusus untuk kegiatan EKSTERNAL, hanya memproses klaim
+        berstatus `menunggu_pimpinan` (yang sudah diteruskan oleh Admin Ditmawa).
+        Jika disetujui, poin dicetak untuk semua klaim. Jika revisi/tolak, alasan wajib.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [klaimIds, keputusan]
+              properties:
+                klaimIds:
+                  type: array
+                  items: { type: integer }
+                  example: [1, 2, 3]
+                  description: "Array ID klaim yang akan diproses"
+                keputusan: { type: string, enum: [disetujui, perlu_revisi, ditolak], example: "disetujui" }
+                alasan: { type: string, example: "Semua bukti valid" }
+      responses:
+        '200': { description: Berhasil memproses klaim secara massal }
+        '400': { description: Alasan wajib diisi untuk revisi/tolak }
+        '404': { description: Tidak ada klaim valid yang bisa diproses }
 
   /api/klaim/{id}/validasi:
     put:
-      summary: Validasi Klaim & Hitung Poin (1-Stage Validation)
-      tags: [3. Klaim Poin (Mahasiswa & Validator)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      summary: (Pimpinan / Operator / Admin) Verifikasi Klaim Poin Mahasiswa
+      description: |
+        Memverifikasi klaim poin mahasiswa satu per satu.
+        **Untuk kegiatan EKSTERNAL (Alur 2-Lapis):** Jika Admin Ditmawa menyetujui, status berubah ke `menunggu_pimpinan` (poin BELUM dicetak). Pimpinan Ditmawa yang akan memberikan persetujuan final via endpoint bulk.
+        **Untuk kegiatan INTERNAL:** Poin langsung dicetak saat disetujui.
+        Jika revisi/tolak, alasan wajib diisi. Notifikasi otomatis terkirim ke mahasiswa.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [keputusan]
               properties:
-                aktorId: { type: integer, example: 2 }
                 keputusan: { type: string, enum: [disetujui, perlu_revisi, ditolak], example: "disetujui" }
-                alasan: { type: string }
-                peranVerifId: { type: integer }
+                alasan: { type: string, example: "Bukti sertifikat valid" }
+                peranVerifId: { type: integer, description: "ID peran yang dikonfirmasi (jika berbeda dari usulan)" }
       responses:
         '200': { description: Berhasil }
 
-  # ==================== KURIKULUM & MATRIKS ====================
-  /api/kurikulum:
+  /api/klaim/{id}:
     get:
-      summary: Daftar Kurikulum
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
-      responses:
-        '200': { description: Berhasil }
-    post:
-      summary: Tambah Kurikulum Baru (Pimpinan)
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                dibuatOleh: { type: integer, example: 1 }
-                nama: { type: string, example: "Kurikulum Merdeka 2024" }
-                tahunAkademik: { type: string, example: "2024/2025" }
-      responses:
-        '201': { description: Berhasil }
-
-  /api/kurikulum/aktif:
-    get:
-      summary: Dapatkan Kurikulum Aktif
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
+      summary: Detail Klaim Poin (Kegiatan, Capaian, Bukti, Mahasiswa)
+      description: "Menampilkan detail lengkap klaim poin beserta data kegiatan, capaian, sub-capaian, bukti, dan info mahasiswa."
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa", "Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       responses:
         '200': { description: Berhasil }
 
-  /api/kurikulum/{id}/aktivasi:
-    put:
-      summary: Aktifkan Kurikulum
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
-      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                aktorId: { type: integer, example: 1 }
-      responses:
-        '200': { description: Berhasil }
-
-  /api/matriks:
-    get:
-      summary: Lihat Tabel Matriks Poin
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
-      parameters: [{ name: kurikulumId, in: query, schema: { type: integer } }]
-      responses:
-        '200': { description: Berhasil }
-    post:
-      summary: Edit/Set Bobot Matriks Poin
-      tags: [4. Kurikulum & Matriks (Pimpinan Ditmawa)]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                aktorId: { type: integer, example: 1 }
-                kurikulumId: { type: integer, example: 1 }
-                kategoriId: { type: integer, example: 1 }
-                skalaId: { type: integer, example: 1 }
-                peranId: { type: integer, example: 1 }
-                poin: { type: integer, example: 150 }
-      responses:
-        '200': { description: Berhasil }
-
-  # ==================== DASHBOARD ====================
-  /api/umum/dashboard/mahasiswa:
-    get:
-      summary: Dashboard Mahasiswa
-      tags: [5. Dashboard (Semua Role)]
-      parameters: [{ name: mahasiswaId, in: query, required: true, schema: { type: integer } }]
-      responses:
-        '200': { description: Berhasil }
-
-  /api/umum/dashboard/dosen-pa:
-    get:
-      summary: Dashboard Dosen PA
-      tags: [5. Dashboard (Semua Role)]
-      parameters: [{ name: dosenPaId, in: query, required: true, schema: { type: integer } }]
-      responses:
-        '200': { description: Berhasil }
-
+  # =================================================================
+  # DASHBOARD & LAPORAN
+  # =================================================================
   /api/umum/dashboard/pimpinan-ditmawa:
     get:
-      summary: Dashboard Pimpinan Ditmawa
-      tags: [5. Dashboard (Semua Role)]
+      summary: (Pimpinan) Dashboard Statistik & Laporan Global (Universitas)
+      description: |
+        Menyajikan data analitik sesuai wireframe, dengan agregasi seluruh Universitas.
+        Termasuk Peringkat Prodi, Distribusi Poin, Rata-rata Capaian, dsb.
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/dashboard/pimpinan-fakultas:
+    get:
+      summary: (Pimpinan) Dashboard Statistik & Laporan Fakultas
+      description: |
+        Menyajikan data analitik sesuai wireframe, dengan agregasi yang difilter spesifik untuk Fakultas terkait.
+        Termasuk Peringkat Prodi di Fakultas tersebut, Distribusi Poin, Rata-rata Capaian, dsb.
+      tags: ["Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Berhasil }
 
   /api/umum/dashboard/admin-ditmawa:
     get:
-      summary: Dashboard Admin Ditmawa
-      tags: [5. Dashboard (Semua Role)]
+      summary: (Admin) Dashboard Operasional Admin
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Berhasil }
+
+  /api/umum/dashboard/mahasiswa:
+    get:
+      summary: (Mahasiswa) Ringkasan Poin Mahasiswa
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/dashboard/dosen-pa:
+    get:
+      summary: (Dosen PA) Pantau Progress Mahasiswa Bimbingan
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # KURIKULUM CRUD LANJUTAN (Pimpinan Ditmawa)
+  # =================================================================
+  /api/kurikulum/{id}/nonaktifkan:
+    put:
+      summary: (Pimpinan) Nonaktifkan Kurikulum (Aktif → Arsip)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Kurikulum berhasil diarsipkan }
+        '400': { description: Kurikulum tidak dalam status aktif }
+
+  /api/kurikulum/{id}/delete:
+    delete:
+      summary: (Pimpinan) Hapus Kurikulum (Hanya Draft/Arsip)
+      description: |
+        Menghapus kurikulum beserta seluruh capaian dan sub-capaian di dalamnya.
+        **Aturan:** Kurikulum berstatus `aktif` TIDAK BOLEH dihapus.
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Kurikulum berhasil dihapus }
+        '400': { description: Kurikulum aktif tidak boleh dihapus }
+
+  /api/kurikulum/capaian/{capaianId}:
+    put:
+      summary: (Pimpinan) Update Nama/Jumlah Poin Capaian
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: capaianId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama: { type: string, example: "Kompetensi Sosial" }
+                jumlahPoin: { type: integer, example: 150 }
+      responses:
+        '200': { description: Berhasil }
+    delete:
+      summary: (Pimpinan) Hapus Capaian dari Kurikulum
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: capaianId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kurikulum/sub-capaian/{subCapaianId}:
+    put:
+      summary: (Pimpinan) Update Nama/Bobot Sub-Capaian
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subCapaianId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama: { type: string, example: "Menjadi Wakil Ketua" }
+                bobotPersen: { type: number, example: 20 }
+      responses:
+        '200': { description: Berhasil }
+    delete:
+      summary: (Pimpinan) Hapus Sub-Capaian
+      description: |
+        **Peringatan:** Menghapus sub-capaian akan menyebabkan total persentase bobot capaian
+        induknya tidak lagi 100%. Sistem akan memberikan peringatan agar Pimpinan bisa
+        menyesuaikan persentase sub-capaian lainnya atau membuat sub-capaian baru.
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subCapaianId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil (dengan peringatan jika total bobot < 100%) }
+
+  # =================================================================
+  # MANAJEMEN PESERTA KEGIATAN (Operator UKM / Admin)
+  # =================================================================
+  /api/kegiatan/{id}/peserta:
+    get:
+      summary: (Operator / Admin) Daftar Peserta Kegiatan
+      description: |
+        Menampilkan daftar peserta (partisipasi) kegiatan beserta statistik (total terdaftar, hadir, tidak hadir).
+        Juga menampilkan status apakah poin sudah di-submit ("Telah Tercatat").
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          description: "ID kegiatan"
+        - name: search
+          in: query
+          description: "Cari berdasarkan NIM atau nama mahasiswa"
+          schema: { type: string }
+        - name: filter
+          in: query
+          description: "Filter kehadiran (semua, hadir, tidak_hadir)"
+          schema: { type: string, enum: [semua, hadir, tidak_hadir] }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: Berhasil (data peserta, statistik, dan status submit) }
+
+  /api/kegiatan/{id}/peserta/template:
+    get:
+      summary: (Operator / Admin) Unduh Template CSV Import Peserta
+      description: |
+        Mendownload file CSV template yang berisi header: NIM, HADIR, PERAN_ID.
+        Di bagian komentar file akan tercantum daftar ID peran yang tersedia untuk kegiatan ini.
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: File CSV template berhasil di-download
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/kegiatan/{id}/peserta/import:
+    post:
+      summary: (Operator / Admin) Import Peserta dari Data CSV
+      description: |
+        Mengimport daftar peserta ke kegiatan. Frontend mengirim hasil parsing CSV sebagai array JSON.
+        Sistem akan mencari mahasiswa berdasarkan NIM, lalu membuat/update data Partisipasi.
+        **Poin belum dicetak** — gunakan endpoint submit-poin setelah semua data benar.
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [peserta]
+              properties:
+                peserta:
+                  type: array
+                  items:
+                    type: object
+                    required: [nim]
+                    properties:
+                      nim: { type: string, example: "2311210001" }
+                      peranId: { type: integer, example: 3, description: "ID peran (opsional, bisa diisi nanti)" }
+                      hadir: { type: boolean, example: true, description: "Status kehadiran" }
+      responses:
+        '200': { description: Berhasil import (menampilkan jumlah berhasil dan gagal) }
+        '400': { description: Kegiatan belum dalam status yang mengizinkan import }
+
+  /api/kegiatan/{id}/peserta/submit-poin:
+    post:
+      summary: (Operator / Admin) Submit & Cetak Poin Otomatis untuk Peserta Hadir
+      description: |
+        Mencetak poin untuk semua peserta yang hadir dan memiliki peran.
+        Sistem akan otomatis membuat KlaimPoin bayangan (langsung disetujui),
+        melakukan lookup MatriksPoin, dan mencetak PerolehanPoin + detail.
+        Notifikasi otomatis terkirim ke setiap mahasiswa.
+        **Setelah submit, status berubah menjadi "Telah Tercatat" dan tidak bisa di-submit ulang.**
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil mencetak poin untuk peserta hadir }
+        '400': { description: Tidak ada peserta hadir atau sudah pernah di-submit }
+
+  /api/kegiatan/{id}/peserta/update:
+    put:
+      summary: (Operator / Admin) Update Kehadiran & Peran Peserta Massal
+      description: |
+        Mengupdate kehadiran dan peran peserta secara massal.
+        Digunakan saat penyelenggara ingin mengedit data sebelum submit poin.
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [peserta]
+              properties:
+                peserta:
+                  type: array
+                  items:
+                    type: object
+                    required: [partisipasiId, hadir]
+                    properties:
+                      partisipasiId: { type: integer, example: 1 }
+                      hadir: { type: boolean, example: true }
+                      peranId: { type: integer, example: 3 }
+      responses:
+        '200': { description: Berhasil mengupdate peserta }

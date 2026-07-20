@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
   daftarKegiatan,
   getMyPartisipasi,
@@ -11,17 +12,20 @@ import {
 
 const router = Router();
 
-// Partisipasi
-router.post('/', daftarKegiatan);                          // POST /api/partisipasi
-router.get('/saya', getMyPartisipasi);                     // GET /api/partisipasi/saya?mahasiswaId=X
-router.post('/:id/minta-izin', mintaIzinPA);               // POST /api/partisipasi/:id/minta-izin
+// Semua rute partisipasi membutuhkan login
+router.use(authenticateJWT);
+
+// Partisipasi (Mahasiswa)
+router.post('/', authorizeRole('mahasiswa'), daftarKegiatan);                          // POST /api/partisipasi
+router.get('/saya', authorizeRole('mahasiswa'), getMyPartisipasi);                     // GET /api/partisipasi/saya
+router.post('/:id/minta-izin', authorizeRole('mahasiswa'), mintaIzinPA);              // POST /api/partisipasi/:id/minta-izin
 
 // Izin PA (Dosen)
-router.get('/izin-pa', getIzinForDosen);                   // GET /api/partisipasi/izin-pa?dosenPaId=X
-router.put('/izin-pa/:id', putuskanIzinPA);                // PUT /api/partisipasi/izin-pa/:id
+router.get('/izin-pa', authorizeRole('dosen'), getIzinForDosen);                      // GET /api/partisipasi/izin-pa
+router.put('/izin-pa/:id', authorizeRole('dosen'), putuskanIzinPA);                   // PUT /api/partisipasi/izin-pa/:id
 
-// Saran PA
-router.post('/saran-pa', createSaranPA);                   // POST /api/partisipasi/saran-pa
-router.get('/saran-pa', getSaranPA);                       // GET /api/partisipasi/saran-pa?mahasiswaId=X
+// Saran PA (Dosen menulis, Mahasiswa membaca)
+router.post('/saran-pa', authorizeRole('dosen'), createSaranPA);                      // POST /api/partisipasi/saran-pa
+router.get('/saran-pa', authorizeRole('mahasiswa', 'dosen'), getSaranPA);             // GET /api/partisipasi/saran-pa
 
 export default router;

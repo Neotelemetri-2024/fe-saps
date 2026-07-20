@@ -55,7 +55,7 @@ export const getOrganisasi = async (req: Request, res: Response) => {
 // POST /api/organisasi — Buat organisasi baru (Admin Ditmawa HANYA UKM)
 export const createOrganisasi = async (req: Request, res: Response): Promise<void> => {
   try {
-    const aktorId = BigInt(req.body.aktorId); 
+    const aktorId = BigInt(req.user!.id); 
     const body = createOrganisasiSchema.parse(req.body);
 
     // [BR-TERKUNCI] Admin Ditmawa hanya bisa buat UKM, UKMF ditolak
@@ -122,7 +122,7 @@ export const getOperatorOrg = async (req: Request, res: Response) => {
 // POST /api/organisasi/operator — Buat akun operator UKM
 export const createOperatorOrg = async (req: Request, res: Response): Promise<void> => {
   try {
-    const aktorId = BigInt(req.body.aktorId);
+    const aktorId = BigInt(req.user!.id);
     const body = createOperatorSchema.parse(req.body);
 
     // Cek apakah email sudah terdaftar
@@ -204,7 +204,7 @@ export const createOperatorOrg = async (req: Request, res: Response): Promise<vo
 export const toggleStatusAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const aktorId = BigInt(req.body.aktorId);
+    const aktorId = BigInt(req.user!.id);
     
     // Pastikan yang ditoggle adalah operator UKM
     const operator = await prisma.organisasiOperator.findUnique({
@@ -253,7 +253,7 @@ export const toggleStatusAkun = async (req: Request, res: Response): Promise<voi
 // POST /api/organisasi/akun — Buat UKM dan Akun sekaligus
 export const createAkunLengkap = async (req: Request, res: Response): Promise<void> => {
   try {
-    const aktorId = BigInt(req.body.aktorId || 0); // Bisa dari token jwt (req.user)
+    const aktorId = BigInt(req.user!.id);
     const body = createAkunLengkapSchema.parse(req.body);
 
     // Di database kita menggunakan email sebagai username

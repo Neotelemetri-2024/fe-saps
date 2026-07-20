@@ -18,7 +18,7 @@ const izinDecisionSchema = z.object({
 // POST /api/partisipasi — Mahasiswa mendaftar kegiatan
 export const daftarKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
-    const mahasiswaUserId = BigInt(req.body.mahasiswaId);
+    const mahasiswaUserId = BigInt(req.user!.id);
     const body = daftarPartisipasiSchema.parse(req.body);
 
     // Cek kegiatan ada & terpublikasi
@@ -206,7 +206,7 @@ export const getIzinForDosen = async (req: Request, res: Response) => {
 export const putuskanIzinPA = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const dosenPaId = BigInt(req.body.dosenPaId);
+    const dosenPaId = BigInt(req.user!.id);
     const body = izinDecisionSchema.parse(req.body);
 
     const izin = await prisma.izinPA.findUnique({
@@ -292,7 +292,7 @@ export const putuskanIzinPA = async (req: Request, res: Response): Promise<void>
 // POST /api/saran-pa — Dosen PA memberikan saran
 export const createSaranPA = async (req: Request, res: Response): Promise<void> => {
   try {
-    const dosenPaId = BigInt(req.body.dosenPaId);
+    const dosenPaId = BigInt(req.user!.id);
     const mahasiswaId = BigInt(req.body.mahasiswaId);
     const isi = req.body.isi as string;
 
