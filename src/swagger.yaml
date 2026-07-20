@@ -12,6 +12,8 @@ info:
   version: 2.3.0
 
 servers:
+  - url: https://api.saps.neotelemetri.id
+    description: Production Server
   - url: http://localhost:3000
     description: Local Development Server
 
