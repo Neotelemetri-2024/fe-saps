@@ -148,6 +148,7 @@ function AjukanKegiatanForm() {
                   <option value="peserta">Peserta</option>
                 </select>
               </div>
+              {/* asdasda */}
               <div>
                 <label htmlFor="skalaKegiatan" className="block text-sm font-medium text-black">
                   Skala Kegiatan<span className="text-red-500">*</span>
