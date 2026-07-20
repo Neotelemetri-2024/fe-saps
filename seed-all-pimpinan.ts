@@ -72,7 +72,7 @@ async function main() {
 
   // Pastikan ada Skala
   let skala = await prisma.mpSkala.findFirst({ where: { nama: 'Nasional' } });
-  if (!skala) skala = await prisma.mpSkala.create({ data: { nama: 'Nasional', urutan: 3 } });
+  if (!skala) skala = await prisma.mpSkala.create({ data: { nama: 'Nasional', urutan: 3, kategoriId: kategori.id } });
 
   // Pastikan ada Peran
   let peran = await prisma.mpPeran.findFirst({ where: { nama: 'Juara 1', kategoriId: kategori.id } });

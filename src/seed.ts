@@ -266,6 +266,11 @@ async function main() {
   }
   console.log(`✅ ${kategoriList.length} Kategori Matriks`);
 
+  // --- mp_peran ---
+  const katKompetisi = await prisma.mpKategori.findUnique({ where: { nama: 'Kompetisi' } });
+  const katOrganisasi = await prisma.mpKategori.findUnique({ where: { nama: 'Organisasi' } });
+  const katPelatihan = await prisma.mpKategori.findUnique({ where: { nama: 'Pelatihan/Seminar' } });
+
   // --- mp_skala ---
   const skalaData = [
     { nama: 'Internasional', urutan: 1 },
@@ -274,14 +279,14 @@ async function main() {
     { nama: 'Internal UNAND', urutan: 4 },
   ];
   for (const s of skalaData) {
-    await prisma.mpSkala.upsert({ where: { nama: s.nama }, update: {}, create: s });
+    // Assuming we link the scales to katKompetisi as a base example
+    await prisma.mpSkala.upsert({ 
+      where: { kategoriId_nama: { kategoriId: katKompetisi!.id, nama: s.nama } }, 
+      update: {}, 
+      create: { ...s, kategoriId: katKompetisi!.id } 
+    });
   }
   console.log(`✅ ${skalaData.length} Skala Matriks`);
-
-  // --- mp_peran ---
-  const katKompetisi = await prisma.mpKategori.findUnique({ where: { nama: 'Kompetisi' } });
-  const katOrganisasi = await prisma.mpKategori.findUnique({ where: { nama: 'Organisasi' } });
-  const katPelatihan = await prisma.mpKategori.findUnique({ where: { nama: 'Pelatihan/Seminar' } });
 
   const peranData = [
     // Kompetisi
@@ -348,10 +353,10 @@ async function main() {
   // ============================================================
   // 7. MATRIKS POIN CONTOH (Kurikulum x Kategori x Skala x Peran)
   // ============================================================
-  const skalaInternasional = await prisma.mpSkala.findUnique({ where: { nama: 'Internasional' } });
-  const skalaNasional = await prisma.mpSkala.findUnique({ where: { nama: 'Nasional' } });
-  const skalaRegional = await prisma.mpSkala.findUnique({ where: { nama: 'Regional' } });
-  const skalaInternal = await prisma.mpSkala.findUnique({ where: { nama: 'Internal UNAND' } });
+  const skalaInternasional = await prisma.mpSkala.findUnique({ where: { kategoriId_nama: { kategoriId: katKompetisi!.id, nama: 'Internasional' } } });
+  const skalaNasional = await prisma.mpSkala.findUnique({ where: { kategoriId_nama: { kategoriId: katKompetisi!.id, nama: 'Nasional' } } });
+  const skalaRegional = await prisma.mpSkala.findUnique({ where: { kategoriId_nama: { kategoriId: katKompetisi!.id, nama: 'Regional' } } });
+  const skalaInternal = await prisma.mpSkala.findUnique({ where: { kategoriId_nama: { kategoriId: katKompetisi!.id, nama: 'Internal UNAND' } } });
 
   // Contoh matriks untuk Kompetisi
   const peranKompetisi = await prisma.mpPeran.findMany({ where: { kategoriId: katKompetisi!.id }, orderBy: { urutan: 'asc' } });

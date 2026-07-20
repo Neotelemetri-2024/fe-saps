@@ -242,7 +242,7 @@ export const deleteKurikulum = async (req: Request, res: Response): Promise<void
 
     await logAudit({
       entitas: 'kurikulum',
-      entitasId: BigInt(id),
+      entitasId: BigInt(id as string),
       aksi: 'delete',
       statusLama: kurikulum.status,
       aktorId,
