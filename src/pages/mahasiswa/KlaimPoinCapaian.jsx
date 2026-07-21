@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, Filter, PlusCircle, UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -7,12 +7,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import DatePickerInput from '../../components/ui/DatePickerInput'
-
-const pengajuanData = [
-  { no: 1, kegiatan: 'SEMINAR AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Peserta', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'pending' },
-  { no: 2, kegiatan: 'SEMINAR AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Peserta', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'pending' },
-  { no: 3, kegiatan: 'SEMINAR AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Peserta', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'ditolak', alasan: 'Bukti tidak relevan. Silakan upload bukti yang sesuai.' },
-]
+import { klaimPoin, getKlaim } from '../../services/poinService'
 
 const columns = [
   { key: 'no', label: 'NO' },
@@ -47,6 +42,8 @@ const columns = [
 function KlaimPoinCapaian() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState([])
   const [formData, setFormData] = useState({
     jenisKegiatan: '',
     namaKegiatan: '',
@@ -80,22 +77,34 @@ function KlaimPoinCapaian() {
     setFormData((prev) => ({ ...prev, tanggalPelaksanaan: date }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Form Submitted:', formData)
-    toast.success('Berhasil!', {
-      description: 'Klaim poin berhasil diajukan dan akan diverifikasi.',
-    })
-    setShowModal(false)
-    setFormData({
-      jenisKegiatan: '',
-      namaKegiatan: '',
-      peranKegiatan: '',
-      skalaKegiatan: '',
-      tanggalPelaksanaan: null,
-      buktiDokumen: null,
-    })
+    setLoading(true)
+    try {
+      await klaimPoin({
+        kegiatan: formData.namaKegiatan,
+        jenis: formData.jenisKegiatan,
+        peran: formData.peranKegiatan,
+        skala: formData.skalaKegiatan,
+        tanggal: formData.tanggalPelaksanaan,
+      })
+      toast.success('Berhasil!', {
+        description: 'Klaim poin berhasil diajukan dan akan diverifikasi.',
+      })
+      setShowModal(false)
+      setFormData({ jenisKegiatan: '', namaKegiatan: '', peranKegiatan: '', skalaKegiatan: '', tanggalPelaksanaan: null, buktiDokumen: null })
+      const res = await getKlaim('mahasiswa')
+      setData(res.map((item, i) => ({ no: i + 1, ...item })))
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  useEffect(() => {
+    getKlaim('mahasiswa').then((res) => setData(res.map((item, i) => ({ no: i + 1, ...item }))))
+  }, [])
 
   const handleReset = () => {
     setFormData({
@@ -254,7 +263,7 @@ function KlaimPoinCapaian() {
               type="submit"
               className="flex-1 rounded-xl bg-brand-dark px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
             >
-              Klaim Poin
+              {loading ? 'Mengirim...' : 'Klaim Poin'}
             </button>
             <button
               type="button"
@@ -317,7 +326,7 @@ function KlaimPoinCapaian() {
           </div>
 
           <div className="mt-6">
-            <DataTable columns={columns} data={pengajuanData} />
+            <DataTable columns={columns} data={data} />
           </div>
         </div>
       </div>

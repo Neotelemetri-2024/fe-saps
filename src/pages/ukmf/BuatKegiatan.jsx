@@ -1,17 +1,17 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Filter, Plus, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
-
-const kegiatanData = [
-  { no: 1, kegiatan: 'Seminar Karir', jenis: 'Seminar', skala: 'Fakultas', tgl: '10 Jul 2026', peserta: 50, status: 'dipublikasikan' },
-  { no: 2, kegiatan: 'Pelatihan Kewirausahaan', jenis: 'Pelatihan', skala: 'Fakultas', tgl: '12 Jul 2026', peserta: 30, status: 'dipublikasikan' },
-  { no: 3, kegiatan: 'Bakti Sosial', jenis: 'Bakti', skala: 'Lokal', tgl: '8 Jul 2026', peserta: 25, status: 'dipublikasikan' },
-  { no: 4, kegiatan: 'Workshop Digital', jenis: 'Workshop', skala: 'Fakultas', tgl: '5 Jul 2026', peserta: 40, status: 'dipublikasikan' },
-]
+import { getKegiatan } from '../../services/kegiatanService'
 
 function BuatKegiatan() {
   const navigate = useNavigate()
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    getKegiatan().then(setData)
+  }, [])
 
   return (
     <DashboardLayout role="ukmf" userName="Operator UKMF" userRole="Operator UKMF">
@@ -72,17 +72,17 @@ function BuatKegiatan() {
                 </tr>
               </thead>
               <tbody>
-                {kegiatanData.map((item) => (
-                  <tr key={item.no} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="px-4 py-3 text-[#616161]">{item.no}</td>
-                    <td className="px-4 py-3 font-medium text-[#333]">{item.kegiatan}</td>
+                {data.map((item) => (
+                  <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                    <td className="px-4 py-3 text-[#616161]">{item.no || item.id}</td>
+                    <td className="px-4 py-3 font-medium text-[#333]">{item.nama || item.kegiatan}</td>
                     <td className="px-4 py-3 text-[#616161]">{item.jenis}</td>
                     <td className="px-4 py-3 text-[#616161]">{item.skala}</td>
-                    <td className="px-4 py-3 text-[#616161]">{item.tgl}</td>
+                    <td className="px-4 py-3 text-[#616161]">{item.tgl || item.tanggal}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <Users className="h-3.5 w-3.5 text-[#616161]" />
-                        <span className="text-[#333]">{item.peserta}</span>
+                        <span className="text-[#333]">{item.peserta || '-'}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={item.status} /></td>

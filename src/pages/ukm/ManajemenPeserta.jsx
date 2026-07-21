@@ -1,34 +1,66 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { Search, Filter, Download, Upload, MoreVertical, ArrowLeft, Info } from 'lucide-react'
+import { Search, Filter, Download, Upload, ArrowLeft, Info } from 'lucide-react'
 import StatCard from '../../components/dashboard/StatCard'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { getPesertaByKegiatanId, updateKehadiran, updatePeran, submitKlaimPoin } from '../../services/pesertaService'
+import { getKegiatanById } from '../../services/kegiatanService'
 
 function ManajemenPeserta() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [pesertaData, setPesertaData] = useState([])
+  const [kegiatan, setKegiatan] = useState({ nama: 'Kegiatan', tanggal: '', tempat: '' })
+  const [loading, setLoading] = useState(true)
 
-  // Mock data untuk contoh
-  const kegiatan = {
-    id: id,
-    nama: "Seminar AI",
-    tanggal: "25 Jun 2026",
-    tempat: "Gedung Teknik UNAND",
-    totalTerdaftar: 8,
-    hadir: 5,
-    tidakHadir: 3,
+  useEffect(() => {
+    Promise.all([
+      getPesertaByKegiatanId(id),
+      getKegiatanById(id),
+    ]).then(([peserta, keg]) => {
+      setPesertaData(peserta.map((p, i) => ({ ...p, no: i + 1 })))
+      if (keg) setKegiatan({ nama: keg.nama || keg.kegiatan || 'Kegiatan', tanggal: keg.tgl || keg.tanggal || '', tempat: keg.lokasi || '' })
+    }).finally(() => setLoading(false))
+  }, [id])
+
+  const handleKehadiranChange = async (pesertaId, value) => {
+    try {
+      await updateKehadiran(pesertaId, value)
+      const res = await getPesertaByKegiatanId(id)
+      setPesertaData(res.map((p, i) => ({ ...p, no: i + 1 })))
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
   }
 
-  const pesertaData = [
-    { no: 1, nim: '2111521001', nama: 'Mahasiswa A', fakultas: 'Teknik', prodi: 'Informatika', kehadiran: 'Hadir', peran: 'Peserta' },
-    { no: 2, nim: '2111521002', nama: 'Mahasiswa B', fakultas: 'Teknik', prodi: 'Sistem Informasi', kehadiran: 'Tidak Hadir', peran: 'Peserta' },
-    { no: 3, nim: '2111521003', nama: 'Mahasiswa C', fakultas: 'MIPA', prodi: 'Matematika', kehadiran: 'Hadir', peran: 'Peserta' },
-    { no: 4, nim: '2111521004', nama: 'Mahasiswa D', fakultas: 'Teknik', prodi: 'Informatika', kehadiran: 'Hadir', peran: 'Panitia' },
-    { no: 5, nim: '2111521005', nama: 'Mahasiswa E', fakultas: 'Teknik', prodi: 'Informatika', kehadiran: 'Tidak Hadir', peran: 'Peserta' },
-  ]
+  const handlePeranChange = async (pesertaId, value) => {
+    try {
+      await updatePeran(pesertaId, value)
+      const res = await getPesertaByKegiatanId(id)
+      setPesertaData(res.map((p, i) => ({ ...p, no: i + 1 })))
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
+  }
+
+  const handleSubmitKlaim = async () => {
+    setShowSubmitModal(false)
+    try {
+      await submitKlaimPoin(id)
+      toast.success('Berhasil!', {
+        description: 'Data peserta berhasil dikirim untuk klaim poin.',
+      })
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
+  }
+
+  const total = pesertaData.length
+  const hadir = pesertaData.filter((p) => p.kehadiran === 'Hadir').length
+  const tidakHadir = pesertaData.filter((p) => p.kehadiran === 'Tidak Hadir').length
 
   return (
     <DashboardLayout role="ukm" userName="Operator UKM" userRole="Operator UKM">
@@ -44,9 +76,9 @@ function ManajemenPeserta() {
 
         {/* Stat Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total Terdaftar" label="Total Terdaftar" value={kegiatan.totalTerdaftar} color="green" />
-          <StatCard title="Hadir" label="Hadir" value={kegiatan.hadir} color="green" />
-          <StatCard title="Tidak Hadir" label="Tidak Hadir" value={kegiatan.tidakHadir} color="green" />
+          <StatCard title="Total Terdaftar" label="Total Terdaftar" value={total} color="green" />
+          <StatCard title="Hadir" label="Hadir" value={hadir} color="green" />
+          <StatCard title="Tidak Hadir" label="Tidak Hadir" value={tidakHadir} color="green" />
         </div>
 
         {/* Info Banner */}
@@ -62,12 +94,7 @@ function ManajemenPeserta() {
           message="Apakah kamu yakin ingin mengirim data kehadiran dan peran peserta untuk diklaim poin?"
           confirmText="Ya, Kirim"
           cancelText="Batal"
-          onConfirm={() => {
-            setShowSubmitModal(false)
-            toast.success('Berhasil!', {
-              description: 'Data peserta berhasil dikirim untuk klaim poin.',
-            })
-          }}
+          onConfirm={handleSubmitKlaim}
           onCancel={() => setShowSubmitModal(false)}
         />
 
@@ -120,21 +147,39 @@ function ManajemenPeserta() {
                 </thead>
                 <tbody>
                   {pesertaData.map((peserta) => (
-                    <tr key={peserta.no} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                    <tr key={peserta.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                       <td className="px-4 py-3 text-[#616161]">{peserta.no}</td>
                       <td className="px-4 py-3 font-medium text-[#333]">{peserta.nim}</td>
                       <td className="px-4 py-3 text-[#616161]">{peserta.nama}</td>
                       <td className="px-4 py-3 text-[#616161]">{peserta.fakultas}</td>
                       <td className="px-4 py-3 text-[#616161]">{peserta.prodi}</td>
-                      <td className="px-4 py-3 text-[#616161]">{peserta.kehadiran}</td>
-                      <td className="px-4 py-3 text-[#616161]">{peserta.peran}</td>
+                      <td className="px-4 py-3 text-[#616161]">
+                        <select
+                          value={peserta.kehadiran}
+                          onChange={(e) => handleKehadiranChange(peserta.id, e.target.value)}
+                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark"
+                        >
+                          <option value="Hadir">Hadir</option>
+                          <option value="Tidak Hadir">Tidak Hadir</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-[#616161]">
+                        <select
+                          value={peserta.peran}
+                          onChange={(e) => handlePeranChange(peserta.id, e.target.value)}
+                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark"
+                        >
+                          <option value="Peserta">Peserta</option>
+                          <option value="Panitia">Panitia</option>
+                        </select>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <div className="flex items-center justify-between px-4 py-3 text-xs text-[#616161]">
-              <span>Showing 1-10 From Total 20</span>
+              <span>Showing 1-10 From Total {total}</span>
               <span>Page 1 of 2</span>
             </div>
           </div>

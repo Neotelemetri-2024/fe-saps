@@ -1,16 +1,38 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { login } from '../services/authService'
 import logoUnand from '../assets/logo_unand.png'
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    toast.success('Login berhasil')
-    navigate('/mahasiswa/dashboard')
+    setLoading(true)
+    try {
+      const user = await login(email, password)
+      toast.success('Login berhasil')
+      const roleRoutes = {
+        mahasiswa: '/mahasiswa/dashboard',
+        'dosen-pa': '/dosen-pa/dashboard',
+        'pimpinan-fakultas': '/pimpinan-fakultas/dashboard',
+        'admin-ditmawa': '/admin-ditmawa/dashboard',
+        'admin-fakultas': '/admin-fakultas/dashboard',
+        ukm: '/ukm/dashboard',
+        ukmf: '/ukmf/dashboard',
+        'pimpinan-utama': '/pimpinan-utama/dashboard',
+      }
+      navigate(roleRoutes[user.role] || '/mahasiswa/dashboard')
+    } catch (err) {
+      toast.error('Login gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -126,6 +148,8 @@ function LoginPage() {
                 <input
                   type="text"
                   placeholder="dendi_unand"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="h-full w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#969696]"
                 />
               </div>
@@ -142,6 +166,8 @@ function LoginPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="123456"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="h-full w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#969696]"
                 />
                 <button
@@ -171,9 +197,10 @@ function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="flex h-16 w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light text-[20px] font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl mt-[8px]"
+              disabled={loading}
+              className="flex h-16 w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light text-[20px] font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl mt-[8px] disabled:opacity-60"
             >
-              Login
+              {loading ? 'Memproses...' : 'Login'}
             </button>
           </form>
         </div>

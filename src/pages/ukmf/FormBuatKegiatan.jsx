@@ -4,9 +4,11 @@ import { toast } from 'sonner'
 import { ArrowLeft, MapPin } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DatePickerInput from '../../components/ui/DatePickerInput'
+import { createKegiatan } from '../../services/kegiatanService'
 
 function FormBuatKegiatan() {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     jenisKegiatan: '',
     namaKegiatan: '',
@@ -51,12 +53,27 @@ function FormBuatKegiatan() {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Logika untuk menyimpan data kegiatan
-    console.log('Data kegiatan baru:', formData)
-    toast.success('Kegiatan berhasil diajukan!')
-    navigate('/ukmf/daftar-kegiatan', { state: { kegiatanBaru: formData } })
+    setLoading(true)
+    try {
+      await createKegiatan({
+        nama: formData.namaKegiatan,
+        jenis: formData.jenisKegiatan,
+        skala: formData.skalaKegiatan,
+        deskripsi: formData.deskripsiKegiatan,
+        tanggal: formData.tanggalMulai,
+        tgl: formData.tanggalMulai,
+        lokasi: formData.lokasi,
+        kuota: formData.kuotaPeserta,
+      })
+      toast.success('Kegiatan berhasil diajukan!')
+      navigate('/ukmf/daftar-kegiatan')
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReset = () => {

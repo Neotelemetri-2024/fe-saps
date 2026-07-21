@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, Filter, Pencil } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -6,12 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
-
-const permintaanPersetujuanData = [
-  { no: 1, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'pending' },
-  { no: 2, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'pending' },
-  { no: 3, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'pending' },
-]
+import { getPersetujuanDosen, setujuiTolak } from '../../services/pengajuanService'
 
 const columns = (openModal) => [
   { key: 'no', label: 'NO' },
@@ -26,7 +21,7 @@ const columns = (openModal) => [
     label: 'AKSI',
     render: (row) => (
       <button
-        onClick={() => openModal(row.kegiatan)}
+        onClick={() => openModal(row)}
         className="rounded p-1 text-brand-dark transition hover:bg-green-50"
       >
         <Pencil className="h-4 w-4" />
@@ -37,44 +32,70 @@ const columns = (openModal) => [
 
 function PermintaanPersetujuan() {
   const navigate = useNavigate()
+  const [data, setData] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedKegiatan, setSelectedKegiatan] = useState('')
+  const [selectedRow, setSelectedRow] = useState(null)
   const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const openModal = (kegiatan) => {
-    setSelectedKegiatan(kegiatan)
+  const openModal = (row) => {
+    setSelectedRow(row)
     setActionType(null)
     setAlasan('')
     setModalOpen(true)
   }
 
-  const handleAction = (type) => {
+  const handleAction = async (type) => {
     if (type === 'setuju') {
-      toast.success('Disetujui!', {
-        description: `Kegiatan "${selectedKegiatan}" berhasil disetujui.`,
-      })
-      setModalOpen(false)
+      setLoading(true)
+      try {
+        await setujuiTolak(selectedRow.id, 'disetujui', '')
+        toast.success('Disetujui!', {
+          description: `Kegiatan "${selectedRow.kegiatan}" berhasil disetujui.`,
+        })
+        setModalOpen(false)
+        const res = await getPersetujuanDosen()
+        setData(res.map((item, i) => ({ no: i + 1, ...item })))
+      } catch (err) {
+        toast.error('Gagal', { description: err.message })
+      } finally {
+        setLoading(false)
+      }
       return
     }
     setActionType(type)
     setAlasan('')
   }
 
-  const handleKirimAlasan = () => {
+  const handleKirimAlasan = async () => {
     if (alasan.trim() === '') {
       toast.error('Gagal!', {
         description: 'Alasan tidak boleh kosong.',
       })
       return
     }
-
-    toast.success('Berhasil!', {
-      description: `Kegiatan "${selectedKegiatan}" berhasil di${actionType} dengan alasan: "${alasan}"`,
-    })
-    setAlasan('')
-    setModalOpen(false)
+    setLoading(true)
+    try {
+      const statusKey = actionType === 'revisi' ? 'revisi' : 'ditolak'
+      await setujuiTolak(selectedRow.id, statusKey, alasan.trim())
+      toast.success('Berhasil!', {
+        description: `Kegiatan "${selectedRow.kegiatan}" berhasil di${actionType}`,
+      })
+      setAlasan('')
+      setModalOpen(false)
+      const res = await getPersetujuanDosen()
+      setData(res.map((item, i) => ({ no: i + 1, ...item })))
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  useEffect(() => {
+    getPersetujuanDosen().then((res) => setData(res.map((item, i) => ({ no: i + 1, ...item }))))
+  }, [])
 
   return (
     <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
@@ -169,7 +190,7 @@ function PermintaanPersetujuan() {
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold text-brand-dark">Permintaan Persetujuan</h3>
-          <DataTable columns={columns(openModal)} data={permintaanPersetujuanData} />
+          <DataTable columns={columns(openModal)} data={data} />
         </div>
       </div>
     </DashboardLayout>

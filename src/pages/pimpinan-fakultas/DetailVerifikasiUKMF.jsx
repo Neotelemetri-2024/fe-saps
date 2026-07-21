@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { updateKegiatan } from '../../services/kegiatanService'
 
 const detailFallback = {
   penyelenggara: 'Hima Teknologi Informasi Universitas Andalas',
@@ -54,13 +55,18 @@ function DetailVerifikasiUKMF() {
     )
   }
 
-  const handleSetujuiConfirm = () => {
+  const handleSetujuiConfirm = async () => {
     setIsActionTaken(true)
     setStatusVerifikasi('Disetujui')
     setShowConfirmSetujui(false)
-    toast.success('Disetujui!', {
-      description: `Pengajuan "${d.kegiatan}" telah disetujui.`,
-    })
+    try {
+      await updateKegiatan(id, { status: 'disetujui', updatedStatus: 'Disetujui' })
+      toast.success('Disetujui!', {
+        description: `Pengajuan "${d.kegiatan}" telah disetujui.`,
+      })
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
     navigate('/pimpinan-fakultas/verifikasi-pengajuan-ukmf', {
       state: { updatedId: Number(id), newStatus: 'disetujui', updatedStatus: 'Disetujui' },
     })
@@ -78,7 +84,7 @@ function DetailVerifikasiUKMF() {
     setShowActionModal(true)
   }
 
-  const handleKirimAction = () => {
+  const handleKirimAction = async () => {
     if (!alasan.trim()) {
       toast.error('Gagal!', {
         description: 'Alasan tidak boleh kosong.',
@@ -92,11 +98,16 @@ function DetailVerifikasiUKMF() {
     setShowActionModal(false)
 
     const statusKey = actionType === 'revisi' ? 'revisi' : 'ditolak'
-    toast.success(actionType === 'revisi' ? 'Revisi Dikirim!' : 'Ditolak!', {
-      description: actionType === 'revisi'
-        ? 'Catatan revisi telah dikirim ke UKMF terkait.'
-        : `Pengajuan "${d.kegiatan}" telah ditolak.`,
-    })
+    try {
+      await updateKegiatan(id, { status: statusKey, updatedStatus: statusText, alasan: alasan.trim() })
+      toast.success(actionType === 'revisi' ? 'Revisi Dikirim!' : 'Ditolak!', {
+        description: actionType === 'revisi'
+          ? 'Catatan revisi telah dikirim ke UKMF terkait.'
+          : `Pengajuan "${d.kegiatan}" telah ditolak.`,
+      })
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
     navigate('/pimpinan-fakultas/verifikasi-pengajuan-ukmf', {
       state: { updatedId: Number(id), newStatus: statusKey, updatedStatus: statusText },
     })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { PlusCircle, Search, Filter } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -7,12 +7,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import DatePickerInput from '../../components/ui/DatePickerInput'
-
-const pengajuanData = [
-  { no: 1, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'pending' },
-  { no: 2, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'disetujui' },
-  { no: 3, kegiatan: 'LOMBA AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Juara 1', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', status: 'ditolak', alasan: 'Bukti yang terlampir disertifikat tidak sesuai dengan peran yang anda ajukan ! Silakan lakukan perbaikan.' },
-]
+import { mintaPersetujuanDosen, getPersetujuanDosen } from '../../services/pengajuanService'
 
 const columns = [
   { key: 'no', label: 'NO' },
@@ -48,6 +43,8 @@ const columns = [
 function PersetujuanDosen() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState([])
   const [formData, setFormData] = useState({
     jenisKegiatan: '',
     namaKegiatan: '',
@@ -65,20 +62,35 @@ function PersetujuanDosen() {
     setFormData((prev) => ({ ...prev, tanggalPelaksanaan: date }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    toast.success('Berhasil!', {
-      description: 'Permohonan persetujuan dosen berhasil dikirim.',
-    })
-    setShowModal(false)
-    setFormData({
-      jenisKegiatan: '',
-      namaKegiatan: '',
-      penyelenggara: '',
-      peranPencapaian: '',
-      tanggalPelaksanaan: null,
-    })
+    setLoading(true)
+    try {
+      await mintaPersetujuanDosen({
+        kegiatan: formData.namaKegiatan,
+        jenis: formData.jenisKegiatan,
+        peran: formData.peranPencapaian,
+        penyelenggara: formData.penyelenggara,
+        tanggal: formData.tanggalPelaksanaan,
+      })
+      toast.success('Berhasil!', {
+        description: 'Permohonan persetujuan dosen berhasil dikirim.',
+      })
+      setShowModal(false)
+      setFormData({ jenisKegiatan: '', namaKegiatan: '', penyelenggara: '', peranPencapaian: '', tanggalPelaksanaan: null })
+      // refresh data
+      const res = await getPersetujuanDosen()
+      setData(res.map((item, i) => ({ no: i + 1, ...item })))
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  useEffect(() => {
+    getPersetujuanDosen().then((res) => setData(res.map((item, i) => ({ no: i + 1, ...item }))))
+  }, [])
 
   const handleClose = () => {
     setShowModal(false)
@@ -160,13 +172,11 @@ function PersetujuanDosen() {
                 className="mt-1 block w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
                 required
               >
-                <option value="">masukkan peran</option>
-                <option value="ketua">Ketua</option>
-                <option value="anggota">Anggota</option>
-                <option value="peserta">Peserta</option>
+                <option value="">Masukkan peran</option>
                 <option value="juara1">Juara 1</option>
                 <option value="juara2">Juara 2</option>
                 <option value="juara3">Juara 3</option>
+                <option value="peserta">Peserta</option>
               </select>
             </div>
             <div>
@@ -185,7 +195,7 @@ function PersetujuanDosen() {
               type="submit"
               className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
             >
-              Minta Persetujuan Dosen PA
+              {loading ? 'Mengirim...' : 'Minta Persetujuan Dosen PA'}
             </button>
             <button
               type="button"
@@ -245,7 +255,7 @@ function PersetujuanDosen() {
           </div>
 
           <div className="mt-6">
-            <DataTable columns={columns} data={pengajuanData} />
+            <DataTable columns={columns} data={data} />
           </div>
         </div>
 

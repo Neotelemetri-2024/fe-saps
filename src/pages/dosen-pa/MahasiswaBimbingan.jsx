@@ -3,13 +3,13 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 
 const mahasiswaList = [
-  { nama: 'Shafa Salsabilla', nim: '2311121063', prodi: 'Teknik Mesin', angkatan: '23', ipk: '3.80', poin: 470, status: 'Aktif' },
-  { nama: 'Ahmad Fauzi', nim: '2311121064', prodi: 'Teknik Mesin', angkatan: '23', ipk: '2.75', poin: 180, status: 'Aktif' },
-  { nama: 'Siti Nurhaliza', nim: '2311121065', prodi: 'Teknik Industri', angkatan: '23', ipk: '3.60', poin: 320, status: 'Aktif' },
-  { nama: 'Budi Santoso', nim: '2311121066', prodi: 'Teknik Sipil', angkatan: '23', ipk: '3.20', poin: 250, status: 'Aktif' },
-  { nama: 'Dewi Lestari', nim: '2311121067', prodi: 'Informatika', angkatan: '23', ipk: '3.90', poin: 490, status: 'Aktif' },
-  { nama: 'Rizky Pratama', nim: '2311121068', prodi: 'Teknik Mesin', angkatan: '23', ipk: '2.50', poin: 150, status: 'Aktif' },
-  { nama: 'Anisa Putri', nim: '2311121069', prodi: 'Teknik Industri', angkatan: '23', ipk: '3.45', poin: 290, status: 'Aktif' },
+  { nama: 'Shafa Salsabilla', nim: '2311121063', prodi: 'Teknik Mesin', angkatan: '2023', ipk: '3.80', poin: 470, status: 'Aktif' },
+  { nama: 'Ahmad Fauzi', nim: '2311121064', prodi: 'Teknik Mesin', angkatan: '2023', ipk: '2.75', poin: 180, status: 'Aktif' },
+  { nama: 'Siti Nurhaliza', nim: '2311121065', prodi: 'Teknik Industri', angkatan: '2023', ipk: '3.60', poin: 320, status: 'Aktif' },
+  { nama: 'Budi Santoso', nim: '2311121066', prodi: 'Teknik Sipil', angkatan: '2023', ipk: '3.20', poin: 250, status: 'Aktif' },
+  { nama: 'Dewi Lestari', nim: '2311121067', prodi: 'Informatika', angkatan: '2023', ipk: '3.90', poin: 490, status: 'Aktif' },
+  { nama: 'Rizky Pratama', nim: '2311121068', prodi: 'Teknik Mesin', angkatan: '2023', ipk: '2.50', poin: 150, status: 'Aktif' },
+  { nama: 'Anisa Putri', nim: '2311121069', prodi: 'Teknik Industri', angkatan: '2023', ipk: '3.45', poin: 290, status: 'Aktif' },
 ]
 
 function MahasiswaBimbingan() {
@@ -39,14 +39,14 @@ function MahasiswaBimbingan() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-                <th className="whitespace-nowrap px-4 py-3 text-center">Nama</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">NIM</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">Prodi</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">Angktn</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">IPK</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">Poin</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">Status</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">Aksi</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Nama</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">NIM</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Prodi</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Angkatan</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">IPK</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Poin</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Status</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left">Aksi</th>
               </tr>
             </thead>
             <tbody>

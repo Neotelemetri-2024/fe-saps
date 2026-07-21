@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { ChevronDown, LogOut } from 'lucide-react'
+import { logout } from '../../services/authService'
 import logoUnand from '../../assets/logo_unand.png'
 
 function Sidebar({ menuItems, userName, userRole }) {
+  const navigate = useNavigate()
   const [openMenus, setOpenMenus] = useState(() =>
     menuItems.reduce((acc, item) => {
       if (item.children?.length) acc[item.label] = true
@@ -127,17 +129,13 @@ function Sidebar({ menuItems, userName, userRole }) {
 
       {/* Logout */}
       <div className="border-t border-[#e9ebf8] px-4 py-4">
-        <NavLink
-          to="/login"
-          onClick={(e) => {
-            e.preventDefault()
-            window.location.href = '/login'
-          }}
-          className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-red-50 hover:text-red-600"
+        <button
+          onClick={() => { logout(); navigate('/login') }}
+          className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-red-50 hover:text-red-600"
         >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   )

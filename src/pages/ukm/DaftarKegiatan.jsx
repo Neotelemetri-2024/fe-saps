@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, Filter, Plus, Search, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import { getKegiatan } from '../../services/kegiatanService'
 
 const stats = [
   { label: 'PENDING', value: 4 },
@@ -10,15 +12,13 @@ const stats = [
   { label: 'EVENT AKTIF', value: 6 },
 ]
 
-const kegiatanSaya = [
-  { id: 1, nama: 'Workshop desain UI/UX', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 32 },
-  { id: 2, nama: 'Seminar Kewirausahaan', jenis: 'Seminar', skala: 'Nasional', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 18 },
-  { id: 3, nama: 'Pelatihan Arduino', jenis: 'Pelatihan', skala: 'Universitas', tanggal: '25 juni 2026', status: 'sudah tercatat', peserta: 73 },
-  { id: 4, nama: 'Workshop Elektronika dasar', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 juni 2026', status: 'belum tercatat', peserta: 32 },
-]
-
 function DaftarKegiatan() {
   const navigate = useNavigate()
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    getKegiatan().then((res) => setData(res))
+  }, [])
 
   return (
     <DashboardLayout role="ukm" userName="Naufal Rafiif Irwan" userRole="Operator UKM">
@@ -87,12 +87,12 @@ function DaftarKegiatan() {
                   </tr>
                 </thead>
                 <tbody>
-                  {kegiatanSaya.map((item) => (
+                  {data.map((item) => (
                     <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                       <td className="px-4 py-4 font-medium text-[#333]">{item.nama}</td>
                       <td className="px-4 py-4 text-[#616161]">{item.jenis}</td>
                       <td className="px-4 py-4 text-[#616161]">{item.skala}</td>
-                      <td className="px-4 py-4 text-[#616161]">{item.tanggal}</td>
+                      <td className="px-4 py-4 text-[#616161]">{item.tgl || item.tanggal}</td>
                       <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                       <td className="px-4 py-4 text-[#333]">
                         <span className="inline-flex items-center gap-1.5">

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Download, Edit3, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { getKegiatan, deleteKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
 const stats = [
   { label: 'DISETUJUI', value: 3, border: 'border-brand-dark', valueColor: 'text-brand-dark' },
@@ -19,13 +20,25 @@ const kegiatanTerbaru = [
 ]
 
 function AdminDitmawaDashboard() {
+  const [data, setData] = useState([])
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
 
-  const handleEdit = (item) => {
-    toast.success('Data diperbarui!', {
-      description: `Kegiatan "${item.nama}" berhasil diperbarui.`,
-    })
+  useEffect(() => {
+    getKegiatan().then(setData)
+  }, [])
+
+  const handleEdit = async (item) => {
+    try {
+      await updateKegiatan(item.id, { status: 'aktif' })
+      toast.success('Data diperbarui!', {
+        description: `Kegiatan "${item.nama}" berhasil diperbarui.`,
+      })
+      const res = await getKegiatan()
+      setData(res)
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    }
   }
 
   const handleDeleteClick = (item) => {
@@ -33,11 +46,16 @@ function AdminDitmawaDashboard() {
     setShowConfirmDelete(true)
   }
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedItem) {
-      toast.success('Dihapus!', {
-        description: 'Kegiatan berhasil dihapus.',
-      })
+      try {
+        await deleteKegiatan(selectedItem.id)
+        toast.success('Dihapus!', { description: 'Kegiatan berhasil dihapus.' })
+        const res = await getKegiatan()
+        setData(res)
+      } catch (err) {
+        toast.error('Gagal', { description: err.message })
+      }
     }
     setShowConfirmDelete(false)
     setSelectedItem(null)

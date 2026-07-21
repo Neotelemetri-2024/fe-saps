@@ -4,9 +4,11 @@ import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { CheckCircle } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
+import { ajukanKegiatan } from '../../services/pengajuanService'
 
 function AjukanKegiatanForm() {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     jenisKegiatan: '',
     namaKegiatan: '',
@@ -31,11 +33,27 @@ function AjukanKegiatanForm() {
     setFormData((prev) => ({ ...prev, tanggalPelaksanaan: date }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    toast.success('Berhasil!', {
-      description: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
-    })
+    setLoading(true)
+    try {
+      await ajukanKegiatan({
+        kegiatan: formData.namaKegiatan,
+        jenis: formData.jenisKegiatan,
+        peran: formData.peranPencapaian,
+        skala: formData.skalaKegiatan,
+        penyelenggara: formData.penyelenggara,
+        tanggal: formData.tanggalPelaksanaan,
+      })
+      toast.success('Berhasil!', {
+        description: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
+      })
+      navigate('/mahasiswa/kegiatan-eksternal')
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReset = () => {

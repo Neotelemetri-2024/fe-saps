@@ -1,53 +1,65 @@
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { CheckCircle, Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
-
-const pengajuanData = [
-  { id: 1, kegiatan: 'Seminar Kewirausahaan', ukm: 'HME', tgl: '12 Jul 2026', status: 'pending' },
-  { id: 2, kegiatan: 'Bakti Sosial', ukm: 'BEM FISIP', tgl: '10 Jul 2026', status: 'disetujui' },
-  { id: 3, kegiatan: 'Latihan Kepemimpinan', ukm: 'BEM FH', tgl: '8 Jul 2026', status: 'menunggu' },
-  { id: 4, kegiatan: 'Pelatihan IT', ukm: 'HIMATIF', tgl: '5 Jul 2026', status: 'ditolak' },
-]
-
-const columns = [
-  { key: 'kegiatan', label: 'Kegiatan' },
-  { key: 'ukm', label: 'UKM' },
-  { key: 'tgl', label: 'Tanggal' },
-  { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-  {
-    key: 'aksi',
-    label: 'Aksi',
-    render: (row) => (
-      <div className="flex gap-2">
-        <button
-          className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-          onClick={() =>
-            toast.success('Disetujui!', {
-              description: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah disetujui.`,
-            })
-          }
-        >
-          Setujui
-        </button>
-        <button
-          className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
-          onClick={() =>
-            toast.error('Ditolak!', {
-              description: `Pengajuan "${row.kegiatan}" dari ${row.ukm} telah ditolak.`,
-            })
-          }
-        >
-          Tolak
-        </button>
-      </div>
-    ),
-  },
-]
+import { updateKegiatan, getKegiatan } from '../../services/kegiatanService'
 
 function AdminFakultasDashboard() {
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    getKegiatan().then((res) => setData(res.slice(0, 4).map((item, i) => ({
+      id: item.id,
+      kegiatan: item.nama,
+      ukm: 'UKM',
+      tgl: item.tgl || item.tanggal || '',
+      status: item.status,
+    }))))
+  }, [])
+
+  const columns = [
+    { key: 'kegiatan', label: 'Kegiatan' },
+    { key: 'ukm', label: 'UKM' },
+    { key: 'tgl', label: 'Tanggal' },
+    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'aksi',
+      label: 'Aksi',
+      render: (row) => (
+        <div className="flex gap-2">
+          <button
+            className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+            onClick={async () => {
+              try {
+                await updateKegiatan(row.id, { status: 'disetujui' })
+                toast.success('Disetujui!', { description: `Pengajuan "${row.kegiatan}" telah disetujui.` })
+                const res = await getKegiatan()
+                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, kegiatan: item.nama, ukm: 'UKM', tgl: item.tgl || item.tanggal || '', status: item.status })))
+              } catch (err) { toast.error('Gagal', { description: err.message }) }
+            }}
+          >
+            Setujui
+          </button>
+          <button
+            className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+            onClick={async () => {
+              try {
+                await updateKegiatan(row.id, { status: 'ditolak' })
+                toast.error('Ditolak!', { description: `Pengajuan "${row.kegiatan}" telah ditolak.` })
+                const res = await getKegiatan()
+                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, kegiatan: item.nama, ukm: 'UKM', tgl: item.tgl || item.tanggal || '', status: item.status })))
+              } catch (err) { toast.error('Gagal', { description: err.message }) }
+            }}
+          >
+            Tolak
+          </button>
+        </div>
+      ),
+    },
+  ]
   return (
     <DashboardLayout role="admin-fakultas" userName="Nouval Rafiif Irwan" userRole="Admin Fakultas">
       <div className="space-y-6">
@@ -94,7 +106,7 @@ function AdminFakultasDashboard() {
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold text-brand-dark">Pengajuan UKM</h3>
-          <DataTable columns={columns} data={pengajuanData} />
+          <DataTable columns={columns} data={data} />
         </div>
       </div>
     </DashboardLayout>

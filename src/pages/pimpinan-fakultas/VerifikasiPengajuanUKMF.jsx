@@ -3,33 +3,43 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
-
-const initialData = [
-  { id: 1, no: 1, kegiatan: 'Lomba Debat', namaUkmf: 'UKMF Debat', jenis: 'Lomba', skala: 'Nasional', tanggal: '8 Feb - 15 Feb 2026', status: 'pending' },
-  { id: 2, no: 2, kegiatan: 'Seminar AI', namaUkmf: 'UKMF AI', jenis: 'Seminar', skala: 'Lokal', tanggal: '10 Mar 2026', status: 'pending' },
-  { id: 3, no: 3, kegiatan: 'Bakti Sosial', namaUkmf: 'UKMF Sosial', jenis: 'Sosial', skala: 'Nasional', tanggal: '5 Apr 2026', status: 'pending' },
-  { id: 4, no: 4, kegiatan: 'Lomba Debat', namaUkmf: 'UKMF Debat', jenis: 'Lomba', skala: 'Internasional', tanggal: '12 Mei 2026', status: 'pending' },
-  { id: 5, no: 5, kegiatan: 'Seminar AI', namaUkmf: 'UKMF AI', jenis: 'Seminar', skala: 'Lokal', tanggal: '20 Jun 2026', status: 'pending' },
-]
-
-// module-level cache biar persist antar mount/unmount
-let dataCache = [...initialData]
+import { getKegiatan } from '../../services/kegiatanService'
 
 function VerifikasiPengajuanUKMF() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [ukmfData, setUkmfData] = useState(dataCache)
+  const [ukmfData, setUkmfData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const res = await getKegiatan()
+      setUkmfData(res.map((item, i) => ({
+        id: item.id,
+        no: i + 1,
+        kegiatan: item.nama || item.kegiatan,
+        namaUkmf: 'UKMF',
+        jenis: item.jenis,
+        skala: item.skala,
+        tanggal: item.tgl || item.tanggal || '',
+        status: item.status || 'pending',
+        penyelenggara: item.penyelenggara,
+      })))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (location.state?.updatedId) {
-      const newStatus = location.state.newStatus
-      const updatedStatus = location.state.updatedStatus || null
-      dataCache = dataCache.map((item) =>
-        item.id === location.state.updatedId
-          ? { ...item, status: newStatus, updatedStatus }
-          : item
-      )
-      setUkmfData([...dataCache])
+      loadData()
       window.history.replaceState({}, '')
     }
   }, [location.state])
