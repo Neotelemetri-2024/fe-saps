@@ -63,19 +63,63 @@ function sanitizePersetujuan(list) {
   })
 }
 
+const JENIS_LABEL = {
+  prestasi: 'Kompetisi',
+  organisasi: 'Organisasi',
+  pelatihan: 'Pelatihan',
+}
+
+const SKALA_LABEL = {
+  internasional: 'Internasional',
+  nasional: 'Nasional',
+  regional: 'Regional',
+  lokal: 'Internal (UNAND)',
+}
+
+function buildKategori(jenis, skala) {
+  const j = JENIS_LABEL[jenis] || jenis || 'Kegiatan'
+  const s = SKALA_LABEL[skala] || skala || ''
+  return s ? `${j} ${s}` : j
+}
+
+function formatDiajukanPada(iso) {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '-'
+  return d.toLocaleString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export async function ajukanKegiatan(data) {
   await delay()
+  const user = getCurrentUser()
   const list = readJson(PENGAJUAN_KEY)
+  const dibuatPada = new Date().toISOString()
   const newItem = {
     id: Date.now(),
     userId: 'mahasiswa',
+    namaMahasiswa: user?.nama || 'Amara Marshinta',
+    nim: data.nim || '2311121017',
+    prodi: data.prodi || 'Teknik Komputer, S1',
     kegiatan: data.kegiatan,
     jenis: data.jenis,
     peran: data.peran,
     skala: data.skala,
+    kategori: buildKategori(data.jenis, data.skala),
     penyelenggara: data.penyelenggara,
+    deskripsi: data.deskripsi || '',
+    linkWebsite: data.linkWebsite || '',
+    emailPenyelenggara: data.emailPenyelenggara || '',
     tanggal: formatTanggal(data.tanggal),
     status: 'pending',
+    dibuatPada,
+    diajukanPada: formatDiajukanPada(dibuatPada),
   }
   list.unshift(newItem)
   writeJson(PENGAJUAN_KEY, list)
@@ -88,6 +132,81 @@ export async function getPengajuan(userId) {
   return readJson(PENGAJUAN_KEY)
     .filter((p) => !userId || p.userId === userId)
     .sort((a, b) => Number(b.id) - Number(a.id))
+}
+
+/** Semua pengajuan kegiatan eksternal (untuk admin ditmawa) */
+export async function getPengajuanEksternal(params = {}) {
+  await delay()
+  let list = readJson(PENGAJUAN_KEY).sort((a, b) => Number(b.id) - Number(a.id))
+
+  if (params.status) list = list.filter((p) => p.status === params.status)
+  if (params.q) {
+    const q = params.q.toLowerCase()
+    list = list.filter(
+      (p) =>
+        (p.namaMahasiswa || '').toLowerCase().includes(q) ||
+        (p.nim || '').toLowerCase().includes(q) ||
+        (p.kegiatan || '').toLowerCase().includes(q) ||
+        (p.kategori || '').toLowerCase().includes(q),
+    )
+  }
+  if (params.kategori) list = list.filter((p) => p.kategori === params.kategori)
+  if (params.skala) list = list.filter((p) => p.skala === params.skala)
+  if (params.tahun) {
+    list = list.filter((p) => String(p.dibuatPada || '').startsWith(String(params.tahun)))
+  }
+
+  return list
+}
+
+export async function verifikasiPengajuanEksternal(pengajuanId, status, alasan) {
+  await delay()
+  const list = readJson(PENGAJUAN_KEY)
+  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
+  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
+
+  list[idx] = {
+    ...list[idx],
+    status,
+    ...(alasan ? { alasan } : {}),
+    diverifikasiPada: new Date().toISOString(),
+  }
+  writeJson(PENGAJUAN_KEY, list)
+  emitUpdate('pengajuan')
+  return list[idx]
+}
+
+/** Admin Ditmawa meneruskan pengajuan ke Pimpinan Ditmawa */
+export async function teruskanKePimpinanDitmawa(pengajuanId) {
+  await delay()
+  const list = readJson(PENGAJUAN_KEY)
+  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
+  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
+
+  list[idx] = {
+    ...list[idx],
+    status: 'diteruskan',
+    tahap: 'pimpinan-ditmawa',
+    diteruskanPada: new Date().toISOString(),
+  }
+  writeJson(PENGAJUAN_KEY, list)
+  emitUpdate('pengajuan')
+  return list[idx]
+}
+
+/** Antrian verifikasi di sisi Pimpinan Ditmawa */
+export async function getPengajuanPimpinanDitmawa() {
+  await delay()
+  return readJson(PENGAJUAN_KEY)
+    .filter((p) => p.tahap === 'pimpinan-ditmawa' || p.status === 'diteruskan')
+    .sort((a, b) => Number(b.id) - Number(a.id))
+}
+
+export async function getPengajuanEksternalById(id) {
+  await delay()
+  const item = readJson(PENGAJUAN_KEY).find((p) => String(p.id) === String(id))
+  if (!item) throw new Error('Pengajuan tidak ditemukan')
+  return item
 }
 
 export async function mintaPersetujuanDosen(data) {

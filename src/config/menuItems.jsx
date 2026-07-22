@@ -10,11 +10,13 @@ import {
   FileText,
   History,
   UserCircle,
-  LayoutGrid, 
-  UserCheck,  
+  LayoutGrid,
+  UserCheck,
   PlusCircle,
   CheckSquare,
   Award,
+  Search,
+  UserCog,
 } from 'lucide-react'
 
 /* ── MAHASISWA ── */
@@ -48,6 +50,7 @@ export const pimpinanDitmawaMenu = [
     label: 'Verifikasi',
     icon: <CheckCircle className="h-4 w-4" />,
     children: [
+      { path: '/pimpinan-ditmawa/verifikasi-pengajuan-eksternal', label: 'Verifikasi Pengajuan Eksternal' },
       { path: '#', label: 'Verifikasi Pengajuan UKM' },
       { path: '#', label: 'Verifikasi Klaim Poin Eksternal' },
     ],
@@ -85,21 +88,30 @@ export const pimpinanUtamaMenu = [
 
 /* ── ADMIN DITMAWA ── */
 export const adminDitmawaMenu = [
-  { path: '/admin-ditmawa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
+  { path: '/admin-ditmawa/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" />, end: true },
   {
     path: '#',
     label: 'Verifikasi',
-    icon: <CheckCircle className="h-4 w-4" />,
+    icon: <FileText className="h-4 w-4" />,
     children: [
-      { path: '/admin-ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin' },
-      { path: '#', label: 'Verifikasi Pengajuan Eksternal' },
-      { path: '#', label: 'Verifikasi Pengajuan UKM' },
+      { path: '/admin-ditmawa/verifikasi-pengajuan-eksternal', label: 'Verifikasi Pengajuan Eksternal' },
+      { path: '/admin-ditmawa/verifikasi-pengajuan-ukm', label: 'Verifikasi Pengajuan UKM' },
+      { path: '/admin-ditmawa/verifikasi-pengajuan-internal', label: 'Verifikasi Pengajuan Internal' },
+      { path: '/admin-ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin eksternal' },
     ],
   },
-  { path: '#', label: 'Manajemen event Global', icon: <FileText className="h-4 w-4" /> },
-  { path: '#', label: 'Manajemen akun UKM', icon: <Users className="h-4 w-4" /> },
-  { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
+  {
+    path: '#',
+    label: 'Event Global',
+    icon: <Search className="h-4 w-4" />,
+    children: [
+      { path: '/admin-ditmawa/manajemen-event', label: 'Buat Event' },
+      { path: '/admin-ditmawa/verifikasi-kegiatan', label: 'verifikasi kegiatan' },
+    ],
+  },
+  { path: '/admin-ditmawa/manajemen-akun-ukm', label: 'Manajemen akun UKM', icon: <UserCog className="h-4 w-4" /> },
+  { path: '/admin-ditmawa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
+  { path: '/admin-ditmawa/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN FAKULTAS ── */

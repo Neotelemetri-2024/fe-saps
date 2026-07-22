@@ -52,6 +52,9 @@ function AjukanKegiatanForm() {
         peran: formData.peranPencapaian,
         skala: formData.skalaKegiatan,
         penyelenggara: formData.penyelenggara,
+        deskripsi: formData.deskripsiKegiatan,
+        linkWebsite: formData.linkWebsite,
+        emailPenyelenggara: formData.emailPenyelenggara,
         tanggal,
       })
       toast.success('Berhasil!', {

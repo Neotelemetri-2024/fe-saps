@@ -5,6 +5,7 @@ const rolePrefixes = {
   mahasiswa: '/mahasiswa',
   'dosen-pa': '/dosen-pa',
   'pimpinan-fakultas': '/pimpinan-fakultas',
+  'pimpinan-ditmawa': '/pimpinan-ditmawa',
   'admin-ditmawa': '/admin-ditmawa',
   'admin-fakultas': '/admin-fakultas',
   ukm: '/ukm',

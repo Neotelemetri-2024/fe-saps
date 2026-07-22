@@ -18,6 +18,7 @@ import DosenPADetail from './pages/dosen-pa/Detail'
 import PermintaanPersetujuan from './pages/dosen-pa/PermintaanPersetujuan'
 import MahasiswaPerluPerhatian from './pages/dosen-pa/MahasiswaPerluPerhatian'
 import PimpinanDitmawaDashboard from './pages/pimpinan/DitmawaDashboard'
+import PimpinanDitmawaVerifikasiPengajuanEksternal from './pages/pimpinan/VerifikasiPengajuanEksternal'
 import PimpinanFakultasDashboard from './pages/pimpinan-fakultas/FakultasDashboard'
 import PimpinanFakultasPersetujuan from './pages/pimpinan-fakultas/FakultasPersetujuan'
 import PimpinanFakultasVerifikasiUKMF from './pages/pimpinan-fakultas/VerifikasiPengajuanUKMF'
@@ -27,6 +28,19 @@ import DetailFakultas from './pages/pimpinan-utama/DetailFakultas'
 import DetailFakultasProdi from './pages/pimpinan-utama/DetailFakultasProdi'
 import AdminDitmawaDashboard from './pages/admin-ditmawa/Dashboard'
 import AdminDitmawaVerifikasiKlaim from './pages/admin-ditmawa/VerifikasiKlaimPoin'
+import AdminDitmawaVerifikasiPengajuanEksternal from './pages/admin-ditmawa/VerifikasiPengajuanEksternal'
+import AdminDitmawaDetailVerifikasiPengajuanEksternal from './pages/admin-ditmawa/DetailVerifikasiPengajuanEksternal'
+import AdminDitmawaBuatEvent from './pages/admin-ditmawa/BuatEvent'
+import AdminDitmawaManajemenAkunUKM from './pages/admin-ditmawa/ManajemenAkunUKM'
+import AdminDitmawaManajemenEvent from './pages/admin-ditmawa/ManajemenEvent'
+import AdminDitmawaVerifikasiKegiatan from './pages/admin-ditmawa/VerifikasiKegiatan'
+import AdminDitmawaVerifikasiPengajuanUKM from './pages/admin-ditmawa/VerifikasiPengajuanUKM'
+import AdminDitmawaDetailVerifikasiPengajuanUKM from './pages/admin-ditmawa/DetailVerifikasiPengajuanUKM'
+import AdminDitmawaManajemenPesertaEvent from './pages/admin-ditmawa/ManajemenPesertaEvent'
+import AdminDitmawaDetailVerifikasiKlaimPoin from './pages/admin-ditmawa/DetailVerifikasiKlaimPoin'
+import AdminDitmawaVerifikasiPengajuanInternal from './pages/admin-ditmawa/VerifikasiPengajuanInternal'
+import AdminDitmawaAkunPengaturan from './pages/admin-ditmawa/AkunPengaturan'
+import AdminDitmawaNotifikasi from './pages/admin-ditmawa/Notifikasi'
 import AdminFakultasDashboard from './pages/admin/FakultasDashboard'
 import UKMDashboard from './pages/ukm/Dashboard'
 import UKMDaftarKegiatan from './pages/ukm/DaftarKegiatan'
@@ -71,6 +85,7 @@ function App() {
         {/* Pimpinan Ditmawa */}
         <Route path="pimpinan-ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan-ditmawa']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<PimpinanDitmawaDashboard />} />
+          <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiPengajuanEksternal />} />
         </Route>
 
         {/* Pimpinan Fakultas */}
@@ -91,7 +106,21 @@ function App() {
         {/* Admin Ditmawa */}
         <Route path="admin-ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['admin-ditmawa']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<AdminDitmawaDashboard />} />
+          <Route path="verifikasi-pengajuan-eksternal" element={<AdminDitmawaVerifikasiPengajuanEksternal />} />
+          <Route path="verifikasi-pengajuan-eksternal/:id" element={<AdminDitmawaDetailVerifikasiPengajuanEksternal />} />
           <Route path="verifikasi-klaim" element={<AdminDitmawaVerifikasiKlaim />} />
+          <Route path="verifikasi-klaim/:id" element={<AdminDitmawaDetailVerifikasiKlaimPoin />} />
+          <Route path="verifikasi-pengajuan-internal" element={<AdminDitmawaVerifikasiPengajuanInternal />} />
+          <Route path="buat-event" element={<AdminDitmawaBuatEvent />} />
+          <Route path="manajemen-akun-ukm" element={<AdminDitmawaManajemenAkunUKM />} />
+          <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
+          <Route path="verifikasi-kegiatan" element={<AdminDitmawaVerifikasiKegiatan />} />
+          <Route path="verifikasi-pengajuan-ukm" element={<AdminDitmawaVerifikasiPengajuanUKM />} />
+          <Route path="verifikasi-pengajuan-ukm/:id" element={<AdminDitmawaDetailVerifikasiPengajuanUKM />} />
+          <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
+          <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
+          <Route path="pengaturan" element={<AdminDitmawaAkunPengaturan />} />
+          <Route path="notifikasi" element={<AdminDitmawaNotifikasi />} />
         </Route>
 
         {/* Admin Fakultas */}

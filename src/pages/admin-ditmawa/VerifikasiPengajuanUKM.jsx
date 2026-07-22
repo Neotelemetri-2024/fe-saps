@@ -1,28 +1,27 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Filter, Search, Check } from 'lucide-react'
+import { Clock, Filter, Search, Check } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const PAGE_SIZE = 10
 
-const klaimData = [
-  { no: 1, mahasiswa: 'AURA NEVIA', nim: '2311121053', prodi: 'Teknik Komputer, S1', kegiatan: 'Lomba Hackathon', kategori: 'Kompetisi Nasional', peran: 'Juara 1', tanggal: '8 Feb - 15 Feb 2026', info: 'Hima Teknologi Informasi Universitas Andalas', status: 'pending' },
-  { no: 2, mahasiswa: 'BUDI SANTOSO', nim: '2311121001', prodi: 'Sistem Informasi, S1', kegiatan: 'Seminar AI', kategori: 'Seminar', peran: 'Peserta', tanggal: '10 Mar 2026', info: 'Universitas Andalas', status: 'pending' },
-  { no: 3, mahasiswa: 'CITRA DEWI', nim: '2311121002', prodi: 'Teknik Elektro, S1', kegiatan: 'Workshop IoT', kategori: 'Pelatihan', peran: 'Peserta', tanggal: '5 Apr 2026', info: 'Hima Elektro Unand', status: 'disetujui' },
+const DUMMY_UKM_PENGAJUAN = [
+  { id: 'ukm-1', namaMahasiswa: 'AUFA ALATA', nim: '2310512011', prodi: 'Teknik Komputer, S1', kegiatan: 'Lomba hackathon', kategori: 'Kompetisi', peran: 'Juara 1', tanggal: '01 Feb - 15 Nov 2026', status: 'diteruskan', diajukanPada: 'Selasa, 4 Feb 2026, 15:37' },
+  { id: 'ukm-2', namaMahasiswa: 'AUFA ALATA', nim: '2310512011', prodi: 'Teknik Komputer, S1', kegiatan: 'Lomba hackathon', kategori: 'Kompetisi', peran: 'Juara 1', tanggal: '01 Feb - 15 Nov 2026', status: 'pending', diajukanPada: 'Selasa, 4 Feb 2026, 15:37' },
+  { id: 'ukm-3', namaMahasiswa: 'AUFA ALATA', nim: '2310512011', prodi: 'Teknik Komputer, S1', kegiatan: 'Lomba hackathon', kategori: 'Kompetisi', peran: 'Juara 1', tanggal: '01 Feb - 15 Nov 2026', status: 'pending', diajukanPada: 'Selasa, 4 Feb 2026, 15:37' },
 ]
 
-function VerifikasiKlaimPoin() {
+function VerifikasiPengajuanUKM() {
   const navigate = useNavigate()
-  const [items, setItems] = useState(klaimData)
+  const [items, setItems] = useState(DUMMY_UKM_PENGAJUAN)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
-  const [peran, setPeran] = useState('')
+  const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
   const [skala, setSkala] = useState('')
-  const [tahun, setTahun] = useState('')
   const [page, setPage] = useState(1)
 
   // Pilih Beberapa
@@ -37,55 +36,58 @@ function VerifikasiKlaimPoin() {
       if (kategori && item.kategori !== kategori) return false
       if (!q) return true
       return (
-        item.mahasiswa.toLowerCase().includes(q) ||
-        item.kegiatan.toLowerCase().includes(q) ||
-        item.kategori.toLowerCase().includes(q)
+        (item.namaMahasiswa || '').toLowerCase().includes(q) ||
+        (item.nim || '').toLowerCase().includes(q) ||
+        (item.kegiatan || '').toLowerCase().includes(q) ||
+        (item.kategori || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, peran, status, skala, tahun])
+  }, [items, search, kategori, tahun, status, skala])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const showingFrom = filtered.length === 0 ? 0 : start + 1
+  const showingTo = Math.min(start + PAGE_SIZE, filtered.length)
 
-  const toggleSelect = (no) => {
+  const resetFilter = () => {
+    setSearch(''); setKategori(''); setTahun(''); setStatus(''); setSkala(''); setPage(1)
+  }
+
+  const toggleSelect = (id) => {
     setSelected((prev) => {
       const next = new Set(prev)
-      if (next.has(no)) next.delete(no)
-      else next.add(no)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
-  const allPageSelected = pageItems.length > 0 && pageItems.every((i) => selected.has(i.no))
+  const allPageSelected = pageItems.length > 0 && pageItems.every((i) => selected.has(i.id))
 
   const centangSemua = () => {
     if (allPageSelected) setSelected(new Set())
-    else setSelected(new Set(pageItems.map((i) => i.no)))
+    else setSelected(new Set(pageItems.map((i) => i.id)))
   }
 
   const handleBulkConfirm = () => {
     setItems((prev) =>
-      prev.map((item) => selected.has(item.no) ? { ...item, status: 'disetujui' } : item)
+      prev.map((item) => selected.has(item.id) ? { ...item, status: 'diteruskan' } : item)
     )
-    toast.success(`${selected.size} klaim poin berhasil disetujui.`)
+    toast.success(`${selected.size} pengajuan UKM disetujui dan diteruskan ke Pimpinan.`)
     setSelected(new Set())
     setPilihanMode(false)
     setShowBulkConfirm(false)
-  }
-
-  const resetFilter = () => {
-    setSearch(''); setKategori(''); setPeran(''); setStatus(''); setSkala(''); setTahun(''); setPage(1)
   }
 
   return (
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        title="Apakah anda yakin menyetujui klaim poin ini ?"
-        message={`${selected.size} klaim poin akan disetujui.`}
-        confirmText="YA, SETUJUI"
+        title="Apakah anda yakin menyetujui semua kegiatan ini ?"
+        message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan ini dan meneruskannya ke Pimpinan Ditmawa?`}
+        confirmText="TERUSKAN KE PIMPINAN"
         cancelText="BATAL"
         onConfirm={handleBulkConfirm}
         onCancel={() => setShowBulkConfirm(false)}
@@ -93,7 +95,9 @@ function VerifikasiKlaimPoin() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Verifikasi Klaim Poin Kegiatan Eksternal</h2>
+          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
+            Verifikasi Pengajuan Kegiatan Eksternal
+          </h2>
         </div>
 
         <div className="space-y-3">
@@ -108,7 +112,8 @@ function VerifikasiKlaimPoin() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
+            <button type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
               <Filter className="h-4 w-4" /> Filter
             </button>
           </div>
@@ -117,21 +122,21 @@ function VerifikasiKlaimPoin() {
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Kategori</option>
-              <option value="Kompetisi Nasional">Kompetisi Nasional</option>
-              <option value="Seminar">Seminar</option>
+              <option value="Kompetisi">Kompetisi</option>
               <option value="Pelatihan">Pelatihan</option>
+              <option value="Seminar">Seminar</option>
             </select>
-            <select value={peran} onChange={(e) => { setPeran(e.target.value); setPage(1) }}
+            <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Peran</option>
-              <option value="Juara 1">Juara 1</option>
-              <option value="Peserta">Peserta</option>
+              <option value="">Tahun</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Status</option>
               <option value="pending">Pending</option>
-              <option value="disetujui">Disetujui</option>
+              <option value="diteruskan">Diteruskan</option>
               <option value="ditolak">Ditolak</option>
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
@@ -139,12 +144,8 @@ function VerifikasiKlaimPoin() {
               <option value="">Skala</option>
               <option value="nasional">Nasional</option>
               <option value="internasional">Internasional</option>
-            </select>
-            <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Tahun</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
+              <option value="regional">Regional</option>
+              <option value="lokal">Universitas</option>
             </select>
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
@@ -164,12 +165,11 @@ function VerifikasiKlaimPoin() {
               <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161]">
+                  className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
                   Batal Pilih
                 </button>
-                <button type="button"
-                  onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
-                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white">
+                <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
+                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
                   Selanjutnya
                 </button>
               </div>
@@ -196,7 +196,6 @@ function VerifikasiKlaimPoin() {
                   <th className="px-4 py-3">Kategori</th>
                   <th className="px-4 py-3">Peran</th>
                   <th className="px-4 py-3">Tanggal</th>
-                  <th className="px-4 py-3">Info Penyelenggara</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Aksi</th>
                 </tr>
@@ -204,45 +203,49 @@ function VerifikasiKlaimPoin() {
               <tbody>
                 {pageItems.length === 0 ? (
                   <tr>
-                    <td colSpan={pilihanMode ? 10 : 9} className="px-4 py-10 text-center text-[#616161]">
-                      Tidak ada data klaim poin.
+                    <td colSpan={pilihanMode ? 9 : 8} className="px-4 py-10 text-center text-[#616161]">
+                      Belum ada pengajuan UKM.
                     </td>
                   </tr>
                 ) : (
-                  pageItems.map((item) => (
-                    <tr key={item.no} className={`border-b border-[#e9ebf8] last:border-0 ${selected.has(item.no) ? 'bg-green-50' : 'hover:bg-[#f9fafb]'}`}>
+                  pageItems.map((item, index) => (
+                    <tr key={item.id} className={`border-b border-[#e9ebf8] last:border-0 ${selected.has(item.id) ? 'bg-green-50' : 'hover:bg-[#f9fafb]'}`}>
                       {pilihanMode && (
                         <td className="px-4 py-3">
-                          <button type="button" onClick={() => toggleSelect(item.no)}
-                            className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${selected.has(item.no) ? 'border-brand-dark bg-brand-dark' : 'border-[#c4c6cf] bg-white hover:border-brand-dark'}`}>
-                            {selected.has(item.no) && <Check className="h-3 w-3 text-white" />}
+                          <button type="button" onClick={() => toggleSelect(item.id)}
+                            className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${selected.has(item.id) ? 'border-brand-dark bg-brand-dark' : 'border-[#c4c6cf] bg-white hover:border-brand-dark'}`}>
+                            {selected.has(item.id) && <Check className="h-3 w-3 text-white" />}
                           </button>
                         </td>
                       )}
-                      <td className="px-4 py-3 text-[#616161]">{start + items.indexOf(item) + 1}</td>
+                      <td className="px-4 py-3 text-[#616161]">{start + index + 1}</td>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-brand-dark">{item.mahasiswa}</p>
-                        <p className="text-[11px] text-orange-500">{item.nim}</p>
-                        <p className="text-[11px] text-sky-500">{item.prodi}</p>
+                        <div className="flex flex-col gap-0.5">
+                          <p className="font-bold uppercase text-[#333]">{item.namaMahasiswa}</p>
+                          <p className="text-sm font-medium text-orange-500">{item.nim}</p>
+                          <p className="text-sm text-sky-500">{item.prodi}</p>
+                          <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                            <Clock className="h-3.5 w-3.5 shrink-0" />
+                            <span>{item.diajukanPada}</span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-[#616161]">{item.kegiatan}</td>
                       <td className="px-4 py-3 text-brand-light">{item.kategori}</td>
                       <td className="px-4 py-3 text-[#616161]">{item.peran}</td>
                       <td className="px-4 py-3 text-[#616161]">{item.tanggal}</td>
-                      <td className="px-4 py-3 text-xs text-[#616161]">{item.info}</td>
                       <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
                       <td className="px-4 py-3">
                         {pilihanMode ? (
-                          <button type="button" onClick={() => toggleSelect(item.no)}
-                            className={`flex h-6 w-6 items-center justify-center rounded border-2 transition ${selected.has(item.no) ? 'border-brand-dark bg-brand-dark text-white' : 'border-[#c4c6cf] text-transparent'}`}>
+                          <button type="button" onClick={() => toggleSelect(item.id)}
+                            className={`flex h-6 w-6 items-center justify-center rounded border-2 transition ${selected.has(item.id) ? 'border-brand-dark bg-brand-dark text-white' : 'border-[#c4c6cf] text-transparent'}`}>
                             <Check className="h-3.5 w-3.5" />
                           </button>
                         ) : (
-                          <button
-                            onClick={() => navigate(`/admin-ditmawa/verifikasi-klaim/${item.no}`, { state: { item } })}
-                            className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
-                          >
-                            Detail dan verifikasi
+                          <button type="button"
+                            onClick={() => navigate(`/admin-ditmawa/verifikasi-pengajuan-ukm/${item.id}`, { state: { item } })}
+                            className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
+                            Detail
                           </button>
                         )}
                       </td>
@@ -253,7 +256,7 @@ function VerifikasiKlaimPoin() {
             </table>
           </div>
           <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-4 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing {filtered.length === 0 ? 0 : start + 1} - {Math.min(start + PAGE_SIZE, filtered.length)} From Total {filtered.length}</span>
+            <span>Showing {showingFrom} - {showingTo} From Total {filtered.length}</span>
             <span>Page {currentPage} of {totalPages}</span>
             <div className="flex items-center gap-1">
               <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -272,4 +275,4 @@ function VerifikasiKlaimPoin() {
   )
 }
 
-export default VerifikasiKlaimPoin
+export default VerifikasiPengajuanUKM

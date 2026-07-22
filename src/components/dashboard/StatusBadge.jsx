@@ -1,4 +1,5 @@
 const statusConfig = {
+  diteruskan: { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500', label: 'Diteruskan' },
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500', label: 'Pending' },
   disetujui: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Disetujui' },
   ditolak: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500', label: 'Ditolak' },

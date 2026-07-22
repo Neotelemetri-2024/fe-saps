@@ -5,11 +5,13 @@ const USER_STORAGE_KEY = 'saps_current_user'
 const loginMap = [
   { prefix: 'mahasiswa', role: 'mahasiswa', nama: 'Amara Marshinta', userRole: 'Mahasiswa' },
   { prefix: 'dosen', role: 'dosen-pa', nama: 'Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP', userRole: 'Dosen Pembimbing' },
+  { prefix: 'pimpinan-ditmawa', role: 'pimpinan-ditmawa', nama: 'Dr. Dendi Adi Saputra', userRole: 'Pimpinan Ditmawa' },
   { prefix: 'pimpinan-fakultas', role: 'pimpinan-fakultas', nama: 'Dr. Andi Wijaya', userRole: 'Pimpinan Fakultas' },
   { prefix: 'admin-ditmawa', role: 'admin-ditmawa', nama: 'Admin Ditmawa', userRole: 'Admin Ditmawa' },
   { prefix: 'admin', role: 'admin-fakultas', nama: 'Nouval Rafiif Irwan', userRole: 'Admin Fakultas' },
-  { prefix: 'ukm', role: 'ukm', nama: 'Naufal Rafiif Irwan', userRole: 'Operator UKM' },
+  // ukmf harus sebelum ukm (karena matching pakai startsWith)
   { prefix: 'ukmf', role: 'ukmf', nama: 'Operator UKMF', userRole: 'Operator UKMF' },
+  { prefix: 'ukm', role: 'ukm', nama: 'Naufal Rafiif Irwan', userRole: 'Operator UKM' },
   { prefix: 'pimpinan-utama', role: 'pimpinan-utama', nama: 'Pimpinan Utama', userRole: 'Pimpinan Utama' },
 ]
 

@@ -21,6 +21,7 @@ function LoginPage() {
         mahasiswa: '/mahasiswa/dashboard',
         'dosen-pa': '/dosen-pa/dashboard',
         'pimpinan-fakultas': '/pimpinan-fakultas/dashboard',
+        'pimpinan-ditmawa': '/pimpinan-ditmawa/dashboard',
         'admin-ditmawa': '/admin-ditmawa/dashboard',
         'admin-fakultas': '/admin-fakultas/dashboard',
         ukm: '/ukm/dashboard',
