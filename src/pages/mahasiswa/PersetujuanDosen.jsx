@@ -1,13 +1,49 @@
 import React, { useState, useEffect } from 'react'
 import { PlusCircle, Search, Filter } from 'lucide-react'
 import { toast } from 'sonner'
-import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import DatePickerInput from '../../components/ui/DatePickerInput'
-import { mintaPersetujuanDosen, getPersetujuanDosen } from '../../services/pengajuanService'
+import { mintaPersetujuanDosen, getPersetujuanDosen, subscribeDataUpdate } from '../../services/pengajuanService'
+
+function formatTanggal(value) {
+  if (!value) return '-'
+  if (typeof value === 'string') return value
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+  return String(value)
+}
+
+const labelMap = {
+  prestasi: 'Prestasi/Kompetisi',
+  organisasi: 'Organisasi/Volunteer',
+  pelatihan: 'Pelatihan/Seminar',
+  juara1: 'Juara 1',
+  juara2: 'Juara 2',
+  juara3: 'Juara 3',
+  peserta: 'Peserta',
+}
+
+function formatLabel(value) {
+  return labelMap[value] || value || '-'
+}
+
+function mapPersetujuanRows(items) {
+  return items.map((item, i) => ({
+    ...item,
+    no: i + 1,
+    jenis: formatLabel(item.jenis),
+    peran: formatLabel(item.peran),
+    tanggal: formatTanggal(item.tanggal),
+  }))
+}
 
 const columns = [
   { key: 'no', label: 'NO' },
@@ -41,7 +77,6 @@ const columns = [
 ]
 
 function PersetujuanDosen() {
-  const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState([])
@@ -71,16 +106,15 @@ function PersetujuanDosen() {
         jenis: formData.jenisKegiatan,
         peran: formData.peranPencapaian,
         penyelenggara: formData.penyelenggara,
-        tanggal: formData.tanggalPelaksanaan,
+        tanggal: formatTanggal(formData.tanggalPelaksanaan),
       })
       toast.success('Berhasil!', {
-        description: 'Permohonan persetujuan dosen berhasil dikirim.',
+        description: 'Permohonan terkirim ke Dosen PA. Login sebagai dosen untuk melihatnya.',
       })
       setShowModal(false)
       setFormData({ jenisKegiatan: '', namaKegiatan: '', penyelenggara: '', peranPencapaian: '', tanggalPelaksanaan: null })
-      // refresh data
       const res = await getPersetujuanDosen()
-      setData(res.map((item, i) => ({ no: i + 1, ...item })))
+      setData(mapPersetujuanRows(res))
     } catch (err) {
       toast.error('Gagal', { description: err.message })
     } finally {
@@ -89,7 +123,13 @@ function PersetujuanDosen() {
   }
 
   useEffect(() => {
-    getPersetujuanDosen().then((res) => setData(res.map((item, i) => ({ no: i + 1, ...item }))))
+    const load = () => {
+      getPersetujuanDosen()
+        .then((res) => setData(mapPersetujuanRows(res)))
+        .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
+    }
+    load()
+    return subscribeDataUpdate(load)
   }, [])
 
   const handleClose = () => {

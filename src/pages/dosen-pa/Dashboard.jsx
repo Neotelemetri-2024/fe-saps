@@ -1,22 +1,18 @@
+import { useEffect, useState } from 'react'
 import { Download, Clock, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import logoUnand from '../../assets/logo_unand.png'
+import { getPersetujuanDosen, getPendingPersetujuanCount } from '../../services/pengajuanService'
 
 // ---------------------------------------------------------------------------
 // Mock data — swap these for real API data
 // ---------------------------------------------------------------------------
-const stats = [
+const baseStats = [
   { label: 'TOTAL MAHASISWA', value: '15', tone: 'emerald', link: true },
   { label: 'RATA RATA IPK', value: '3,80', tone: 'emerald', link: false },
-  { label: 'PENDING APPROVAL', value: '3', tone: 'amber', link: false },
+  { label: 'PENDING APPROVAL', value: '0', tone: 'amber', link: false },
   { label: 'PERLU PERHATIAN', value: '2', tone: 'red', link: false, sublabel: 'Mahasiswa' },
-]
-
-const permintaanPersetujuan = [
-  { nama: 'Ahmad Pratama', desc: 'mengikuti hackaton firetech dari UKM Neo Telemetri' },
-  { nama: 'Ilham Furqan', desc: 'Lomba poster Inovasi Digital' },
-  { nama: 'Ilham Furqan', desc: 'Lomba poster Inovasi Digital' },
 ]
 
 const prodiChart = [
@@ -45,8 +41,11 @@ function StatBox({ label, value, tone, link, sublabel }) {
   const s = toneStyles[tone]
   return (
     <div
-      className={`rounded-xl border-2 bg-white p-5 shadow-sm ${s.border} ${link || label === 'PERLU PERHATIAN' ? 'cursor-pointer' : ''}`}
-      onClick={() => { if (label === 'PERLU PERHATIAN') navigate('/dosen-pa/mahasiswa-perlu-perhatian') }}
+      className={`rounded-xl border-2 bg-white p-5 shadow-sm ${s.border} ${link || label === 'PERLU PERHATIAN' || label === 'PENDING APPROVAL' ? 'cursor-pointer' : ''}`}
+      onClick={() => {
+        if (label === 'PERLU PERHATIAN') navigate('/dosen-pa/mahasiswa-perlu-perhatian')
+        if (label === 'PENDING APPROVAL') navigate('/dosen-pa/permintaan-persetujuan')
+      }}
     >
       <p className={`text-xs font-semibold tracking-wide ${s.label}`}>{label}</p>
       <p className={`mt-2 text-3xl font-extrabold ${s.value}`}>
@@ -173,6 +172,29 @@ function Pagination({ page = 1, totalPages = 2, showingFrom = 1, showingTo = 10,
 // Main component
 // ---------------------------------------------------------------------------
 function DosenPADashboard() {
+  const navigate = useNavigate()
+  const [stats, setStats] = useState(baseStats)
+  const [permintaanPersetujuan, setPermintaanPersetujuan] = useState([])
+
+  useEffect(() => {
+    Promise.all([
+      getPendingPersetujuanCount(),
+      getPersetujuanDosen({ status: 'pending' }),
+    ]).then(([count, pending]) => {
+      setStats((prev) =>
+        prev.map((s) =>
+          s.label === 'PENDING APPROVAL' ? { ...s, value: String(count) } : s
+        )
+      )
+      setPermintaanPersetujuan(
+        pending.slice(0, 5).map((item) => ({
+          nama: item.namaMahasiswa || 'Mahasiswa',
+          desc: item.kegiatan,
+        }))
+      )
+    })
+  }, [])
+
   return (
     <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
@@ -207,20 +229,28 @@ function DosenPADashboard() {
             <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
               <h3 className="text-lg font-bold text-brand-dark">Permintaan Persetujuan</h3>
               <div className="mt-4 divide-y divide-[#eef0f7]">
-                {permintaanPersetujuan.map((p, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3">
-                    <img src={logoUnand} alt="Logo" className="h-10 w-auto object-contain" />
-                    <div>
-                      <p className="text-sm font-semibold text-brand-dark">{p.nama}</p>
-                      <p className="text-xs text-[#616161]">{p.desc}</p>
+                {permintaanPersetujuan.length === 0 ? (
+                  <p className="py-3 text-sm text-[#616161]">Belum ada permintaan pending.</p>
+                ) : (
+                  permintaanPersetujuan.map((p, i) => (
+                    <div key={i} className="flex items-center gap-3 py-3">
+                      <img src={logoUnand} alt="Logo" className="h-10 w-auto object-contain" />
+                      <div>
+                        <p className="text-sm font-semibold text-brand-dark">{p.nama}</p>
+                        <p className="text-xs text-[#616161]">{p.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               <div className="mt-3 text-right">
-                <a href="#" className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark">
+                <button
+                  type="button"
+                  onClick={() => navigate('/dosen-pa/permintaan-persetujuan')}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark"
+                >
                   Lihat Detail <ChevronRight className="h-4 w-4" />
-                </a>
+                </button>
               </div>
             </div>
           </div>

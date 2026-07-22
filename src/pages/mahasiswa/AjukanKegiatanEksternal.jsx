@@ -1,15 +1,55 @@
+import { useEffect, useState } from 'react'
 import { PlusCircle, Search, Filter } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import { getPengajuan } from '../../services/pengajuanService'
 
-const pengajuanData = [
-  { no: 1, kegiatan: 'SEMINAR AI & TEKNOLOGI', tanggalInput: 'Selasa, 4 Feb 2025, 15:37', jenis: 'Kompetisi', peran: 'Peserta', penyelenggara: 'Hima FTI UNPAD', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'pending' },
-  { no: 2, kegiatan: 'WORKSHOP GRAPHIC DESIGN', tanggalInput: 'Selasa, 4 Feb 2025, 15:37', jenis: 'Pelatihan', peran: 'Peserta', penyelenggara: 'Hima FTI UNPAD', tanggal: '12 Feb - 15 Feb 2026', skala: 'Regional', status: 'pending' },
-  { no: 3, kegiatan: 'LOMBA KARYA TULIS ILMIAH', tanggalInput: 'Selasa, 4 Feb 2025, 15:37', jenis: 'Lomba', peran: 'Juara 1', penyelenggara: 'Universitas Indonesia', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'ditolak', alasan: 'Berkas persyaratan tidak lengkap. Silakan lengkapi dokumen pendukung dan ajukan kembali.' },
-]
+const peranLabel = {
+  juara1: 'Juara 1',
+  juara2: 'Juara 2',
+  juara3: 'Juara 3',
+  peserta: 'Peserta',
+  prestasi: 'Prestasi/Kompetisi',
+  organisasi: 'Organisasi/Volunteer',
+  pelatihan: 'Pelatihan/Seminar',
+  internasional: 'Internasional',
+  nasional: 'Nasional',
+  regional: 'Regional',
+  lokal: 'Internal (UNAND)',
+}
+
+function formatLabel(value) {
+  if (!value) return '-'
+  return peranLabel[value] || value
+}
+
+function formatTanggal(value) {
+  if (!value) return '-'
+  if (typeof value === 'string') return value
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+  return String(value)
+}
+
+function mapPengajuanRows(items) {
+  return items.map((item, i) => ({
+    ...item,
+    no: i + 1,
+    kegiatan: item.kegiatan,
+    jenis: formatLabel(item.jenis),
+    peran: formatLabel(item.peran),
+    skala: formatLabel(item.skala),
+    tanggal: formatTanggal(item.tanggal),
+  }))
+}
 
 const columns = [
   { key: 'no', label: 'NO' },
@@ -43,13 +83,22 @@ const columns = [
 
 function AjukanKegiatanEksternal() {
   const navigate = useNavigate()
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    getPengajuan('mahasiswa')
+      .then((res) => setData(mapPengajuanRows(res)))
+      .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-4 sm:space-y-6">
         <h2 className="text-lg font-bold text-brand-dark sm:text-2xl">Daftar Pengajuan</h2>
 
-        {/* Tombol Tambah Ajukan Kegiatan */}
         <button
           onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto sm:px-6 sm:py-3"
@@ -59,13 +108,10 @@ function AjukanKegiatanEksternal() {
           <span className="hidden sm:inline">Tambah ajukan kegiatan</span>
         </button>
 
-        {/* Kegiatan yang telah diajukan */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
           <h3 className="text-sm font-bold text-brand-dark sm:text-lg">Kegiatan yang telah diajukan</h3>
 
-          {/* Search and Filters */}
           <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
-            {/* Search */}
             <div className="flex w-full items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
               <Search className="h-3.5 w-3.5 shrink-0 text-[#616161] sm:h-4 sm:w-4" />
               <input
@@ -75,7 +121,6 @@ function AjukanKegiatanEksternal() {
               />
             </div>
 
-            {/* Filter button - only on mobile, toggles dropdowns */}
             <details className="w-full sm:hidden">
               <summary className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white">
                 <Filter className="h-4 w-4" />
@@ -101,7 +146,6 @@ function AjukanKegiatanEksternal() {
               <button className="mt-2 w-full text-center text-xs font-medium text-[#616161] hover:underline">Reset Filter</button>
             </details>
 
-            {/* Filter - desktop */}
             <div className="hidden items-center gap-3 sm:flex">
               <button className="flex items-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
                 <Filter className="h-4 w-4" />
@@ -126,9 +170,12 @@ function AjukanKegiatanEksternal() {
             </div>
           </div>
 
-          {/* DataTable */}
           <div className="mt-8">
-            <DataTable columns={columns} data={pengajuanData} />
+            {loading ? (
+              <p className="py-8 text-center text-sm text-[#616161]">Memuat data...</p>
+            ) : (
+              <DataTable columns={columns} data={data} />
+            )}
           </div>
         </div>
       </div>

@@ -1,15 +1,39 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Filter, Pencil } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
-import { getPersetujuanDosen, setujuiTolak } from '../../services/pengajuanService'
+import { getPersetujuanDosen, setujuiTolak, subscribeDataUpdate } from '../../services/pengajuanService'
+
+const labelMap = {
+  prestasi: 'Prestasi/Kompetisi',
+  organisasi: 'Organisasi/Volunteer',
+  pelatihan: 'Pelatihan/Seminar',
+  juara1: 'Juara 1',
+  juara2: 'Juara 2',
+  juara3: 'Juara 3',
+  peserta: 'Peserta',
+}
+
+function formatLabel(value) {
+  return labelMap[value] || value || '-'
+}
+
+function mapRows(items) {
+  return items.map((item, i) => ({
+    ...item,
+    no: i + 1,
+    jenis: formatLabel(item.jenis),
+    peran: formatLabel(item.peran),
+    mahasiswa: item.namaMahasiswa || 'Mahasiswa',
+  }))
+}
 
 const columns = (openModal) => [
   { key: 'no', label: 'NO' },
+  { key: 'mahasiswa', label: 'MAHASISWA' },
   { key: 'kegiatan', label: 'KEGIATAN' },
   { key: 'jenis', label: 'JENIS' },
   { key: 'peran', label: 'PERAN' },
@@ -19,25 +43,33 @@ const columns = (openModal) => [
   {
     key: 'aksi',
     label: 'AKSI',
-    render: (row) => (
-      <button
-        onClick={() => openModal(row)}
-        className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
-    ),
+    render: (row) =>
+      row.status === 'pending' ? (
+        <button
+          onClick={() => openModal(row)}
+          className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+          title="Verifikasi"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+      ) : (
+        <span className="text-xs text-[#969696]">Selesai</span>
+      ),
   },
 ]
 
 function PermintaanPersetujuan() {
-  const navigate = useNavigate()
   const [data, setData] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedRow, setSelectedRow] = useState(null)
   const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const loadData = async () => {
+    const res = await getPersetujuanDosen()
+    setData(mapRows(res))
+  }
 
   const openModal = (row) => {
     setSelectedRow(row)
@@ -52,11 +84,10 @@ function PermintaanPersetujuan() {
       try {
         await setujuiTolak(selectedRow.id, 'disetujui', '')
         toast.success('Disetujui!', {
-          description: `Kegiatan "${selectedRow.kegiatan}" berhasil disetujui.`,
+          description: `Kegiatan "${selectedRow.kegiatan}" dari ${selectedRow.mahasiswa} berhasil disetujui.`,
         })
         setModalOpen(false)
-        const res = await getPersetujuanDosen()
-        setData(res.map((item, i) => ({ no: i + 1, ...item })))
+        await loadData()
       } catch (err) {
         toast.error('Gagal', { description: err.message })
       } finally {
@@ -84,8 +115,7 @@ function PermintaanPersetujuan() {
       })
       setAlasan('')
       setModalOpen(false)
-      const res = await getPersetujuanDosen()
-      setData(res.map((item, i) => ({ no: i + 1, ...item })))
+      await loadData()
     } catch (err) {
       toast.error('Gagal', { description: err.message })
     } finally {
@@ -94,19 +124,30 @@ function PermintaanPersetujuan() {
   }
 
   useEffect(() => {
-    getPersetujuanDosen().then((res) => setData(res.map((item, i) => ({ no: i + 1, ...item }))))
+    loadData().catch((err) => toast.error('Gagal memuat data', { description: err.message }))
+    return subscribeDataUpdate(() => {
+      loadData().catch(() => {})
+    })
   }, [])
 
   return (
     <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Setujui Kegiatan dari Mahasiswa">
+        {selectedRow && (
+          <div className="mb-4 rounded-lg bg-[#f9fafb] p-3 text-sm text-[#333]">
+            <p><span className="font-semibold">Mahasiswa:</span> {selectedRow.mahasiswa}</p>
+            <p><span className="font-semibold">Kegiatan:</span> {selectedRow.kegiatan}</p>
+            <p><span className="font-semibold">Penyelenggara:</span> {selectedRow.penyelenggara}</p>
+          </div>
+        )}
         {!actionType ? (
           <div className="flex justify-center gap-4">
             <button
               onClick={() => handleAction('setuju')}
-              className="flex-1 rounded-xl bg-green-700 px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+              disabled={loading}
+              className="flex-1 rounded-xl bg-green-700 px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 disabled:opacity-60"
             >
-              SETUJU
+              {loading ? 'Memproses...' : 'SETUJU'}
             </button>
             <button
               onClick={() => handleAction('revisi')}
@@ -138,9 +179,10 @@ function PermintaanPersetujuan() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={handleKirimAlasan}
-                className={`rounded-xl px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-700'}`}
+                disabled={loading}
+                className={`rounded-xl px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-700'}`}
               >
-                KIRIM ALASAN
+                {loading ? 'Mengirim...' : 'KIRIM ALASAN'}
               </button>
               <button
                 onClick={() => { setActionType(null); setAlasan('') }}
@@ -154,8 +196,20 @@ function PermintaanPersetujuan() {
       </Modal>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Permintaan Persetujuan</h2>
-        
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-brand-dark">Permintaan Persetujuan</h2>
+            <p className="text-sm text-[#616161]">Pengajuan dari mahasiswa bimbingan Anda akan muncul di sini.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadData().then(() => toast.success('Data diperbarui'))}
+            className="rounded-lg border border-brand-dark px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+          >
+            Refresh
+          </button>
+        </div>
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
             <Search className="h-4 w-4 text-[#616161]" />
@@ -169,7 +223,7 @@ function PermintaanPersetujuan() {
             <Filter className="h-4 w-4" />
             Filter
           </button>
-          
+
           <select className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
             <option>Kategori</option>
           </select>
@@ -191,6 +245,11 @@ function PermintaanPersetujuan() {
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold text-brand-dark">Permintaan Persetujuan</h3>
           <DataTable columns={columns(openModal)} data={data} />
+          {data.length === 0 && (
+            <p className="mt-3 text-center text-xs text-[#969696]">
+              Belum ada pengajuan. Login sebagai mahasiswa → Persetujuan Dosen → Minta Persetujuan.
+            </p>
+          )}
         </div>
       </div>
     </DashboardLayout>

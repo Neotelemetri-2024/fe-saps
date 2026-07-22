@@ -37,13 +37,22 @@ function AjukanKegiatanForm() {
     e.preventDefault()
     setLoading(true)
     try {
+      const tanggal =
+        formData.tanggalPelaksanaan instanceof Date
+          ? formData.tanggalPelaksanaan.toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            })
+          : formData.tanggalPelaksanaan || '-'
+
       await ajukanKegiatan({
         kegiatan: formData.namaKegiatan,
         jenis: formData.jenisKegiatan,
         peran: formData.peranPencapaian,
         skala: formData.skalaKegiatan,
         penyelenggara: formData.penyelenggara,
-        tanggal: formData.tanggalPelaksanaan,
+        tanggal,
       })
       toast.success('Berhasil!', {
         description: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
