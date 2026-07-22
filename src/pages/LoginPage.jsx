@@ -37,8 +37,8 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full font-poppins overflow-hidden bg-white">
-      {/* Left Panel - Green Gradient (Desktop - 6: 720x1024) */}
+    <div className="flex min-h-screen w-full overflow-hidden bg-white font-poppins">
+      {/* Left Panel — desktop only */}
       <div className="relative hidden min-h-screen w-1/2 flex-col justify-center overflow-hidden bg-brand-gradient lg:flex">
         {/* Decorative SVG Ellipses */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -113,10 +113,19 @@ function LoginPage() {
         </div>
       </div>
 
-      {/* Right Panel - Form */}
+      {/* Right Panel — Form */}
       <div className="flex w-full min-h-screen flex-col bg-white lg:w-1/2">
-        {/* Logo - positioned top-right */}
-        <div className="flex justify-end pr-[180px] pt-[111px]">
+        {/* Mobile top banner */}
+        <div className="flex items-center justify-center gap-3 bg-brand-gradient px-6 py-6 lg:hidden">
+          <img src={logoUnand} alt="Logo" className="h-12 w-12 rounded-full object-cover" />
+          <div>
+            <p className="text-base font-bold leading-tight text-white">MyUnand Student Connect</p>
+            <p className="text-[10px] text-white/70">Universitas Andalas</p>
+          </div>
+        </div>
+
+        {/* Logo — desktop top-right */}
+        <div className="hidden justify-end pr-[180px] pt-[111px] lg:flex">
           <div className="flex items-center gap-4">
             <img src={logoUnand} alt="Logo Universitas Andalas" className="h-[60px] w-[60px] rounded-full object-cover" />
             <div>
@@ -130,18 +139,18 @@ function LoginPage() {
           </div>
         </div>
 
-        {/* Form - centered with correct Figma spacing */}
-        <div className="flex flex-1 flex-col justify-center px-[86px]">
-          <h2 className="text-[36px] font-bold text-[#292727] leading-[54px]">Log in</h2>
-          <p className="mt-[11px] text-[20px] leading-[30px] text-[#969696]">
-            Silahkan login menggunakankan informasi akun portal Anda.
+        {/* Form */}
+        <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 lg:px-[86px] lg:py-0">
+          <h2 className="text-2xl font-bold text-[#292727] sm:text-3xl lg:text-[36px] lg:leading-[54px]">Log in</h2>
+          <p className="mt-2 text-sm text-[#969696] sm:text-base lg:mt-[11px] lg:text-[20px] lg:leading-[30px]">
+            Silahkan login menggunakan informasi akun portal Anda.
           </p>
 
-          <form className="mt-10 space-y-[18px]" onSubmit={handleSubmit}>
+          <form className="mt-6 space-y-4 lg:mt-10 lg:space-y-[18px]" onSubmit={handleSubmit}>
             {/* Username */}
             <div>
-              <label className="block text-[20px] font-light leading-[30px] text-black">Username</label>
-              <div className="flex h-16 items-center gap-4 rounded-xl border border-brand-dark px-5">
+              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Username</label>
+              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-brand-dark px-4 lg:h-16 lg:gap-4 lg:px-5">
                 <svg className="h-5 w-5 shrink-0 text-[#969696]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
@@ -151,15 +160,15 @@ function LoginPage() {
                   placeholder="dendi_unand"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-full w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#969696]"
+                  className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-[20px] font-light leading-[30px] text-black">Password</label>
-              <div className="flex h-16 items-center gap-4 rounded-xl border border-brand-dark px-5">
+              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Password</label>
+              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-brand-dark px-4 lg:h-16 lg:gap-4 lg:px-5">
                 <svg className="h-5 w-5 shrink-0 text-[#969696]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -169,7 +178,7 @@ function LoginPage() {
                   placeholder="123456"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-full w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#969696]"
+                  className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
                 />
                 <button
                   type="button"
@@ -199,7 +208,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex h-16 w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light text-[20px] font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl mt-[8px] disabled:opacity-60"
+              className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light text-base font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:mt-[8px] lg:h-16 lg:text-[20px]"
             >
               {loading ? 'Memproses...' : 'Login'}
             </button>
