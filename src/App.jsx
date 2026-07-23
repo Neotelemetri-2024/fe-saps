@@ -19,6 +19,17 @@ import PermintaanPersetujuan from './pages/dosen-pa/PermintaanPersetujuan'
 import MahasiswaPerluPerhatian from './pages/dosen-pa/MahasiswaPerluPerhatian'
 import PimpinanDitmawaDashboard from './pages/pimpinan/DitmawaDashboard'
 import PimpinanDitmawaVerifikasiPengajuanEksternal from './pages/pimpinan/VerifikasiPengajuanEksternal'
+import PimpinanDitmawaDashboardNew from './pages/pimpinan-ditmawa/Dashboard'
+import PimpinanDitmawaManajemenKurikulum from './pages/pimpinan-ditmawa/ManajemenKurikulum'
+import PimpinanDitmawaTambahMatriks from './pages/pimpinan-ditmawa/TambahMatriks'
+import PimpinanDitmawaBobotPoin from './pages/pimpinan-ditmawa/BobotPoin'
+import PimpinanDitmawaEditPoin from './pages/pimpinan-ditmawa/EditPoin'
+import PimpinanDitmawaVerifikasiEksternal from './pages/pimpinan-ditmawa/VerifikasiPengajuanEksternal'
+import PimpinanDitmawaDetailVerifikasiEksternal from './pages/pimpinan-ditmawa/DetailVerifikasiPengajuanEksternal'
+import PimpinanDitmawaVerifikasiUKM from './pages/pimpinan-ditmawa/VerifikasiPengajuanUKM'
+import PimpinanDitmawaDetailVerifikasiUKM from './pages/pimpinan-ditmawa/DetailVerifikasiPengajuanUKM'
+import PimpinanDitmawaVerifikasiInternal from './pages/pimpinan-ditmawa/VerifikasiPengajuanInternal'
+import PimpinanDitmawaDetailVerifikasiInternal from './pages/pimpinan-ditmawa/DetailVerifikasiPengajuanInternal'
 import PimpinanFakultasDashboard from './pages/pimpinan-fakultas/FakultasDashboard'
 import PimpinanFakultasPersetujuan from './pages/pimpinan-fakultas/FakultasPersetujuan'
 import PimpinanFakultasVerifikasiUKMF from './pages/pimpinan-fakultas/VerifikasiPengajuanUKMF'
@@ -42,6 +53,13 @@ import AdminDitmawaVerifikasiPengajuanInternal from './pages/admin-ditmawa/Verif
 import AdminDitmawaAkunPengaturan from './pages/admin-ditmawa/AkunPengaturan'
 import AdminDitmawaNotifikasi from './pages/admin-ditmawa/Notifikasi'
 import AdminFakultasDashboard from './pages/admin/FakultasDashboard'
+import AdminFakultasDashboardNew from './pages/admin-fakultas/Dashboard'
+import AdminFakultasManajemenEvent from './pages/admin-fakultas/ManajemenEvent'
+import AdminFakultasBuatEvent from './pages/admin-fakultas/BuatEvent'
+import AdminFakultasManajemenPesertaEvent from './pages/admin-fakultas/ManajemenPesertaEvent'
+import AdminFakultasManajemenAkunUKMF from './pages/admin-fakultas/ManajemenAkunUKMF'
+import AdminFakultasVerifikasiPengajuanUKMF from './pages/admin-fakultas/VerifikasiPengajuanUKMF'
+import AdminFakultasDetailVerifikasiUKMF from './pages/admin-fakultas/DetailVerifikasiUKMF'
 import UKMDashboard from './pages/ukm/Dashboard'
 import UKMDaftarKegiatan from './pages/ukm/DaftarKegiatan'
 import UKMManajemenPeserta from './pages/ukm/ManajemenPeserta'
@@ -84,8 +102,17 @@ function App() {
 
         {/* Pimpinan Ditmawa */}
         <Route path="pimpinan-ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan-ditmawa']}><Outlet /></RoleGuard></AuthGuard>}>
-          <Route path="dashboard" element={<PimpinanDitmawaDashboard />} />
-          <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiPengajuanEksternal />} />
+          <Route path="dashboard" element={<PimpinanDitmawaDashboardNew />} />
+          <Route path="manajemen-kurikulum" element={<PimpinanDitmawaManajemenKurikulum />} />
+          <Route path="tambah-matriks" element={<PimpinanDitmawaTambahMatriks />} />
+          <Route path="bobot-poin" element={<PimpinanDitmawaBobotPoin />} />
+          <Route path="edit-poin/:id" element={<PimpinanDitmawaEditPoin />} />
+          <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />
+          <Route path="verifikasi-pengajuan-eksternal/:id" element={<PimpinanDitmawaDetailVerifikasiEksternal />} />
+          <Route path="verifikasi-pengajuan-ukm" element={<PimpinanDitmawaVerifikasiUKM />} />
+          <Route path="verifikasi-pengajuan-ukm/:id" element={<PimpinanDitmawaDetailVerifikasiUKM />} />
+          <Route path="verifikasi-pengajuan-internal" element={<PimpinanDitmawaVerifikasiInternal />} />
+          <Route path="verifikasi-pengajuan-internal/:id" element={<PimpinanDitmawaDetailVerifikasiInternal />} />
         </Route>
 
         {/* Pimpinan Fakultas */}
@@ -125,7 +152,13 @@ function App() {
 
         {/* Admin Fakultas */}
         <Route path="admin-fakultas" element={<AuthGuard><RoleGuard allowedRoles={['admin-fakultas']}><Outlet /></RoleGuard></AuthGuard>}>
-          <Route path="dashboard" element={<AdminFakultasDashboard />} />
+          <Route path="dashboard" element={<AdminFakultasDashboardNew />} />
+          <Route path="manajemen-event" element={<AdminFakultasManajemenEvent />} />
+          <Route path="buat-event" element={<AdminFakultasBuatEvent />} />
+          <Route path="manajemen-event/:id/peserta" element={<AdminFakultasManajemenPesertaEvent />} />
+          <Route path="manajemen-akun-ukmf" element={<AdminFakultasManajemenAkunUKMF />} />
+          <Route path="verifikasi-pengajuan-ukmf" element={<AdminFakultasVerifikasiPengajuanUKMF />} />
+          <Route path="verifikasi-pengajuan-ukmf/:id" element={<AdminFakultasDetailVerifikasiUKMF />} />
         </Route>
 
         {/* UKM */}

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
@@ -13,25 +15,41 @@ const mahasiswaList = [
 ]
 
 function MahasiswaBimbingan() {
+  const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [filterProdi, setFilterProdi] = useState('')
+
+  const filtered = mahasiswaList.filter((m) => {
+    const q = search.toLowerCase()
+    const matchSearch = m.nama.toLowerCase().includes(q) || m.nim.includes(q)
+    const matchProdi = !filterProdi || m.prodi === filterProdi
+    return matchSearch && matchProdi
+  })
+
   return (
-    <DashboardLayout role="dosen-pa" userName="Dr. Ahmad Rizal" userRole="Dosen PA">
+    <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <div className="flex items-center gap-4 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm">
-          <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
-            <Search className="h-4 w-4 text-[#616161]" />
-            <input type="text" placeholder="Cari mahasiswa..." className="flex-1 text-sm outline-none" />
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm">
+          <div className="flex flex-1 min-w-[180px] items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
+            <Search className="h-4 w-4 text-[#9aa0a6]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari mahasiswa..."
+              className="flex-1 text-sm outline-none"
+            />
           </div>
-          <select className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-            <option>Semua Prodi</option>
+          <select
+            value={filterProdi}
+            onChange={(e) => setFilterProdi(e.target.value)}
+            className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none"
+          >
+            <option value="">Semua Prodi</option>
             <option>Teknik Mesin</option>
             <option>Teknik Industri</option>
             <option>Teknik Sipil</option>
             <option>Informatika</option>
-          </select>
-          <select className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-            <option>Semua Status</option>
-            <option>Aktif</option>
-            <option>Nonaktif</option>
           </select>
         </div>
 
@@ -50,7 +68,7 @@ function MahasiswaBimbingan() {
               </tr>
             </thead>
             <tbody>
-              {mahasiswaList.map((m) => (
+              {filtered.map((m) => (
                 <tr key={m.nim} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                   <td className="px-4 py-3 font-medium text-[#333]">{m.nama}</td>
                   <td className="px-4 py-3 text-[#616161]">{m.nim}</td>
@@ -69,7 +87,13 @@ function MahasiswaBimbingan() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">{m.status}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <a href={`/dosen-pa/lihat-detail/${m.nim}`} className="text-xs font-medium text-brand-light hover:underline">Lihat Detail</a>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dosen-pa/lihat-detail/${m.nim}`, { state: { mahasiswa: m } })}
+                      className="text-xs font-semibold text-brand-light hover:underline"
+                    >
+                      Lihat Detail
+                    </button>
                   </td>
                 </tr>
               ))}
