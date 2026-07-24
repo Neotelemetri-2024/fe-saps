@@ -422,7 +422,7 @@ paths:
   # =================================================================
   # MANAJEMEN ORGANISASI / AKUN UKM (Admin Ditmawa)
   # =================================================================
-  /api/organisasi:
+  /api/organisasi/akun:
     get:
       summary: (Admin) Daftar Semua Organisasi & Akun UKM
       tags: ["Role: Admin Ditmawa"]
@@ -430,6 +430,25 @@ paths:
         - bearerAuth: []
       responses:
         '200': { description: Berhasil }
+    post:
+      summary: (Admin) Buat Akun UKM & Organisasi Sekaligus
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namaUkm, username, password, status]
+              properties:
+                namaUkm: { type: string, example: "UKM Kesenian Universitas Andalas" }
+                username: { type: string, example: "ukmseni123" }
+                password: { type: string, example: "rahasia123" }
+                status: { type: boolean, example: true }
+      responses:
+        '201': { description: Berhasil }
 
   /api/organisasi/akun/{userId}/toggle-status:
     put:
@@ -445,28 +464,7 @@ paths:
       responses:
         '200': { description: Status akun berhasil diubah }
 
-  /api/organisasi/akun:
-    post:
-      summary: (Admin) Buat Akun UKM & Organisasi Sekaligus
-      tags: ["Role: Admin Ditmawa"]
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password, namaOrganisasi, tingkat]
-              properties:
-                email: { type: string, example: "ukm_seni@unand.ac.id" }
-                password: { type: string, example: "rahasia123" }
-                namaOrganisasi: { type: string, example: "UKM Kesenian Universitas Andalas" }
-                tingkat: { type: string, enum: [universitas, fakultas, jurusan] }
-      responses:
-        '201': { description: Berhasil }
-
-  /api/organisasi/akun/{userId}/reset:
+  /api/organisasi/akun/{userId}/reset-password:
     put:
       summary: (Admin) Reset Password Akun UKM
       tags: ["Role: Admin Ditmawa"]
@@ -483,9 +481,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [newPassword]
+              required: [passwordBaru]
               properties:
-                newPassword: { type: string, example: "passwordbaru123" }
+                passwordBaru: { type: string, example: "passwordbaru123" }
       responses:
         '200': { description: Berhasil }
 
