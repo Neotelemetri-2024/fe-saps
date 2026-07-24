@@ -20,6 +20,7 @@ import kegiatanRoutes from './routes/kegiatan.routes';
 import klaimRoutes from './routes/klaim.routes';
 import umumRoutes from './routes/umum.routes';
 import organisasiRoutes from './routes/organisasi.routes';
+import organisasiFakultasRoutes from './routes/organisasi_fakultas.routes';
 import pesertaRoutes from './routes/peserta.routes';
 
 dotenv.config();
@@ -91,6 +92,7 @@ app.use('/api/kegiatan', pesertaRoutes);
 
 // Manajemen Organisasi & Akun UKM (Admin)
 app.use('/api/organisasi', organisasiRoutes);
+app.use('/api/organisasi-fakultas', organisasiFakultasRoutes);
 
 // (Rute partisipasi telah dipindahkan ke dosen.routes.ts dan mahasiswa.routes.ts)
 

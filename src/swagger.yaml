@@ -504,6 +504,88 @@ paths:
         '200': { description: Berhasil }
 
   # =================================================================
+  # MANAJEMEN ORGANISASI / AKUN UKMF (Admin Fakultas)
+  # =================================================================
+  /api/organisasi-fakultas/akun:
+    get:
+      summary: (Admin) Daftar Semua Akun UKMF
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+    post:
+      summary: (Admin) Buat Akun UKMF & Organisasi Sekaligus
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namaUkm, username, password, status]
+              properties:
+                namaUkm: { type: string, example: "BEM KM FTI" }
+                username: { type: string, example: "bemkmfti123" }
+                password: { type: string, example: "bem666" }
+                status: { type: boolean, example: true }
+      responses:
+        '201': { description: Berhasil }
+
+  /api/organisasi-fakultas/akun/{userId}/toggle-status:
+    put:
+      summary: (Admin) Aktifkan / Nonaktifkan Akun UKMF
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Status akun berhasil diubah }
+
+  /api/organisasi-fakultas/akun/{userId}/reset-password:
+    put:
+      summary: (Admin) Reset Password Akun UKMF
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passwordBaru]
+              properties:
+                passwordBaru: { type: string, example: "bem666" }
+      responses:
+        '200': { description: Password berhasil direset }
+
+  /api/organisasi-fakultas/akun/{userId}:
+    delete:
+      summary: (Admin) Hapus Akun UKMF
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
   # KEGIATAN & EVENT
   # =================================================================
   /api/kegiatan:
