@@ -54,7 +54,7 @@ function AkunPengaturan() {
   return (
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Akun dan Pengaturan</h2>
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
 
         {/* Header Profil */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

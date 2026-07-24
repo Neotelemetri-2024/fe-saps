@@ -234,23 +234,18 @@ function PermintaanPersetujuan() {
         )}
       </Modal>
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-brand-dark">
-              Permintaan Persetujuan
-            </h2>
-            <p className="text-sm text-[#616161]">
-              Pengajuan dari mahasiswa bimbingan Anda akan muncul di sini.
-            </p>
-          </div>
-          <div className="flex gap-2">
-          </div>
+      <div className="space-y-4 sm:space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">
+            Permintaan Persetujuan
+          </h2>
+          <p className="text-sm text-[#616161]">
+            Pengajuan dari mahasiswa bimbingan Anda akan muncul di sini.
+          </p>
         </div>
 
-
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-[180px] flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
             <Search className="h-4 w-4 text-[#616161]" />
             <input
               type="text"
@@ -283,8 +278,8 @@ function PermintaanPersetujuan() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+          <h3 className="mb-4 text-base font-bold text-brand-dark sm:text-lg">
             Permintaan Persetujuan
           </h3>
           <DataTable columns={columns(openModal)} data={filteredData} />

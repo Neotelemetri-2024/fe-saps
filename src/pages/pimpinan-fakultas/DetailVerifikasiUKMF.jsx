@@ -277,7 +277,8 @@ function DetailVerifikasiUKMF() {
             <div>
               <p className="mb-3 text-sm font-semibold text-[#444]">Sub Capaian &amp; Bobot</p>
               <div className="overflow-hidden rounded-xl border border-[#e9ebf8]">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[320px] text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
                       <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Sub Capaian</th>
@@ -297,6 +298,7 @@ function DetailVerifikasiUKMF() {
                     </tr>
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>

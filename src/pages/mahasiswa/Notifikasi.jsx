@@ -79,11 +79,11 @@ function Notifikasi() {
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Notifikasi</h2>
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Notifikasi</h2>
         <p className="text-sm text-[#616161]">3 notifikasi belum dibaca</p>
 
         {/* Filter Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="rounded-full bg-brand-dark px-4 py-2 text-sm font-medium text-white">Semua</button>
           <button className="rounded-full bg-gray-200 px-4 py-2 text-sm font-medium text-[#333]">Verifikasi</button>
           <button className="rounded-full bg-gray-200 px-4 py-2 text-sm font-medium text-[#333]">Event</button>
@@ -104,10 +104,12 @@ function Notifikasi() {
                   {getIcon(notif.type)}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
                     <p className="font-semibold text-brand-dark">{notif.title}</p>
-                    <span className="text-xs text-[#969696]">{notif.time}</span>
-                    <MoreVertical className="h-4 w-4 text-[#969696] cursor-pointer" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#969696]">{notif.time}</span>
+                      <MoreVertical className="h-4 w-4 text-[#969696] cursor-pointer" />
+                    </div>
                   </div>
                   <p className="mt-1 text-sm text-[#333]">{notif.message}</p>
                   <div className="mt-2 flex gap-2">

@@ -99,7 +99,7 @@ function VerifikasiPengajuanUKMF() {
         </div>
 
         {/* Search + filter */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-wrap gap-3">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
             <input
@@ -112,7 +112,7 @@ function VerifikasiPengajuanUKMF() {
           <select
             value={filterSkala}
             onChange={(e) => setFilterSkala(e.target.value)}
-            className="rounded-lg border border-[#d1d5db] px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark"
+            className="w-full rounded-lg border border-[#d1d5db] px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark sm:w-auto"
           >
             <option value="">Semua Skala</option>
             {uniqueSkala.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -120,7 +120,7 @@ function VerifikasiPengajuanUKMF() {
           <select
             value={filterJenis}
             onChange={(e) => setFilterJenis(e.target.value)}
-            className="rounded-lg border border-[#d1d5db] px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark"
+            className="w-full rounded-lg border border-[#d1d5db] px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark sm:w-auto"
           >
             <option value="">Semua Jenis</option>
             {uniqueJenis.map((j) => <option key={j} value={j}>{j}</option>)}

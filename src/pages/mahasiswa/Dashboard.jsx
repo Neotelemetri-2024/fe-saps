@@ -146,11 +146,11 @@ function MahasiswaDashboard() {
   const navigate = useNavigate()
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Welcome + Radar */}
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
+          <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+            <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-xl font-extrabold text-transparent sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />Amara Marshinta!
             </h2>
             <p className="mt-3 max-w-lg text-sm text-[#616161]">
@@ -176,7 +176,7 @@ function MahasiswaDashboard() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="flex-1 rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-6 text-center shadow-sm">
+            <div className="flex-1 rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-3 sm:p-6 text-center shadow-sm">
               <h3 className="text-sm font-bold text-white">Radar Karakter Andalasian</h3>
               <RadarChartCJ
                 labels={radarData.map((d) => d.label)}

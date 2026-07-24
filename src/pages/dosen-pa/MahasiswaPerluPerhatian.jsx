@@ -35,8 +35,8 @@ function MahasiswaPerluPerhatian() {
   return (
     <DashboardLayout role="dosen-pa" userName="Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Mahasiswa yang Perlu Perhatian!</h2>
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
           <DataTable columns={columns} data={mahasiswaPerluPerhatianData} />
           <p className="mt-4 text-sm text-[#616161]">menampilkan 1 - 2 dari 2 Mahasiswa</p>
         </div>

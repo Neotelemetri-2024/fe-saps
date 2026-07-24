@@ -121,12 +121,12 @@ function ManajemenEvent() {
       )}
 
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-brand-dark">Buat Event</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Buat Event</h2>
           <button
             type="button"
             onClick={() => navigate('/admin-ditmawa/buat-event')}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Tambah Buat Event

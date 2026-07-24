@@ -56,6 +56,7 @@ import AdminFakultasDashboard from './pages/admin/FakultasDashboard'
 import AdminFakultasDashboardNew from './pages/admin-fakultas/Dashboard'
 import AdminFakultasManajemenEvent from './pages/admin-fakultas/ManajemenEvent'
 import AdminFakultasBuatEvent from './pages/admin-fakultas/BuatEvent'
+import AdminFakultasVerifikasiKegiatan from './pages/admin-fakultas/VerifikasiKegiatan'
 import AdminFakultasManajemenPesertaEvent from './pages/admin-fakultas/ManajemenPesertaEvent'
 import AdminFakultasManajemenAkunUKMF from './pages/admin-fakultas/ManajemenAkunUKMF'
 import AdminFakultasVerifikasiPengajuanUKMF from './pages/admin-fakultas/VerifikasiPengajuanUKMF'
@@ -156,6 +157,8 @@ function App() {
           <Route path="dashboard" element={<AdminFakultasDashboardNew />} />
           <Route path="manajemen-event" element={<AdminFakultasManajemenEvent />} />
           <Route path="buat-event" element={<AdminFakultasBuatEvent />} />
+          <Route path="verifikasi-kegiatan" element={<AdminFakultasVerifikasiKegiatan />} />
+          <Route path="verifikasi-kegiatan/:id/peserta" element={<AdminFakultasManajemenPesertaEvent />} />
           <Route path="manajemen-event/:id/peserta" element={<AdminFakultasManajemenPesertaEvent />} />
           <Route path="manajemen-akun-ukmf" element={<AdminFakultasManajemenAkunUKMF />} />
           <Route path="verifikasi-pengajuan-ukmf" element={<AdminFakultasVerifikasiPengajuanUKMF />} />

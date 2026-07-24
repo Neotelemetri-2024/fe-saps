@@ -463,7 +463,7 @@ function ManajemenKurikulum() {
           <button
             type="button"
             onClick={() => { setKurForm({ tahun: '', nama: '' }); setShowTambahKurikulum(true) }}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
           >
             <Plus className="h-4 w-4" />
             Tambah Kurikulum
@@ -472,7 +472,7 @@ function ManajemenKurikulum() {
 
         {/* Daftar Kurikulum */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-[#e9ebf8] px-5 py-4">
+          <div className="flex flex-col gap-2 border-b border-[#e9ebf8] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-bold text-[#333]">Daftar Kurikulum</h3>
             <AlignJustify className="h-4 w-4 text-[#616161]" />
           </div>

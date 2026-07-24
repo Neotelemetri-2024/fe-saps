@@ -14,7 +14,7 @@ function AkunPengaturan() {
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Profil dan Pengaturan</h2>
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Profil dan Pengaturan</h2>
         
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Header Profil */}
@@ -45,29 +45,31 @@ function AkunPengaturan() {
           </div>
           
           <form className="space-y-4">
-            <div>
-              <label htmlFor="namaLengkap" className="block text-sm font-medium text-black">Nama Lengkap</label>
-              <input type="text" id="namaLengkap" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan nama lengkap" />
-            </div>
-            <div>
-              <label htmlFor="nim" className="block text-sm font-medium text-black">NIM</label>
-              <input type="text" id="nim" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan NIM" />
-            </div>
-            <div>
-              <label htmlFor="programStudi" className="block text-sm font-medium text-black">Program Studi</label>
-              <select id="programStudi" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark">
-                <option>Pilih Program studi</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="fakultas" className="block text-sm font-medium text-black">Fakultas</label>
-              <select id="fakultas" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark">
-                <option>Masukkan Fakultas</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="nomorTelepon" className="block text-sm font-medium text-black">Nomor Telepon</label>
-              <input type="text" id="nomorTelepon" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan nomor telepon" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="namaLengkap" className="block text-sm font-medium text-black">Nama Lengkap</label>
+                <input type="text" id="namaLengkap" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan nama lengkap" />
+              </div>
+              <div>
+                <label htmlFor="nim" className="block text-sm font-medium text-black">NIM</label>
+                <input type="text" id="nim" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan NIM" />
+              </div>
+              <div>
+                <label htmlFor="programStudi" className="block text-sm font-medium text-black">Program Studi</label>
+                <select id="programStudi" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark">
+                  <option>Pilih Program studi</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="fakultas" className="block text-sm font-medium text-black">Fakultas</label>
+                <select id="fakultas" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark">
+                  <option>Masukkan Fakultas</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="nomorTelepon" className="block text-sm font-medium text-black">Nomor Telepon</label>
+                <input type="text" id="nomorTelepon" className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark" placeholder="Masukkan nomor telepon" />
+              </div>
             </div>
             <div>
               <label htmlFor="alamat" className="block text-sm font-medium text-black">Alamat</label>
@@ -76,7 +78,7 @@ function AkunPengaturan() {
             <button
               type="button"
               onClick={handleSimpanPerubahan}
-              className="mt-4 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+              className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 sm:w-auto"
             >
               Simpan Perubahan
             </button>

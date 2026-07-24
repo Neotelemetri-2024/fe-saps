@@ -185,19 +185,19 @@ function ManajemenAkunUKMF() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Manajemen Akun UKMF</h2>
+            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">Manajemen Akun UKMF</h2>
             <p className="mt-1 text-sm text-[#616161]">Kelola daftar UKMF di fakultas.</p>
           </div>
           <button
             type="button"
             onClick={() => setShowTambah(true)}
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Tambah UKMF
           </button>
         </div>
 
-        <div className="relative max-w-sm">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
           <input
             value={search}
@@ -268,7 +268,7 @@ function ManajemenAkunUKMF() {
           {filtered.length === 0 && (
             <div className="py-10 text-center text-sm text-[#9aa0a6]">Tidak ada UKMF ditemukan.</div>
           )}
-          <div className="flex items-center justify-between border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888]">
+          <div className="flex flex-col gap-2 border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
             <span>Total: {ukmfList.length} UKMF</span>
             <span>{filtered.length} ditampilkan</span>
           </div>

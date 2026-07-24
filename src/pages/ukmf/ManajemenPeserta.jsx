@@ -95,7 +95,7 @@ function ManajemenPeserta() {
         />
 
         <div>
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex flex-col gap-2 mb-1 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-bold text-brand-dark">Daftar Peserta ({pesertaData.length})</h3>
             <div className="flex items-center space-x-2">
               <button className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-sm font-semibold text-white">
@@ -111,6 +111,7 @@ function ManajemenPeserta() {
               <input type="text" placeholder="Cari mahasiswa atau kegiatan..." className="w-full text-sm outline-none" />
             </div>
             <div className="flex flex-wrap gap-2">
+
               <button className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm">Semua</button>
               <button className="rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]">Hadir</button>
               <button className="rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]">Tidak Hadir</button>

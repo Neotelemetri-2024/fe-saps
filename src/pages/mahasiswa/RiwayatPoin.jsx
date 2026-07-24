@@ -37,13 +37,13 @@ function RiwayatPoin() {
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Riwayat Poin</h2>
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Riwayat Poin</h2>
         <p className="text-sm text-[#616161]">Rekap seluruh kegiatan dan poin yang telah terkumpul sesuai kurikulum.</p>
 
         {/* Progress per Tahun Kurikulum */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-brand-dark">Progress per Tahun Kurikulum</h3>
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-base font-bold text-brand-dark sm:text-lg">Progress per Tahun Kurikulum</h3>
             <div className="flex items-center gap-2 text-sm font-medium text-brand-dark">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-light text-white text-xs">⭐</span>
               Total Capaian: <span className="font-bold">365</span> / 550 poin
@@ -72,8 +72,8 @@ function RiwayatPoin() {
         </div>
 
         {/* Riwayat Poin */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-brand-dark">Riwayat Poin</h3>
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+          <h3 className="text-base font-bold text-brand-dark sm:text-lg">Riwayat Poin</h3>
           
           {/* Search and Filters */}
           <div className="mt-4 flex flex-wrap items-center gap-4">

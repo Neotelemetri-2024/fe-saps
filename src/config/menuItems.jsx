@@ -106,9 +106,17 @@ export const adminDitmawaMenu = [
 /* ── ADMIN FAKULTAS ── */
 export const adminFakultasMenu = [
   { path: '/admin-fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '/admin-fakultas/manajemen-event', label: 'Manajemen Event', icon: <Search className="h-4 w-4" /> },
-  { path: '/admin-fakultas/manajemen-akun-ukmf', label: 'Manajemen Akun UKMF', icon: <UserCog className="h-4 w-4" /> },
   { path: '/admin-fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
+  {
+    path: '#',
+    label: 'Event',
+    icon: <Search className="h-4 w-4" />,
+    children: [
+      { path: '/admin-fakultas/manajemen-event', label: 'Buat Event' },
+      { path: '/admin-fakultas/verifikasi-kegiatan', label: 'Verifikasi Kegiatan' },
+    ],
+  },
+  { path: '/admin-fakultas/manajemen-akun-ukmf', label: 'Manajemen akun UKMF', icon: <UserCog className="h-4 w-4" /> },
   { path: '#', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
   { path: '#', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]

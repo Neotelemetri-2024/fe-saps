@@ -63,14 +63,14 @@ function DaftarKegiatan() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 lg:w-auto">
               <Filter className="h-4 w-4" />
               Filter
             </button>
-            <select className="rounded-lg border border-[#d9dce7] bg-white px-8 py-2.5 text-sm text-[#616161] outline-none">
+            <select className="w-full rounded-lg border border-[#d9dce7] bg-white px-8 py-2.5 text-sm text-[#616161] outline-none lg:w-auto">
               <option>Skala</option>
             </select>
-            <select className="rounded-lg border border-[#d9dce7] bg-white px-8 py-2.5 text-sm text-[#616161] outline-none">
+            <select className="w-full rounded-lg border border-[#d9dce7] bg-white px-8 py-2.5 text-sm text-[#616161] outline-none lg:w-auto">
               <option>Jenis</option>
             </select>
           </div>

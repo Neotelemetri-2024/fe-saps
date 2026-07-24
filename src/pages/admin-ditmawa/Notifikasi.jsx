@@ -93,9 +93,9 @@ function Notifikasi() {
   return (
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-5">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-brand-dark">Notifikasi</h2>
+            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Notifikasi</h2>
             <p className="mt-1 text-sm text-[#616161]">
               {belumDibacaCount > 0 ? `${belumDibacaCount} notifikasi belum dibaca` : 'Semua notifikasi sudah dibaca'}
             </p>
@@ -104,7 +104,7 @@ function Notifikasi() {
             <button
               type="button"
               onClick={tandaiSemuaDibaca}
-              className="rounded-lg border border-brand-dark px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-green-50"
+              className="w-full rounded-lg border border-brand-dark px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-green-50 sm:w-auto"
             >
               Tandai semua dibaca
             </button>

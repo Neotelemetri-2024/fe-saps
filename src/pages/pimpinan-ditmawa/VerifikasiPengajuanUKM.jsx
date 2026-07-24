@@ -114,7 +114,7 @@ function VerifikasiPengajuanUKM() {
               />
             </div>
             <button type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto">
               <Filter className="h-4 w-4" /> Filter
             </button>
           </div>

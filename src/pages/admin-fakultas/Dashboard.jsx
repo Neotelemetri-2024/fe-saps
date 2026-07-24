@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { GroupedBarChart } from '../../components/charts'
+import { StackedBarChart } from '../../components/charts'
 
 const statCards = [
-  { label: 'PENDING', value: 4, border: 'border-yellow-400', numColor: 'text-yellow-500' },
-  { label: 'DISETUJUI', value: 1, border: 'border-green-500', numColor: 'text-green-600' },
-  { label: 'MENUNGGU PIMPINAN', value: 0, border: 'border-blue-500', numColor: 'text-blue-500' },
+  { label: 'PENDING', value: 4, border: 'border-green-600', numColor: 'text-green-800' },
+  { label: 'DISETUJUI', value: 1, border: 'border-green-600', numColor: 'text-green-800' },
+  { label: 'MENUNGGU PIMPINAN', value: 0, border: 'border-green-600', numColor: 'text-green-600' },
   { label: 'DITOLAK', value: 0, border: 'border-red-400', numColor: 'text-red-500' },
 ]
 
@@ -37,7 +37,7 @@ function Dashboard() {
     <DashboardLayout role="admin-fakultas" userName="Nouval Rafiif Irwan" userRole="Operator UKM">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
+          <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
             Dasboard Fakultas <span className="text-[#222]">Teknologi Informasi</span>
           </h2>
           <p className="mt-1 text-sm text-[#616161]">Verifikasi dan ajukan lanjutan kegiatan dari UKMF ke Pimpinan Fakultas</p>
@@ -46,7 +46,7 @@ function Dashboard() {
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
-            <div key={card.label} className={`rounded-xl border-2 ${card.border} bg-white p-5 shadow-sm`}>
+            <div key={card.label} className={`rounded-xl border-2 ${card.border} bg-white p-4 shadow-sm sm:p-5 lg:p-6`}>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">{card.label}</p>
               <p className={`mt-2 text-3xl font-extrabold ${card.numColor}`}>{card.value}</p>
             </div>
@@ -113,11 +113,11 @@ function Dashboard() {
             </table>
           </div>
           {/* Pagination */}
-          <div className="flex items-center justify-between border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888]">
+          <div className="flex flex-col gap-3 border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
             <span>Showing 1 – 10 from Total 20</span>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <span>Page 1 of 2</span>
-              <div className="ml-3 flex gap-1">
+              <div className="ml-3 flex flex-wrap gap-1">
                 {['Previous', '1', '2', '...', '4', '5', 'Next'].map((p) => (
                   <button
                     key={p}
@@ -136,28 +136,26 @@ function Dashboard() {
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#222]">Rata rata Capaian per prodi</h3>
-            <GroupedBarChart
+            <StackedBarChart
               labels={chartData.map((d) => d.prodi.replace('\n', ' '))}
               datasets={[
-                { label: 'Organisasi', data: chartData.map((d) => d.organisasi), color: '#2563eb' },
-                { label: 'Seminar',    data: chartData.map((d) => d.seminar),    color: '#16a34a' },
-                { label: 'Prestasi',  data: chartData.map((d) => d.prestasi),   color: '#ca8a04' },
+                { label: 'organisasi', data: chartData.map((d) => d.organisasi), color: '#3b82f6' },
+                { label: 'seminar',    data: chartData.map((d) => d.seminar),    color: '#16a34a' },
+                { label: 'prestasi',  data: chartData.map((d) => d.prestasi),   color: '#eab308' },
               ]}
-              height={240}
+              height={280}
             />
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div
-              className="flex flex-1 cursor-pointer flex-col justify-center rounded-xl bg-gradient-to-br from-brand-dark to-brand-light p-6 shadow-sm"
-            >
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-start">
+            <div className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-white">Download Panduan</h3>
+              <div className="mt-3 flex items-start gap-3 text-white/90">
+                <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
+                <p className="text-xs leading-snug">Admin Fakultas – Panduan Penggunaan Website MyUnand Student Connect.pdf</p>
               </div>
-              <p className="text-sm font-bold text-white">Download Panduan</p>
-              <p className="mt-1 text-xs text-white/80">Admin Fakultas – Panduan Penggunaan Website MyUnand Student Connect.pdf</p>
             </div>
           </div>
         </div>

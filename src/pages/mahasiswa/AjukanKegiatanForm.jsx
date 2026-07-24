@@ -107,7 +107,7 @@ function AjukanKegiatanForm() {
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand-dark">Pengajuan Kegiatan</h2>
+        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Pengajuan Kegiatan</h2>
         <p className="text-sm text-[#616161]">
           Ajukan kegiatan terbaru yang diikuti mahasiswa
         </p>
@@ -121,7 +121,7 @@ function AjukanKegiatanForm() {
         </div>
 
         {/* Detail Kegiatan Baru Form */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
           <h3 className="mb-6 text-lg font-bold text-brand-dark">Detail Kegiatan Baru</h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -259,54 +259,56 @@ function AjukanKegiatanForm() {
             </div>
 
             {/* Link Website & Email Penyelenggara */}
-            <div>
-              <label htmlFor="linkWebsite" className="block text-sm font-medium text-black">
-                Link website penyelenggara
-              </label>
-              <input
-                type="url"
-                id="linkWebsite"
-                name="linkWebsite"
-                value={formData.linkWebsite}
-                onChange={handleChange}
-                placeholder="https://..."
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-              />
-            </div>
-            <div>
-              <label htmlFor="emailPenyelenggara" className="block text-sm font-medium text-black">
-                Email penyelenggara
-              </label>
-              <input
-                type="email"
-                id="emailPenyelenggara"
-                name="emailPenyelenggara"
-                value={formData.emailPenyelenggara}
-                onChange={handleChange}
-                placeholder="unand@gmail.com"
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="linkWebsite" className="block text-sm font-medium text-black">
+                  Link website penyelenggara
+                </label>
+                <input
+                  type="url"
+                  id="linkWebsite"
+                  name="linkWebsite"
+                  value={formData.linkWebsite}
+                  onChange={handleChange}
+                  placeholder="https://..."
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                />
+              </div>
+              <div>
+                <label htmlFor="emailPenyelenggara" className="block text-sm font-medium text-black">
+                  Email penyelenggara
+                </label>
+                <input
+                  type="email"
+                  id="emailPenyelenggara"
+                  name="emailPenyelenggara"
+                  value={formData.emailPenyelenggara}
+                  onChange={handleChange}
+                  placeholder="unand@gmail.com"
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                />
+              </div>
             </div>
 
             {/* Form Buttons */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-wrap gap-3 pt-4">
               <button
                 type="submit"
-                className="rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+                className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 sm:w-auto"
               >
                 Ajukan Sekarang
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded-xl bg-gray-600 px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+                className="w-full rounded-xl bg-gray-600 px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 sm:w-auto"
               >
                 Reset
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="rounded-xl border border-brand-dark px-6 py-3 text-brand-dark font-semibold shadow-md transition hover:bg-brand-light hover:text-white"
+                className="w-full rounded-xl border border-brand-dark px-6 py-3 text-brand-dark font-semibold shadow-md transition hover:bg-brand-light hover:text-white sm:w-auto"
               >
                 Batal
               </button>

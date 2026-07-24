@@ -101,7 +101,7 @@ function BuatEvent() {
     <DashboardLayout role="admin-fakultas" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Buat Event Fakultas</h2>
+          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">Buat Event Fakultas</h2>
           <p className="mt-1 text-sm text-[#616161]">Isi detail kegiatan dan publikasikan untuk mahasiswa.</p>
         </div>
 
@@ -368,17 +368,17 @@ function BuatEvent() {
           </div>
 
           {/* ── Tombol Aksi ── */}
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold text-white hover:opacity-90 sm:flex-none sm:px-8"
+              className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-3.5 text-sm font-bold text-white hover:opacity-90"
             >
               Teruskan ke Pimpinan
             </button>
             <button
               type="button"
               onClick={() => navigate('/admin-fakultas/manajemen-event')}
-              className="flex-1 rounded-lg border border-[#d1d5db] py-3 text-sm font-semibold text-[#444] hover:bg-[#f5f5f5] sm:flex-none sm:px-8"
+              className="w-full rounded-xl border border-[#d1d5db] bg-white py-3.5 text-sm font-semibold text-[#444] hover:bg-[#f5f5f5]"
             >
               Batal
             </button>
