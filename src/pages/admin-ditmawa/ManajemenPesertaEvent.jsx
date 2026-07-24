@@ -76,7 +76,7 @@ function ManajemenPesertaEvent() {
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        title="Verifikasi semua peserta yang dipilih?"
+       
         message={`${selected.size} peserta akan diverifikasi.`}
         confirmText="Ya, Verifikasi"
         cancelText="Batal"
@@ -98,7 +98,7 @@ function ManajemenPesertaEvent() {
               className="w-full text-sm outline-none" />
           </div>
           <button type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
             <Filter className="h-4 w-4" /> Filter
           </button>
         </div>

@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import { RadarChartCJ, HorizontalBarChart } from '../../components/charts'
 
 // ── DATA FALLBACK ──
 const defaultMahasiswa = {
@@ -79,56 +80,6 @@ const riwayatCatatan = [
   },
 ]
 
-// ── RadarChart SVG ──
-function RadarChart({ items }) {
-  const n = items.length
-  const cx = 90; const cy = 90; const R = 68
-  const levels = 4
-
-  const angleStep = (2 * Math.PI) / n
-  const getPoint = (i, r) => {
-    const angle = i * angleStep - Math.PI / 2
-    return {
-      x: cx + r * Math.cos(angle),
-      y: cy + r * Math.sin(angle),
-    }
-  }
-
-  const webLines = Array.from({ length: levels }, (_, li) => {
-    const r = (R * (li + 1)) / levels
-    const pts = Array.from({ length: n }, (_, i) => getPoint(i, r))
-    return pts.map((p, pi) => (pi === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ') + 'Z'
-  })
-
-  const dataPoints = items.map((item, i) => getPoint(i, (item.value / 100) * R))
-  const dataPoly = dataPoints.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ') + 'Z'
-
-  return (
-    <svg className="w-[140px] h-[140px] sm:w-[180px] sm:h-[180px]" viewBox="0 0 180 180">
-      {webLines.map((d, i) => (
-        <path key={i} d={d} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={1} />
-      ))}
-      {Array.from({ length: n }, (_, i) => {
-        const p = getPoint(i, R)
-        return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.2)" strokeWidth={1} />
-      })}
-      <path d={dataPoly} fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-      {dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={3} fill="white" />
-      ))}
-      {Array.from({ length: n }, (_, i) => {
-        const p = getPoint(i, R + 14)
-        const shortLabel = items[i].label.length > 12 ? items[i].label.slice(0, 12) + '…' : items[i].label
-        return (
-          <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fontSize={7} fill="rgba(255,255,255,0.85)">
-            {shortLabel}
-          </text>
-        )
-      })}
-      <text x={cx} y={cy - 6} textAnchor="middle" fontSize={8} fill="white" fontWeight="600">Capaian per Bidang</text>
-    </svg>
-  )
-}
 
 function DosenPADetail() {
   const navigate = useNavigate()
@@ -197,72 +148,67 @@ function DosenPADetail() {
         {/* Sub Capaian + Total Poin */}
         <div className="grid gap-5 lg:grid-cols-2">
           {/* Sub Capaian — bg hijau gelap */}
-          <div className="rounded-xl bg-brand-dark p-6 text-white shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="rounded-xl bg-gradient-to-br from-brand-dark to-brand-light p-5 text-white shadow-sm">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold">Sub Capaian</h3>
-                <p className="mt-0.5 text-xs text-white/70">Sub Capaian dalam kategori fondasi</p>
+                <h3 className="text-lg font-extrabold">Sub Capaian</h3>
+                <p className="mt-0.5 text-[11px] text-white/60">Sub Capaian dalam kategori fondasi</p>
               </div>
               <select
                 value={activeCapaian}
                 onChange={(e) => setActiveCapaian(e.target.value)}
-                className="rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-xs text-white outline-none"
+                className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-[11px] text-white outline-none backdrop-blur-sm"
               >
+                <option value="">---Pilih Capaian---</option>
                 {capaianOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <p className="mb-4 text-xs font-semibold text-white/80">{activeCapaian}</p>
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-              {/* Radar */}
-              <div className="shrink-0">
-                <RadarChart items={radarItems} />
-              </div>
-              {/* Progress list */}
-              <div className="flex-1 space-y-2 w-full">
-                {radarItems.map((item) => (
-                  <div key={item.label} className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-white/80 truncate max-w-[160px]">{item.label}</span>
-                      <span className="font-semibold">{item.value}</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                      <div
-                        className="h-full rounded-full bg-white transition-all"
-                        style={{ width: `${item.value}%` }}
-                      />
-                    </div>
+
+            {/* Active capaian label */}
+            {activeCapaian && (
+              <p className="mt-3 text-xs font-semibold text-white/80">{activeCapaian}</p>
+            )}
+
+            {/* Radar chart centered */}
+            <div className="mt-3 flex justify-center">
+              <RadarChartCJ
+                labels={radarItems.map((r) => r.label)}
+                values={radarItems.map((r) => r.value)}
+                darkBg
+                height={220}
+              />
+            </div>
+
+            {/* Progress bars */}
+            <div className="mt-4 space-y-2.5">
+              {radarItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <span className="w-44 shrink-0 truncate text-[11px] text-white/80">{item.label}</span>
+                  <div className="flex-1 overflow-hidden rounded-full bg-white/20" style={{ height: 6 }}>
+                    <div
+                      className={`h-full rounded-full transition-all ${item.value >= 60 ? 'bg-white' : 'bg-red-400'}`}
+                      style={{ width: `${item.value}%` }}
+                    />
                   </div>
-                ))}
-              </div>
+                  <span className="w-7 shrink-0 text-right text-[11px] font-bold">{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Total Poin per Capaian */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-brand-dark">Total Poin per Capaian</h3>
+            <h3 className="text-base font-bold text-[#222]">Total Poin per Capaian</h3>
             <p className="mt-0.5 text-xs text-[#888]">Distribusi poin mahasiswa di setiap area pengembangan</p>
-            <div className="mt-5 space-y-4">
-              {totalPoinData.map((item) => (
-                <div key={item.category} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-20 sm:w-24 shrink-0 text-xs sm:text-sm text-[#444]">{item.category}</span>
-                  <div className="flex-1">
-                    <div className="h-2.5 sm:h-3 overflow-hidden rounded-full bg-[#e9ebf8]">
-                      <div
-                        className="h-full rounded-full bg-brand-dark transition-all"
-                        style={{ width: `${item.value}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="hidden sm:flex gap-2 text-xs shrink-0">
-                    <span>0</span>
-                    <span className="text-[#888]">25</span>
-                    <span className="text-[#888]">50</span>
-                    <span className="text-[#888]">75</span>
-                    <span className="text-[#888]">100</span>
-                  </div>
-                  <span className="text-xs font-semibold text-brand-dark sm:hidden">{item.value}%</span>
-                </div>
-              ))}
+            <div className="mt-5">
+              <HorizontalBarChart
+                labels={totalPoinData.map((d) => d.category)}
+                values={totalPoinData.map((d) => d.value)}
+                max={100}
+                color="#1a5c38"
+                height={220}
+              />
             </div>
           </div>
         </div>

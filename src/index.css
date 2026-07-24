@@ -78,3 +78,38 @@ h2 {
 .border-brand-dark {
   border-color: var(--brand-dark);
 }
+
+/* Login page — rotating decorative shapes */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spin-slow-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes spin-slower {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.login-shape-1 {
+  transform-origin: center center;
+  animation: spin-slow 28s linear infinite;
+}
+.login-shape-2 {
+  transform-origin: center center;
+  animation: spin-slow-reverse 22s linear infinite;
+}
+.login-shape-3 {
+  transform-origin: center center;
+  animation: spin-slower 40s linear infinite;
+}
+.login-shape-4 {
+  transform-origin: center center;
+  animation: spin-slow-reverse 18s linear infinite;
+}
+.login-shape-5 {
+  transform-origin: center center;
+  animation: spin-slow 32s linear infinite;
+}

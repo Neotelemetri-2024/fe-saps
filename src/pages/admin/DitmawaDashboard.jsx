@@ -73,7 +73,7 @@ function AdminDitmawaDashboard() {
     <DashboardLayout role="admin-ditmawa" userName="Admin Ditmawa" userRole="Admin Ditmawa">
       <ConfirmModal
         isOpen={showConfirmDelete}
-        title="Hapus kegiatan?"
+       
         message={selectedRow ? `Yakin ingin menghapus "${selectedRow.kegiatan}"?` : ''}
         confirmText="Ya, hapus!"
         cancelText="Batal"

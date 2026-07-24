@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import {
+  getPengajuanEksternalById,
+  setujuiPengajuanEksternalPimpinan,
+  tolakPengajuanEksternalPimpinan,
+} from '../../services/pengajuanService'
 
 const JENIS_LABEL = {
   prestasi: 'Kompetisi',
@@ -42,49 +47,41 @@ function DetailVerifikasiPengajuanEksternal() {
   const { id } = useParams()
   const location = useLocation()
 
-  const stateItem = location.state?.item || {
-    id,
-    namaMahasiswa: 'AUFA ALATA',
-    nim: '2310512011',
-    prodi: 'Teknik Komputer, S1',
-    kegiatan: 'Lomba Hackathon',
-    jenis: 'prestasi',
-    skala: 'nasional',
-    tanggal: '01 Feb - 15 Nov 2026',
-    penyelenggara: 'Hima FTI Universitas Indonesia',
-    email: 'himatfi@gmail.com',
-    linkWebsite: 'https://...',
-    deskripsi: DEFAULT_DETAIL.deskripsi,
-    capaian: DEFAULT_DETAIL.capaian,
-    subCapaian: DEFAULT_DETAIL.subCapaian,
-    status: 'pending',
-  }
-
-  const [item, setItem] = useState(stateItem)
+  const [item, setItem] = useState(location.state?.item || null)
+  const [loading, setLoading] = useState(!location.state?.item)
   const [showConfirmSetujui, setShowConfirmSetujui] = useState(false)
   const [showActionModal, setShowActionModal] = useState(false)
   const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const backToList = () => navigate('/pimpinan-ditmawa/verifikasi-pengajuan-eksternal')
+  useEffect(() => {
+    if (location.state?.item) {
+      setItem(location.state.item)
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    getPengajuanEksternalById(id)
+      .then(setItem)
+      .catch(() => setItem(null))
+      .finally(() => setLoading(false))
+  }, [id, location.state])
 
-  const d = {
-    ...DEFAULT_DETAIL,
-    ...item,
-    jenisLabel: JENIS_LABEL[item.jenis] || item.jenis || '-',
-    skalaLabel: SKALA_LABEL[item.skala] || item.skala || '-',
-    capaian: item.capaian?.length ? item.capaian : DEFAULT_DETAIL.capaian,
-    subCapaian: item.subCapaian?.length ? item.subCapaian : DEFAULT_DETAIL.subCapaian,
-  }
+  const backToList = () => navigate('/pimpinan-ditmawa/verifikasi-pengajuan-eksternal')
 
   const handleSetujui = async () => {
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 400))
-    setItem((prev) => ({ ...prev, status: 'disetujui' }))
-    toast.success('Pengajuan disetujui!')
-    setShowConfirmSetujui(false)
-    setSubmitting(false)
+    try {
+      await setujuiPengajuanEksternalPimpinan(id)
+      toast.success('Pengajuan disetujui! Poin akan diberikan ke mahasiswa.')
+      setShowConfirmSetujui(false)
+      backToList()
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleKirimAction = async () => {
@@ -93,21 +90,59 @@ function DetailVerifikasiPengajuanEksternal() {
       return
     }
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 400))
-    const newStatus = actionType === 'revisi' ? 'revisi' : 'ditolak'
-    setItem((prev) => ({ ...prev, status: newStatus, alasan: alasan.trim() }))
-    toast.success(actionType === 'revisi' ? 'Revisi dikirim!' : 'Ditolak!')
-    setShowActionModal(false)
-    setSubmitting(false)
+    try {
+      const newStatus = actionType === 'revisi' ? 'revisi' : 'ditolak'
+      await tolakPengajuanEksternalPimpinan(id, newStatus, alasan.trim())
+      toast.success(actionType === 'revisi' ? 'Revisi dikirim ke mahasiswa!' : 'Pengajuan ditolak!')
+      setShowActionModal(false)
+      backToList()
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const canAct = item.status === 'pending'
+  if (loading) {
+    return (
+      <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
+        <p className="py-20 text-center text-sm text-[#616161]">Memuat detail...</p>
+      </DashboardLayout>
+    )
+  }
+
+  if (!item) {
+    return (
+      <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
+        <div className="flex flex-col items-center gap-4 py-20">
+          <p className="text-lg font-semibold text-[#616161]">Data tidak ditemukan.</p>
+          <button type="button" onClick={backToList}
+            className="rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+            Kembali
+          </button>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const canAct = item.status === 'diteruskan' || item.status === 'pending'
+
+  const d = {
+    ...DEFAULT_DETAIL,
+    ...item,
+    jenisLabel: JENIS_LABEL[item.jenis] || item.jenis || '-',
+    skalaLabel: SKALA_LABEL[item.skala] || item.skala || '-',
+    capaian: item.capaian?.length ? item.capaian : DEFAULT_DETAIL.capaian,
+    subCapaian: item.subCapaian?.length ? item.subCapaian : DEFAULT_DETAIL.subCapaian,
+    email: item.emailPenyelenggara || item.email || '-',
+    linkWebsite: item.linkWebsite || '-',
+  }
 
   return (
     <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        title="Apakah anda yakin menyetujui kegiatan ini?"
+       
         message="Pengajuan ini akan disetujui dan poin akan diberikan kepada mahasiswa."
         confirmText={submitting ? 'Memproses...' : 'SETUJUI'}
         cancelText="BATAL"

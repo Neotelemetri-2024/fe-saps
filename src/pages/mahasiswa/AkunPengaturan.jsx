@@ -30,7 +30,7 @@ function AkunPengaturan() {
           </div>
 
           {/* Keamanan Card */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-brand-dark p-6 shadow-sm flex flex-col justify-center">
+          <div className="rounded-xl border border-[#e9ebf8] bg-gradient-to-br from-brand-dark to-brand-light p-6 shadow-sm flex flex-col justify-center">
             <Lock className="h-8 w-8 text-white mb-2" />
             <p className="font-semibold text-white text-lg">KEAMANAN</p>
             <p className="text-sm text-gray-200">Data login dan kata sandi Anda terintegrasi dengan portal utama universitas.</p>
@@ -76,7 +76,7 @@ function AkunPengaturan() {
             <button
               type="button"
               onClick={handleSimpanPerubahan}
-              className="mt-4 rounded-xl bg-brand-dark px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+              className="mt-4 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
             >
               Simpan Perubahan
             </button>

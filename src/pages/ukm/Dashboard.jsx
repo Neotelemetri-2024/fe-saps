@@ -114,17 +114,13 @@ function UKMDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15">
-              <Download className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="font-semibold text-white">Download Panduan</p>
-              <p className="text-xs text-white/80">
-                UKM - Panduan Penggunaan Website MyUnand Student Connect 2026.pdf
-              </p>
-            </div>
+        <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-white">Download Panduan</h3>
+          <div className="mt-3 flex items-start gap-3 text-white/90">
+            <Download className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-xs leading-snug">
+              UKM – Panduan Penggunaan Website MyUnand Student Connect 2026.pdf
+            </p>
           </div>
         </div>
       </div>

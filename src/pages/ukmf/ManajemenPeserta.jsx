@@ -63,7 +63,7 @@ function ManajemenPeserta() {
   const tidakHadir = pesertaData.filter((p) => p.kehadiran === 'Tidak Hadir').length
 
   return (
-    <DashboardLayout role="ukm" userName="Operator UKM" userRole="Operator UKM">
+    <DashboardLayout role="ukmf" userName="Operator UKMF" userRole="Operator UKMF">
       <div className="space-y-6">
         <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline">
           <ArrowLeft className="h-4 w-4" /> Kembali
@@ -74,23 +74,19 @@ function ManajemenPeserta() {
           <p className="mt-1 text-sm text-[#616161]">{kegiatan.nama} - {kegiatan.tanggal} - {kegiatan.tempat}</p>
         </div>
 
-        {/* Stat Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard label="Total Terdaftar" value={total} color="green" />
           <StatCard label="Hadir" value={hadir} color="green" />
           <StatCard label="Tidak Hadir" value={tidakHadir} color="green" />
         </div>
 
-        {/* Info Banner */}
         <div className="flex items-center gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
           <Info className="h-5 w-5" />
-          UKM hanya dapat mengelola daftar peserta dan kehadiran. Bobot poin ditentukan oleh Admin Fakultas dan Pimpinan Fakultas.
+          UKMF hanya dapat mengelola daftar peserta dan kehadiran. Bobot poin ditentukan oleh Admin Fakultas dan Pimpinan Fakultas.
         </div>
 
-        {/* Confirm Submit Modal */}
         <ConfirmModal
           isOpen={showSubmitModal}
-         
           message="Apakah kamu yakin ingin mengirim data kehadiran dan peran peserta untuk diklaim poin?"
           confirmText="Ya, Kirim"
           cancelText="Batal"
@@ -98,7 +94,6 @@ function ManajemenPeserta() {
           onCancel={() => setShowSubmitModal(false)}
         />
 
-        {/* Daftar Peserta Section */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-lg font-bold text-brand-dark">Daftar Peserta ({pesertaData.length})</h3>
@@ -110,13 +105,12 @@ function ManajemenPeserta() {
           </div>
           <p className="mb-4 text-sm text-[#616161]">Cari dan kelola kehadiran peserta pada kegiatan ini</p>
 
-          {/* Search and Action Buttons */}
           <div className="flex flex-col gap-3 lg:flex-row mb-4">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input type="text" placeholder="Cari mahasiswa atau kegiatan..." className="w-full text-sm outline-none" />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm">Semua</button>
               <button className="rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]">Hadir</button>
               <button className="rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]">Tidak Hadir</button>
@@ -130,7 +124,6 @@ function ManajemenPeserta() {
             </div>
           </div>
 
-          {/* Table */}
           <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] text-left text-sm">
@@ -182,9 +175,11 @@ function ManajemenPeserta() {
             </div>
           </div>
 
-          {/* Submit Klaim Poin */}
           <div className="mt-4 flex justify-end">
-            <button onClick={() => setShowSubmitModal(true)} className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
+            <button
+              onClick={() => setShowSubmitModal(true)}
+              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+            >
               Submit untuk Klaim Poin Peserta
             </button>
           </div>

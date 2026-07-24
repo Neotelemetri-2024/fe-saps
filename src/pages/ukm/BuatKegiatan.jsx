@@ -93,7 +93,7 @@ function BuatKegiatan() {
         kuota: form.kuotaPeserta,
       })
       toast.success('Kegiatan berhasil diajukan ke Admin Ditmawa!')
-      navigate("/ukmf/daftar-kegiatan")
+      navigate('/ukm/daftar-kegiatan')
     } catch (err) {
       toast.error('Gagal', { description: err.message })
     } finally {
@@ -102,7 +102,7 @@ function BuatKegiatan() {
   }
 
   return (
-    <DashboardLayout role="ukmf" userName="Operator UKMF" userRole="Operator UKMF">
+    <DashboardLayout role="ukm" userName="Nouval Rafiif Irwan" userRole="Operator UKM">
       <div className="space-y-5">
         <button
           type="button"
@@ -380,7 +380,7 @@ function BuatKegiatan() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/ukmf/daftar-kegiatan")}
+              onClick={() => navigate('/ukm/daftar-kegiatan')}
               className="rounded-lg border border-[#d1d5db] bg-white px-8 py-2.5 text-sm font-bold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
             >
               Batal

@@ -28,7 +28,10 @@ function DaftarKegiatan() {
             <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Daftar Kegiatan</h2>
             <p className="mt-1 text-sm text-[#616161]">Kelola seluruh kegiatan yang diikuti oleh organisasi Anda.</p>
           </div>
-          <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-light sm:w-auto">
+          <button
+            onClick={() => navigate('/ukm/buat-kegiatan')}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
+          >
             <Plus className="h-4 w-4" />
             Ajukan Kegiatan
           </button>
@@ -60,7 +63,7 @@ function DaftarKegiatan() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
+            <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               <Filter className="h-4 w-4" />
               Filter
             </button>

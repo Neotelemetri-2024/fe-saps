@@ -65,7 +65,7 @@ function AdminDitmawaDashboard() {
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <ConfirmModal
         isOpen={showConfirmDelete}
-        title="Hapus kegiatan?"
+       
         message={selectedItem ? `Yakin ingin menghapus "${selectedItem.nama}"?` : ''}
         confirmText="Ya, hapus"
         cancelText="Batal"

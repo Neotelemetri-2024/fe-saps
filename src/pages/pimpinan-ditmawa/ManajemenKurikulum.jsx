@@ -290,7 +290,7 @@ function ManajemenKurikulum() {
 
       <ConfirmModal
         isOpen={showHapusCapaianConfirm}
-        title="Hapus Capaian?"
+       
         message={`Apakah Anda yakin ingin menghapus capaian "${hapusCapaianTarget?.label}"? Semua sub capaian di dalamnya juga akan ikut terhapus.`}
         confirmText="HAPUS"
         cancelText="BATAL"
@@ -300,7 +300,7 @@ function ManajemenKurikulum() {
 
       <ConfirmModal
         isOpen={showHapusSubCapaianConfirm}
-        title="Hapus Sub Capaian?"
+       
         message={`Apakah Anda yakin ingin menghapus sub capaian "${hapusSubCapaianTarget?.nama}"?`}
         confirmText="HAPUS"
         cancelText="BATAL"
@@ -309,7 +309,7 @@ function ManajemenKurikulum() {
       />
 
       {/* Modal Tambah Kurikulum */}
-      <Modal isOpen={showTambahKurikulum} onClose={() => setShowTambahKurikulum(false)} title="Tambah Kurikulum Baru">
+      <Modal isOpen={showTambahKurikulum} onClose={() => setShowTambahKurikulum(false)}>
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-[#333]">Tahun</label>
@@ -345,7 +345,7 @@ function ManajemenKurikulum() {
       </Modal>
 
       {/* Modal Tambah Capaian */}
-      <Modal isOpen={showTambahCapaian} onClose={() => setShowTambahCapaian(false)} title="Tambah Capaian">
+      <Modal isOpen={showTambahCapaian} onClose={() => setShowTambahCapaian(false)}>
         <label className="mb-1 block text-sm font-medium text-[#333]">Nama Capaian <span className="text-red-500">*</span></label>
         <input
           type="text"
@@ -367,7 +367,7 @@ function ManajemenKurikulum() {
       </Modal>
 
       {/* Modal Tambah Sub Capaian */}
-      <Modal isOpen={showTambahSubCapaian} onClose={() => setShowTambahSubCapaian(false)} title="Tambah Sub Capaian">
+      <Modal isOpen={showTambahSubCapaian} onClose={() => setShowTambahSubCapaian(false)}>
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-[#333]">Capaian Induk <span className="text-red-500">*</span></label>
@@ -416,7 +416,7 @@ function ManajemenKurikulum() {
       </Modal>
 
       {/* Modal Edit Sub Capaian */}
-      <Modal isOpen={!!editSubCapaian} onClose={() => setEditSubCapaian(null)} title="Edit Sub Capaian">
+      <Modal isOpen={!!editSubCapaian} onClose={() => setEditSubCapaian(null)}>
         {editSubCapaian && (
           <div className="space-y-4">
             <div>

@@ -62,11 +62,12 @@ import AdminFakultasVerifikasiPengajuanUKMF from './pages/admin-fakultas/Verifik
 import AdminFakultasDetailVerifikasiUKMF from './pages/admin-fakultas/DetailVerifikasiUKMF'
 import UKMDashboard from './pages/ukm/Dashboard'
 import UKMDaftarKegiatan from './pages/ukm/DaftarKegiatan'
+import UKMBuatKegiatan from './pages/ukm/BuatKegiatan'
 import UKMManajemenPeserta from './pages/ukm/ManajemenPeserta'
 import UKMFDashboard from './pages/ukmf/Dashboard'
 import UKMFDaftarKegiatan from './pages/ukmf/DaftarKegiatan'
 import UKMFBuatKegiatan from './pages/ukmf/BuatKegiatan'
-import UKMFFormBuatKegiatan from './pages/ukmf/FormBuatKegiatan'
+import UKMFManajemenPeserta from './pages/ukmf/ManajemenPeserta'
 import UKMFAkunDanPengaturan from './pages/ukmf/AkunDanPengaturan'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -165,6 +166,7 @@ function App() {
         <Route path="ukm" element={<AuthGuard><RoleGuard allowedRoles={['ukm']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<UKMDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMDaftarKegiatan />} />
+          <Route path="buat-kegiatan" element={<UKMBuatKegiatan />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMManajemenPeserta />} />
         </Route>
 
@@ -172,8 +174,8 @@ function App() {
         <Route path="ukmf" element={<AuthGuard><RoleGuard allowedRoles={['ukmf']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<UKMFDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMFDaftarKegiatan />} />
+          <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMFManajemenPeserta />} />
           <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
-          <Route path="buat-kegiatan/form" element={<UKMFFormBuatKegiatan />} />
           <Route path="pengaturan" element={<UKMFAkunDanPengaturan />} />
         </Route>
 

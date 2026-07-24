@@ -1,18 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Clock, Filter, Search, Check } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import {
+  getPengajuanPimpinanDitmawa,
+  setujuiPengajuanEksternalPimpinan,
+  subscribeDataUpdate,
+} from '../../services/pengajuanService'
 
 const PAGE_SIZE = 10
-
-const DUMMY_EKSTERNAL = [
-  { id: 'ext-1', namaMahasiswa: 'AUFA ALATA', nim: '2310512011', prodi: 'Teknik Komputer, S1', kegiatan: 'Lomba hackathon', kategori: 'Kompetisi', peran: 'Juara 1', tanggal: '01 Feb - 15 Nov 2026', skala: 'nasional', status: 'pending', diajukanPada: 'Selasa, 4 Feb 2026, 15:37' },
-  { id: 'ext-2', namaMahasiswa: 'BUDI SANTOSO', nim: '2310512012', prodi: 'Sistem Informasi, S1', kegiatan: 'Seminar Internasional AI', kategori: 'Seminar', peran: 'Peserta', tanggal: '10 Mar - 12 Mar 2026', skala: 'internasional', status: 'pending', diajukanPada: 'Rabu, 5 Mar 2026, 09:00' },
-  { id: 'ext-3', namaMahasiswa: 'CITRA DEWI', nim: '2310512013', prodi: 'Teknik Elektro, S1', kegiatan: 'Debat Mahasiswa Nasional', kategori: 'Kompetisi', peran: 'Juara 2', tanggal: '20 Apr 2026', skala: 'nasional', status: 'disetujui', diajukanPada: 'Kamis, 6 Apr 2026, 10:15' },
-]
 
 const SKALA_LABEL = {
   internasional: 'Internasional',
@@ -23,7 +22,8 @@ const SKALA_LABEL = {
 
 function VerifikasiPengajuanEksternal() {
   const navigate = useNavigate()
-  const [items, setItems] = useState(DUMMY_EKSTERNAL)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
   const [tahun, setTahun] = useState('')
@@ -34,6 +34,21 @@ function VerifikasiPengajuanEksternal() {
   const [pilihanMode, setPilihanMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [showBulkConfirm, setShowBulkConfirm] = useState(false)
+
+  const load = () => {
+    setLoading(true)
+    getPengajuanPimpinanDitmawa()
+      .then(setItems)
+      .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    return subscribeDataUpdate((detail) => {
+      if (!detail?.type || detail.type === 'pengajuan') load()
+    })
+  }, [])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -78,21 +93,27 @@ function VerifikasiPengajuanEksternal() {
     else setSelected(new Set(pageItems.map((i) => i.id)))
   }
 
-  const handleBulkConfirm = () => {
-    setItems((prev) =>
-      prev.map((item) => selected.has(item.id) ? { ...item, status: 'disetujui' } : item)
-    )
-    toast.success(`${selected.size} pengajuan eksternal disetujui.`)
-    setSelected(new Set())
-    setPilihanMode(false)
-    setShowBulkConfirm(false)
+  const handleBulkConfirm = async () => {
+    try {
+      for (const id of selected) {
+        await setujuiPengajuanEksternalPimpinan(id)
+      }
+      toast.success(`${selected.size} pengajuan eksternal disetujui.`)
+      setSelected(new Set())
+      setPilihanMode(false)
+      setShowBulkConfirm(false)
+      load()
+    } catch (err) {
+      toast.error('Gagal menyetujui', { description: err.message })
+      setShowBulkConfirm(false)
+    }
   }
 
   return (
     <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        title="Apakah anda yakin menyetujui semua kegiatan ini?"
+       
         message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan eksternal ini?`}
         confirmText="SETUJUI"
         cancelText="BATAL"
@@ -123,7 +144,7 @@ function VerifikasiPengajuanEksternal() {
               />
             </div>
             <button type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               <Filter className="h-4 w-4" /> Filter
             </button>
           </div>
@@ -212,7 +233,13 @@ function VerifikasiPengajuanEksternal() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={pilihanMode ? 9 : 8} className="px-4 py-10 text-center text-[#616161]">
+                      Memuat data...
+                    </td>
+                  </tr>
+                ) : pageItems.length === 0 ? (
                   <tr>
                     <td colSpan={pilihanMode ? 9 : 8} className="px-4 py-10 text-center text-[#616161]">
                       Belum ada pengajuan eksternal yang diteruskan dari Admin Ditmawa.
@@ -256,7 +283,7 @@ function VerifikasiPengajuanEksternal() {
                         ) : (
                           <button type="button"
                             onClick={() => navigate(`/pimpinan-ditmawa/verifikasi-pengajuan-eksternal/${item.id}`, { state: { item } })}
-                            className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
+                            className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
                             Detail dan verifikasi
                           </button>
                         )}

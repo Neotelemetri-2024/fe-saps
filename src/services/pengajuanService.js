@@ -268,6 +268,41 @@ export async function setujuiTolak(pengajuanId, status, alasan) {
   return list[idx]
 }
 
+/** Pimpinan Ditmawa menyetujui pengajuan eksternal — status jadi 'disetujui' final */
+export async function setujuiPengajuanEksternalPimpinan(pengajuanId) {
+  await delay()
+  const list = readJson(PENGAJUAN_KEY)
+  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
+  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
+  list[idx] = {
+    ...list[idx],
+    status: 'disetujui',
+    tahap: 'selesai',
+    disetujuiPimpinanPada: new Date().toISOString(),
+  }
+  writeJson(PENGAJUAN_KEY, list)
+  emitUpdate('pengajuan')
+  return list[idx]
+}
+
+/** Pimpinan Ditmawa menolak / merevisi pengajuan eksternal */
+export async function tolakPengajuanEksternalPimpinan(pengajuanId, status, alasan) {
+  await delay()
+  const list = readJson(PENGAJUAN_KEY)
+  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
+  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
+  list[idx] = {
+    ...list[idx],
+    status,
+    alasan,
+    tahap: status === 'revisi' ? 'mahasiswa' : 'selesai',
+    diverifikasiPimpinanPada: new Date().toISOString(),
+  }
+  writeJson(PENGAJUAN_KEY, list)
+  emitUpdate('pengajuan')
+  return list[idx]
+}
+
 export function subscribeDataUpdate(callback) {
   const handler = (e) => callback(e?.detail)
   window.addEventListener(EVENT_NAME, handler)

@@ -1,5 +1,6 @@
 import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { HorizontalBarChart } from '../../components/charts'
 
 const ukmData = [
   { label: 'UKM Olahraga', poin: 45 },
@@ -8,26 +9,6 @@ const ukmData = [
   { label: 'UKM Sosial', poin: 60 },
   { label: 'UKM Bahasa', poin: 22 },
 ]
-
-function RoundedBarChart({ data }) {
-  const maxPoin = Math.max(...data.map((d) => d.poin))
-  return (
-    <div className="space-y-3">
-      {data.map((d) => (
-        <div key={d.label} className="flex items-center gap-3">
-          <span className="w-28 text-xs font-medium text-[#333]">{d.label}</span>
-          <div className="flex h-6 flex-1 overflow-hidden rounded-full bg-[#e9ebf8]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-dark to-brand-light transition-all"
-              style={{ width: `${(d.poin / maxPoin) * 100}%` }}
-            />
-          </div>
-          <span className="w-8 text-right text-xs font-semibold text-[#616161]">{d.poin}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 const daftarEvent = [
   { no: 1, nama: 'TAC (Training Andalasian Character)', dalam: '2 hari', tipe: 'Lomba', penyelenggara: 'BEM Universitas', kategori: 'Wajib', peserta: 1000, skala: 'Universitas' },
@@ -63,7 +44,11 @@ function PimpinanDitmawaDashboard() {
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="text-lg font-bold text-brand-dark">Grafik poin per UKM berdasarkan pengajuan Kegiatan</h3>
-          <RoundedBarChart data={ukmData} />
+          <HorizontalBarChart
+            labels={ukmData.map((d) => d.label)}
+            values={ukmData.map((d) => d.poin)}
+            max={80}
+          />
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">

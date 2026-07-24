@@ -79,7 +79,7 @@ function DetailVerifikasiPengajuanInternal() {
     <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        title="Apakah anda yakin menyetujui kegiatan ini?"
+       
         message="Pengajuan ini akan disetujui dan poin akan diberikan."
         confirmText={submitting ? 'Memproses...' : 'SETUJUI'}
         cancelText="BATAL"

@@ -150,7 +150,7 @@ function VerifikasiPengajuanEksternal() {
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        title="Apakah anda yakin menyetujui semua kegiatan ini ?"
+       
         message={`Apakah Anda yakin ingin menyetujui pengajuan ini dan meneruskannya ke Pimpinan Ditmawa?`}
         confirmText="TERUSKAN KE PIMPINAN"
         cancelText="BATAL"
@@ -179,7 +179,7 @@ function VerifikasiPengajuanEksternal() {
             </div>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               <Filter className="h-4 w-4" /> Filter
             </button>
@@ -285,7 +285,7 @@ function VerifikasiPengajuanEksternal() {
                       <button
                         type="button"
                         onClick={centangSemua}
-                        title="Centang Semua"
+                       
                         className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${
                           allPageSelected
                             ? 'border-white bg-white'
@@ -384,7 +384,7 @@ function VerifikasiPengajuanEksternal() {
                                 state: { item },
                               })
                             }
-                            className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+                            className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
                           >
                             Detail dan verifikasi
                           </button>

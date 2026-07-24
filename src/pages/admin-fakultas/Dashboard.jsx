@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { GroupedBarChart } from '../../components/charts'
 
 const statCards = [
   { label: 'PENDING', value: 4, border: 'border-yellow-400', numColor: 'text-yellow-500' },
@@ -28,106 +29,6 @@ const chartData = [
   { prodi: 'Sistem\nInformasi', organisasi: 550, seminar: 370, prestasi: 310 },
   { prodi: 'Teknik\nKomputer', organisasi: 620, seminar: 420, prestasi: 280 },
 ]
-const MAX_VAL = 800
-const BAR_COLORS = {
-  organisasi: '#2563eb',
-  seminar: '#16a34a',
-  prestasi: '#ca8a04',
-}
-
-function GroupedBarChart() {
-  const chartH = 200
-  const barW = 20
-  const groupGap = 40
-  const barGap = 4
-  const paddingLeft = 48
-  const paddingBottom = 56
-  const paddingTop = 16
-  const paddingRight = 24
-  const groupW = barW * 3 + barGap * 2
-
-  const totalW = paddingLeft + chartData.length * (groupW + groupGap) + paddingRight
-
-  const yLabels = [800, 700, 600, 500, 400, 300, 200]
-
-  return (
-    <div className="w-full overflow-x-auto">
-      <svg
-        width={totalW}
-        height={chartH + paddingBottom + paddingTop}
-        style={{ minWidth: totalW }}
-      >
-        {/* Y-axis grid lines + labels */}
-        {yLabels.map((val) => {
-          const y = paddingTop + chartH - (val / MAX_VAL) * chartH
-          return (
-            <g key={val}>
-              <line x1={paddingLeft} y1={y} x2={totalW - paddingRight} y2={y} stroke="#e5e7eb" strokeWidth={1} />
-              <text x={paddingLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#9ca3af">{val}</text>
-            </g>
-          )
-        })}
-
-        {/* Bars */}
-        {chartData.map((d, gi) => {
-          const groupX = paddingLeft + gi * (groupW + groupGap)
-          const keys = ['organisasi', 'seminar', 'prestasi']
-          return (
-            <g key={d.prodi}>
-              {keys.map((key, bi) => {
-                const barH = (d[key] / MAX_VAL) * chartH
-                const x = groupX + bi * (barW + barGap)
-                const y = paddingTop + chartH - barH
-                return (
-                  <g key={key}>
-                    <rect
-                      x={x} y={y} width={barW} height={barH}
-                      fill={BAR_COLORS[key]}
-                      rx={3}
-                    />
-                    <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={9} fill={BAR_COLORS[key]} fontWeight="600">
-                      {d[key]}
-                    </text>
-                  </g>
-                )
-              })}
-              {/* X-axis label — split on \n */}
-              {d.prodi.split('\n').map((line, li) => (
-                <text
-                  key={li}
-                  x={groupX + groupW / 2}
-                  y={paddingTop + chartH + 16 + li * 12}
-                  textAnchor="middle"
-                  fontSize={10}
-                  fill="#374151"
-                >
-                  {line}
-                </text>
-              ))}
-            </g>
-          )
-        })}
-
-        {/* Baseline */}
-        <line
-          x1={paddingLeft} y1={paddingTop + chartH}
-          x2={totalW - paddingRight} y2={paddingTop + chartH}
-          stroke="#d1d5db" strokeWidth={1}
-        />
-      </svg>
-
-      {/* Legend */}
-      <div className="mt-3 flex flex-wrap gap-4 px-1">
-        {[['organisasi', BAR_COLORS.organisasi], ['seminar', BAR_COLORS.seminar], ['prestasi', BAR_COLORS.prestasi]].map(([key, color]) => (
-          <div key={key} className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-sm" style={{ background: color }} />
-            <span className="text-xs text-[#555] capitalize">{key}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -235,7 +136,15 @@ function Dashboard() {
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#222]">Rata rata Capaian per prodi</h3>
-            <GroupedBarChart />
+            <GroupedBarChart
+              labels={chartData.map((d) => d.prodi.replace('\n', ' '))}
+              datasets={[
+                { label: 'Organisasi', data: chartData.map((d) => d.organisasi), color: '#2563eb' },
+                { label: 'Seminar',    data: chartData.map((d) => d.seminar),    color: '#16a34a' },
+                { label: 'Prestasi',  data: chartData.map((d) => d.prestasi),   color: '#ca8a04' },
+              ]}
+              height={240}
+            />
           </div>
 
           <div className="flex flex-col gap-4">

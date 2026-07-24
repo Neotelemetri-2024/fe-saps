@@ -83,7 +83,7 @@ function VerifikasiPengajuanUKM() {
     <DashboardLayout role="pimpinan-ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        title="Apakah anda yakin menyetujui semua kegiatan ini?"
+       
         message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan UKM ini?`}
         confirmText="SETUJUI"
         cancelText="BATAL"
@@ -114,7 +114,7 @@ function VerifikasiPengajuanUKM() {
               />
             </div>
             <button type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark">
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               <Filter className="h-4 w-4" /> Filter
             </button>
           </div>
@@ -239,7 +239,7 @@ function VerifikasiPengajuanUKM() {
                         ) : (
                           <button type="button"
                             onClick={() => navigate(`/pimpinan-ditmawa/verifikasi-pengajuan-ukm/${item.id}`, { state: { item } })}
-                            className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
+                            className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
                             Detail dan verifikasi
                           </button>
                         )}

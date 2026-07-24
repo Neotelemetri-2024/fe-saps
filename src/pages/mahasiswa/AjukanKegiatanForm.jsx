@@ -1,10 +1,31 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { CheckCircle } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import { ajukanKegiatan } from '../../services/pengajuanService'
+
+const peranOptions = {
+  prestasi: [
+    { value: 'juara1', label: 'Juara 1 / Emas' },
+    { value: 'juara2', label: 'Juara 2 / Perak' },
+    { value: 'juara3', label: 'Juara 3 / Perunggu' },
+    { value: 'finalis', label: 'Penghargaan / Finalis / Peserta' },
+  ],
+  organisasi: [
+    { value: 'ketua_umum', label: 'Ketua Umum / Presiden Mahasiswa' },
+    { value: 'pengurus_inti', label: 'Pengurus Inti (Sekretaris, Bendahara, Kabid)' },
+    { value: 'anggota_aktif', label: 'Anggota Aktif / Staff' },
+    { value: 'ketua_panitia', label: 'Ketua Panitia / Pelaksana Event' },
+  ],
+  pelatihan: [
+    { value: 'pembicara', label: 'Pembicara / Narasumber / Fasilitator' },
+    { value: 'moderator', label: 'Moderator / Panitia Eksekutif' },
+    { value: 'peserta_terstruktur', label: 'Peserta Pelatihan Terstruktur' },
+    { value: 'peserta_umum', label: 'Peserta Pelatihan Umum / Kuliah Umum / Webinar' },
+  ],
+}
 
 function AjukanKegiatanForm() {
   const navigate = useNavigate()
@@ -23,10 +44,11 @@ function AjukanKegiatanForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }))
+    if (name === 'jenisKegiatan') {
+      setFormData((prev) => ({ ...prev, jenisKegiatan: value, peranPencapaian: '' }))
+      return
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleDateChange = (date) => {
@@ -168,15 +190,20 @@ function AjukanKegiatanForm() {
                   name="peranPencapaian"
                   value={formData.peranPencapaian}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                  disabled={!formData.jenisKegiatan}
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark disabled:cursor-not-allowed disabled:bg-[#f5f5f5] disabled:text-[#aaa]"
                   required
                 >
-                  <option value="">Pilih peran kegiatan</option>
-                  <option value="juara1">Juara 1</option>
-                  <option value="juara2">Juara 2</option>
-                  <option value="juara3">Juara 3</option>
-                  <option value="peserta">Peserta</option>
+                  <option value="">
+                    {formData.jenisKegiatan ? 'Pilih peran / pencapaian' : 'Pilih jenis kegiatan terlebih dahulu'}
+                  </option>
+                  {(peranOptions[formData.jenisKegiatan] ?? []).map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
+                {!formData.jenisKegiatan && (
+                  <p className="mt-1 text-xs text-[#9aa0a6]">Pilih jenis kegiatan dulu untuk melihat pilihan peran.</p>
+                )}
               </div>
               {/* asdasda */}
               <div>

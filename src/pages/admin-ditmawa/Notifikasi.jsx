@@ -163,7 +163,7 @@ function Notifikasi() {
                           <button
                             type="button"
                             onClick={() => tandaiSudahDibaca(notif.id)}
-                            title="Tandai sudah dibaca"
+                           
                           >
                             <MoreVertical className="h-4 w-4 text-[#969696] hover:text-brand-dark" />
                           </button>

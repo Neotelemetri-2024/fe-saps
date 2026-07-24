@@ -149,7 +149,7 @@ function ManajemenEvent() {
             </div>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               <Filter className="h-4 w-4" /> Filter
             </button>
@@ -236,7 +236,7 @@ function ManajemenEvent() {
                               type="button"
                               onClick={() => navigate('/admin-ditmawa/buat-event', { state: { edit: item } })}
                               className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-                              title="Edit"
+                             
                             >
                               <Edit3 className="h-4 w-4" />
                             </button>
@@ -244,7 +244,7 @@ function ManajemenEvent() {
                               type="button"
                               onClick={() => setHapusTarget(item)}
                               className="rounded p-1 text-red-600 transition hover:bg-red-50"
-                              title="Hapus"
+                             
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

@@ -5,16 +5,29 @@ import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
-import { getPengajuan } from '../../services/pengajuanService'
+import { getPengajuan, subscribeDataUpdate } from '../../services/pengajuanService'
 
 const peranLabel = {
-  juara1: 'Juara 1',
-  juara2: 'Juara 2',
-  juara3: 'Juara 3',
-  peserta: 'Peserta',
+  // Prestasi & Kompetisi
+  juara1: 'Juara 1 / Emas',
+  juara2: 'Juara 2 / Perak',
+  juara3: 'Juara 3 / Perunggu',
+  finalis: 'Penghargaan / Finalis / Peserta',
+  // Organisasi
+  ketua_umum: 'Ketua Umum / Presiden Mahasiswa',
+  pengurus_inti: 'Pengurus Inti',
+  anggota_aktif: 'Anggota Aktif / Staff',
+  ketua_panitia: 'Ketua Panitia / Pelaksana Event',
+  // Pelatihan & Seminar
+  pembicara: 'Pembicara / Narasumber / Fasilitator',
+  moderator: 'Moderator / Panitia Eksekutif',
+  peserta_terstruktur: 'Peserta Pelatihan Terstruktur',
+  peserta_umum: 'Peserta Pelatihan Umum / Webinar',
+  // Jenis
   prestasi: 'Prestasi/Kompetisi',
   organisasi: 'Organisasi/Volunteer',
   pelatihan: 'Pelatihan/Seminar',
+  // Skala
   internasional: 'Internasional',
   nasional: 'Nasional',
   regional: 'Regional',
@@ -86,27 +99,35 @@ function AjukanKegiatanEksternal() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true)
     getPengajuan('mahasiswa')
       .then((res) => setData(mapPengajuanRows(res)))
       .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    return subscribeDataUpdate((detail) => {
+      if (!detail?.type || detail.type === 'pengajuan') load()
+    })
   }, [])
 
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
       <div className="space-y-4 sm:space-y-6">
-        <h2 className="text-lg font-bold text-brand-dark sm:text-2xl">Daftar Pengajuan</h2>
-
-        <button
-          onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto sm:px-6 sm:py-3"
-        >
-          <PlusCircle className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
-          <span className="sm:hidden">Ajukan Baru</span>
-          <span className="hidden sm:inline">Tambah ajukan kegiatan</span>
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-brand-dark sm:text-2xl">Daftar Pengajuan</h2>
+          <button
+            onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
+          >
+            <PlusCircle className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+            <span className="sm:hidden">Ajukan Baru</span>
+            <span className="hidden sm:inline">Tambah Ajukan Kegiatan</span>
+          </button>
+        </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
           <h3 className="text-sm font-bold text-brand-dark sm:text-lg">Kegiatan yang telah diajukan</h3>
@@ -122,7 +143,7 @@ function AjukanKegiatanEksternal() {
             </div>
 
             <details className="w-full sm:hidden">
-              <summary className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white">
+              <summary className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white">
                 <Filter className="h-4 w-4" />
                 Filter
               </summary>
@@ -147,7 +168,7 @@ function AjukanKegiatanEksternal() {
             </details>
 
             <div className="hidden items-center gap-3 sm:flex">
-              <button className="flex items-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+              <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
                 <Filter className="h-4 w-4" />
                 Filter
               </button>

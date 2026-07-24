@@ -1,8 +1,8 @@
-import React from 'react'
 import { ChevronRight, Download } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import { StackedBarChart } from '../../components/charts'
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -10,14 +10,14 @@ import ProgressBar from '../../components/dashboard/ProgressBar'
 const stats = [
   { label: 'TOTAL MAHASISWA AKTIF', value: '12.300', tone: 'emerald' },
   { label: 'RATA RATA CAPAIAN', value: '72%', tone: 'emerald' },
-  { label: 'KEGIATAN PERLU PERSETUJUAN', value: '4', tone: 'emerald' },
-  { label: 'KURIKULUM AKTIF', value: '1', tone: 'emerald' },
+  { label: 'TOTAL FAKULTAS', value: '15', tone: 'emerald' },
+  { label: 'KURIKULUM AKTIF', value: 'Kurikulum Berjenjang 2022', tone: 'emerald' },
 ]
 
 const rankingFakultas = [
-  { name: 'Teknologi Informasi', desc: '1. Program Studi', progress: 90 },
-  { name: 'Teknologi Informasi', desc: '2. Program Studi', progress: 80 },
-  { name: 'Teknologi Informasi', desc: '3. Program Studi', progress: 80 },
+  { name: 'Teknologi Informasi', desc: '3 Program Studi', progress: 90 },
+  { name: 'Teknologi Informasi', desc: '3 Program Studi', progress: 80 },
+  { name: 'Teknologi Informasi', desc: '3 Program Studi', progress: 80 },
 ]
 
 const chartData = [
@@ -52,69 +52,11 @@ function StatBox({ label, value, tone }) {
   )
 }
 
-function StackedChart({ data }) {
-  const width = 800
-  const height = 400
-  const paddingLeft = 50
-  const paddingBottom = 80
-  const maxVal = 500
-  const chartHeight = height - paddingBottom - 10
-  const barWidth = 20
-  const gap = (width - paddingLeft - barWidth * data.length) / (data.length + 1)
-  const yTicks = [100, 200, 300, 400, 500]
-  const colors = { organisasi: '#3b82f6', prestasi: '#eab308', seminar: '#15803d' }
-  const scaleY = (v) => (v / maxVal) * chartHeight
-
-  return (
-    <div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-        {yTicks.map((t) => {
-          const y = height - paddingBottom - scaleY(t)
-          return (
-            <g key={t}>
-              <line x1={paddingLeft} y1={y} x2={width} y2={y} stroke="#eef0f7" strokeWidth="1" />
-              <text x={paddingLeft - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#9aa0a6">{t}</text>
-            </g>
-          )
-        })}
-        {data.map((d, i) => {
-          const x = paddingLeft + gap + i * (barWidth + gap)
-          const baseY = height - paddingBottom
-          const hSem = scaleY(d.seminar)
-          const hPre = scaleY(d.prestasi)
-          const hOrg = scaleY(d.organisasi)
-          const ySem = baseY - hSem
-          const yPre = ySem - hPre
-          const yOrg = yPre - hOrg
-
-          return (
-            <g key={d.fakultas}>
-              <rect x={x} y={ySem} width={barWidth} height={hSem} fill={colors.seminar} rx="2" />
-              <rect x={x} y={yPre} width={barWidth} height={hPre} fill={colors.prestasi} rx="2" />
-              <rect x={x} y={yOrg} width={barWidth} height={hOrg} fill={colors.organisasi} rx="2" />
-              <text
-                x={x + barWidth / 2}
-                y={baseY + 5}
-                textAnchor="end"
-                fontSize="11"
-                fill="#616161"
-                transform={`rotate(-45 ${x + barWidth / 2} ${baseY + 5})`}
-              >
-                {d.fakultas}
-              </text>
-            </g>
-          )
-        })}
-        <line x1={paddingLeft} y1={height - paddingBottom} x2={width} y2={height - paddingBottom} stroke="#e9ebf8" strokeWidth="1" />
-      </svg>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-[#616161]">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.organisasi }} />organisasi</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.seminar }} />seminar</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.prestasi }} />prestasi</span>
-      </div>
-    </div>
-  )
-}
+const chartDatasets = [
+  { label: 'Organisasi', data: chartData.map((d) => d.organisasi), color: '#3b82f6' },
+  { label: 'Seminar',    data: chartData.map((d) => d.seminar),    color: '#15803d' },
+  { label: 'Prestasi',  data: chartData.map((d) => d.prestasi),   color: '#eab308' },
+]
 
 // ---------------------------------------------------------------------------
 // Main
@@ -143,7 +85,11 @@ function PimpinanUtamaDashboard() {
         {/* Grafik poin per Fakultas */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-center text-lg font-bold text-brand-dark">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
-          <StackedChart data={chartData} />
+          <StackedBarChart
+            labels={chartData.map((d) => d.fakultas)}
+            datasets={chartDatasets}
+            height={320}
+          />
         </div>
 
         {/* Ranking Fakultas */}

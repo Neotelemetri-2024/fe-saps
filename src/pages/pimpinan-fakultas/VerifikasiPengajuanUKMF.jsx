@@ -179,7 +179,7 @@ function VerifikasiPengajuanUKMF() {
                       <button
                         type="button"
                         onClick={() => navigate(`/pimpinan-fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })}
-                        className="whitespace-nowrap rounded-full border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+                        className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
                       >
                         {item.status?.toLowerCase() === 'pending' ? 'Detail dan verifikasi' : 'Detail'}
                       </button>

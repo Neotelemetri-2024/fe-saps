@@ -160,7 +160,7 @@ function DetailVerifikasiPengajuanEksternal() {
     <DashboardLayout role="admin-ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        title="Apakah anda yakin menyetujui kegiatan ini ?"
+       
         message="Apakah Anda yakin ingin menyetujui pengajuan ini dan meneruskannya ke Pimpinan Ditmawa?"
         confirmText={submitting ? 'Memproses...' : 'TERUSKAN KE PIMPINAN'}
         cancelText="BATAL"
@@ -171,7 +171,7 @@ function DetailVerifikasiPengajuanEksternal() {
       <Modal
         isOpen={showActionModal}
         onClose={() => setShowActionModal(false)}
-        title={actionType === 'revisi' ? 'Revisi Pengajuan' : 'Tolak Pengajuan'}
+       
       >
         <p className="mb-2 text-sm font-medium text-black">
           Alasan {actionType === 'revisi' ? 'Revisi' : 'Tolak'}

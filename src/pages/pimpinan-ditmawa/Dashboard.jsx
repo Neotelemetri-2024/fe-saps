@@ -1,5 +1,6 @@
 import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { VerticalBarChart } from '../../components/charts'
 
 const ukmData = [
   { label: 'Neo Telemetri', poin: 30 },
@@ -18,53 +19,6 @@ const ukmData = [
   { label: 'Ptek', poin: 12 },
   { label: 'Raharayo', poin: 10 },
 ]
-
-function VerticalBarChart({ data }) {
-  const maxPoin = Math.max(...data.map((d) => d.poin))
-  const chartHeight = 200
-
-  return (
-    <div className="overflow-x-auto">
-      <div style={{ minWidth: data.length * 52 + 40 }} className="flex items-end gap-0 px-4 pb-2">
-        {/* Y-axis labels */}
-        <div className="flex flex-col justify-between pr-2 text-right" style={{ height: chartHeight + 24 }}>
-          {[80, 60, 40, 20, 0].map((v) => (
-            <span key={v} className="text-[10px] text-[#9aa0a6]">{v}</span>
-          ))}
-        </div>
-
-        {/* Bars + x labels */}
-        <div className="flex flex-1 items-end gap-0 border-l border-b border-[#e9ebf8]" style={{ height: chartHeight + 24 }}>
-          {data.map((d) => {
-            const barH = Math.max(4, (d.poin / 80) * chartHeight)
-            return (
-              <div key={d.label} className="flex flex-1 flex-col items-center justify-end" style={{ height: chartHeight + 24 }}>
-                <div
-                  className="w-6 rounded-t-sm bg-[#48a757]"
-                  style={{ height: barH }}
-                  title={`${d.label}: ${d.poin}`}
-                />
-                <div className="mt-1 w-full overflow-hidden px-0.5" style={{ height: 24 }}>
-                  <p
-                    className="text-[9px] text-[#616161] leading-tight"
-                    style={{
-                      writingMode: 'vertical-rl',
-                      transform: 'rotate(180deg)',
-                      whiteSpace: 'nowrap',
-                      maxHeight: 22,
-                    }}
-                  >
-                    {d.label}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function Dashboard() {
   return (
@@ -105,7 +59,11 @@ function Dashboard() {
           <h3 className="mb-4 text-base font-bold text-[#333]">
             Grafik poin per UKM berdasarkan pengajuan Kegiatan
           </h3>
-          <VerticalBarChart data={ukmData} />
+          <VerticalBarChart
+            labels={ukmData.map((d) => d.label)}
+            values={ukmData.map((d) => d.poin)}
+            height={260}
+          />
         </div>
 
         <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 text-white shadow-sm">

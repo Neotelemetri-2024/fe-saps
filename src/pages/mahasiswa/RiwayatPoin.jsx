@@ -85,7 +85,7 @@ function RiwayatPoin() {
                 className="flex-1 text-sm outline-none"
               />
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+            <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
               <Filter className="h-4 w-4" />
               Filter
             </button>

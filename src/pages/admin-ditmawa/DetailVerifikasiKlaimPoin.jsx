@@ -100,7 +100,7 @@ function DetailVerifikasiKlaimPoin() {
     >
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        title="Apakah anda yakin menyetujui klaim poin ini ?"
+       
         message={`Klaim poin "${item.kegiatan}" oleh ${item.mahasiswa} akan disetujui.`}
         confirmText={submitting ? 'Memproses...' : 'YA, SETUJUI'}
         cancelText="BATAL"
@@ -111,7 +111,7 @@ function DetailVerifikasiKlaimPoin() {
       <Modal
         isOpen={showActionModal}
         onClose={() => setShowActionModal(false)}
-        title={actionType === 'revisi' ? 'Revisi Klaim Poin' : 'Tolak Klaim Poin'}
+       
       >
         <p className="mb-2 text-sm font-medium text-black">
           Alasan {actionType === 'revisi' ? 'Revisi' : 'Tolak'}

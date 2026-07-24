@@ -191,7 +191,7 @@ function ManajemenAkunUKM() {
       )}
       <ConfirmModal
         isOpen={!!confirmDelete}
-        title="Hapus akun UKM?"
+       
         message={confirmDelete ? `Yakin ingin menghapus akun "${confirmDelete.nama}"? Tindakan ini tidak bisa dibatalkan.` : ''}
         confirmText="Ya, Hapus"
         cancelText="Batal"
@@ -257,7 +257,7 @@ function ManajemenAkunUKM() {
                               type="button"
                               onClick={() => setResetTarget(item)}
                               className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-                              title="Reset Password"
+                             
                             >
                               <Key className="h-4 w-4" />
                             </button>
@@ -265,7 +265,7 @@ function ManajemenAkunUKM() {
                               type="button"
                               onClick={() => setConfirmDelete(item)}
                               className="rounded p-1 text-red-600 transition hover:bg-red-50"
-                              title="Hapus Akun"
+                             
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

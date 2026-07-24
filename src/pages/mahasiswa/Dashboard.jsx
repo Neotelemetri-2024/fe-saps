@@ -1,6 +1,7 @@
 import { Plus, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { RadarChartCJ } from '../../components/charts'
 
 // ---------------------------------------------------------------------------
 // Mock data — swap these for real API data
@@ -96,63 +97,6 @@ function Pagination({ page = 1, totalPages = 2, showingFrom = 1, showingTo = 10,
   )
 }
 
-// Diamond radar chart (4 axes: Spiritual, Ilmu, Amal, Sosial), drawn as raw SVG
-function RadarChart({ data }) {
-  const size = 220
-  const center = size / 2
-  const maxR = size / 2 - 30
-  const angles = [-90, 0, 90, 180] // top, right, bottom, left (degrees)
-
-  const pointFor = (value, angleDeg) => {
-    const rad = (angleDeg * Math.PI) / 180
-    const r = (value / 100) * maxR
-    return [center + r * Math.cos(rad), center + r * Math.sin(rad)]
-  }
-
-  const rings = [0.25, 0.5, 0.75, 1]
-  const dataPoints = data.map((d, i) => pointFor(d.value, angles[i]))
-  const polygon = dataPoints.map((p) => p.join(',')).join(' ')
-
-  const labelPos = {
-    Spiritual: { x: center, y: 14, anchor: 'middle' },
-    Ilmu: { x: size - 6, y: center + 4, anchor: 'end' },
-    Amal: { x: center, y: size - 4, anchor: 'middle' },
-    Sosial: { x: 6, y: center + 4, anchor: 'start' },
-  }
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-56 w-56">
-      {rings.map((r, i) => {
-        const ringPts = angles.map((a) => pointFor(r * 100, a))
-        return (
-          <polygon
-            key={i}
-            points={ringPts.map((p) => p.join(',')).join(' ')}
-            fill="none"
-            stroke="rgba(255,255,255,0.25)"
-            strokeWidth="1"
-          />
-        )
-      })}
-      {angles.map((a, i) => {
-        const [x, y] = pointFor(100, a)
-        return <line key={i} x1={center} y1={center} x2={x} y2={y} stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-      })}
-      <polygon points={polygon} fill="rgba(255,255,255,0.35)" stroke="#ffffff" strokeWidth="2" />
-      {dataPoints.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#ffffff" />
-      ))}
-      {data.map((d) => {
-        const pos = labelPos[d.label]
-        return (
-          <text key={d.label} x={pos.x} y={pos.y} textAnchor={pos.anchor} fontSize="12" fill="#ffffff" fontWeight="600">
-            {d.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
 
 function RiwayatTable({ title, columns, rows, renderRow }) {
   return (
@@ -232,12 +176,14 @@ function MahasiswaDashboard() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <button onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')} className="flex items-center justify-center gap-2 rounded-xl bg-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
-              <Plus className="h-4 w-4" /> Ajukan Kegiatan Eksternal ( luar universitas)
-            </button>
             <div className="flex-1 rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-6 text-center shadow-sm">
               <h3 className="text-sm font-bold text-white">Radar Karakter Andalasian</h3>
-              <RadarChart data={radarData} />
+              <RadarChartCJ
+                labels={radarData.map((d) => d.label)}
+                values={radarData.map((d) => d.value)}
+                darkBg
+                height={220}
+              />
             </div>
           </div>
         </div>
@@ -278,7 +224,7 @@ function MahasiswaDashboard() {
 
         {/* Riwayat Kegiatan Persetujuan Dosen PA */}
         <RiwayatTable
-          title="Riwayat Kegiatan Persetujuan Dosen PA"
+         
           columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'STATUS', 'AKSI']}
           rows={persetujuanDosen}
           renderRow={(row, i) => (
@@ -301,7 +247,7 @@ function MahasiswaDashboard() {
 
         {/* Riwayat Kegiatan Pengajuan Eksternal */}
         <RiwayatTable
-          title="Riwayat Kegiatan Pengajuan Eksternal"
+         
           columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'SKALA', 'STATUS', 'AKSI']}
           rows={pengajuanEksternal}
           renderRow={(row, i) => (
@@ -325,7 +271,7 @@ function MahasiswaDashboard() {
 
         {/* Riwayat Kegiatan Klaim Poin */}
         <RiwayatTable
-          title="Riwayat Kegiatan Klaim Poin"
+         
           columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'BUKTI', 'POIN', 'STATUS', 'AKSI']}
           rows={klaimPoin}
           renderRow={(row, i) => (

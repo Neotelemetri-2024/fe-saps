@@ -25,10 +25,39 @@ const labelMap = {
   prestasi: 'Prestasi/Kompetisi',
   organisasi: 'Organisasi/Volunteer',
   pelatihan: 'Pelatihan/Seminar',
-  juara1: 'Juara 1',
-  juara2: 'Juara 2',
-  juara3: 'Juara 3',
-  peserta: 'Peserta',
+  juara1: 'Juara 1 / Emas',
+  juara2: 'Juara 2 / Perak',
+  juara3: 'Juara 3 / Perunggu',
+  finalis: 'Penghargaan / Finalis / Peserta',
+  ketua_umum: 'Ketua Umum / Presiden Mahasiswa',
+  pengurus_inti: 'Pengurus Inti',
+  anggota_aktif: 'Anggota Aktif / Staff',
+  ketua_panitia: 'Ketua Panitia / Pelaksana Event',
+  pembicara: 'Pembicara / Narasumber / Fasilitator',
+  moderator: 'Moderator / Panitia Eksekutif',
+  peserta_terstruktur: 'Peserta Pelatihan Terstruktur',
+  peserta_umum: 'Peserta Pelatihan Umum / Webinar',
+}
+
+const peranOptions = {
+  prestasi: [
+    { value: 'juara1', label: 'Juara 1 / Emas' },
+    { value: 'juara2', label: 'Juara 2 / Perak' },
+    { value: 'juara3', label: 'Juara 3 / Perunggu' },
+    { value: 'finalis', label: 'Penghargaan / Finalis / Peserta' },
+  ],
+  organisasi: [
+    { value: 'ketua_umum', label: 'Ketua Umum / Presiden Mahasiswa' },
+    { value: 'pengurus_inti', label: 'Pengurus Inti (Sekretaris, Bendahara, Kabid)' },
+    { value: 'anggota_aktif', label: 'Anggota Aktif / Staff' },
+    { value: 'ketua_panitia', label: 'Ketua Panitia / Pelaksana Event' },
+  ],
+  pelatihan: [
+    { value: 'pembicara', label: 'Pembicara / Narasumber / Fasilitator' },
+    { value: 'moderator', label: 'Moderator / Panitia Eksekutif' },
+    { value: 'peserta_terstruktur', label: 'Peserta Pelatihan Terstruktur' },
+    { value: 'peserta_umum', label: 'Peserta Pelatihan Umum / Kuliah Umum / Webinar' },
+  ],
 }
 
 function formatLabel(value) {
@@ -90,6 +119,10 @@ function PersetujuanDosen() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    if (name === 'jenisKegiatan') {
+      setFormData((prev) => ({ ...prev, jenisKegiatan: value, peranPencapaian: '' }))
+      return
+    }
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -145,7 +178,7 @@ function PersetujuanDosen() {
 
   return (
     <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
-      <Modal isOpen={showModal} onClose={handleClose} title="Permohonan Persetujuan Dosen PA" size="3xl">
+      <Modal isOpen={showModal} onClose={handleClose} size="3xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="modalJenisKegiatan" className="block text-sm font-medium text-black">
@@ -209,15 +242,20 @@ function PersetujuanDosen() {
                 name="peranPencapaian"
                 value={formData.peranPencapaian}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                disabled={!formData.jenisKegiatan}
+                className="mt-1 block w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark disabled:cursor-not-allowed disabled:bg-[#f5f5f5] disabled:text-[#aaa]"
                 required
               >
-                <option value="">Masukkan peran</option>
-                <option value="juara1">Juara 1</option>
-                <option value="juara2">Juara 2</option>
-                <option value="juara3">Juara 3</option>
-                <option value="peserta">Peserta</option>
+                <option value="">
+                  {formData.jenisKegiatan ? 'Pilih peran / pencapaian' : 'Pilih jenis kegiatan terlebih dahulu'}
+                </option>
+                {(peranOptions[formData.jenisKegiatan] ?? []).map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
+              {!formData.jenisKegiatan && (
+                <p className="mt-1 text-xs text-[#9aa0a6]">Pilih jenis kegiatan dulu untuk melihat pilihan peran.</p>
+              )}
             </div>
             <div>
               <DatePickerInput
@@ -253,7 +291,7 @@ function PersetujuanDosen() {
           <h2 className="text-2xl font-bold text-brand-dark">Persetujuan Dosen PA</h2>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-brand-dark px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90"
           >
             <PlusCircle className="h-5 w-5" /> Minta Persetujuan
           </button>
@@ -271,7 +309,7 @@ function PersetujuanDosen() {
                 className="flex-1 text-sm outline-none"
               />
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-brand-light px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+            <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
               <Filter className="h-4 w-4" />
               Filter
             </button>
