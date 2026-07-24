@@ -1,26 +1,24 @@
 import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
-  createKlaim,
-  getMyKlaim,
-  getKlaimForValidasi,
-  getKlaimEksternalForVerifikasi,
-  getKlaimById,
-  validasiKlaim,
-  validasiKlaimBulk,
-} from '../controllers/klaim.controller';
+  getKlaimForValidasi, getKlaimEksternalForVerifikasi, getKlaimById,
+  validasiKlaim, validasiKlaimBulk,
+} from '../controllers/admin/ditmawa/klaim.controller';
 
 const router = Router();
 
-// Semua rute klaim membutuhkan login
 router.use(authenticateJWT);
 
-router.post('/', authorizeRole('mahasiswa'), createKlaim);                                                          // POST /api/klaim
-router.get('/saya', authorizeRole('mahasiswa'), getMyKlaim);                                                        // GET /api/klaim/saya
-router.get('/validasi', authorizeRole('operator_org', 'admin_ditmawa'), getKlaimForValidasi);                       // GET /api/klaim/validasi
-router.get('/verifikasi-eksternal', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getKlaimEksternalForVerifikasi); // GET /api/klaim/verifikasi-eksternal
-router.get('/:id', getKlaimById);                                                                                   // GET /api/klaim/:id (semua role)
-router.put('/validasi-bulk', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), validasiKlaimBulk); // PUT /api/klaim/validasi-bulk
-router.put('/:id/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'pimpinan_ditmawa'), validasiKlaim);     // PUT /api/klaim/:id/validasi
+// GET /api/klaim/verifikasi-eksternal — Klaim eksternal menunggu verifikasi Pimpinan
+router.get('/verifikasi-eksternal', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getKlaimEksternalForVerifikasi);
+
+// GET /api/klaim/:id — Detail klaim (semua role)
+router.get('/:id', getKlaimById);
+
+// PUT /api/klaim/validasi-bulk — Bulk validasi klaim
+router.put('/validasi-bulk', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), validasiKlaimBulk);
+
+// PUT /api/klaim/:id/validasi — Validasi satu klaim
+router.put('/:id/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'pimpinan_ditmawa'), validasiKlaim);
 
 export default router;

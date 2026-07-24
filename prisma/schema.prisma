@@ -78,6 +78,7 @@ enum StatusPartisipasi {
   menunggu_izin_pa
   disetujui_pa
   ditolak_pa
+  revisi_pa
   hadir
   tidak_hadir
   dibatalkan
@@ -87,6 +88,7 @@ enum StatusIzin {
   diajukan
   disetujui
   ditolak
+  revisi
 }
 
 enum StatusKlaim {
@@ -392,8 +394,10 @@ model Kegiatan {
   lokasi          String?        @db.VarChar(200)
   kuota           Int?
   organisasiId    Int?           @map("organisasi_id")
-  penyelenggaraExt String?       @map("penyelenggara_ext") @db.VarChar(200)
-  kurikulumId     Int            @map("kurikulum_id") // pengikat versi [BR-005]
+  penyelenggaraExt   String?        @map("penyelenggara_ext") @db.VarChar(200)
+  linkPenyelenggara  String?        @map("link_penyelenggara") @db.VarChar(255)
+  emailPenyelenggara String?        @map("email_penyelenggara") @db.VarChar(255)
+  kurikulumId        Int            @map("kurikulum_id") // pengikat versi [BR-005]
   dibuatOleh      BigInt         @map("dibuat_oleh")
   status          StatusKegiatan @default(draft)
   createdAt       DateTime       @default(now()) @map("created_at")

@@ -21,20 +21,20 @@ tags:
   - name: "Autentikasi"
     description: "Login untuk mendapatkan token JWT dan melihat profil."
   - name: "Role: Pimpinan Ditmawa"
-    description: "Fitur strategis: Menetapkan bobot poin (Matriks), menyetujui kegiatan UKM, dan menyusun Kurikulum."
+    description: "Fitur strategis: Menetapkan bobot poin (Matriks), menyetujui Kegiatan UKM / UKMF, dan menyusun Kurikulum."
   - name: "Role: Pimpinan Fakultas"
     description: "Fitur strategis: Menyetujui kegiatan yang diajukan oleh UKMF tingkat fakultas."
   - name: "Role: Admin Ditmawa"
-    description: "Fitur operasional: Manajemen Akun UKM, Verifikasi Kegiatan UKM, dan Verifikasi Klaim Poin Eksternal."
+    description: "Fitur operasional: Manajemen Akun UKM, Verifikasi Kegiatan UKM / UKMF, dan Verifikasi Klaim Poin Eksternal."
   - name: "Role: Admin Fakultas"
-    description: "Fitur operasional: Verifikasi Kegiatan UKMF di lingkungan fakultas masing-masing."
+    description: "Fitur operasional: Verifikasi Kegiatan UKM / UKMFF di lingkungan fakultas masing-masing."
   - name: "Role: Mahasiswa"
     description: "Fitur pengguna utama: Mengikuti kegiatan, meminta izin PA, dan mengklaim poin SKPI."
   - name: "Role: Dosen PA"
     description: "Fitur pembimbing: Memberikan izin kegiatan dan catatan pembinaan kepada mahasiswa bimbingannya."
-  - name: "Role: Operator UKM"
+  - name: "Role: Operator UKM/F"
     description: "Fitur organisasi: Mengajukan event kegiatan (Universitas) dan manajemen pesertanya."
-  - name: "Role: Operator UKMF"
+  - name: "Role: Operator UKM/FF"
     description: "Fitur organisasi: Mengajukan event kegiatan (Fakultas) dan manajemen pesertanya."
 
 components:
@@ -315,6 +315,42 @@ paths:
       responses:
         '201': { description: Berhasil }
 
+  /api/matriks/skala/{id}:
+    put:
+      summary: (Pimpinan) Edit Skala (Ubah Nama atau Urutan Baris)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama: { type: string, example: "Regional" }
+                urutan: { type: integer, example: 2 }
+      responses:
+        '200': { description: Berhasil }
+    delete:
+      summary: (Pimpinan) Hapus Skala
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil dihapus }
+        '400': { description: Gagal dihapus karena masih digunakan }
+
   /api/matriks/peran:
     get:
       summary: (Pimpinan) Lihat Daftar Peran/Jabatan (Juara 1, Ketua, dll)
@@ -347,9 +383,68 @@ paths:
       responses:
         '201': { description: Berhasil }
 
+  /api/matriks/peran/{id}:
+    put:
+      summary: (Pimpinan) Edit Peran (Ubah Nama atau Urutan Kolom)
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama: { type: string, example: "Ketua Panitia" }
+                urutan: { type: integer, example: 2 }
+      responses:
+        '200': { description: Berhasil }
+    delete:
+      summary: (Pimpinan) Hapus Peran
+      tags: ["Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil dihapus }
+        '400': { description: Gagal dihapus karena masih digunakan }
+
   # =================================================================
   # MANAJEMEN ORGANISASI / AKUN UKM (Admin Ditmawa)
   # =================================================================
+  /api/organisasi:
+    get:
+      summary: (Admin) Daftar Semua Organisasi & Akun UKM
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/organisasi/akun/{userId}/toggle-status:
+    put:
+      summary: (Admin) Aktifkan / Nonaktifkan Akun UKM
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Status akun berhasil diubah }
+
   /api/organisasi/akun:
     post:
       summary: (Admin) Buat Akun UKM & Organisasi Sekaligus
@@ -415,9 +510,10 @@ paths:
     get:
       summary: Katalog Kegiatan / Daftar Kegiatan Saya
       description: |
-        Menampilkan daftar kegiatan. Untuk Operator UKM, ini menampilkan kegiatan yang telah dibuat/diajukan oleh UKM-nya.
+        Menampilkan daftar kegiatan. Untuk Operator UKM/F, ini menampilkan kegiatan yang telah dibuat/diajukan oleh organisasinya.
         Mendukung filter berdasarkan status, asal, kategori, dan pencarian nama.
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
+        Juga mengembalikan `kegiatanApproval` (hanya 1 record terbaru) yang berisi `alasan` dan `keputusan` (berguna untuk modal "Lihat Alasan" saat status ditolak/revisi).
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -428,15 +524,44 @@ paths:
           in: query
           schema: { type: string }
       responses:
-        '200': { description: Berhasil }
+        '200': 
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: 
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        nama: { type: string }
+                        status: { type: string }
+                        kegiatanApproval:
+                          type: array
+                          description: Array riwayat approval (maksimal 1) yang berisi alasan revisi/tolak terbaru.
+                          items:
+                            type: object
+                            properties:
+                              keputusan: { type: string }
+                              alasan: { type: string }
+                              aktor: 
+                                type: object
+                                properties:
+                                  nama: { type: string }
     post:
-      summary: (Operator UKM / UKMF / Admin) Buat & Kirim Kegiatan
+      summary: (Operator UKM/F / UKMF / Admin) Buat & Kirim Kegiatan
       description: |
         Membuat kegiatan baru. Alur approval otomatis tergantung siapa yang membuat:
-        - **Admin Ditmawa** → Langsung `disetujui` (tanpa perlu verifikasi)
-        - **Operator UKM** → Status `diajukan` → Notifikasi ke **Admin Ditmawa** → lalu ke **Pimpinan Ditmawa**
-        - **Operator UKMF** → Status `diajukan` → Notifikasi ke **Admin Fakultas** terkait → lalu ke **Pimpinan Fakultas**
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+        
+        - **Admin Ditmawa** -> Status `menunggu_pimpinan` -> Notifikasi ke **Pimpinan Ditmawa**
+        - **Admin Fakultas** -> Status `menunggu_pimpinan` -> Notifikasi ke **Pimpinan Fakultas**
+        - **Operator UKM/F** -> Status `diajukan` -> Notifikasi ke **Admin Ditmawa** -> lalu ke **Pimpinan Ditmawa**
+        - **Operator UKM/FF** -> Status `diajukan` -> Notifikasi ke **Admin Fakultas** terkait -> lalu ke **Pimpinan Fakultas**
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       requestBody:
@@ -487,6 +612,10 @@ paths:
           in: query
           description: "Filter status (diajukan, terverifikasi, perlu_revisi, ditolak, semua)"
           schema: { type: string }
+        - name: asal
+          in: query
+          description: "Pilih 'eksternal' untuk melihat pengajuan mahasiswa mandiri, atau 'internal' untuk UKM/UKMF"
+          schema: { type: string, enum: [internal, eksternal] }
         - name: tahun
           in: query
           description: "Filter tahun kegiatan"
@@ -502,9 +631,38 @@ paths:
       responses:
         '200': { description: Berhasil (termasuk objek pagination) }
 
+  /api/kegiatan/verifikasi-bulk:
+    put:
+      summary: (Admin) Verifikasi Banyak Kegiatan Sekaligus (Bulk Action)
+      tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kegiatanIds, keputusan]
+              properties:
+                kegiatanIds:
+                  type: array
+                  items: { type: integer }
+                  description: "Array ID kegiatan yang akan diproses"
+                keputusan:
+                  type: string
+                  enum: [setuju, tolak, revisi]
+                alasan:
+                  type: string
+                  description: "Wajib diisi jika ditolak/revisi"
+      responses:
+        '200': { description: Berhasil memproses bulk verifikasi }
+        '400': { description: Validasi gagal / Alasan kosong saat ditolak }
+
+
   /api/kegiatan/{id}/verifikasi:
     put:
-      summary: (Admin) Setujui / Tolak Kegiatan UKM
+      summary: (Admin) Setujui / Tolak Kegiatan UKM / UKMF
       tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
@@ -597,8 +755,8 @@ paths:
 
   /api/kegiatan/{id}/publikasi:
     put:
-      summary: (Operator UKM / Admin) Publish Event agar Tampil di Katalog
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      summary: (Operator UKM/F / Admin) Publish Event agar Tampil di Katalog
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -611,12 +769,12 @@ paths:
 
   /api/kegiatan/{id}/ajukan:
     put:
-      summary: (Operator UKM) Ajukan Ulang Kegiatan Setelah Revisi
+      summary: (Operator UKM/F) Ajukan Ulang Kegiatan Setelah Revisi
       description: |
         Mengajukan ulang kegiatan yang berstatus `perlu_revisi` ke Admin Ditmawa.
-        Endpoint ini digunakan setelah Operator UKM memperbaiki kegiatan yang diminta revisi.
+        Endpoint ini digunakan setelah Operator UKM/F memperbaiki kegiatan yang diminta revisi.
         Status berubah kembali menjadi `diajukan`.
-      tags: ["Role: Operator UKM", "Role: Operator UKMF"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF"]
       security:
         - bearerAuth: []
       parameters:
@@ -629,10 +787,47 @@ paths:
         '400': { description: Kegiatan tidak dalam status draft/perlu_revisi }
 
   /api/kegiatan/{id}:
+    put:
+      summary: (Operator UKM/F / Admin) Edit Kegiatan (Draft/Revisi)
+      description: "Memperbarui data kegiatan yang dikembalikan dengan status `perlu_revisi`."
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, kategoriId, skalaId, asal, tanggalMulai, tanggalSelesai, alokasi]
+              properties:
+                nama: { type: string }
+                kategoriId: { type: integer }
+                skalaId: { type: integer }
+                asal: { type: string }
+                deskripsi: { type: string }
+                tanggalMulai: { type: string }
+                tanggalSelesai: { type: string }
+                lokasi: { type: string }
+                kuota: { type: integer }
+                alokasi:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      subCapaianId: { type: integer }
+                      alokasiPersen: { type: number }
+      responses:
+        '200': { description: "Berhasil" }
     get:
       summary: Detail Kegiatan (Capaian, Sub-Capaian, Riwayat Approval)
       description: "Menampilkan detail lengkap kegiatan beserta Capaian, Sub-Capaian (bobot), dan riwayat verifikasi/approval."
-      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas", "Role: Admin Ditmawa", "Role: Admin Fakultas", "Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas", "Role: Admin Ditmawa", "Role: Admin Fakultas", "Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -641,7 +836,33 @@ paths:
           required: true
           schema: { type: integer }
       responses:
-        '200': { description: Berhasil }
+        '200': 
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      nama: { type: string }
+                      status: { type: string }
+                      kegiatanApproval:
+                        type: array
+                        description: Seluruh riwayat approval kegiatan, menampilkan aktor, keputusan, alasan, dan tanggal.
+                        items:
+                          type: object
+                          properties:
+                            keputusan: { type: string, example: "revisi" }
+                            alasan: { type: string, example: "Dokumen proposal kurang lengkap" }
+                            createdAt: { type: string, format: date-time }
+                            aktor: 
+                              type: object
+                              properties:
+                                nama: { type: string }
     delete:
       summary: (Admin) Hapus Kegiatan
       tags: ["Role: Admin Ditmawa", "Role: Admin Fakultas"]
@@ -699,7 +920,7 @@ paths:
       responses:
         '201': { description: Berhasil }
 
-  /api/partisipasi/izin-pa:
+  /api/dosen/persetujuan:
     get:
       summary: (Dosen PA) Daftar Permintaan Izin Mahasiswa Bimbingan
       tags: ["Role: Dosen PA"]
@@ -708,9 +929,9 @@ paths:
       responses:
         '200': { description: Berhasil }
 
-  /api/partisipasi/izin-pa/{id}:
+  /api/dosen/persetujuan/{id}:
     put:
-      summary: (Dosen PA) Setujui atau Tolak Izin
+      summary: (Dosen PA) Setujui, Tolak, atau Revisi Izin
       tags: ["Role: Dosen PA"]
       security:
         - bearerAuth: []
@@ -727,12 +948,12 @@ paths:
               type: object
               required: [status]
               properties:
-                status: { type: string, enum: [disetujui, ditolak] }
-                alasan: { type: string }
+                status: { type: string, enum: [disetujui, ditolak, revisi] }
+                alasan: { type: string, description: "Wajib diisi jika status ditolak atau revisi" }
       responses:
         '200': { description: Berhasil }
 
-  /api/partisipasi/saran-pa:
+  /api/dosen/saran:
     post:
       summary: (Dosen PA) Berikan Pesan/Saran Pembinaan
       tags: ["Role: Dosen PA"]
@@ -801,37 +1022,6 @@ paths:
       responses:
         '200': { description: Berhasil }
 
-  /api/klaim/validasi:
-    get:
-      summary: (Operator UKM / Admin) Daftar Klaim Menunggu Validasi Internal
-      description: "Klaim poin dari kegiatan internal UKM yang perlu divalidasi oleh Operator atau Admin."
-      tags: ["Role: Operator UKM", "Role: Admin Ditmawa"]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: search
-          in: query
-          description: "Cari berdasarkan nama kegiatan atau nama mahasiswa"
-          schema: { type: string }
-        - name: status
-          in: query
-          description: "Filter status (menunggu_validasi, disetujui, perlu_revisi, ditolak, semua)"
-          schema: { type: string }
-        - name: asal
-          in: query
-          description: "Filter asal kegiatan (kurikuler_ukm, universitas, dll)"
-          schema: { type: string }
-        - name: kategoriId
-          in: query
-          schema: { type: integer }
-        - name: page
-          in: query
-          schema: { type: integer, default: 1 }
-        - name: limit
-          in: query
-          schema: { type: integer, default: 10 }
-      responses:
-        '200': { description: Berhasil (termasuk objek pagination) }
 
   /api/klaim/verifikasi-eksternal:
     get:
@@ -913,7 +1103,7 @@ paths:
         **Untuk kegiatan EKSTERNAL (Alur 2-Lapis):** Jika Admin Ditmawa menyetujui, status berubah ke `menunggu_pimpinan` (poin BELUM dicetak). Pimpinan Ditmawa yang akan memberikan persetujuan final via endpoint bulk.
         **Untuk kegiatan INTERNAL:** Poin langsung dicetak saat disetujui.
         Jika revisi/tolak, alasan wajib diisi. Notifikasi otomatis terkirim ke mahasiswa.
-      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM/F", "Role: Admin Ditmawa"]
       security:
         - bearerAuth: []
       parameters:
@@ -939,7 +1129,7 @@ paths:
     get:
       summary: Detail Klaim Poin (Kegiatan, Capaian, Bukti, Mahasiswa)
       description: "Menampilkan detail lengkap klaim poin beserta data kegiatan, capaian, sub-capaian, bukti, dan info mahasiswa."
-      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa", "Role: Mahasiswa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM/F", "Role: Admin Ditmawa", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -947,6 +1137,94 @@ paths:
           in: path
           required: true
           schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # APPROVAL KEGIATAN (Pimpinan Ditmawa & Pimpinan Fakultas)
+  # =================================================================
+  /api/kegiatan/approval:
+    get:
+      summary: (Pimpinan) Daftar Kegiatan Menunggu Persetujuan
+      description: |
+        Menampilkan kegiatan yang sudah terverifikasi Admin dan menunggu approval Pimpinan.
+        Gunakan `asal=internal` untuk kegiatan UKM/UKMF, `asal=eksternal` untuk kegiatan luar kampus.
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: asal
+          in: query
+          description: "Filter: 'internal' atau 'eksternal'"
+          schema: { type: string, enum: [internal, eksternal] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [terverifikasi, disetujui, perlu_revisi, ditolak, semua] }
+        - name: kategoriId
+          in: query
+          schema: { type: integer }
+        - name: skalaId
+          in: query
+          schema: { type: integer }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: tahun
+          in: query
+          schema: { type: integer }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kegiatan/{id}/approval:
+    put:
+      summary: (Pimpinan) Setujui / Revisi / Tolak Kegiatan
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [keputusan]
+              properties:
+                keputusan: { type: string, enum: [setuju, revisi, tolak] }
+                alasan: { type: string }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/kegiatan/approval-bulk:
+    put:
+      summary: (Pimpinan) Approval Banyak Kegiatan Sekaligus (Bulk Action)
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kegiatanIds, keputusan]
+              properties:
+                kegiatanIds:
+                  type: array
+                  items: { type: integer }
+                  example: [1, 2, 3]
+                keputusan: { type: string, enum: [setuju, revisi, tolak] }
+                alasan: { type: string, description: "Wajib untuk revisi/tolak" }
       responses:
         '200': { description: Berhasil }
 
@@ -985,6 +1263,17 @@ paths:
         - bearerAuth: []
       responses:
         '200': { description: Berhasil }
+
+  /api/umum/dashboard/admin-fakultas:
+    get:
+      summary: (Admin) Dashboard Fakultas
+      description: |
+        Menyajikan metrik kartu, riwayat pengajuan kegiatan terbaru dari UKMF, dan grafik capaian poin per prodi di fakultas tersebut.
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil mengembalikan data dashboard Fakultas }
 
   /api/umum/dashboard/mahasiswa:
     get:
@@ -1115,7 +1404,7 @@ paths:
         '200': { description: Berhasil (dengan peringatan jika total bobot < 100%) }
 
   # =================================================================
-  # MANAJEMEN PESERTA KEGIATAN (Operator UKM / Admin)
+  # MANAJEMEN PESERTA KEGIATAN (Operator UKM/F / Admin)
   # =================================================================
   /api/kegiatan/{id}/peserta:
     get:
@@ -1123,7 +1412,7 @@ paths:
       description: |
         Menampilkan daftar peserta (partisipasi) kegiatan beserta statistik (total terdaftar, hadir, tidak hadir).
         Juga menampilkan status apakah poin sudah di-submit ("Telah Tercatat").
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1155,7 +1444,7 @@ paths:
       description: |
         Mendownload file CSV template yang berisi header: NIM, HADIR, PERAN_ID.
         Di bagian komentar file akan tercantum daftar ID peran yang tersedia untuk kegiatan ini.
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1177,7 +1466,7 @@ paths:
         Mengimport daftar peserta ke kegiatan. Frontend mengirim hasil parsing CSV sebagai array JSON.
         Sistem akan mencari mahasiswa berdasarkan NIM, lalu membuat/update data Partisipasi.
         **Poin belum dicetak** — gunakan endpoint submit-poin setelah semua data benar.
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1215,7 +1504,7 @@ paths:
         melakukan lookup MatriksPoin, dan mencetak PerolehanPoin + detail.
         Notifikasi otomatis terkirim ke setiap mahasiswa.
         **Setelah submit, status berubah menjadi "Telah Tercatat" dan tidak bisa di-submit ulang.**
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1233,7 +1522,7 @@ paths:
       description: |
         Mengupdate kehadiran dan peran peserta secara massal.
         Digunakan saat penyelenggara ingin mengedit data sebelum submit poin.
-      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1260,3 +1549,47 @@ paths:
                       peranId: { type: integer, example: 3 }
       responses:
         '200': { description: Berhasil mengupdate peserta }
+
+  # =================================================================
+  # NOTIFIKASI
+  # =================================================================
+  /api/umum/notifikasi:
+    get:
+      summary: (Semua Role) Ambil Daftar Notifikasi
+      description: "Menampilkan daftar notifikasi untuk user yang sedang login."
+      tags: ["Umum (Semua Role)"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: unreadOnly
+          in: query
+          description: "Jika true, hanya mengembalikan notifikasi yang belum dibaca."
+          schema: { type: boolean, default: false }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/notifikasi/{id}/baca:
+    put:
+      summary: (Semua Role) Tandai Satu Notifikasi Sudah Dibaca
+      tags: ["Umum (Semua Role)"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/notifikasi/baca-semua:
+    put:
+      summary: (Semua Role) Tandai Semua Notifikasi Sudah Dibaca
+      tags: ["Umum (Semua Role)"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }

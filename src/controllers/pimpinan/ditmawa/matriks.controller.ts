@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
+import prisma from '../../../lib/prisma';
 import { z } from 'zod';
-import { logAudit } from '../lib/auditLog';
+import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const upsertMatriksSchema = z.object({
@@ -182,32 +182,6 @@ export const createKategori = async (req: Request, res: Response) => {
   }
 };
 
-// POST /api/matriks/peran
-export const createPeran = async (req: Request, res: Response) => {
-  try {
-    const { kategoriId, nama, urutan } = req.body;
-    if (!kategoriId || !nama) {
-      res.status(400).json({ success: false, message: 'Kategori ID dan Nama Peran wajib diisi' });
-      return;
-    }
-
-    const urutanToUse = urutan || 99; // Default urutan paling akhir jika tidak diisi
-
-    const data = await prisma.mpPeran.create({
-      data: {
-        kategoriId: Number(kategoriId),
-        nama,
-        urutan: Number(urutanToUse)
-      }
-    });
-
-    res.status(201).json({ success: true, data });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
-  }
-};
-
 // GET /api/master/skala
 export const getSkala = async (req: Request, res: Response) => {
   try {
@@ -253,6 +227,56 @@ export const createSkala = async (req: Request, res: Response) => {
   }
 };
 
+// PUT /api/matriks/skala/:id
+export const updateSkala = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { nama, urutan } = req.body;
+
+    const data = await prisma.mpSkala.update({
+      where: { id: Number(id) },
+      data: {
+        ...(nama && { nama }),
+        ...(urutan !== undefined && { urutan: Number(urutan) }),
+      }
+    });
+
+    res.json({ success: true, message: 'Skala berhasil diperbarui', data });
+  } catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ success: false, message: 'Skala tidak ditemukan' });
+      return;
+    }
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// DELETE /api/matriks/skala/:id
+export const deleteSkala = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Prisma akan melempar error referential integrity jika ada relasi yang menghalangi
+    await prisma.mpSkala.delete({
+      where: { id: Number(id) }
+    });
+
+    res.json({ success: true, message: 'Skala berhasil dihapus' });
+  } catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ success: false, message: 'Skala tidak ditemukan' });
+      return;
+    }
+    if (error.code === 'P2003') {
+      res.status(400).json({ success: false, message: 'Gagal dihapus: Skala ini sedang digunakan pada Kegiatan atau Matriks Poin.' });
+      return;
+    }
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
 // GET /api/master/peran?kategoriId=1
 export const getPeran = async (req: Request, res: Response) => {
   try {
@@ -268,6 +292,82 @@ export const getPeran = async (req: Request, res: Response) => {
     res.json({ success: true, data });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// POST /api/matriks/peran
+export const createPeran = async (req: Request, res: Response) => {
+  try {
+    const { kategoriId, nama, urutan } = req.body;
+    if (!kategoriId || !nama) {
+      res.status(400).json({ success: false, message: 'Kategori ID dan Nama Peran wajib diisi' });
+      return;
+    }
+
+    const urutanToUse = urutan || 99; // Default urutan paling akhir jika tidak diisi
+
+    const data = await prisma.mpPeran.create({
+      data: {
+        kategoriId: Number(kategoriId),
+        nama,
+        urutan: Number(urutanToUse)
+      }
+    });
+
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// PUT /api/matriks/peran/:id
+export const updatePeran = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { nama, urutan } = req.body;
+
+    const data = await prisma.mpPeran.update({
+      where: { id: Number(id) },
+      data: {
+        ...(nama && { nama }),
+        ...(urutan !== undefined && { urutan: Number(urutan) }),
+      }
+    });
+
+    res.json({ success: true, message: 'Peran berhasil diperbarui', data });
+  } catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ success: false, message: 'Peran tidak ditemukan' });
+      return;
+    }
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// DELETE /api/matriks/peran/:id
+export const deletePeran = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Prisma akan melempar error referential integrity jika ada relasi yang menghalangi
+    await prisma.mpPeran.delete({
+      where: { id: Number(id) }
+    });
+
+    res.json({ success: true, message: 'Peran berhasil dihapus' });
+  } catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ success: false, message: 'Peran tidak ditemukan' });
+      return;
+    }
+    if (error.code === 'P2003') {
+      res.status(400).json({ success: false, message: 'Gagal dihapus: Peran ini sedang digunakan pada Partisipasi atau Matriks Poin.' });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };

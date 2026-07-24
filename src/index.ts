@@ -17,7 +17,6 @@ import authRoutes from './routes/auth.routes';
 import kurikulumRoutes from './routes/kurikulum.routes';
 import matriksRoutes from './routes/matriks.routes';
 import kegiatanRoutes from './routes/kegiatan.routes';
-import partisipasiRoutes from './routes/partisipasi.routes';
 import klaimRoutes from './routes/klaim.routes';
 import umumRoutes from './routes/umum.routes';
 import organisasiRoutes from './routes/organisasi.routes';
@@ -45,7 +44,8 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-app.use(express.json());
+// Mencegah hacker mengirim payload raksasa yang membuat server down (DoS)
+app.use(express.json({ limit: '10kb' }));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static('uploads'));
@@ -92,11 +92,23 @@ app.use('/api/kegiatan', pesertaRoutes);
 // Manajemen Organisasi & Akun UKM (Admin)
 app.use('/api/organisasi', organisasiRoutes);
 
-// Partisipasi, Izin PA, Saran PA (Mahasiswa, Dosen PA)
-app.use('/api/partisipasi', partisipasiRoutes);
+// (Rute partisipasi telah dipindahkan ke dosen.routes.ts dan mahasiswa.routes.ts)
+
+import mahasiswaRoutes from './routes/mahasiswa.routes';
+import dosenRoutes from './routes/dosen.routes';
+import ukmRoutes from './routes/ukm.routes';
 
 // Klaim Poin & Perolehan (Mahasiswa, Validator, Admin)
 app.use('/api/klaim', klaimRoutes);
+
+// Khusus Mahasiswa
+app.use('/api/mahasiswa', mahasiswaRoutes);
+
+// Khusus Dosen PA
+app.use('/api/dosen', dosenRoutes);
+
+// Khusus Operator UKM
+app.use('/api/ukm', ukmRoutes);
 
 // Umum: Notifikasi, Audit Log, Dashboard, Portofolio
 app.use('/api/umum', umumRoutes);

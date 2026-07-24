@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
+import prisma from '../../../lib/prisma';
 import { z } from 'zod';
-import { logAudit } from '../lib/auditLog';
+import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const createOrganisasiSchema = z.object({
@@ -30,7 +30,7 @@ const resetPasswordSchema = z.object({
 
 // ==================== ORGANISASI CRUD ====================
 
-// GET /api/organisasi — Daftar organisasi
+// GET /api/organisasi â€” Daftar organisasi
 export const getOrganisasi = async (req: Request, res: Response) => {
   try {
     const { tipe } = req.query;
@@ -52,7 +52,7 @@ export const getOrganisasi = async (req: Request, res: Response) => {
   }
 };
 
-// POST /api/organisasi — Buat organisasi baru (Admin Ditmawa HANYA UKM)
+// POST /api/organisasi â€” Buat organisasi baru (Admin Ditmawa HANYA UKM)
 export const createOrganisasi = async (req: Request, res: Response): Promise<void> => {
   try {
     const aktorId = BigInt(req.user!.id); 
@@ -97,7 +97,7 @@ export const createOrganisasi = async (req: Request, res: Response): Promise<voi
 
 // ==================== OPERATOR UKM CRUD ====================
 
-// GET /api/organisasi/operator — Daftar akun operator UKM
+// GET /api/organisasi/operator â€” Daftar akun operator UKM
 export const getOperatorOrg = async (req: Request, res: Response) => {
   try {
     const data = await prisma.organisasiOperator.findMany({
@@ -119,7 +119,7 @@ export const getOperatorOrg = async (req: Request, res: Response) => {
   }
 };
 
-// POST /api/organisasi/operator — Buat akun operator UKM
+// POST /api/organisasi/operator â€” Buat akun operator UKM
 export const createOperatorOrg = async (req: Request, res: Response): Promise<void> => {
   try {
     const aktorId = BigInt(req.user!.id);
@@ -200,7 +200,7 @@ export const createOperatorOrg = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// PUT /api/organisasi/operator/:userId/status — Aktifkan/Nonaktifkan akun
+// PUT /api/organisasi/operator/:userId/status â€” Aktifkan/Nonaktifkan akun
 export const toggleStatusAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
@@ -250,7 +250,7 @@ export const toggleStatusAkun = async (req: Request, res: Response): Promise<voi
 
 // ==================== FITUR TERPADU (SESUAI WIREFRAME UI) ====================
 
-// POST /api/organisasi/akun — Buat UKM dan Akun sekaligus
+// POST /api/organisasi/akun â€” Buat UKM dan Akun sekaligus
 export const createAkunLengkap = async (req: Request, res: Response): Promise<void> => {
   try {
     const aktorId = BigInt(req.user!.id);
@@ -325,7 +325,7 @@ export const createAkunLengkap = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// PUT /api/organisasi/akun/:userId/reset — Reset Password & Edit Status
+// PUT /api/organisasi/akun/:userId/reset â€” Reset Password & Edit Status
 export const resetPasswordAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
@@ -354,7 +354,7 @@ export const resetPasswordAkun = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/organisasi/akun/:userId — Hapus Akun UKM
+// DELETE /api/organisasi/akun/:userId â€” Hapus Akun UKM
 export const hapusAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;

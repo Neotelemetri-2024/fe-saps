@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
+import { Request, Response, NextFunction } from 'express';
+import prisma from '../../../lib/prisma';
 import { z } from 'zod';
-import { logAudit } from '../lib/auditLog';
+import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const createKegiatanSchema = z.object({
@@ -30,7 +30,7 @@ const approvalSchema = z.object({
 
 // ==================== KEGIATAN CRUD ====================
 
-// GET /api/kegiatan — Daftar kegiatan (filter: status, asal, kategoriId)
+// GET /api/kegiatan â€” Daftar kegiatan (filter: status, asal, kategoriId)
 export const getAllKegiatan = async (req: Request, res: Response) => {
   try {
     const { status, asal, kategoriId, search } = req.query;
@@ -46,6 +46,18 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
       ];
     }
 
+    const userPeran = req.user!.peran;
+    
+    // Jika operator UKM/UKMF, hanya lihat kegiatan organisasinya
+    if (userPeran === 'operator_org') {
+      const operatorData = await prisma.organisasiOperator.findUnique({
+        where: { userId: BigInt(req.user!.id) }
+      });
+      if (operatorData) {
+        where.organisasiId = operatorData.organisasiId;
+      }
+    }
+
     const data = await prisma.kegiatan.findMany({
       where,
       include: {
@@ -54,6 +66,11 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
         organisasi: { select: { id: true, nama: true, tipe: true } },
         kurikulum: { select: { id: true, nama: true } },
         pembuat: { select: { id: true, nama: true } },
+        kegiatanApproval: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: { aktor: { select: { nama: true } } },
+        },
         _count: { select: { partisipasi: true, kegiatanCapaian: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -65,7 +82,7 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/kegiatan/:id — Detail kegiatan + alokasi + approval history
+// GET /api/kegiatan/:id â€” Detail kegiatan + alokasi + approval history
 export const getKegiatanById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -76,7 +93,18 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
         skala: true,
         organisasi: true,
         kurikulum: { select: { id: true, nama: true, status: true } },
-        pembuat: { select: { id: true, nama: true } },
+        pembuat: { 
+          select: { 
+            id: true, 
+            nama: true,
+            mahasiswa: {
+              select: {
+                nim: true,
+                prodi: { select: { nama: true } }
+              }
+            }
+          } 
+        },
         kegiatanCapaian: {
           include: { subCapaian: { include: { capaian: true } } },
         },
@@ -98,11 +126,11 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
   }
 };
 
-// POST /api/kegiatan — Buat kegiatan baru
+// POST /api/kegiatan â€” Buat kegiatan baru
 // Alur approval berbeda tergantung pembuat:
-//   Admin Ditmawa   → langsung disetujui (tidak perlu izin)
-//   Operator UKM    → diajukan → Admin Ditmawa → Pimpinan Ditmawa
-//   Operator UKMF   → diajukan → Admin Fakultas → Pimpinan Fakultas
+//   Admin Ditmawa   â†’ langsung disetujui (tidak perlu izin)
+//   Operator UKM    â†’ diajukan â†’ Admin Ditmawa â†’ Pimpinan Ditmawa
+//   Operator UKMF   â†’ diajukan â†’ Admin Fakultas â†’ Pimpinan Fakultas
 export const createKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const dibuatOleh = BigInt(req.user!.id);
@@ -137,12 +165,31 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
     const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
 
     if (effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas') {
-      // ── Admin Ditmawa / Admin Fakultas: langsung disetujui, tidak perlu verifikasi ──
-      statusAwal = 'disetujui';
-      pesanResponse = 'Kegiatan berhasil dibuat dan langsung disetujui.';
+      // â”€â”€ Admin Ditmawa / Admin Fakultas: verifikasi dilewati, langsung menunggu_pimpinan â”€â”€
+      statusAwal = 'terverifikasi';
+      pesanResponse = 'Kegiatan berhasil dibuat dan menunggu persetujuan Pimpinan.';
+
+      if (effectiveRole === 'admin_ditmawa') {
+        const pimpinanDitmawa = await prisma.staff.findMany({
+          where: { jabatan: 'pimpinan_ditmawa', user: { aktif: true } },
+          select: { userId: true },
+        });
+        notifTargets = pimpinanDitmawa.map(p => ({ userId: p.userId }));
+        notifJudul = 'Pengajuan Kegiatan Baru ðŸ“‹';
+        notifIsi = `Kegiatan "%NAMA%" telah diajukan oleh Admin Ditmawa dan menunggu persetujuan Anda.`;
+      } else {
+        const adminData = await prisma.staff.findUnique({ where: { userId: dibuatOleh } });
+        const pimpinanFakultas = await prisma.staff.findMany({
+          where: { jabatan: 'pimpinan_fakultas', fakultasId: adminData?.fakultasId, user: { aktif: true } },
+          select: { userId: true },
+        });
+        notifTargets = pimpinanFakultas.map(p => ({ userId: p.userId }));
+        notifJudul = 'Pengajuan Kegiatan Baru ðŸ“‹';
+        notifIsi = `Kegiatan "%NAMA%" telah diajukan oleh Admin Fakultas dan menunggu persetujuan Anda.`;
+      }
 
     } else if (effectiveRole === 'operator_org') {
-      // Cek organisasi operator → UKM atau UKMF?
+      // Cek organisasi operator â†’ UKM atau UKMF?
       const operatorData = await prisma.organisasiOperator.findUnique({
         where: { userId: dibuatOleh },
         include: { organisasi: true },
@@ -156,7 +203,7 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
       const org = operatorData.organisasi;
 
       if (org.tipe === 'UKMF' && org.fakultasId) {
-        // ── UKMF: ajukan ke Admin Fakultas ──
+        // â”€â”€ UKMF: ajukan ke Admin Fakultas â”€â”€
         statusAwal = 'diajukan';
         pesanResponse = 'Kegiatan berhasil dibuat dan diajukan ke Admin Fakultas.';
 
@@ -170,11 +217,11 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
           select: { userId: true },
         });
         notifTargets = adminFakultas.map(a => ({ userId: a.userId }));
-        notifJudul = 'Pengajuan Kegiatan UKMF Baru 📋';
+        notifJudul = 'Pengajuan Kegiatan UKMF Baru ðŸ“‹';
         notifIsi = `Kegiatan "%NAMA%" dari ${org.nama} telah diajukan dan menunggu verifikasi Anda.`;
 
       } else {
-        // ── UKM: ajukan ke Admin Ditmawa ──
+        // â”€â”€ UKM: ajukan ke Admin Ditmawa â”€â”€
         statusAwal = 'diajukan';
         pesanResponse = 'Kegiatan berhasil dibuat dan diajukan ke Admin Ditmawa.';
 
@@ -187,7 +234,7 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
           select: { userId: true },
         });
         notifTargets = adminDitmawa.map(a => ({ userId: a.userId }));
-        notifJudul = 'Pengajuan Kegiatan UKM Baru 📋';
+        notifJudul = 'Pengajuan Kegiatan UKM Baru ðŸ“‹';
         notifIsi = `Kegiatan "%NAMA%" dari ${org.nama} telah diajukan dan menunggu verifikasi Anda.`;
       }
 
@@ -260,7 +307,205 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// PUT /api/kegiatan/:id/ajukan — Ajukan ulang kegiatan setelah revisi
+// PUT /api/kegiatan/:id â€” Edit kegiatan (hanya saat draft atau perlu_revisi)
+export const editKegiatan = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const body = createKegiatanSchema.parse(req.body);
+    const userId = BigInt(req.user!.id);
+    const userPeran = req.user!.peran;
+
+    const existing = await prisma.kegiatan.findUnique({
+      where: { id: Number(id) }
+    });
+
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan' });
+      return;
+    }
+
+    if (existing.status !== 'draft' && existing.status !== 'perlu_revisi') {
+      res.status(400).json({ success: false, message: 'Hanya kegiatan berstatus draft atau perlu revisi yang bisa diedit' });
+      return;
+    }
+
+    // Cek otorisasi
+    if (userPeran === 'operator_org') {
+      const operatorData = await prisma.organisasiOperator.findUnique({ where: { userId } });
+      if (!operatorData || operatorData.organisasiId !== existing.organisasiId) {
+        res.status(403).json({ success: false, message: 'Tidak diizinkan mengedit kegiatan milik organisasi lain' });
+        return;
+      }
+    } else if (existing.dibuatOleh !== userId) {
+      res.status(403).json({ success: false, message: 'Tidak diizinkan mengedit kegiatan ini' });
+      return;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.kegiatan.update({
+        where: { id: Number(id) },
+        data: {
+          nama: body.nama,
+          kategoriId: body.kategoriId,
+          skalaId: body.skalaId,
+          asal: body.asal,
+          deskripsi: body.deskripsi,
+          tanggalMulai: new Date(body.tanggalMulai),
+          tanggalSelesai: new Date(body.tanggalSelesai),
+          lokasi: body.lokasi,
+          kuota: body.kuota,
+          penyelenggaraExt: body.penyelenggaraExt,
+        }
+      });
+
+      await tx.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } });
+
+      await tx.kegiatanCapaian.createMany({
+        data: body.alokasi.map(a => ({
+          kegiatanId: Number(id),
+          subCapaianId: a.subCapaianId,
+          alokasiPersen: a.alokasiPersen,
+        }))
+      });
+    });
+
+    res.json({ success: true, message: 'Kegiatan berhasil diperbarui' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, message: 'Data tidak valid', errors: error.issues });
+    } else {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  }
+};
+
+
+// PUT /api/kegiatan/verifikasi-bulk â€” Verifikasi banyak kegiatan sekaligus
+export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const aktorId = BigInt(req.user!.id);
+    const userJabatan = req.user!.jabatan;
+
+    const schema = z.object({
+      kegiatanIds: z.array(z.number()).min(1),
+      keputusan: z.enum(['setuju', 'tolak', 'revisi']),
+      alasan: z.string().optional(),
+    });
+
+    const body = schema.parse(req.body);
+
+    if ((body.keputusan === 'tolak' || body.keputusan === 'revisi') && !body.alasan) {
+      return res.status(400).json({ success: false, message: 'Alasan wajib diisi jika ditolak/revisi' });
+    }
+
+    const kegiatans = await prisma.kegiatan.findMany({
+      where: {
+        id: { in: body.kegiatanIds },
+        status: 'diajukan'
+      },
+      include: {
+        organisasi: true
+      }
+    });
+
+    if (kegiatans.length === 0) {
+      return res.status(400).json({ success: false, message: 'Tidak ada kegiatan valid yang bisa diverifikasi.' });
+    }
+
+    let statusBaru = 'terverifikasi';
+    if (body.keputusan === 'revisi') statusBaru = 'perlu_revisi';
+    if (body.keputusan === 'tolak') statusBaru = 'ditolak';
+
+    // Proses satu per satu agar notifikasi dan audit log berjalan lancar
+    let successCount = 0;
+    for (const kegiatan of kegiatans) {
+      // Sama seperti logika satuan: Admin Fakultas hanya boleh verifikasi UKMF fakultasnya
+      if (userJabatan === 'admin_fakultas') {
+        const staffData = await prisma.staff.findUnique({ where: { userId: aktorId } });
+        if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {
+          continue; // skip
+        }
+      }
+
+      await prisma.kegiatan.update({
+        where: { id: kegiatan.id },
+        data: { status: statusBaru as any },
+      });
+
+      await prisma.kegiatanApproval.create({
+        data: {
+          kegiatanId: kegiatan.id,
+          tahap: 'verifikasi',
+          aktorId,
+          keputusan: body.keputusan as any,
+          alasan: body.alasan,
+        },
+      });
+
+      await logAudit({
+        entitas: 'kegiatan',
+        entitasId: kegiatan.id,
+        aksi: 'verifikasi_bulk',
+        statusLama: 'diajukan',
+        statusBaru,
+        aktorId,
+      });
+
+      // Notifikasi ke pembuat kegiatan
+      await prisma.notifikasi.create({
+        data: {
+          userId: kegiatan.dibuatOleh,
+          judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi ✅' : body.keputusan === 'revisi' ? 'Perlu Revisi ⚠️' : 'Ditolak ❌'}`,
+          isi: `Kegiatan "${kegiatan.nama}" telah diverifikasi oleh Admin. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
+          refType: 'kegiatan',
+          refId: BigInt(kegiatan.id),
+        },
+      });
+
+      // Jika setuju dan bukan eksternal, beri notif ke pimpinan
+      if (body.keputusan === 'setuju' && kegiatan.asal !== 'eksternal') {
+        let pimpinanTargets: { userId: bigint }[] = [];
+        if (kegiatan.organisasi?.tipe === 'UKMF') {
+          const pimpinanFakultas = await prisma.staff.findMany({
+            where: { jabatan: 'pimpinan_fakultas', fakultasId: kegiatan.organisasi.fakultasId, user: { aktif: true } },
+            select: { userId: true },
+          });
+          pimpinanTargets = pimpinanFakultas.map(p => ({ userId: p.userId }));
+        } else {
+          const pimpinanDitmawa = await prisma.staff.findMany({
+            where: { jabatan: 'pimpinan_ditmawa', user: { aktif: true } },
+            select: { userId: true },
+          });
+          pimpinanTargets = pimpinanDitmawa.map(p => ({ userId: p.userId }));
+        }
+
+        if (pimpinanTargets.length > 0) {
+          await prisma.notifikasi.createMany({
+            data: pimpinanTargets.map(t => ({
+              userId: t.userId,
+              judul: 'Kegiatan Menunggu Approval ⏳',
+              isi: `Kegiatan "${kegiatan.nama}" telah lolos verifikasi Admin dan menunggu approval final Anda.`,
+              refType: 'kegiatan',
+              refId: BigInt(kegiatan.id),
+            })),
+          });
+        }
+      }
+
+      successCount++;
+    }
+
+    res.json({ success: true, message: `${successCount} kegiatan berhasil diproses secara bulk.` });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+    }
+    next(error);
+  }
+};
+
+// PUT /api/kegiatan/:id/ajukan â€” Ajukan ulang kegiatan setelah revisi
 export const ajukanKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -279,9 +524,15 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const userPeran = req.user!.peran;
+    const userJabatan = req.user!.jabatan;
+    const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
+    const isAdmin = effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas';
+    const statusBaru = isAdmin ? 'terverifikasi' : 'diajukan';
+
     const updated = await prisma.kegiatan.update({
       where: { id: Number(id) },
-      data: { status: 'diajukan' },
+      data: { status: statusBaru as any },
     });
 
     // Kirim notifikasi ke approver yang tepat berdasarkan organisasi
@@ -289,7 +540,7 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
     let notifLabel = 'Admin';
 
     if (kegiatan.organisasi?.tipe === 'UKMF' && kegiatan.organisasi.fakultasId) {
-      // UKMF → kirim ke Admin Fakultas
+      // UKMF â†’ kirim ke Admin Fakultas
       const adminFakultas = await prisma.staff.findMany({
         where: { jabatan: 'admin_fakultas', fakultasId: kegiatan.organisasi.fakultasId, user: { aktif: true } },
         select: { userId: true },
@@ -297,7 +548,7 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
       notifTargets = adminFakultas.map(a => ({ userId: a.userId }));
       notifLabel = 'Admin Fakultas';
     } else {
-      // UKM → kirim ke Admin Ditmawa
+      // UKM â†’ kirim ke Admin Ditmawa
       const adminDitmawa = await prisma.staff.findMany({
         where: { jabatan: 'admin_ditmawa', user: { aktif: true } },
         select: { userId: true },
@@ -310,7 +561,7 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
       await prisma.notifikasi.createMany({
         data: notifTargets.map(t => ({
           userId: t.userId,
-          judul: 'Pengajuan Ulang Kegiatan 🔄',
+          judul: 'Pengajuan Ulang Kegiatan ðŸ”„',
           isi: `Kegiatan "${kegiatan.nama}" telah diajukan ulang setelah revisi. Silakan verifikasi kembali.`,
           refType: 'kegiatan',
           refId: BigInt(kegiatan.id),
@@ -336,12 +587,12 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
 
 // ==================== VERIFIKASI & APPROVAL [BR-009] ====================
 
-// GET /api/kegiatan/verifikasi — Kegiatan untuk verifikasi Admin (Ditmawa atau Fakultas)
-// Admin Ditmawa → melihat kegiatan UKM (tingkat universitas)
-// Admin Fakultas → melihat kegiatan UKMF dari fakultasnya
+// GET /api/kegiatan/verifikasi â€” Kegiatan untuk verifikasi Admin (Ditmawa atau Fakultas)
+// Admin Ditmawa â†’ melihat kegiatan UKM (tingkat universitas)
+// Admin Fakultas â†’ melihat kegiatan UKMF dari fakultasnya
 export const getKegiatanForVerifikasi = async (req: Request, res: Response) => {
   try {
-    const { search, kategoriId, skalaId, status, tahun, page = '1', limit = '10' } = req.query;
+    const { search, kategoriId, skalaId, status, tahun, asal, page = '1', limit = '10' } = req.query;
     const userJabatan = req.user!.jabatan;
 
     const where: any = {};
@@ -353,19 +604,24 @@ export const getKegiatanForVerifikasi = async (req: Request, res: Response) => {
       where.status = { in: ['diajukan', 'terverifikasi', 'perlu_revisi', 'ditolak'] };
     }
 
-    // ── Filter berdasarkan jabatan Admin ──
-    if (userJabatan === 'admin_fakultas') {
-      // Admin Fakultas: hanya kegiatan UKMF dari fakultas yang sama
-      const staffData = await prisma.staff.findUnique({
-        where: { userId: BigInt(req.user!.id) },
-      });
-      if (staffData?.fakultasId) {
-        where.organisasi = { fakultasId: staffData.fakultasId };
-        where.asal = 'kurikuler_ukmf';
-      }
+    // â”€â”€ Filter berdasarkan jabatan Admin dan asal kegiatan â”€â”€
+    if (asal === 'eksternal') {
+      // Pengajuan kegiatan eksternal oleh Mahasiswa (hanya ditangani Admin Ditmawa secara default)
+      where.asal = 'eksternal';
     } else {
-      // Admin Ditmawa: hanya kegiatan UKM (tingkat universitas) + universitas
-      where.asal = { in: ['kurikuler_ukm', 'universitas'] };
+      // Pengajuan internal (UKM / UKMF)
+      if (userJabatan === 'admin_fakultas') {
+        const staffData = await prisma.staff.findUnique({
+          where: { userId: BigInt(req.user!.id) },
+        });
+        if (staffData?.fakultasId) {
+          where.organisasi = { fakultasId: staffData.fakultasId };
+          where.asal = 'kurikuler_ukmf';
+        }
+      } else {
+        // Admin Ditmawa: hanya kegiatan UKM (tingkat universitas) + universitas
+        where.asal = { in: ['kurikuler_ukm', 'universitas'] };
+      }
     }
 
     if (kategoriId) where.kategoriId = Number(kategoriId);
@@ -429,8 +685,8 @@ export const getKegiatanForVerifikasi = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /api/kegiatan/:id/verifikasi — Admin verifikasi (setuju/revisi/tolak)
-// Setelah disetujui → notifikasi ke Pimpinan yang tepat (Ditmawa atau Fakultas)
+// PUT /api/kegiatan/:id/verifikasi â€” Admin verifikasi (setuju/revisi/tolak)
+// Setelah disetujui â†’ notifikasi ke Pimpinan yang tepat (Ditmawa atau Fakultas)
 export const verifikasiKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -450,7 +706,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // Maker ≠ checker [BR-012]
+    // Maker â‰  checker [BR-012]
     if (kegiatan.dibuatOleh === aktorId) {
       res.status(403).json({ success: false, message: 'Pembuat kegiatan tidak boleh memverifikasi sendiri [BR-012]' });
       return;
@@ -487,7 +743,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     await prisma.notifikasi.create({
       data: {
         userId: kegiatan.dibuatOleh,
-        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi ✅' : body.keputusan === 'revisi' ? 'Perlu Revisi ⚠️' : 'Ditolak ❌'}`,
+        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi âœ…' : body.keputusan === 'revisi' ? 'Perlu Revisi âš ï¸' : 'Ditolak âŒ'}`,
         isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Admin.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
         refType: 'kegiatan',
         refId: BigInt(id as string),
@@ -499,14 +755,14 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       let pimpinanTargets: { userId: bigint }[] = [];
 
       if (kegiatan.organisasi?.tipe === 'UKMF' && kegiatan.organisasi.fakultasId) {
-        // UKMF → notifikasi ke Pimpinan Fakultas
+        // UKMF â†’ notifikasi ke Pimpinan Fakultas
         const pimpinanFakultas = await prisma.staff.findMany({
           where: { jabatan: 'pimpinan_fakultas', fakultasId: kegiatan.organisasi.fakultasId, user: { aktif: true } },
           select: { userId: true },
         });
         pimpinanTargets = pimpinanFakultas.map(p => ({ userId: p.userId }));
       } else {
-        // UKM / universitas → notifikasi ke Pimpinan Ditmawa
+        // UKM / universitas â†’ notifikasi ke Pimpinan Ditmawa
         const pimpinanDitmawa = await prisma.staff.findMany({
           where: { jabatan: 'pimpinan_ditmawa', user: { aktif: true } },
           select: { userId: true },
@@ -518,7 +774,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
         await prisma.notifikasi.createMany({
           data: pimpinanTargets.map(t => ({
             userId: t.userId,
-            judul: 'Kegiatan Menunggu Approval 📋',
+            judul: 'Kegiatan Menunggu Approval ðŸ“‹',
             isi: `Kegiatan "${kegiatan.nama}" telah terverifikasi dan menunggu persetujuan Anda.`,
             refType: 'kegiatan',
             refId: BigInt(kegiatan.id),
@@ -547,10 +803,10 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
   }
 };
 
-// GET /api/kegiatan/approval — Kegiatan untuk approval Pimpinan (Ditmawa atau Fakultas)
+// GET /api/kegiatan/approval â€” Kegiatan untuk approval Pimpinan (Ditmawa atau Fakultas)
 export const getKegiatanForApproval = async (req: Request, res: Response) => {
   try {
-    const { search, kategoriId, skalaId, status, tahun, page = '1', limit = '10' } = req.query;
+    const { search, kategoriId, skalaId, status, asal, tahun, page = '1', limit = '10' } = req.query;
     const userJabatan = req.user!.jabatan;
 
     const where: any = {};
@@ -564,7 +820,7 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
       where.status = { in: ['terverifikasi', 'disetujui', 'perlu_revisi', 'ditolak'] };
     }
 
-    // ── Filter berdasarkan jabatan Pimpinan ──
+    // â”€â”€ Filter berdasarkan jabatan Pimpinan â”€â”€
     if (userJabatan === 'pimpinan_fakultas') {
       // Pimpinan Fakultas: hanya kegiatan UKMF dari fakultas yang sama
       const staffData = await prisma.staff.findUnique({
@@ -581,6 +837,12 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
 
     if (kategoriId) where.kategoriId = Number(kategoriId);
     if (skalaId) where.skalaId = Number(skalaId);
+
+    if (asal === 'internal') {
+      where.asal = { in: ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] };
+    } else if (asal === 'eksternal') {
+      where.asal = 'eksternal';
+    }
 
     // Filter berdasarkan tahun (dari tanggalMulai)
     if (tahun) {
@@ -614,7 +876,18 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
         kategori: true,
         skala: true,
         organisasi: { select: { id: true, nama: true, tipe: true } },
-        pembuat: { select: { id: true, nama: true } },
+        pembuat: { 
+          select: { 
+            id: true, 
+            nama: true,
+            mahasiswa: {
+              select: {
+                nim: true,
+                prodi: { select: { nama: true } }
+              }
+            }
+          } 
+        },
         kegiatanCapaian: {
           include: { subCapaian: { include: { capaian: true } } },
         },
@@ -644,7 +917,7 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /api/kegiatan/:id/approval — Pimpinan approval (setuju/revisi/tolak)
+// PUT /api/kegiatan/:id/approval â€” Pimpinan approval (setuju/revisi/tolak)
 export const approvalKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -665,7 +938,7 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // ── Otorisasi Pimpinan Fakultas ──
+    // â”€â”€ Otorisasi Pimpinan Fakultas â”€â”€
     if (userJabatan === 'pimpinan_fakultas') {
       const staffData = await prisma.staff.findUnique({
         where: { userId: aktorId },
@@ -703,7 +976,7 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
     await prisma.notifikasi.create({
       data: {
         userId: kegiatan.dibuatOleh,
-        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui ✅' : body.keputusan === 'revisi' ? 'Perlu Revisi ⚠️' : 'Ditolak ❌'}`,
+        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui âœ…' : body.keputusan === 'revisi' ? 'Perlu Revisi âš ï¸' : 'Ditolak âŒ'}`,
         isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
         refType: 'kegiatan',
         refId: BigInt(id as string),
@@ -730,7 +1003,91 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// PUT /api/kegiatan/:id/publikasi — Publikasikan kegiatan yang sudah disetujui
+const bulkApprovalSchema = z.object({
+  kegiatanIds: z.array(z.number().int().positive()).min(1, 'Minimal 1 kegiatan'),
+  keputusan: z.enum(['setuju', 'revisi', 'tolak']),
+  alasan: z.string().max(500).optional(),
+});
+
+export const approvalKegiatanBulk = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const aktorId = BigInt(req.user!.id);
+    const userJabatan = req.user!.jabatan;
+    const body = bulkApprovalSchema.parse(req.body);
+
+    if ((body.keputusan === 'revisi' || body.keputusan === 'tolak') && !body.alasan) {
+      res.status(400).json({ success: false, message: 'Alasan wajib diisi untuk revisi/tolak' });
+      return;
+    }
+
+    let statusBaru = 'disetujui';
+    if (body.keputusan === 'revisi') statusBaru = 'perlu_revisi';
+    if (body.keputusan === 'tolak') statusBaru = 'ditolak';
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (const kegiatanId of body.kegiatanIds) {
+      try {
+        const kegiatan = await prisma.kegiatan.findUnique({
+          where: { id: kegiatanId },
+          include: { organisasi: true },
+        });
+
+        if (!kegiatan) { errors.push(`ID ${kegiatanId}: tidak ditemukan`); continue; }
+        if (kegiatan.status !== 'terverifikasi') { errors.push(`ID ${kegiatanId}: belum diverifikasi Admin`); continue; }
+
+        if (userJabatan === 'pimpinan_fakultas') {
+          const staffData = await prisma.staff.findUnique({ where: { userId: aktorId } });
+          if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {
+            errors.push(`ID ${kegiatanId}: bukan kegiatan fakultas Anda`);
+            continue;
+          }
+        }
+
+        await prisma.kegiatanApproval.create({
+          data: { kegiatanId, tahap: 'approval', aktorId, keputusan: body.keputusan, alasan: body.alasan },
+        });
+
+        await prisma.kegiatan.update({ where: { id: kegiatanId }, data: { status: statusBaru as any } });
+
+        await prisma.notifikasi.create({
+          data: {
+            userId: kegiatan.dibuatOleh,
+            judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+            isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+            refType: 'kegiatan',
+            refId: BigInt(kegiatanId),
+          },
+        });
+
+        await logAudit({
+          entitas: 'kegiatan', entitasId: kegiatanId,
+          aksi: `approval.${body.keputusan}`, statusLama: 'terverifikasi', statusBaru, aktorId,
+        });
+
+        successCount++;
+      } catch (e) {
+        errors.push(`ID ${kegiatanId}: gagal diproses`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `${successCount} kegiatan berhasil di-${body.keputusan}. ${errors.length > 0 ? `${errors.length} gagal.` : ''}`,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+    } else {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  }
+};
+
+// PUT /api/kegiatan/:id/publikasi â€” Publikasikan kegiatan yang sudah disetujui
 export const publikasiKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -747,7 +1104,7 @@ export const publikasiKegiatan = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // ── Otorisasi Publikasi ──
+    // â”€â”€ Otorisasi Publikasi â”€â”€
     const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
 
     if (effectiveRole === 'operator_org') {
@@ -786,7 +1143,7 @@ export const publikasiKegiatan = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/kegiatan/:id — Hapus Kegiatan (Hanya jika belum berjalan/ada partisipan)
+// DELETE /api/kegiatan/:id â€” Hapus Kegiatan (Hanya jika belum berjalan/ada partisipan)
 export const hapusKegiatan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -806,7 +1163,7 @@ export const hapusKegiatan = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // ── Otorisasi Hapus ──
+    // â”€â”€ Otorisasi Hapus â”€â”€
     if (userJabatan === 'admin_fakultas') {
       const staffData = await prisma.staff.findUnique({ where: { userId: aktorId } });
       if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {

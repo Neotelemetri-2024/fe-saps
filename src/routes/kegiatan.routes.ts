@@ -4,29 +4,49 @@ import {
   getAllKegiatan,
   getKegiatanById,
   createKegiatan,
+  editKegiatan,
   ajukanKegiatan,
   getKegiatanForVerifikasi,
   verifikasiKegiatan,
-  getKegiatanForApproval,
-  approvalKegiatan,
+  verifikasiKegiatanBulk,
   publikasiKegiatan,
   hapusKegiatan,
-} from '../controllers/kegiatan.controller';
+} from '../controllers/admin/ditmawa/kegiatan.controller';
+import {
+  getKegiatanForApproval,
+  approvalKegiatan,
+  approvalKegiatanBulk,
+} from '../controllers/pimpinan/ditmawa/kegiatan.controller';
 
 const router = Router();
 
-// Semua rute kegiatan membutuhkan login
 router.use(authenticateJWT);
 
-router.get('/', getAllKegiatan);                                                                    // GET /api/kegiatan (semua role)
-router.get('/verifikasi', authorizeRole('admin_ditmawa', 'admin_fakultas'), getKegiatanForVerifikasi); // GET /api/kegiatan/verifikasi
-router.get('/approval', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), getKegiatanForApproval); // GET /api/kegiatan/approval
-router.get('/:id', getKegiatanById);                                                               // GET /api/kegiatan/:id (semua role)
-router.post('/', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), createKegiatan);                   // POST /api/kegiatan
-router.put('/:id/ajukan', authorizeRole('operator_org'), ajukanKegiatan);                           // PUT /api/kegiatan/:id/ajukan
-router.put('/:id/verifikasi', authorizeRole('admin_ditmawa', 'admin_fakultas'), verifikasiKegiatan);                  // PUT /api/kegiatan/:id/verifikasi
-router.put('/:id/approval', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), approvalKegiatan);                   // PUT /api/kegiatan/:id/approval
-router.put('/:id/publikasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), publikasiKegiatan);    // PUT /api/kegiatan/:id/publikasi
-router.delete('/:id', authorizeRole('admin_ditmawa', 'admin_fakultas'), hapusKegiatan);                               // DELETE /api/kegiatan/:id
+// ─── BACA (Semua role) ────────────────────────────────────────────────────────
+router.get('/', getAllKegiatan);
+router.get('/:id', getKegiatanById);
+
+// ─── BUAT KEGIATAN (UKM/UKMF, Admin Ditmawa, Admin Fakultas) ─────────────────
+router.post('/', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), createKegiatan);
+router.put('/:id', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), editKegiatan);
+
+// ─── AJUKAN ke Admin (UKM/UKMF dan Admin yang buat kegiatan) ─────────────────
+router.put('/:id/ajukan', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), ajukanKegiatan);
+
+// ─── ADMIN DITMAWA / ADMIN FAKULTAS: Verifikasi ──────────────────────────────
+// UKM → Admin Ditmawa verifikasi → Pimpinan Ditmawa approval
+// UKMF → Admin Fakultas verifikasi → Pimpinan Fakultas approval
+router.get('/verifikasi', authorizeRole('admin_ditmawa', 'admin_fakultas'), getKegiatanForVerifikasi);
+router.put('/verifikasi-bulk', authorizeRole('admin_ditmawa', 'admin_fakultas'), verifikasiKegiatanBulk);
+router.put('/:id/verifikasi', authorizeRole('admin_ditmawa', 'admin_fakultas'), verifikasiKegiatan);
+
+// ─── PIMPINAN DITMAWA / PIMPINAN FAKULTAS: Approval Final ────────────────────
+router.get('/approval', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), getKegiatanForApproval);
+router.put('/approval-bulk', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), approvalKegiatanBulk);
+router.put('/:id/approval', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), approvalKegiatan);
+
+// ─── PUBLIKASI & HAPUS ────────────────────────────────────────────────────────
+router.put('/:id/publikasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), publikasiKegiatan);
+router.delete('/:id', authorizeRole('admin_ditmawa', 'admin_fakultas'), hapusKegiatan);
 
 export default router;

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import prisma from "../lib/prisma";
+import prisma from "../../../lib/prisma";
 import { z } from "zod";
-import { logAudit } from "../lib/auditLog";
+import { logAudit } from "../../../lib/auditLog";
 
 // ==================== VALIDASI ====================
 const createKlaimSchema = z.object({
@@ -30,7 +30,7 @@ const validasiKlaimBulkSchema = z.object({
 
 // ==================== KLAIM POIN ====================
 
-// POST /api/klaim — Mahasiswa ajukan klaim poin atas partisipasi
+// POST /api/klaim â€” Mahasiswa ajukan klaim poin atas partisipasi
 export const createKlaim = async (
   req: Request,
   res: Response,
@@ -78,13 +78,13 @@ export const createKlaim = async (
     // Tentukan validator berdasarkan asal kegiatan [BR-018]
     let validatorId: bigint | null = null;
     if (partisipasi.kegiatan.organisasiId) {
-      // Kegiatan internal (UKM/UKMF) — validator = operator organisasi
+      // Kegiatan internal (UKM/UKMF) â€” validator = operator organisasi
       const operator = await prisma.organisasiOperator.findFirst({
         where: { organisasiId: partisipasi.kegiatan.organisasiId },
       });
       validatorId = operator?.userId ?? null;
     }
-    // Jika tidak ada organisasi (universitas/eksternal) → validator = Admin Ditmawa (diisi saat validasi)
+    // Jika tidak ada organisasi (universitas/eksternal) â†’ validator = Admin Ditmawa (diisi saat validasi)
 
     // Buat klaim + bukti [BR-020 lapis 2: UNIQUE partisipasiId]
     const klaim = await prisma.klaimPoin.create({
@@ -132,7 +132,7 @@ export const createKlaim = async (
   }
 };
 
-// GET /api/klaim/saya?mahasiswaId=X — Daftar klaim milik mahasiswa
+// GET /api/klaim/saya?mahasiswaId=X â€” Daftar klaim milik mahasiswa
 export const getMyKlaim = async (req: Request, res: Response) => {
   try {
     const mahasiswaId = BigInt(req.query.mahasiswaId as string);
@@ -159,7 +159,7 @@ export const getMyKlaim = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/klaim/:id — Detail klaim untuk halaman Detail
+// GET /api/klaim/:id â€” Detail klaim untuk halaman Detail
 export const getKlaimById = async (
   req: Request,
   res: Response,
@@ -218,7 +218,7 @@ export const getKlaimById = async (
   }
 };
 
-// GET /api/klaim/validasi — Daftar klaim menunggu validasi (Operator UKM / Admin) dengan filter & pagination
+// GET /api/klaim/validasi â€” Daftar klaim menunggu validasi (Operator UKM / Admin) dengan filter & pagination
 export const getKlaimForValidasi = async (req: Request, res: Response) => {
   try {
     const { search, status, asal, kategoriId, page = '1', limit = '10' } = req.query;
@@ -293,7 +293,7 @@ export const getKlaimForValidasi = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/klaim/verifikasi-eksternal — Daftar klaim poin kegiatan EKSTERNAL untuk Pimpinan Ditmawa
+// GET /api/klaim/verifikasi-eksternal â€” Daftar klaim poin kegiatan EKSTERNAL untuk Pimpinan Ditmawa
 // Kolom: MAHASISWA (nama, NIM, prodi), KEGIATAN, KATEGORI, PERAN, TANGGAL, INFO PENYELENGGARA, STATUS
 export const getKlaimEksternalForVerifikasi = async (req: Request, res: Response) => {
   try {
@@ -397,7 +397,7 @@ export const getKlaimEksternalForVerifikasi = async (req: Request, res: Response
   }
 };
 
-// PUT /api/klaim/:id/validasi — Validator (penyelenggara) crosscheck klaim & proses poin [BR-030]
+// PUT /api/klaim/:id/validasi â€” Validator (penyelenggara) crosscheck klaim & proses poin [BR-030]
 export const validasiKlaim = async (
   req: Request,
   res: Response,
@@ -542,7 +542,7 @@ export const validasiKlaim = async (
       await prisma.notifikasi.create({
         data: {
           userId: klaim.partisipasi.mahasiswaId,
-          judul: "Poin Diperoleh! 🎉",
+          judul: "Poin Diperoleh! ðŸŽ‰",
           isi: `Klaim poin Anda disetujui. Anda memperoleh ${matriks.poin} poin dari kegiatan "${kegiatan.nama}".${body.alasan ? ` Catatan: ${body.alasan}` : ""}`,
           refType: "perolehan_poin",
           refId: perolehan.id,
@@ -575,7 +575,7 @@ export const validasiKlaim = async (
 
       // Notifikasi ke mahasiswa
       const statusTitle =
-        body.keputusan === "perlu_revisi" ? "Perlu Revisi ⚠️" : "Ditolak ❌";
+        body.keputusan === "perlu_revisi" ? "Perlu Revisi âš ï¸" : "Ditolak âŒ";
       await prisma.notifikasi.create({
         data: {
           userId: klaim.partisipasi.mahasiswaId,
@@ -618,7 +618,7 @@ export const validasiKlaim = async (
   }
 };
 
-// PUT /api/klaim/validasi-bulk — Pimpinan / Admin validasi banyak klaim eksternal sekaligus
+// PUT /api/klaim/validasi-bulk â€” Pimpinan / Admin validasi banyak klaim eksternal sekaligus
 export const validasiKlaimBulk = async (
   req: Request,
   res: Response,
@@ -729,7 +729,7 @@ export const validasiKlaimBulk = async (
           await tx.notifikasi.create({
             data: {
               userId: klaim.partisipasi.mahasiswaId,
-              judul: "Poin Diperoleh! 🎉",
+              judul: "Poin Diperoleh! ðŸŽ‰",
               isi: `Klaim poin Anda disetujui secara massal. Anda memperoleh ${matriks.poin} poin dari kegiatan "${kegiatan.nama}".${body.alasan ? ` Catatan: ${body.alasan}` : ""}`,
               refType: "perolehan_poin",
               refId: perolehan.id,
@@ -749,7 +749,7 @@ export const validasiKlaimBulk = async (
             },
           });
 
-          const statusTitle = body.keputusan === "perlu_revisi" ? "Perlu Revisi ⚠️" : "Ditolak ❌";
+          const statusTitle = body.keputusan === "perlu_revisi" ? "Perlu Revisi âš ï¸" : "Ditolak âŒ";
           await tx.notifikasi.create({
             data: {
               userId: klaim.partisipasi.mahasiswaId,

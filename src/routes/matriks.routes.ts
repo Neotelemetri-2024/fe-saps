@@ -1,32 +1,32 @@
 import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
-  getMatriksPoin,
-  upsertMatriksPoin,
-  getMatriksHistori,
-  getKategori,
-  createKategori,
-  getSkala,
-  createSkala,
-  getPeran,
-  createPeran,
-} from '../controllers/matriks.controller';
+  getMatriksPoin, upsertMatriksPoin, getMatriksHistori,
+  getKategori, createKategori, 
+  getSkala, createSkala, updateSkala, deleteSkala, 
+  getPeran, createPeran, updatePeran, deletePeran
+} from '../controllers/pimpinan/ditmawa/matriks.controller';
 
 const router = Router();
 
-// Semua rute matriks membutuhkan login
 router.use(authenticateJWT);
 
-router.get('/', authorizeRole('pimpinan_ditmawa'), getMatriksPoin);                               // GET /api/matriks
-router.post('/', authorizeRole('pimpinan_ditmawa'), upsertMatriksPoin);                           // POST /api/matriks
-router.get('/histori/:matriksPoinId', authorizeRole('pimpinan_ditmawa'), getMatriksHistori);       // GET /api/matriks/histori/:id
+// Matriks CRUD — hanya Pimpinan Ditmawa
+router.get('/', authorizeRole('pimpinan_ditmawa'), getMatriksPoin);
+router.post('/', authorizeRole('pimpinan_ditmawa'), upsertMatriksPoin);
+router.get('/histori/:matriksPoinId', authorizeRole('pimpinan_ditmawa'), getMatriksHistori);
 
-// Master data lookup (Pimpinan Ditmawa)
-router.get('/kategori', authorizeRole('pimpinan_ditmawa'), getKategori);                           // GET /api/matriks/kategori
-router.post('/kategori', authorizeRole('pimpinan_ditmawa'), createKategori);                       // POST /api/matriks/kategori
-router.get('/skala', authorizeRole('pimpinan_ditmawa'), getSkala);                                 // GET /api/matriks/skala
-router.post('/skala', authorizeRole('pimpinan_ditmawa'), createSkala);                             // POST /api/matriks/skala
-router.get('/peran', authorizeRole('pimpinan_ditmawa'), getPeran);                                 // GET /api/matriks/peran
-router.post('/peran', authorizeRole('pimpinan_ditmawa'), createPeran);                             // POST /api/matriks/peran
+// Master data (Pimpinan Ditmawa)
+router.get('/kategori', authorizeRole('pimpinan_ditmawa'), getKategori);
+router.post('/kategori', authorizeRole('pimpinan_ditmawa'), createKategori);
+router.get('/skala', authorizeRole('pimpinan_ditmawa'), getSkala);
+router.post('/skala', authorizeRole('pimpinan_ditmawa'), createSkala);
+router.put('/skala/:id', authorizeRole('pimpinan_ditmawa'), updateSkala);
+router.delete('/skala/:id', authorizeRole('pimpinan_ditmawa'), deleteSkala);
+
+router.get('/peran', authorizeRole('pimpinan_ditmawa'), getPeran);
+router.post('/peran', authorizeRole('pimpinan_ditmawa'), createPeran);
+router.put('/peran/:id', authorizeRole('pimpinan_ditmawa'), updatePeran);
+router.delete('/peran/:id', authorizeRole('pimpinan_ditmawa'), deletePeran);
 
 export default router;

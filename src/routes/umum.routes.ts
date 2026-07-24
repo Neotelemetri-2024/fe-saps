@@ -1,41 +1,34 @@
 import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
-import {
-  getNotifikasi,
-  bacaNotifikasi,
-  bacaSemuaNotifikasi,
-  getAuditLog,
-} from '../controllers/notifikasi.controller';
-import {
-  dashboardMahasiswa,
-  dashboardDosenPA,
-  dashboardAdminDitmawa,
-  dashboardPimpinanDitmawa,
-  dashboardPimpinanFakultas,
-  getPortofolio,
-} from '../controllers/dashboard.controller';
+import { getNotifikasi, bacaNotifikasi, bacaSemuaNotifikasi, getAuditLog } from '../controllers/shared/notifikasi.controller';
+import { dashboardAdminDitmawa } from '../controllers/admin/ditmawa/dashboard.controller';
+import { dashboardPimpinanDitmawa } from '../controllers/pimpinan/ditmawa/dashboard.controller';
+import { dashboardPimpinanFakultas } from '../controllers/pimpinan/fakultas/dashboard.controller';
+import { getDashboardPimpinanUtama, getDetailFakultasPimpinanUtama } from '../controllers/pimpinan/utama/dashboard.controller';
+import { getDashboardFakultas } from '../controllers/admin/fakultas/dashboard.controller';
+import { getPortofolio } from '../controllers/shared/portofolio.controller';
 
 const router = Router();
 
-// Semua rute umum membutuhkan login
 router.use(authenticateJWT);
 
-// Notifikasi (semua role bisa baca notifikasi masing-masing)
-router.get('/notifikasi', getNotifikasi);                                                         // GET /api/umum/notifikasi
-router.put('/notifikasi/:id/baca', bacaNotifikasi);                                               // PUT /api/umum/notifikasi/:id/baca
-router.put('/notifikasi/baca-semua', bacaSemuaNotifikasi);                                        // PUT /api/umum/notifikasi/baca-semua
+// ─── NOTIFIKASI (semua role) ──────────────────────────────────────────────────
+router.get('/notifikasi', getNotifikasi);
+router.put('/notifikasi/:id/baca', bacaNotifikasi);
+router.put('/notifikasi/baca-semua', bacaSemuaNotifikasi);
 
-// Audit Log (hanya Pimpinan & Admin)
-router.get('/audit-log', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getAuditLog);        // GET /api/umum/audit-log
+// ─── AUDIT LOG (Pimpinan & Admin) ────────────────────────────────────────────
+router.get('/audit-log', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getAuditLog);
 
-// Dashboard per-role
-router.get('/dashboard/mahasiswa', authorizeRole('mahasiswa'), dashboardMahasiswa);
-router.get('/dashboard/dosen-pa', authorizeRole('dosen'), dashboardDosenPA);
+// ─── DASHBOARD per ROLE ───────────────────────────────────────────────────────
 router.get('/dashboard/admin-ditmawa', authorizeRole('admin_ditmawa'), dashboardAdminDitmawa);
 router.get('/dashboard/pimpinan-ditmawa', authorizeRole('pimpinan_ditmawa'), dashboardPimpinanDitmawa);
 router.get('/dashboard/pimpinan-fakultas', authorizeRole('pimpinan_fakultas'), dashboardPimpinanFakultas);
+router.get('/dashboard/pimpinan-utama', authorizeRole('pimpinan_utama'), getDashboardPimpinanUtama);
+router.get('/dashboard/pimpinan-utama/fakultas/:id', authorizeRole('pimpinan_utama'), getDetailFakultasPimpinanUtama);
+router.get('/dashboard/admin-fakultas', authorizeRole('admin_fakultas'), getDashboardFakultas);
 
-// Portofolio / CV (mahasiswa + dosen PA + admin bisa lihat)
+// ─── PORTOFOLIO / CV ──────────────────────────────────────────────────────────
 router.get('/portofolio/:mahasiswaId', authorizeRole('mahasiswa', 'dosen', 'admin_ditmawa'), getPortofolio);
 
 export default router;

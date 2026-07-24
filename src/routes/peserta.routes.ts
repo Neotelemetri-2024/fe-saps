@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
-  getPesertaKegiatan,
-  importPeserta,
-  submitPoinPeserta,
-  downloadTemplatePeserta,
-  updatePeserta,
-} from '../controllers/peserta.controller';
+  getManajemenPeserta as getPesertaKegiatan,
+  importPesertaUKM as importPeserta,
+  submitPoinPesertaUKM as submitPoinPeserta,
+  downloadTemplatePesertaUKM as downloadTemplatePeserta,
+  updatePesertaUKM as updatePeserta,
+} from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
 

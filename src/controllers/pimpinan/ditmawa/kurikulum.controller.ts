@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
+import prisma from '../../../lib/prisma';
 import { z } from 'zod';
-import { logAudit } from '../lib/auditLog';
+import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const createKurikulumSchema = z.object({
@@ -34,7 +34,7 @@ const updateSubCapaianSchema = z.object({
 
 // ==================== KURIKULUM CRUD ====================
 
-// GET /api/kurikulum — Daftar semua kurikulum
+// GET /api/kurikulum â€” Daftar semua kurikulum
 export const getAllKurikulum = async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
@@ -56,7 +56,7 @@ export const getAllKurikulum = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/kurikulum/aktif — Kurikulum yang sedang aktif
+// GET /api/kurikulum/aktif â€” Kurikulum yang sedang aktif
 export const getKurikulumAktif = async (req: Request, res: Response) => {
   try {
     const data = await prisma.kurikulum.findFirst({
@@ -79,7 +79,7 @@ export const getKurikulumAktif = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/kurikulum/:id — Detail kurikulum + capaian + sub_capaian
+// GET /api/kurikulum/:id â€” Detail kurikulum + capaian + sub_capaian
 export const getKurikulumById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -104,7 +104,7 @@ export const getKurikulumById = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// POST /api/kurikulum — Buat kurikulum baru (draft)
+// POST /api/kurikulum â€” Buat kurikulum baru (draft)
 export const createKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const dibuatOleh = BigInt(req.user!.id);
@@ -139,7 +139,7 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
   }
 };
 
-// PUT /api/kurikulum/:id/aktivasi — Aktifkan kurikulum (arsipkan yg lama) [BR-001]
+// PUT /api/kurikulum/:id/aktivasi â€” Aktifkan kurikulum (arsipkan yg lama) [BR-001]
 export const aktivasiKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -183,7 +183,7 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// PUT /api/kurikulum/:id/non-aktif — Non-aktifkan kurikulum
+// PUT /api/kurikulum/:id/non-aktif â€” Non-aktifkan kurikulum
 export const nonAktifKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -220,7 +220,7 @@ export const nonAktifKurikulum = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/kurikulum/:id — Hapus kurikulum (Hanya jika tidak aktif)
+// DELETE /api/kurikulum/:id â€” Hapus kurikulum (Hanya jika tidak aktif)
 export const deleteKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
