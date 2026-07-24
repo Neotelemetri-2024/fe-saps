@@ -32,9 +32,9 @@ tags:
     description: "Fitur pengguna utama: Mengikuti kegiatan, meminta izin PA, dan mengklaim poin SKPI."
   - name: "Role: Dosen PA"
     description: "Fitur pembimbing: Memberikan izin kegiatan dan catatan pembinaan kepada mahasiswa bimbingannya."
-  - name: "Role: Operator UKM/F"
+  - name: "Role: Operator UKM"
     description: "Fitur organisasi: Mengajukan event kegiatan (Universitas) dan manajemen pesertanya."
-  - name: "Role: Operator UKM/FF"
+  - name: "Role: Operator UKMF"
     description: "Fitur organisasi: Mengajukan event kegiatan (Fakultas) dan manajemen pesertanya."
 
 components:
@@ -510,10 +510,10 @@ paths:
     get:
       summary: Katalog Kegiatan / Daftar Kegiatan Saya
       description: |
-        Menampilkan daftar kegiatan. Untuk Operator UKM/F, ini menampilkan kegiatan yang telah dibuat/diajukan oleh organisasinya.
+        Menampilkan daftar kegiatan. Untuk Operator UKM, ini menampilkan kegiatan yang telah dibuat/diajukan oleh organisasinya.
         Mendukung filter berdasarkan status, asal, kategori, dan pencarian nama.
         Juga mengembalikan `kegiatanApproval` (hanya 1 record terbaru) yang berisi `alasan` dan `keputusan` (berguna untuk modal "Lihat Alasan" saat status ditolak/revisi).
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Mahasiswa"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -553,15 +553,15 @@ paths:
                                 properties:
                                   nama: { type: string }
     post:
-      summary: (Operator UKM/F / UKMF / Admin) Buat & Kirim Kegiatan
+      summary: (Operator UKM / UKMF / Admin) Buat & Kirim Kegiatan
       description: |
         Membuat kegiatan baru. Alur approval otomatis tergantung siapa yang membuat:
         
         - **Admin Ditmawa** -> Status `menunggu_pimpinan` -> Notifikasi ke **Pimpinan Ditmawa**
         - **Admin Fakultas** -> Status `menunggu_pimpinan` -> Notifikasi ke **Pimpinan Fakultas**
-        - **Operator UKM/F** -> Status `diajukan` -> Notifikasi ke **Admin Ditmawa** -> lalu ke **Pimpinan Ditmawa**
-        - **Operator UKM/FF** -> Status `diajukan` -> Notifikasi ke **Admin Fakultas** terkait -> lalu ke **Pimpinan Fakultas**
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+        - **Operator UKM** -> Status `diajukan` -> Notifikasi ke **Admin Ditmawa** -> lalu ke **Pimpinan Ditmawa**
+        - **Operator UKMF** -> Status `diajukan` -> Notifikasi ke **Admin Fakultas** terkait -> lalu ke **Pimpinan Fakultas**
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       requestBody:
@@ -755,8 +755,8 @@ paths:
 
   /api/kegiatan/{id}/publikasi:
     put:
-      summary: (Operator UKM/F / Admin) Publish Event agar Tampil di Katalog
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      summary: (Operator UKM / Admin) Publish Event agar Tampil di Katalog
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -769,12 +769,12 @@ paths:
 
   /api/kegiatan/{id}/ajukan:
     put:
-      summary: (Operator UKM/F) Ajukan Ulang Kegiatan Setelah Revisi
+      summary: (Operator UKM) Ajukan Ulang Kegiatan Setelah Revisi
       description: |
         Mengajukan ulang kegiatan yang berstatus `perlu_revisi` ke Admin Ditmawa.
-        Endpoint ini digunakan setelah Operator UKM/F memperbaiki kegiatan yang diminta revisi.
+        Endpoint ini digunakan setelah Operator UKM memperbaiki kegiatan yang diminta revisi.
         Status berubah kembali menjadi `diajukan`.
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF"]
       security:
         - bearerAuth: []
       parameters:
@@ -788,9 +788,9 @@ paths:
 
   /api/kegiatan/{id}:
     put:
-      summary: (Operator UKM/F / Admin) Edit Kegiatan (Draft/Revisi)
+      summary: (Operator UKM / Admin) Edit Kegiatan (Draft/Revisi)
       description: "Memperbarui data kegiatan yang dikembalikan dengan status `perlu_revisi`."
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -827,7 +827,7 @@ paths:
     get:
       summary: Detail Kegiatan (Capaian, Sub-Capaian, Riwayat Approval)
       description: "Menampilkan detail lengkap kegiatan beserta Capaian, Sub-Capaian (bobot), dan riwayat verifikasi/approval."
-      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas", "Role: Admin Ditmawa", "Role: Admin Fakultas", "Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Mahasiswa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Pimpinan Fakultas", "Role: Admin Ditmawa", "Role: Admin Fakultas", "Role: Operator UKM", "Role: Operator UKMF", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -1103,7 +1103,7 @@ paths:
         **Untuk kegiatan EKSTERNAL (Alur 2-Lapis):** Jika Admin Ditmawa menyetujui, status berubah ke `menunggu_pimpinan` (poin BELUM dicetak). Pimpinan Ditmawa yang akan memberikan persetujuan final via endpoint bulk.
         **Untuk kegiatan INTERNAL:** Poin langsung dicetak saat disetujui.
         Jika revisi/tolak, alasan wajib diisi. Notifikasi otomatis terkirim ke mahasiswa.
-      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM/F", "Role: Admin Ditmawa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa"]
       security:
         - bearerAuth: []
       parameters:
@@ -1129,7 +1129,7 @@ paths:
     get:
       summary: Detail Klaim Poin (Kegiatan, Capaian, Bukti, Mahasiswa)
       description: "Menampilkan detail lengkap klaim poin beserta data kegiatan, capaian, sub-capaian, bukti, dan info mahasiswa."
-      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM/F", "Role: Admin Ditmawa", "Role: Mahasiswa"]
+      tags: ["Role: Pimpinan Ditmawa", "Role: Operator UKM", "Role: Admin Ditmawa", "Role: Mahasiswa"]
       security:
         - bearerAuth: []
       parameters:
@@ -1404,7 +1404,7 @@ paths:
         '200': { description: Berhasil (dengan peringatan jika total bobot < 100%) }
 
   # =================================================================
-  # MANAJEMEN PESERTA KEGIATAN (Operator UKM/F / Admin)
+  # MANAJEMEN PESERTA KEGIATAN (Operator UKM / Admin)
   # =================================================================
   /api/kegiatan/{id}/peserta:
     get:
@@ -1412,7 +1412,7 @@ paths:
       description: |
         Menampilkan daftar peserta (partisipasi) kegiatan beserta statistik (total terdaftar, hadir, tidak hadir).
         Juga menampilkan status apakah poin sudah di-submit ("Telah Tercatat").
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1444,7 +1444,7 @@ paths:
       description: |
         Mendownload file CSV template yang berisi header: NIM, HADIR, PERAN_ID.
         Di bagian komentar file akan tercantum daftar ID peran yang tersedia untuk kegiatan ini.
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1466,7 +1466,7 @@ paths:
         Mengimport daftar peserta ke kegiatan. Frontend mengirim hasil parsing CSV sebagai array JSON.
         Sistem akan mencari mahasiswa berdasarkan NIM, lalu membuat/update data Partisipasi.
         **Poin belum dicetak** — gunakan endpoint submit-poin setelah semua data benar.
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1504,7 +1504,7 @@ paths:
         melakukan lookup MatriksPoin, dan mencetak PerolehanPoin + detail.
         Notifikasi otomatis terkirim ke setiap mahasiswa.
         **Setelah submit, status berubah menjadi "Telah Tercatat" dan tidak bisa di-submit ulang.**
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
@@ -1522,7 +1522,7 @@ paths:
       description: |
         Mengupdate kehadiran dan peran peserta secara massal.
         Digunakan saat penyelenggara ingin mengedit data sebelum submit poin.
-      tags: ["Role: Operator UKM/F", "Role: Operator UKM/FF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
+      tags: ["Role: Operator UKM", "Role: Operator UKMF", "Role: Admin Ditmawa", "Role: Admin Fakultas"]
       security:
         - bearerAuth: []
       parameters:
