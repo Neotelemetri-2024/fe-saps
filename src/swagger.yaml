@@ -423,6 +423,25 @@ paths:
   # MANAJEMEN ORGANISASI / AKUN UKM (Admin Ditmawa)
   # =================================================================
   /api/organisasi/akun:
+    post:
+      summary: (Admin Ditmawa) Buat Akun UKM Baru
+      tags: ["Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namaUkm, username, password, status]
+              properties:
+                namaUkm: { type: string, example: "UKM Kesenian" }
+                username: { type: string, example: "kesenian_ukm" }
+                password: { type: string, example: "password123" }
+                status: { type: boolean, example: true }
+      responses:
+        '201': { description: Berhasil }
     get:
       summary: (Admin) Daftar Semua Organisasi & Akun UKM
       tags: ["Role: Admin Ditmawa"]
@@ -505,6 +524,25 @@ paths:
   # MANAJEMEN ORGANISASI / AKUN UKMF (Admin Fakultas)
   # =================================================================
   /api/organisasi-fakultas/akun:
+    post:
+      summary: (Admin Fakultas) Buat Akun UKMF Baru
+      tags: ["Role: Admin Fakultas"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namaUkm, username, password, status]
+              properties:
+                namaUkm: { type: string, example: "BEM FTI" }
+                username: { type: string, example: "bem_fti" }
+                password: { type: string, example: "password123" }
+                status: { type: boolean, example: true }
+      responses:
+        '201': { description: Berhasil }
     get:
       summary: (Admin) Daftar Semua Akun UKMF
       tags: ["Role: Admin Fakultas"]
