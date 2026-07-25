@@ -89,7 +89,7 @@ export const getDashboardPimpinanUtama = async (req: Request, res: Response): Pr
           totalMahasiswa,
           rataRataCapaian: rataRataCapaianGlobal,
           totalFakultas,
-          kurikulumAktif
+          kurikulumAktif: kurikulumDoc ? kurikulumDoc.nama : '-'
         },
         peringkatFakultas
       }
