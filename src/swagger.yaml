@@ -1402,18 +1402,6 @@ paths:
       responses:
         '200': { description: Berhasil }
 
-  /api/umum/dashboard/dosen-pa:
-    get:
-      summary: (Dosen PA) Pantau Progress Mahasiswa Bimbingan
-      tags: ["Role: Dosen PA"]
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: Berhasil }
-
-  # =================================================================
-  # KURIKULUM CRUD LANJUTAN (Pimpinan Ditmawa)
-  # =================================================================
   /api/kurikulum/{id}/nonaktifkan:
     put:
       summary: (Pimpinan) Nonaktifkan Kurikulum (Aktif → Arsip)
@@ -1837,6 +1825,187 @@ paths:
         - bearerAuth: []
       parameters:
         - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+
+  # =================================================================
+  # DOSEN PA (Tambahan)
+  # =================================================================
+  /api/dosen/dashboard:
+    get:
+      summary: (Dosen PA) Dashboard Statistik
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/dosen/mahasiswa-bimbingan:
+    get:
+      summary: (Dosen PA) Daftar Semua Mahasiswa Bimbingan
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/dosen/mahasiswa-bimbingan/{mahasiswaId}:
+    get:
+      summary: (Dosen PA) Detail Satu Mahasiswa Bimbingan
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: mahasiswaId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/dosen/mahasiswa-perlu-perhatian:
+    get:
+      summary: (Dosen PA) Daftar Mahasiswa Bimbingan dengan Poin Rendah
+      tags: ["Role: Dosen PA"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # MAHASISWA (Tambahan)
+  # =================================================================
+  /api/mahasiswa/riwayat-poin:
+    get:
+      summary: (Mahasiswa) Daftar Histori Perolehan Poin Mahasiswa
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # UMUM / AUDIT (Tambahan)
+  # =================================================================
+  /api/umum/audit-log:
+    get:
+      summary: (Pimpinan / Admin Ditmawa) Melihat Histori Log Aktivitas Penting
+      tags: ["Role: Admin Ditmawa", "Role: Pimpinan Ditmawa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/portofolio/{mahasiswaId}:
+    get:
+      summary: (Semua Role terkait) Menampilkan Rekap Portofolio SKPI Mahasiswa
+      tags: ["Role: Mahasiswa", "Role: Dosen PA", "Role: Admin Ditmawa"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: mahasiswaId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  # =================================================================
+  # OPERATOR UKM SPESIFIK
+  # =================================================================
+  /api/ukm/dashboard:
+    get:
+      summary: (Operator UKM) Dashboard UKM
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/ukm/kegiatan:
+    get:
+      summary: (Operator UKM) Daftar Kegiatan Spesifik Milik UKM Tersebut
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/ukm/kegiatan/{kegiatanId}/peserta:
+    get:
+      summary: (Operator UKM) Daftar Peserta Kegiatan UKM
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kegiatanId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+    put:
+      summary: (Operator UKM) Update Data Peserta
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kegiatanId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/ukm/kegiatan/{kegiatanId}/peserta/template:
+    get:
+      summary: (Operator UKM) Download Template Absen CSV
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kegiatanId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/ukm/kegiatan/{kegiatanId}/peserta/import:
+    post:
+      summary: (Operator UKM) Import Massal Daftar Peserta (CSV)
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kegiatanId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201': { description: Berhasil }
+
+  /api/ukm/kegiatan/{kegiatanId}/peserta/submit:
+    post:
+      summary: (Operator UKM) Cetak Poin Massal
+      tags: ["Role: Operator UKM"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kegiatanId
           in: path
           required: true
           schema: { type: integer }
