@@ -1769,6 +1769,11 @@ paths:
             schema:
               type: object
               properties:
-                partisipasiId: { type: integer }
+                kategoriId: { type: integer, description: "Jenis Kegiatan (dari UI)" }
+                kegiatanId: { type: integer, description: "ID dari kegiatan yang sudah disetujui/terpublikasi" }
+                penyelenggara: { type: string, description: "Penyelenggara (Autofill dari UI)" }
+                peranId: { type: integer, description: "ID peran yang dipilih" }
+                tanggalPelaksanaan: { type: string, description: "Tanggal Pelaksanaan (Autofill dari UI)" }
+              required: [kegiatanId, peranId]
       responses:
         '201': { description: Berhasil }

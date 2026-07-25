@@ -9,14 +9,10 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { kegiatanId, kategoriId, namaKegiatan, penyelenggara, peranId, tanggalPelaksanaan } = req.body;
+    const { kegiatanId, peranId, kategoriId, penyelenggara, tanggalPelaksanaan } = req.body;
 
-    if (!peranId) {
-      return res.status(400).json({ success: false, message: 'Peran wajib dipilih' });
-    }
-
-    if (!kegiatanId && (!kategoriId || !namaKegiatan || !penyelenggara || !tanggalPelaksanaan)) {
-      return res.status(400).json({ success: false, message: 'Jika kegiatan diinput manual, semua kolom wajib diisi' });
+    if (!kegiatanId || !peranId) {
+      return res.status(400).json({ success: false, message: 'Harap pilih kegiatan dan peran' });
     }
 
     // Cek Mahasiswa dan Dosen PA
@@ -28,44 +24,17 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
       return res.status(400).json({ success: false, message: 'Anda belum memiliki Dosen PA' });
     }
 
-    // Ambil Kurikulum Aktif (untuk kegiatan manual)
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' }
-    });
-
-    if (!kegiatanId && !kurikulumAktif) {
-      return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
-    }
-
-    // Default Skala (Misal: Regional / Nasional) - UI tidak mengirim ini
-    const skala = await prisma.mpSkala.findFirst();
+    const usedKegiatanId = parseInt(kegiatanId);
 
     const result = await prisma.$transaction(async (tx: any) => {
-      let usedKegiatanId = kegiatanId ? parseInt(kegiatanId) : null;
+      // 1. Cek jika kegiatanId ada dan sudah disetujui
+      const existingKegiatan = await tx.kegiatan.findUnique({ where: { id: usedKegiatanId } });
+      if (!existingKegiatan) {
+        throw new Error('Kegiatan yang dipilih tidak ditemukan');
+      }
 
-      if (!usedKegiatanId) {
-        // 1. Buat Kegiatan Eksternal (Mandiri)
-        const kegiatan = await tx.kegiatan.create({
-          data: {
-            nama: namaKegiatan,
-            kategoriId: parseInt(kategoriId),
-            skalaId: req.body.skalaId ? parseInt(req.body.skalaId) : (skala ? skala.id : 1),
-            asal: 'eksternal',
-            tanggalMulai: new Date(tanggalPelaksanaan),
-            tanggalSelesai: new Date(tanggalPelaksanaan),
-            penyelenggaraExt: penyelenggara,
-            kurikulumId: kurikulumAktif!.id,
-            dibuatOleh: BigInt(userId),
-            status: 'draft',
-          }
-        });
-        usedKegiatanId = kegiatan.id;
-      } else {
-        // Cek jika kegiatanId ada
-        const existingKegiatan = await tx.kegiatan.findUnique({ where: { id: usedKegiatanId } });
-        if (!existingKegiatan) {
-          throw new Error('Kegiatan yang dipilih tidak ditemukan');
-        }
+      if (existingKegiatan.status !== 'disetujui' && existingKegiatan.status !== 'terpublikasi') {
+         throw new Error('Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA');
       }
 
       // 2. Buat atau Update Partisipasi
@@ -130,8 +99,8 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
     });
 
   } catch (error: any) {
-    if (error.message === 'Kegiatan yang dipilih tidak ditemukan') {
-      return res.status(404).json({ success: false, message: error.message });
+    if (error.message === 'Kegiatan yang dipilih tidak ditemukan' || error.message === 'Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA') {
+      return res.status(400).json({ success: false, message: error.message });
     }
     next(error);
   }
