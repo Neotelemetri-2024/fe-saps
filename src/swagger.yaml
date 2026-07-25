@@ -1777,3 +1777,30 @@ paths:
               required: [kegiatanId, peranId]
       responses:
         '201': { description: Berhasil }
+
+
+  # =================================================================
+  # PIMPINAN UTAMA
+  # =================================================================
+  /api/umum/dashboard/pimpinan-utama:
+    get:
+      summary: (Pimpinan Utama) Dashboard Statistik & Laporan Global (Universitas)
+      tags: ["Role: Pimpinan Utama"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/umum/dashboard/pimpinan-utama/fakultas/{id}:
+    get:
+      summary: (Pimpinan Utama) Detail Statistik & Capaian Spesifik Fakultas
+      tags: ["Role: Pimpinan Utama"]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Berhasil }
