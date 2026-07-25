@@ -59,11 +59,20 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const body = submitKlaimEksternalSchema.parse(req.body);
+    const { partisipasiId, peranUsulanId } = req.body;
+    const file = req.file;
+
+    if (!partisipasiId || !peranUsulanId || !file) {
+      return res.status(400).json({ success: false, message: 'Harap isi semua kolom wajib dan unggah file bukti' });
+    }
+
+    const partisipasiIdBigInt = BigInt(partisipasiId);
+    const peranUsulanIdInt = parseInt(peranUsulanId);
+    const buktiUrl = `/uploads/${file.filename}`;
 
     // Cek partisipasi valid
     const partisipasi = await prisma.partisipasi.findUnique({
-      where: { id: BigInt(body.partisipasiId) },
+      where: { id: partisipasiIdBigInt },
       include: {
         kegiatan: true,
         izinPA: { where: { status: 'disetujui' }, take: 1 },
@@ -90,11 +99,11 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
     // Buat Klaim
     const klaim = await prisma.klaimPoin.create({
       data: {
-        partisipasiId: BigInt(body.partisipasiId),
-        peranUsulanId: body.peranUsulanId,
+        partisipasiId: partisipasiIdBigInt,
+        peranUsulanId: peranUsulanIdInt,
         status: 'menunggu_validasi',
         bukti: {
-          create: [{ tipe: 'pdf', url: body.buktiUrl }]
+          create: [{ tipe: 'pdf', url: buktiUrl }]
         }
       }
     });

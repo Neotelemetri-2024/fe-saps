@@ -1673,3 +1673,102 @@ paths:
         - bearerAuth: []
       responses:
         '200': { description: Berhasil }
+
+  # =================================================================
+  # MAHASISWA ROUTES
+  # =================================================================
+  /api/mahasiswa/kegiatan-eksternal:
+    post:
+      summary: (Mahasiswa) Pengajuan Kegiatan Eksternal
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kategoriId, namaKegiatan, penyelenggara, skalaId, tanggalPelaksanaan]
+              properties:
+                kategoriId: { type: integer }
+                namaKegiatan: { type: string }
+                penyelenggara: { type: string }
+                skalaId: { type: integer }
+                tanggalPelaksanaan: { type: string, format: date }
+                deskripsi: { type: string }
+                linkWebsite: { type: string }
+                emailPenyelenggara: { type: string }
+      responses:
+        '201': { description: Berhasil }
+    get:
+      summary: (Mahasiswa) Riwayat Pengajuan Kegiatan Eksternal
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/mahasiswa/klaim-eksternal/kegiatan-tersedia:
+    get:
+      summary: (Mahasiswa) Mengambil Kegiatan Eksternal yang tersedia untuk diklaim
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/mahasiswa/klaim-eksternal:
+    post:
+      summary: (Mahasiswa) Ajukan Klaim Poin Eksternal (Upload Sertifikat)
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                partisipasiId: { type: integer, description: "ID Partisipasi (dari kegiatan yang disetujui)" }
+                peranUsulanId: { type: integer, description: "ID Peran dalam kegiatan" }
+                bukti:
+                  type: string
+                  format: binary
+                  description: "File sertifikat/bukti (PDF/Gambar)"
+      responses:
+        '201': { description: Berhasil }
+    get:
+      summary: (Mahasiswa) Riwayat Klaim Eksternal
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+
+  /api/mahasiswa/dashboard:
+    get:
+      summary: (Mahasiswa) Dashboard Poin SKPI
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Berhasil }
+        
+  /api/mahasiswa/izin-pa:
+    post:
+      summary: (Mahasiswa) Meminta Izin PA
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                partisipasiId: { type: integer }
+      responses:
+        '201': { description: Berhasil }
