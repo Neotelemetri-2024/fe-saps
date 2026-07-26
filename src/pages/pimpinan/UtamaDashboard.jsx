@@ -128,7 +128,7 @@ function PimpinanUtamaDashboard() {
   const navigate = useNavigate()
 
   return (
-    <DashboardLayout role="pimpinan-utama" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Pimpinan Utama (Rektor)">
+    <DashboardLayout role="pimpinan_utama" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Pimpinan Utama (Rektor)">
       <div className="space-y-6">
         {/* Welcome header */}
         <div>

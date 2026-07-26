@@ -1,51 +1,90 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { CheckCircle } from 'lucide-react'
+import { Save, Trash2, Send, ArrowLeft } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
-import { ajukanKegiatan } from '../../services/pengajuanService'
+import ConfirmModal from '../../components/ui/ConfirmModal'
+import {
+  ajukanKegiatan,
+  simpanDraftKegiatanEksternal,
+  editDraftKegiatanEksternal,
+  hapusDraftKegiatanEksternal,
+  ajukanDraftKegiatanEksternal,
+} from '../../services/pengajuanService'
+import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
+import { getCurrentUser } from '../../services/authService'
 
-const peranOptions = {
-  prestasi: [
-    { value: 'juara1', label: 'Juara 1 / Emas' },
-    { value: 'juara2', label: 'Juara 2 / Perak' },
-    { value: 'juara3', label: 'Juara 3 / Perunggu' },
-    { value: 'finalis', label: 'Penghargaan / Finalis / Peserta' },
-  ],
-  organisasi: [
-    { value: 'ketua_umum', label: 'Ketua Umum / Presiden Mahasiswa' },
-    { value: 'pengurus_inti', label: 'Pengurus Inti (Sekretaris, Bendahara, Kabid)' },
-    { value: 'anggota_aktif', label: 'Anggota Aktif / Staff' },
-    { value: 'ketua_panitia', label: 'Ketua Panitia / Pelaksana Event' },
-  ],
-  pelatihan: [
-    { value: 'pembicara', label: 'Pembicara / Narasumber / Fasilitator' },
-    { value: 'moderator', label: 'Moderator / Panitia Eksekutif' },
-    { value: 'peserta_terstruktur', label: 'Peserta Pelatihan Terstruktur' },
-    { value: 'peserta_umum', label: 'Peserta Pelatihan Umum / Kuliah Umum / Webinar' },
-  ],
+const EMPTY_FORM = {
+  kategoriId: '',
+  namaKegiatan: '',
+  penyelenggara: '',
+  skalaId: '',
+  tanggalPelaksanaan: null,
+  deskripsiKegiatan: '',
+  linkWebsite: '',
+  emailPenyelenggara: '',
+}
+
+function toISODate(d) {
+  if (!d) return null
+  if (typeof d === 'string') return d
+  return d.toISOString().split('T')[0]
 }
 
 function AjukanKegiatanForm() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const user = getCurrentUser()
+
+  // Jika dinavigasi dari tabel draft → mode edit
+  // isRevisi: dinavigasi dari tabel revisi → edit + ajukan ulang
+  const draftItem = location.state?.draft || null
+  const isRevisi = !!(location.state?.isRevisi && draftItem)
+  const isEditDraft = !!draftItem && !isRevisi
+
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    jenisKegiatan: '',
-    namaKegiatan: '',
-    penyelenggara: '',
-    peranPencapaian: '',
-    skalaKegiatan: '',
-    tanggalPelaksanaan: null,
-    deskripsiKegiatan: '',
-    linkWebsite: '',
-    emailPenyelenggara: '',
-  })
+  const [formData, setFormData] = useState(EMPTY_FORM)
+  const [draftId, setDraftId] = useState(draftItem?.id || null)
+  const [showHapusDraftConfirm, setShowHapusDraftConfirm] = useState(false)
+  const [showKirimConfirm, setShowKirimConfirm] = useState(false)
+  const [kategoriList, setKategoriList] = useState([])
+  const [skalaList, setSkalaList] = useState([])
+
+  // Populate form dari draft yang diedit
+  useEffect(() => {
+    getKategoriKegiatan()
+      .then((list) => setKategoriList(Array.isArray(list) ? list : []))
+      .catch(() => setKategoriList([]))
+
+    if (draftItem) {
+      setFormData({
+        kategoriId: String(draftItem.kategoriId || ''),
+        namaKegiatan: draftItem.namaKegiatan || '',
+        penyelenggara: draftItem.penyelenggara || '',
+      skalaId: String(draftItem.skalaId || ''),
+        tanggalPelaksanaan: draftItem.tanggalPelaksanaan ? new Date(draftItem.tanggalPelaksanaan) : null,
+        deskripsiKegiatan: draftItem.deskripsi || '',
+        linkWebsite: draftItem.linkWebsite || '',
+        emailPenyelenggara: draftItem.emailPenyelenggara || '',
+      })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!formData.kategoriId) {
+      setSkalaList([])
+      return
+    }
+    getSkalaKegiatan(formData.kategoriId)
+      .then((list) => setSkalaList(Array.isArray(list) ? list : []))
+      .catch(() => setSkalaList([]))
+  }, [formData.kategoriId])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    if (name === 'jenisKegiatan') {
-      setFormData((prev) => ({ ...prev, jenisKegiatan: value, peranPencapaian: '' }))
+    if (name === 'kategoriId') {
+      setFormData((prev) => ({ ...prev, kategoriId: value, skalaId: '' }))
       return
     }
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -55,32 +94,87 @@ function AjukanKegiatanForm() {
     setFormData((prev) => ({ ...prev, tanggalPelaksanaan: date }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  function buildPayload() {
+    return {
+      kategoriId: formData.kategoriId ? Number(formData.kategoriId) : undefined,
+      namaKegiatan: formData.namaKegiatan,
+      penyelenggara: formData.penyelenggara,
+      skalaId: formData.skalaId ? Number(formData.skalaId) : undefined,
+      tanggalPelaksanaan: toISODate(formData.tanggalPelaksanaan),
+      deskripsi: formData.deskripsiKegiatan,
+      linkWebsite: formData.linkWebsite,
+      emailPenyelenggara: formData.emailPenyelenggara,
+    }
+  }
+
+  /** Simpan / update draft ke BE */
+  const handleSimpanDraft = async () => {
     setLoading(true)
     try {
-      const tanggal =
-        formData.tanggalPelaksanaan instanceof Date
-          ? formData.tanggalPelaksanaan.toLocaleDateString('id-ID', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            })
-          : formData.tanggalPelaksanaan || '-'
+      if (draftId) {
+        await editDraftKegiatanEksternal(draftId, buildPayload())
+        toast.success('Draft diperbarui!')
+      } else {
+        await simpanDraftKegiatanEksternal(buildPayload())
+        toast.success('Draft tersimpan!', {
+          description: 'Terlihat di tabel dengan status Draft. Bisa diedit kapan saja.',
+        })
+      }
+      navigate('/mahasiswa/kegiatan-eksternal')
+    } catch (err) {
+      toast.error('Gagal menyimpan draft', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      await ajukanKegiatan({
-        kegiatan: formData.namaKegiatan,
-        jenis: formData.jenisKegiatan,
-        peran: formData.peranPencapaian,
-        skala: formData.skalaKegiatan,
-        penyelenggara: formData.penyelenggara,
-        deskripsi: formData.deskripsiKegiatan,
-        linkWebsite: formData.linkWebsite,
-        emailPenyelenggara: formData.emailPenyelenggara,
-        tanggal,
-      })
+  /** Hapus draft dari BE */
+  const handleHapusDraft = async () => {
+    setShowHapusDraftConfirm(false)
+    if (!draftId) {
+      setFormData(EMPTY_FORM)
+      navigate('/mahasiswa/kegiatan-eksternal')
+      return
+    }
+    setLoading(true)
+    try {
+      await hapusDraftKegiatanEksternal(draftId)
+      toast.info('Draft dihapus.')
+      navigate('/mahasiswa/kegiatan-eksternal')
+    } catch (err) {
+      toast.error('Gagal menghapus draft', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /** Kirim pengajuan */
+  const handleSubmit = async () => {
+    setShowKirimConfirm(false)
+    if (!formData.kategoriId || !formData.skalaId) {
+      toast.error('Pilih jenis dan skala kegiatan')
+      return
+    }
+    if (!formData.namaKegiatan.trim()) {
+      toast.error('Nama kegiatan tidak boleh kosong')
+      return
+    }
+    if (!formData.penyelenggara.trim()) {
+      toast.error('Penyelenggara tidak boleh kosong')
+      return
+    }
+    setLoading(true)
+    try {
+      if (draftId) {
+        // Simpan perubahan terbaru dulu lalu ajukan draft
+        await editDraftKegiatanEksternal(draftId, buildPayload())
+        await ajukanDraftKegiatanEksternal(draftId)
+      } else {
+        // Langsung buat dan ajukan
+        await ajukanKegiatan(buildPayload())
+      }
       toast.success('Berhasil!', {
-        description: 'Pengajuan kegiatan berhasil dikirim dan akan ditinjau oleh Admin.',
+        description: 'Pengajuan kegiatan dikirim dan akan ditinjau Admin Ditmawa.',
       })
       navigate('/mahasiswa/kegiatan-eksternal')
     } catch (err) {
@@ -90,230 +184,226 @@ function AjukanKegiatanForm() {
     }
   }
 
-  const handleReset = () => {
-    setFormData({
-      jenisKegiatan: '',
-      namaKegiatan: '',
-      penyelenggara: '',
-      peranPencapaian: '',
-      skalaKegiatan: '',
-      tanggalPelaksanaan: '',
-      deskripsiKegiatan: '',
-      linkWebsite: '',
-      emailPenyelenggara: '',
-    })
-  }
+  const isDirty = !!(formData.namaKegiatan || formData.penyelenggara || formData.kategoriId)
 
   return (
-    <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Pengajuan Kegiatan</h2>
-        <p className="text-sm text-[#616161]">
-          Ajukan kegiatan terbaru yang diikuti mahasiswa
-        </p>
+    <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
+      <ConfirmModal
+        isOpen={showHapusDraftConfirm}
+        message="Yakin ingin menghapus draft ini? Data tidak dapat dikembalikan."
+        confirmText="Ya, hapus"
+        cancelText="Batal"
+        onConfirm={handleHapusDraft}
+        onCancel={() => setShowHapusDraftConfirm(false)}
+      />
+      <ConfirmModal
+        isOpen={showKirimConfirm}
+        message="Kirim pengajuan kegiatan ini ke Admin Ditmawa untuk ditinjau?"
+        confirmText="Ya, kirim"
+        cancelText="Batal"
+        onConfirm={handleSubmit}
+        onCancel={() => setShowKirimConfirm(false)}
+      />
 
-        {/* Info Box */}
-        <div className="flex items-center gap-3 rounded-lg bg-green-50 p-4 text-green-700">
-          <CheckCircle className="h-5 w-5" />
-          <p className="text-sm">
-            Kegiatan yang belum ada di sistem akan ditinjau oleh Admin. Jika disetujui, kegiatan didaftarkan dan poin ditambahkan otomatis.
-          </p>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
+            className="flex items-center gap-1 text-sm text-brand-dark hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </button>
         </div>
 
-        {/* Detail Kegiatan Baru Form */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-bold text-brand-dark">Detail Kegiatan Baru</h3>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">
+              {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
+            </h2>
+            <p className="mt-1 text-sm text-[#616161]">
+              {isRevisi
+                ? 'Perbaiki data sesuai catatan revisi, lalu ajukan ulang.'
+                : isEditDraft
+                ? 'Perbarui data draft, simpan, atau langsung ajukan.'
+                : 'Isi data kegiatan eksternal yang ingin diajukan ke Admin Ditmawa.'}
+            </p>
+          </div>
+          {isRevisi ? (
+            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 shrink-0">
+              Revisi
+            </span>
+          ) : draftId ? (
+            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 shrink-0">
+              <Save className="h-3.5 w-3.5" />
+              Draft
+            </span>
+          ) : null}
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Jenis Kegiatan */}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+          <h3 className="mb-6 text-lg font-bold text-brand-dark">Detail Kegiatan</h3>
+
+          <div className="space-y-6">
             <div>
-              <label htmlFor="jenisKegiatan" className="block text-sm font-medium text-black">
+              <label className="block text-sm font-medium text-black">
                 Jenis Kegiatan<span className="text-red-500">*</span>
               </label>
               <select
-                id="jenisKegiatan"
-                name="jenisKegiatan"
-                value={formData.jenisKegiatan}
+                name="kategoriId"
+                value={formData.kategoriId}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-                required
+                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
               >
                 <option value="">Pilih jenis kegiatan</option>
-                <option value="prestasi">Prestasi/Kompetisi</option>
-                <option value="organisasi">Organisasi/Volunteer</option>
-                <option value="pelatihan">Pelatihan/Seminar</option>
+                {kategoriList.map((k) => (
+                  <option key={k.id} value={k.id}>{k.nama || k.name}</option>
+                ))}
               </select>
             </div>
 
-            {/* Nama Kegiatan & Penyelenggara */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="namaKegiatan" className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-black">
                   Nama Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="namaKegiatan"
                   name="namaKegiatan"
                   value={formData.namaKegiatan}
                   onChange={handleChange}
                   placeholder="Masukkan nama kegiatan"
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-                  required
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
                 />
               </div>
               <div>
-                <label htmlFor="penyelenggara" className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-black">
                   Penyelenggara<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="penyelenggara"
                   name="penyelenggara"
                   value={formData.penyelenggara}
                   onChange={handleChange}
                   placeholder="Masukkan penyelenggara..."
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-                  required
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
                 />
               </div>
             </div>
 
-            {/* Peran atau Pencapaian & Skala Kegiatan */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="peranPencapaian" className="block text-sm font-medium text-black">
-                  Peran atau Pencapaian<span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="peranPencapaian"
-                  name="peranPencapaian"
-                  value={formData.peranPencapaian}
-                  onChange={handleChange}
-                  disabled={!formData.jenisKegiatan}
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark disabled:cursor-not-allowed disabled:bg-[#f5f5f5] disabled:text-[#aaa]"
-                  required
-                >
-                  <option value="">
-                    {formData.jenisKegiatan ? 'Pilih peran / pencapaian' : 'Pilih jenis kegiatan terlebih dahulu'}
-                  </option>
-                  {(peranOptions[formData.jenisKegiatan] ?? []).map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {!formData.jenisKegiatan && (
-                  <p className="mt-1 text-xs text-[#9aa0a6]">Pilih jenis kegiatan dulu untuk melihat pilihan peran.</p>
-                )}
-              </div>
-              {/* asdasda */}
-              <div>
-                <label htmlFor="skalaKegiatan" className="block text-sm font-medium text-black">
-                  Skala Kegiatan<span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="skalaKegiatan"
-                  name="skalaKegiatan"
-                  value={formData.skalaKegiatan}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-                  required
-                >
-                  <option value="">Pilih skala kegiatan</option>
-                  <option value="internasional">Internasional</option>
-                  <option value="nasional">Nasional</option>
-                  <option value="regional">Regional</option>
-                  <option value="lokal">Internal (UNAND)</option>
-                  
-                  
-                  
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Skala Kegiatan<span className="text-red-500">*</span>
+              </label>
+              <select
+                name="skalaId"
+                value={formData.skalaId}
+                onChange={handleChange}
+                disabled={!formData.kategoriId}
+                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark disabled:bg-[#f5f5f5]"
+              >
+                <option value="">
+                  {formData.kategoriId ? 'Pilih skala kegiatan' : 'Pilih jenis kegiatan terlebih dahulu'}
+                </option>
+                {skalaList.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nama || s.name}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Tanggal Pelaksanaan */}
             <DatePickerInput
               label="Tanggal Pelaksanaan"
               value={formData.tanggalPelaksanaan}
               onChange={handleDateChange}
-              required
               placeholder="Pilih tanggal"
             />
-            <p className="mt-1 text-xs text-[#969696]">
-              Tanggal harus dalam masa studi aktif anda
-            </p>
 
-            {/* Deskripsi Kegiatan */}
             <div>
-              <label htmlFor="deskripsiKegiatan" className="block text-sm font-medium text-black">
-                Deskripsi Kegiatan
-              </label>
+              <label className="block text-sm font-medium text-black">Deskripsi Kegiatan</label>
               <textarea
-                id="deskripsiKegiatan"
                 name="deskripsiKegiatan"
                 value={formData.deskripsiKegiatan}
                 onChange={handleChange}
-                rows="3"
+                rows={3}
                 placeholder="Jelaskan peran dan manfaat kegiatan..."
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-              ></textarea>
+                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+              />
             </div>
 
-            {/* Link Website & Email Penyelenggara */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="linkWebsite" className="block text-sm font-medium text-black">
-                  Link website penyelenggara
-                </label>
+                <label className="block text-sm font-medium text-black">Link Website penyelenggara</label>
                 <input
                   type="url"
-                  id="linkWebsite"
                   name="linkWebsite"
                   value={formData.linkWebsite}
                   onChange={handleChange}
                   placeholder="https://..."
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
                 />
               </div>
               <div>
-                <label htmlFor="emailPenyelenggara" className="block text-sm font-medium text-black">
-                  Email penyelenggara
-                </label>
+                <label className="block text-sm font-medium text-black">Email penyelenggara</label>
                 <input
                   type="email"
-                  id="emailPenyelenggara"
                   name="emailPenyelenggara"
                   value={formData.emailPenyelenggara}
                   onChange={handleChange}
                   placeholder="unand@gmail.com"
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
                 />
               </div>
             </div>
 
-            {/* Form Buttons */}
-            <div className="flex flex-wrap gap-3 pt-4">
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 sm:w-auto"
-              >
-                Ajukan Sekarang
-              </button>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3 border-t border-[#f0f0f0] pt-4">
+              {/* Simpan draft — hanya tampil jika bukan mode revisi */}
+              {!isRevisi && (
+                <button
+                  type="button"
+                  disabled={loading || !isDirty}
+                  onClick={handleSimpanDraft}
+                  className="flex items-center gap-2 rounded-xl border border-brand-dark px-5 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Save className="h-4 w-4" />
+                  {draftId ? 'Perbarui Draft' : 'Simpan Draft'}
+                </button>
+              )}
+
+              {/* Hapus draft — hanya tampil jika bukan mode revisi */}
+              {!isRevisi && (draftId || isEditDraft) && (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setShowHapusDraftConfirm(true)}
+                  className="flex items-center gap-2 rounded-xl border border-red-400 px-5 py-2.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-500 hover:text-white disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Hapus Draft
+                </button>
+              )}
+
+              {/* Ajukan */}
               <button
                 type="button"
-                onClick={handleReset}
-                className="w-full rounded-xl bg-gray-600 px-6 py-3 text-white font-semibold shadow-md transition hover:opacity-90 sm:w-auto"
+                disabled={loading || !isDirty}
+                onClick={() => setShowKirimConfirm(true)}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Reset
+                <Send className="h-4 w-4" />
+                {loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="w-full rounded-xl border border-brand-dark px-6 py-3 text-brand-dark font-semibold shadow-md transition hover:bg-brand-light hover:text-white sm:w-auto"
+                className="rounded-xl border border-[#d9dce7] px-5 py-2.5 text-sm font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
               >
                 Batal
               </button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </DashboardLayout>

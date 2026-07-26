@@ -1,96 +1,129 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { CheckCircle, FileText, Trash2, Users, Edit } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { toast } from 'sonner'
+import { getCurrentUser } from '../../services/authService'
+import { getDashboardAdminDitmawa } from '../../services/dashboardService'
+import { deleteKegiatan } from '../../services/kegiatanService'
 
-const kegiatanData = [
-  { id: 1, kegiatan: 'PKM 2026', pengaju: 'Shafa Salsabilla', nim: '2311121063', skala: 'Nasional', tgl: '12 Jul 2026', status: 'pending' },
-  { id: 2, kegiatan: 'Lomba Debat Nasional', pengaju: 'Tim Debat Unand', nim: '20231001', skala: 'Nasional', tgl: '10 Jul 2026', status: 'disetujui' },
-  { id: 3, kegiatan: 'Seminar Internasional', pengaju: 'BEM FISIP', nim: '20231002', skala: 'Internasional', tgl: '8 Jul 2026', status: 'ditolak' },
-  { id: 4, kegiatan: 'Workshop IoT', pengaju: 'HME', nim: '20231003', skala: 'Nasional', tgl: '5 Jul 2026', status: 'pending' },
-  { id: 5, kegiatan: 'PKM Pendanaan', pengaju: 'Shafa Salsabilla', nim: '2311121063', skala: 'Nasional', tgl: '1 Jul 2026', status: 'disetujui' },
-]
+function formatTanggal(start, end) {
+  if (!start) return '-'
+  try {
+    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    if (!end) return a
+    return `${a} - ${new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  } catch { return String(start) }
+}
 
 function AdminDitmawaDashboard() {
+  const user = getCurrentUser()
+  const [stats, setStats] = useState([])
+  const [kegiatan, setKegiatan] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [selectedRow, setSelectedRow] = useState(null)
 
-  const handleEdit = (row) => {
-    toast.success('Berhasil!', {
-      description: `Kegiatan "${row.kegiatan}" telah diperbarui.`,
-    })
-  }
-
-  const handleDeleteClick = (row) => {
-    setSelectedRow(row)
-    setShowConfirmDelete(true)
-  }
-
-  const handleDeleteConfirm = () => {
-    if (selectedRow) {
-      toast.success('Dihapus!', {
-        description: `Kegiatan "${selectedRow.kegiatan}" berhasil dihapus.`,
+  const load = () => {
+    setLoading(true)
+    getDashboardAdminDitmawa()
+      .then((data) => {
+        const s = data?.statistik || {}
+        setStats([
+          { label: 'DISETUJUI', value: String(s.disetujui ?? 0) },
+          { label: 'PENDING', value: String(s.pending ?? 0) },
+          { label: 'DITOLAK', value: String(s.ditolak ?? 0) },
+          { label: 'EVENT GLOBAL AKTIF', value: String(s.eventGlobalAktif ?? 0) },
+        ])
+        setKegiatan(
+          (data?.kegiatanTerbaru || []).map((k, i) => ({
+            id: k.id,
+            kegiatan: k.namaKegiatan || k.nama || '-',
+            pengaju: k.kategori || '-',
+            skala: k.skala || '-',
+            tgl: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
+            status: String(k.status || 'pending').toLowerCase(),
+          }))
+        )
       })
+      .catch((err) => toast.error('Gagal memuat dashboard', { description: err.message }))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  const columns = [
+    { key: 'kegiatan', label: 'KEGIATAN' },
+    { key: 'pengaju', label: 'KATEGORI' },
+    { key: 'skala', label: 'SKALA' },
+    { key: 'tgl', label: 'TANGGAL' },
+    { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'aksi', label: 'AKSI',
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => { setSelectedRow(row); setShowConfirmDelete(true) }}
+          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+        >
+          Hapus
+        </button>
+      ),
+    },
+  ]
+
+  const handleDeleteConfirm = async () => {
+    if (selectedRow) {
+      try {
+        await deleteKegiatan(selectedRow.id)
+        toast.success('Dihapus!', { description: `Kegiatan "${selectedRow.kegiatan}" dihapus.` })
+        load()
+      } catch (err) {
+        toast.error('Gagal', { description: err.message })
+      }
     }
     setShowConfirmDelete(false)
     setSelectedRow(null)
   }
 
-  const columns = [
-    { key: 'kegiatan', label: 'Kegiatan' },
-    { key: 'pengaju', label: 'Pengaju' },
-    { key: 'nim', label: 'NIM' },
-    { key: 'skala', label: 'Skala' },
-    { key: 'tgl', label: 'Tanggal' },
-    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-    {
-      key: 'aksi',
-      label: 'Aksi',
-      render: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="rounded p-1 text-blue-600 transition hover:bg-blue-50"
-            onClick={() => handleEdit(row)}
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            className="rounded p-1 text-red-600 transition hover:bg-red-50"
-            onClick={() => handleDeleteClick(row)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-  ]
-
   return (
-    <DashboardLayout role="admin-ditmawa" userName="Admin Ditmawa" userRole="Admin Ditmawa">
+    <DashboardLayout
+      role="admin_ditmawa"
+      userName={user?.nama || 'Admin Ditmawa'}
+      userRole="Admin Ditmawa"
+    >
       <ConfirmModal
         isOpen={showConfirmDelete}
-       
         message={selectedRow ? `Yakin ingin menghapus "${selectedRow.kegiatan}"?` : ''}
-        confirmText="Ya, hapus!"
+        confirmText="Ya, hapus"
         cancelText="Batal"
         onConfirm={handleDeleteConfirm}
         onCancel={() => { setShowConfirmDelete(false); setSelectedRow(null) }}
       />
 
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={<CheckCircle className="h-5 w-5" />} label="Disetujui" value="3" />
-          <StatCard icon={<FileText className="h-5 w-5" />} label="Pending" value="4" sublabel="Perlu verifikasi" />
-          <StatCard icon={<Trash2 className="h-5 w-5" />} label="Ditolak" value="3" />
-          <StatCard icon={<Users className="h-5 w-5" />} label="Event Global Aktif" value="3" />
+        <div>
+          <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
+            Dashboard Admin Ditmawa
+          </h2>
         </div>
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Verifikasi Kegiatan</h3>
-          <DataTable columns={columns} data={kegiatanData} />
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label} className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#616161]">{s.label}</p>
+              <p className="mt-2 text-3xl font-extrabold text-brand-dark">{loading ? '…' : s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <div className="border-b border-[#e9ebf8] px-5 py-4">
+            <h3 className="font-bold text-[#333]">Kegiatan Terbaru</h3>
+          </div>
+          <DataTable columns={columns} data={kegiatan} />
         </div>
       </div>
     </DashboardLayout>

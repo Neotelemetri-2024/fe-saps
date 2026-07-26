@@ -1,54 +1,136 @@
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
-
-let kegiatanMock = [
-  { id: 1, nama: 'Seminar AI', jenis: 'Seminar', skala: 'Universitas', tanggal: '25 Jun 2026', tgl: '25 Jun 2026', status: 'dipublikasikan', peserta: 50, penyelenggara: 'Hima TI', no: 1, kegiatan: 'Seminar AI' },
-  { id: 2, nama: 'Pelatihan Arduino', jenis: 'Pelatihan', skala: 'Universitas', tanggal: '25 Jun 2026', tgl: '25 Jun 2026', status: 'dipublikasikan', peserta: 73, penyelenggara: 'HME', no: 2, kegiatan: 'Pelatihan Arduino' },
-  { id: 3, nama: 'Workshop UI/UX', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 Jun 2026', tgl: '25 Jun 2026', status: 'belum tercatat', peserta: 32, penyelenggara: 'Hima TI', no: 3, kegiatan: 'Workshop UI/UX' },
-  { id: 4, nama: 'Seminar Kewirausahaan', jenis: 'Seminar', skala: 'Nasional', tanggal: '25 Jun 2026', tgl: '25 Jun 2026', status: 'sudah tercatat', peserta: 18, penyelenggara: 'BEM', no: 4, kegiatan: 'Seminar Kewirausahaan' },
-  { id: 5, nama: 'Workshop Elektronika dasar', jenis: 'Workshop', skala: 'Universitas', tanggal: '25 Jun 2026', tgl: '25 Jun 2026', status: 'belum tercatat', peserta: 32, penyelenggara: 'HME', no: 5, kegiatan: 'Workshop Elektronika dasar' },
-]
+import { get, post, put, del, postFormData } from './apiClient'
 
 export async function getKegiatan(params = {}) {
-  await delay()
-  let result = [...kegiatanMock]
-  if (params.role) {
-    // filter by role-specific logic if needed
-  }
-  if (params.search) {
-    const q = params.search.toLowerCase()
-    result = result.filter((k) => k.nama?.toLowerCase().includes(q) || k.kegiatan?.toLowerCase().includes(q))
-  }
-  return result
+  const res = await get('/api/kegiatan', params)
+  return res?.data || res || []
 }
 
 export async function getKegiatanById(id) {
-  await delay()
-  return kegiatanMock.find((k) => k.id === Number(id)) || null
+  const res = await get(`/api/kegiatan/${id}`)
+  return res?.data || res
 }
 
 export async function createKegiatan(data) {
-  await delay()
-  const newItem = {
-    id: Date.now(),
-    no: kegiatanMock.length + 1,
-    ...data,
-    status: data.status || 'pending',
-    tgl: data.tgl || data.tanggal || '',
-  }
-  kegiatanMock.push(newItem)
-  return newItem
+  const res = await post('/api/kegiatan', data)
+  return res?.data || res
 }
 
 export async function updateKegiatan(id, data) {
-  await delay()
-  const idx = kegiatanMock.findIndex((k) => k.id === Number(id))
-  if (idx === -1) throw new Error('Kegiatan not found')
-  kegiatanMock[idx] = { ...kegiatanMock[idx], ...data }
-  return kegiatanMock[idx]
+  const res = await put(`/api/kegiatan/${id}`, data)
+  return res?.data || res
 }
 
 export async function deleteKegiatan(id) {
-  await delay()
-  kegiatanMock = kegiatanMock.filter((k) => k.id !== Number(id))
+  await del(`/api/kegiatan/${id}`)
   return true
+}
+
+export async function ajukanKegiatan(id) {
+  // PUT /api/kegiatan/{id}/ajukan — kirim draft atau ajukan ulang revisi
+  const res = await put(`/api/kegiatan/${id}/ajukan`)
+  return res?.data || res
+}
+
+/** @deprecated gunakan ajukanKegiatan */
+export async function ajukanUlangKegiatan(id) {
+  return ajukanKegiatan(id)
+}
+
+export async function publikasiKegiatan(id) {
+  const res = await put(`/api/kegiatan/${id}/publikasi`)
+  return res?.data || res
+}
+
+export async function getKegiatanVerifikasi(params = {}) {
+  const res = await get('/api/kegiatan/verifikasi', params)
+  return res?.data || res || []
+}
+
+export async function verifikasiKegiatan(id, data) {
+  const res = await put(`/api/kegiatan/${id}/verifikasi`, data)
+  return res?.data || res
+}
+
+function toKeputusan(status) {
+  const s = String(status || '').toLowerCase()
+  if (['setuju', 'disetujui', 'diteruskan', 'approve', 'terverifikasi'].includes(s)) return 'setuju'
+  if (['revisi', 'perlu_revisi'].includes(s)) return 'revisi'
+  return 'tolak'
+}
+
+export async function verifikasiBulk(ids, status, catatan) {
+  const res = await put('/api/kegiatan/verifikasi-bulk', {
+    kegiatanIds: (ids || []).map(Number),
+    keputusan: toKeputusan(status),
+    alasan: catatan,
+  })
+  return res?.data || res
+}
+
+export async function getKegiatanApproval(params = {}) {
+  const res = await get('/api/kegiatan/approval', params)
+  return res?.data || res || []
+}
+
+export async function approvalKegiatan(id, data) {
+  const res = await put(`/api/kegiatan/${id}/approval`, data)
+  return res?.data || res
+}
+
+export async function approvalBulk(ids, status, catatan) {
+  const res = await put('/api/kegiatan/approval-bulk', {
+    kegiatanIds: (ids || []).map(Number),
+    keputusan: toKeputusan(status),
+    alasan: catatan,
+  })
+  return res?.data || res
+}
+
+export async function getPesertaKegiatan(kegiatanId, params = {}) {
+  const res = await get(`/api/kegiatan/${kegiatanId}/peserta`, {
+    limit: 100,
+    ...params,
+  })
+  const data = res?.data || res
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.peserta)) return data.peserta
+  return []
+}
+
+/**
+ * Update kehadiran & peran peserta massal.
+ * BE expects: [{ partisipasiId, hadir, peranId? }]
+ * FE may pass peranVerifId — mapped to peranId.
+ */
+export async function updatePesertaKegiatan(kegiatanId, peserta) {
+  const normalized = (peserta || []).map((p) => {
+    const item = {
+      partisipasiId: Number(p.partisipasiId ?? p.id),
+      hadir: p.hadir === true || p.hadir === 'Hadir' || p.kehadiran === true || p.kehadiran === 'Hadir',
+    }
+    const peranId = p.peranId ?? p.peranVerifId
+    if (peranId != null && peranId !== '') {
+      item.peranId = Number(peranId)
+    }
+    return item
+  })
+  const res = await put(`/api/kegiatan/${kegiatanId}/peserta/update`, { peserta: normalized })
+  return res?.data || res
+}
+
+export async function importPesertaCSV(kegiatanId, file) {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await postFormData(`/api/kegiatan/${kegiatanId}/peserta/import`, form)
+  return res?.data || res
+}
+
+export async function submitPoinPeserta(kegiatanId) {
+  const res = await post(`/api/kegiatan/${kegiatanId}/peserta/submit-poin`)
+  return res?.data || res
+}
+
+export function downloadTemplatePeserta(kegiatanId) {
+  const base = import.meta.env.VITE_API_BASE || 'https://api.saps.neotelemetri.id'
+  return `${base.replace(/\/$/, '')}/api/kegiatan/${kegiatanId}/peserta/template`
 }

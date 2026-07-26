@@ -1,26 +1,11 @@
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
+import { get, put } from './apiClient'
 
-const profileMock = {
-  mahasiswa: {
-    nama: 'AMARA MARSHINTA',
-    nim: '2311121017',
-    prodi: 'Teknologi Pangan',
-    fakultas: 'Teknologi Pertanian',
-    angkatan: '2021',
-    telepon: '',
-    alamat: '',
-    email: 'mahasiswa@unand.ac.id',
-  },
+export async function getProfile() {
+  const res = await get('/api/auth/me')
+  return res?.data || res
 }
 
-export async function getProfile(userId) {
-  await delay()
-  return profileMock[userId] || profileMock.mahasiswa
-}
-
-export async function updateProfile(userId, data) {
-  await delay()
-  if (!profileMock[userId]) profileMock[userId] = { ...profileMock.mahasiswa }
-  profileMock[userId] = { ...profileMock[userId], ...data }
-  return profileMock[userId]
+export async function updateProfile(data) {
+  const res = await put('/api/auth/me', data)
+  return res?.data || res
 }

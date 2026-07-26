@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { login } from '../services/authService'
@@ -11,24 +11,34 @@ function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+  // Hapus session lama saat halaman login dibuka
+  useEffect(() => {
+    localStorage.removeItem('saps_current_user')
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
       const user = await login(email, password)
+      console.log('[DEBUG LOGIN] user object:', JSON.stringify(user, null, 2))
       toast.success('Login berhasil')
       const roleRoutes = {
         mahasiswa: '/mahasiswa/dashboard',
-        'dosen-pa': '/dosen-pa/dashboard',
-        'pimpinan-fakultas': '/pimpinan-fakultas/dashboard',
-        'pimpinan-ditmawa': '/pimpinan-ditmawa/dashboard',
-        'admin-ditmawa': '/admin-ditmawa/dashboard',
-        'admin-fakultas': '/admin-fakultas/dashboard',
-        ukm: '/ukm/dashboard',
-        ukmf: '/ukmf/dashboard',
-        'pimpinan-utama': '/pimpinan-utama/dashboard',
+        dosen: '/dosen/dashboard',
+        dosen_pa: '/dosen/dashboard',
+        pimpinan_fakultas: '/pimpinan_fakultas/dashboard',
+        pimpinan_ditmawa: '/pimpinan_ditmawa/dashboard',
+        admin_ditmawa: '/admin_ditmawa/dashboard',
+        admin_fakultas: '/admin_fakultas/dashboard',
+        operator_ukm: '/operator_ukm/dashboard',
+        operator_ukmf: '/operator_ukmf/dashboard',
+        pimpinan_utama: '/pimpinan_utama/dashboard',
       }
-      navigate(roleRoutes[user.role] || '/mahasiswa/dashboard')
+      const dest = roleRoutes[user.role]
+      console.log('[DEBUG LOGIN] role:', user.role, '→ dest:', dest)
+      if (!dest) toast.error(`Role "${user.role}" tidak ada di roleRoutes — cek console`)
+      navigate(dest || '/login')
     } catch (err) {
       toast.error('Login gagal', { description: err.message })
     } finally {

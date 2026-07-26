@@ -1,44 +1,88 @@
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
+import { get, put, postFormData } from './apiClient'
 
-let klaimMock = [
-  { id: 1, userId: 'mahasiswa', kegiatan: 'SEMINAR AI & TEKNOLOGI', jenis: 'Kompetisi', peran: 'Peserta', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'pending' },
-  { id: 2, userId: 'mahasiswa', kegiatan: 'WORKSHOP GRAPHIC DESIGN', jenis: 'Pelatihan', peran: 'Peserta', penyelenggara: 'Hima FTI UNAND', tanggal: '12 Feb - 15 Feb 2026', skala: 'Regional', status: 'pending' },
-  { id: 3, userId: 'mahasiswa', kegiatan: 'LOMBA KARYA TULIS ILMIAH', jenis: 'Lomba', peran: 'Juara 1', penyelenggara: 'Universitas Indonesia', tanggal: '12 Feb - 15 Feb 2026', skala: 'Nasional', status: 'ditolak', alasan: 'Berkas tidak lengkap' },
-]
+/** Kegiatan eksternal siap diklaim — GET /api/mahasiswa/klaim-eksternal/kegiatan-tersedia */
+export async function getKegiatanTersediaKlaim() {
+  const res = await get('/api/mahasiswa/klaim-eksternal/kegiatan-tersedia')
+  return res?.data || res || []
+}
 
-let riwayatMock = [
-  { id: 1, userId: 'mahasiswa', kegiatan: 'Seminar Nasional AI', poin: 50, tanggal: '10 Jun 2026', status: 'disetujui', kategori: 'Fondasi' },
-  { id: 2, userId: 'mahasiswa', kegiatan: 'Bakti Sosial', poin: 30, tanggal: '5 Jun 2026', status: 'disetujui', kategori: 'Penguatan' },
-  { id: 3, userId: 'mahasiswa', kegiatan: 'Pelatihan Kewirausahaan', poin: 20, tanggal: '20 Mei 2026', status: 'pending', kategori: 'Fondasi' },
-]
+/**
+ * Ajukan klaim eksternal — POST /api/mahasiswa/klaim-eksternal (multipart)
+ * @param {{ partisipasiId: number|string, peranUsulanId: number|string, bukti: File }}
+ */
+export async function klaimPoin({ partisipasiId, peranUsulanId, bukti }) {
+  const fd = new FormData()
+  fd.append('partisipasiId', String(partisipasiId))
+  fd.append('peranUsulanId', String(peranUsulanId))
+  if (bukti) fd.append('bukti', bukti)
+  const res = await postFormData('/api/mahasiswa/klaim-eksternal', fd)
+  return res?.data || res
+}
 
-export async function klaimPoin(data) {
-  await delay()
-  const newItem = {
-    id: Date.now(),
-    userId: 'mahasiswa',
-    ...data,
-    status: 'pending',
+/** Riwayat klaim mahasiswa — GET /api/mahasiswa/klaim-eksternal */
+export async function getKlaim() {
+  const res = await get('/api/mahasiswa/klaim-eksternal')
+  return res?.data || res || []
+}
+
+/** Detail klaim — GET /api/klaim/:id */
+export async function getKlaimById(id) {
+  const res = await get(`/api/klaim/${id}`)
+  return res?.data || res
+}
+
+/**
+ * Daftar klaim menunggu validasi admin — GET /api/klaim/validasi
+ * (fallback: verifikasi-eksternal?status=menunggu_validasi)
+ */
+export async function getKlaimForValidasi(params = {}) {
+  try {
+    const res = await get('/api/klaim/validasi', { limit: 50, ...params })
+    return res?.data || res || []
+  } catch {
+    const res = await get('/api/klaim/verifikasi-eksternal', {
+      status: 'menunggu_validasi',
+      limit: 50,
+      ...params,
+    })
+    return res?.data || res || []
   }
-  klaimMock.push(newItem)
-  return newItem
 }
 
-export async function getKlaim(userId) {
-  await delay()
-  return klaimMock.filter((k) => k.userId === userId)
+export async function getKlaimEksternal(params = {}) {
+  const res = await get('/api/klaim/verifikasi-eksternal', params)
+  return res?.data || res || []
 }
 
-export async function getRiwayatPoin(userId) {
-  await delay()
-  return riwayatMock.filter((r) => r.userId === userId)
+/** PUT /api/klaim/:id/validasi — { keputusan, alasan? } */
+export async function verifikasiKlaim(id, data) {
+  const keputusan = data?.keputusan || mapKeputusan(data?.status)
+  const res = await put(`/api/klaim/${id}/validasi`, {
+    keputusan,
+    ...(data?.alasan ? { alasan: data.alasan } : {}),
+    ...(data?.peranVerifId ? { peranVerifId: Number(data.peranVerifId) } : {}),
+  })
+  return res?.data || res
 }
 
-export async function verifikasiKlaim(klaimId, status, catatan) {
-  await delay()
-  const idx = klaimMock.findIndex((k) => k.id === Number(klaimId))
-  if (idx === -1) throw new Error('Klaim not found')
-  klaimMock[idx].status = status
-  if (catatan) klaimMock[idx].alasan = catatan
-  return klaimMock[idx]
+/** PUT /api/klaim/validasi-bulk — { klaimIds, keputusan, alasan? } */
+export async function validasiBulk(ids, status, catatan) {
+  const res = await put('/api/klaim/validasi-bulk', {
+    klaimIds: (ids || []).map(Number),
+    keputusan: mapKeputusan(status),
+    ...(catatan ? { alasan: catatan } : {}),
+  })
+  return res?.data || res
+}
+
+export async function getRiwayatPoin(params = {}) {
+  const res = await get('/api/mahasiswa/riwayat-poin', params)
+  return res?.data || res || {}
+}
+
+function mapKeputusan(status) {
+  const s = String(status || '').toLowerCase()
+  if (['disetujui', 'setujui', 'approved', 'setuju'].includes(s)) return 'disetujui'
+  if (['revisi', 'perlu_revisi'].includes(s)) return 'perlu_revisi'
+  return 'ditolak'
 }

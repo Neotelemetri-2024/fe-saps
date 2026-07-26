@@ -61,7 +61,7 @@ function AdminFakultasDashboard() {
     },
   ]
   return (
-    <DashboardLayout role="admin-fakultas" userName="Nouval Rafiif Irwan" userRole="Admin Fakultas">
+    <DashboardLayout role="admin_fakultas" userName="Nouval Rafiif Irwan" userRole="Admin Fakultas">
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard icon={<FileIcon className="h-5 w-5" />} label="Pending" value="4" />

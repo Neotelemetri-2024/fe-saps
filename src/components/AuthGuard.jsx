@@ -1,16 +1,18 @@
 import { Navigate } from 'react-router-dom'
 import { isAuthenticated, getCurrentUser } from '../services/authService'
 
+/** Prefix URL dashboard per role BE (jabatan / peran) */
 const rolePrefixes = {
   mahasiswa: '/mahasiswa',
-  'dosen-pa': '/dosen-pa',
-  'pimpinan-fakultas': '/pimpinan-fakultas',
-  'pimpinan-ditmawa': '/pimpinan-ditmawa',
-  'admin-ditmawa': '/admin-ditmawa',
-  'admin-fakultas': '/admin-fakultas',
-  ukm: '/ukm',
-  ukmf: '/ukmf',
-  'pimpinan-utama': '/pimpinan-utama',
+  dosen: '/dosen',
+  dosen_pa: '/dosen',
+  pimpinan_fakultas: '/pimpinan_fakultas',
+  pimpinan_ditmawa: '/pimpinan_ditmawa',
+  admin_ditmawa: '/admin_ditmawa',
+  admin_fakultas: '/admin_fakultas',
+  operator_ukm: '/operator_ukm',
+  operator_ukmf: '/operator_ukmf',
+  pimpinan_utama: '/pimpinan_utama',
 }
 
 function AuthGuard({ children }) {
@@ -24,7 +26,8 @@ export function RoleGuard({ allowedRoles, children }) {
   const user = getCurrentUser()
   if (!user) return <Navigate to="/login" replace />
   if (!allowedRoles.includes(user.role)) {
-    const redirect = rolePrefixes[user.role] + '/dashboard' || '/login'
+    const prefix = rolePrefixes[user.role]
+    const redirect = prefix ? `${prefix}/dashboard` : '/login'
     return <Navigate to={redirect} replace />
   }
   return children

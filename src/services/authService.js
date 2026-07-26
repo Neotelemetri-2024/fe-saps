@@ -1,42 +1,88 @@
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
+import { post, get } from './apiClient'
 
 const USER_STORAGE_KEY = 'saps_current_user'
 
-const loginMap = [
-  { prefix: 'mahasiswa', role: 'mahasiswa', nama: 'Amara Marshinta', userRole: 'Mahasiswa' },
-  { prefix: 'dosen', role: 'dosen-pa', nama: 'Dr. Efa Yonnedi, SE, MPPM, Akt, CA, CRGP', userRole: 'Dosen Pembimbing' },
-  { prefix: 'pimpinan-ditmawa', role: 'pimpinan-ditmawa', nama: 'Dr. Dendi Adi Saputra', userRole: 'Pimpinan Ditmawa' },
-  { prefix: 'pimpinan-fakultas', role: 'pimpinan-fakultas', nama: 'Dr. Andi Wijaya', userRole: 'Pimpinan Fakultas' },
-  { prefix: 'admin-ditmawa', role: 'admin-ditmawa', nama: 'Admin Ditmawa', userRole: 'Admin Ditmawa' },
-  { prefix: 'admin', role: 'admin-fakultas', nama: 'Nouval Rafiif Irwan', userRole: 'Admin Fakultas' },
-  // ukmf harus sebelum ukm (karena matching pakai startsWith)
-  { prefix: 'ukmf', role: 'ukmf', nama: 'Operator UKMF', userRole: 'Operator UKMF' },
-  { prefix: 'ukm', role: 'ukm', nama: 'Naufal Rafiif Irwan', userRole: 'Operator UKM' },
-  { prefix: 'pimpinan-utama', role: 'pimpinan-utama', nama: 'Pimpinan Utama', userRole: 'Pimpinan Utama' },
-]
+/**
+ * BE memakai peran generik:
+ *   "operator_org" → UKM atau UKMF (dibedakan dari /api/auth/me)
+ *   "admin_org"    → admin_ditmawa atau admin_fakultas
+ *
+ * /api/auth/me diharapkan punya field:
+ *   tipeOrganisasi: "ukm" | "ukmf"
+ *   tipe: "universitas" | "fakultas"
+ *   tingkat: sama
+ */
+function resolveRoleFromMe(peranRaw, meData) {
+  const tipe = (
+    meData?.tipeOrganisasi ||
+    meData?.tipe ||
+    meData?.organisasi?.tipe ||
+    meData?.organisasi?.tingkat ||
+    meData?.tingkat ||
+    ''
+  ).toLowerCase()
 
-export async function login(email, password) {
-  await delay()
-
-  if (!password) {
-    throw new Error('Password wajib diisi')
+  if (peranRaw === 'operator_org') {
+    // ukmf identifiers
+    if (['ukmf', 'fakultas', 'ukmf_org'].includes(tipe)) return 'operator_ukmf'
+    return 'operator_ukm'
   }
 
-  const localPart = email.split('@')[0].toLowerCase()
-  const match = loginMap.find((m) => localPart.startsWith(m.prefix))
+  if (peranRaw === 'admin_org') {
+    if (tipe === 'fakultas') return 'admin_fakultas'
+    return 'admin_ditmawa'
+  }
 
-  if (!match) {
-    throw new Error('Email tidak terdaftar')
+  return peranRaw
+}
+
+export async function login(email, password) {
+  if (!password) throw new Error('Password wajib diisi')
+
+  const emailLower = email.trim().toLowerCase()
+  const res = await post('/api/auth/login', { email: emailLower, password })
+
+  if (!res?.success) {
+    throw new Error(res?.message || 'Email atau password salah.')
+  }
+
+  const token = res.data?.token
+  const userData = res.data?.user || {}
+
+  // Simpan token sementara agar get() bisa pakai Authorization header
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ token }))
+
+  // Ambil detail profil untuk resolve role generik
+  let meData = {}
+  try {
+    const meRes = await get('/api/auth/me')
+    meData = meRes?.data || meRes || {}
+    console.log('[DEBUG /api/auth/me]', JSON.stringify(meData, null, 2))
+  } catch (e) {
+    console.warn('[DEBUG /api/auth/me] gagal:', e?.message)
+  }
+
+  const peranRaw = (userData.jabatan || userData.peran || '').trim()
+  const role = resolveRoleFromMe(peranRaw, meData) || peranRaw
+
+  if (!role) {
+    localStorage.removeItem(USER_STORAGE_KEY)
+    throw new Error('Role tidak dikenali dari respons server. Hubungi administrator.')
   }
 
   const user = {
-    email,
-    role: match.role,
-    nama: match.nama,
-    userRole: match.userRole,
-    token: 'mock-token-' + Date.now(),
+    id: userData.id,
+    email: userData.email || emailLower,
+    nama: userData.nama || meData.nama || emailLower,
+    peran: userData.peran || null,
+    jabatan: userData.jabatan || null,
+    organisasiId: userData.organisasiId ?? meData.organisasiId ?? null,
+    namaOrganisasi: userData.namaOrganisasi ?? meData.namaOrganisasi ?? null,
+    tipeOrganisasi: meData.tipeOrganisasi ?? meData.tipe ?? meData.organisasi?.tipe ?? null,
+    role,
+    userRole: userData.jabatan || userData.peran || role,
+    token,
   }
-
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
   return user
 }
@@ -55,5 +101,6 @@ export function getCurrentUser() {
 }
 
 export function isAuthenticated() {
-  return getCurrentUser() !== null
+  const u = getCurrentUser()
+  return u !== null && !!u.role
 }

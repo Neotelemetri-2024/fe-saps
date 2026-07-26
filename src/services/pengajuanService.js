@@ -1,314 +1,340 @@
-import { getCurrentUser } from './authService'
+import { get, post, put, del } from './apiClient'
 
-const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms))
-
-const PERSETUJUAN_KEY = 'saps_persetujuan_dosen'
-const PENGAJUAN_KEY = 'saps_pengajuan_eksternal'
 const EVENT_NAME = 'saps-data-updated'
 
 function emitUpdate(type) {
   try {
     window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { type } }))
-  } catch {
-    // ignore (non-browser)
-  }
-}
-
-function readJson(key) {
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function writeJson(key, list) {
-  localStorage.setItem(key, JSON.stringify(list))
-}
-
-function formatTanggal(value) {
-  if (!value) return '-'
-  if (typeof value === 'string') return value
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-  return String(value)
-}
-
-function sortPersetujuan(list) {
-  return [...list].sort((a, b) => {
-    const rank = (s) => (s === 'pending' ? 0 : s === 'revisi' ? 1 : 2)
-    const byStatus = rank(a.status) - rank(b.status)
-    if (byStatus !== 0) return byStatus
-    return Number(b.id) - Number(a.id)
-  })
-}
-
-/** Bersihkan seed lama yang sempat membuat bingung */
-function sanitizePersetujuan(list) {
-  return list.filter((item) => {
-    if (!item?.kegiatan) return false
-    const isOldSeed =
-      item.kegiatan === 'LOMBA AI & TEKNOLOGI' &&
-      item.penyelenggara === 'Hima FTI UNAND' &&
-      Number(item.id) <= 3
-    return !isOldSeed
-  })
-}
-
-const JENIS_LABEL = {
-  prestasi: 'Kompetisi',
-  organisasi: 'Organisasi',
-  pelatihan: 'Pelatihan',
-}
-
-const SKALA_LABEL = {
-  internasional: 'Internasional',
-  nasional: 'Nasional',
-  regional: 'Regional',
-  lokal: 'Internal (UNAND)',
-}
-
-function buildKategori(jenis, skala) {
-  const j = JENIS_LABEL[jenis] || jenis || 'Kegiatan'
-  const s = SKALA_LABEL[skala] || skala || ''
-  return s ? `${j} ${s}` : j
-}
-
-function formatDiajukanPada(iso) {
-  if (!iso) return '-'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '-'
-  return d.toLocaleString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-export async function ajukanKegiatan(data) {
-  await delay()
-  const user = getCurrentUser()
-  const list = readJson(PENGAJUAN_KEY)
-  const dibuatPada = new Date().toISOString()
-  const newItem = {
-    id: Date.now(),
-    userId: 'mahasiswa',
-    namaMahasiswa: user?.nama || 'Amara Marshinta',
-    nim: data.nim || '2311121017',
-    prodi: data.prodi || 'Teknik Komputer, S1',
-    kegiatan: data.kegiatan,
-    jenis: data.jenis,
-    peran: data.peran,
-    skala: data.skala,
-    kategori: buildKategori(data.jenis, data.skala),
-    penyelenggara: data.penyelenggara,
-    deskripsi: data.deskripsi || '',
-    linkWebsite: data.linkWebsite || '',
-    emailPenyelenggara: data.emailPenyelenggara || '',
-    tanggal: formatTanggal(data.tanggal),
-    status: 'pending',
-    dibuatPada,
-    diajukanPada: formatDiajukanPada(dibuatPada),
-  }
-  list.unshift(newItem)
-  writeJson(PENGAJUAN_KEY, list)
-  emitUpdate('pengajuan')
-  return newItem
-}
-
-export async function getPengajuan(userId) {
-  await delay()
-  return readJson(PENGAJUAN_KEY)
-    .filter((p) => !userId || p.userId === userId)
-    .sort((a, b) => Number(b.id) - Number(a.id))
-}
-
-/** Semua pengajuan kegiatan eksternal (untuk admin ditmawa) */
-export async function getPengajuanEksternal(params = {}) {
-  await delay()
-  let list = readJson(PENGAJUAN_KEY).sort((a, b) => Number(b.id) - Number(a.id))
-
-  if (params.status) list = list.filter((p) => p.status === params.status)
-  if (params.q) {
-    const q = params.q.toLowerCase()
-    list = list.filter(
-      (p) =>
-        (p.namaMahasiswa || '').toLowerCase().includes(q) ||
-        (p.nim || '').toLowerCase().includes(q) ||
-        (p.kegiatan || '').toLowerCase().includes(q) ||
-        (p.kategori || '').toLowerCase().includes(q),
-    )
-  }
-  if (params.kategori) list = list.filter((p) => p.kategori === params.kategori)
-  if (params.skala) list = list.filter((p) => p.skala === params.skala)
-  if (params.tahun) {
-    list = list.filter((p) => String(p.dibuatPada || '').startsWith(String(params.tahun)))
-  }
-
-  return list
-}
-
-export async function verifikasiPengajuanEksternal(pengajuanId, status, alasan) {
-  await delay()
-  const list = readJson(PENGAJUAN_KEY)
-  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
-  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
-
-  list[idx] = {
-    ...list[idx],
-    status,
-    ...(alasan ? { alasan } : {}),
-    diverifikasiPada: new Date().toISOString(),
-  }
-  writeJson(PENGAJUAN_KEY, list)
-  emitUpdate('pengajuan')
-  return list[idx]
-}
-
-/** Admin Ditmawa meneruskan pengajuan ke Pimpinan Ditmawa */
-export async function teruskanKePimpinanDitmawa(pengajuanId) {
-  await delay()
-  const list = readJson(PENGAJUAN_KEY)
-  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
-  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
-
-  list[idx] = {
-    ...list[idx],
-    status: 'diteruskan',
-    tahap: 'pimpinan-ditmawa',
-    diteruskanPada: new Date().toISOString(),
-  }
-  writeJson(PENGAJUAN_KEY, list)
-  emitUpdate('pengajuan')
-  return list[idx]
-}
-
-/** Antrian verifikasi di sisi Pimpinan Ditmawa */
-export async function getPengajuanPimpinanDitmawa() {
-  await delay()
-  return readJson(PENGAJUAN_KEY)
-    .filter((p) => p.tahap === 'pimpinan-ditmawa' || p.status === 'diteruskan')
-    .sort((a, b) => Number(b.id) - Number(a.id))
-}
-
-export async function getPengajuanEksternalById(id) {
-  await delay()
-  const item = readJson(PENGAJUAN_KEY).find((p) => String(p.id) === String(id))
-  if (!item) throw new Error('Pengajuan tidak ditemukan')
-  return item
-}
-
-export async function mintaPersetujuanDosen(data) {
-  await delay()
-  const user = getCurrentUser()
-  const list = sanitizePersetujuan(readJson(PERSETUJUAN_KEY))
-
-  const newItem = {
-    id: Date.now(),
-    userId: 'mahasiswa',
-    namaMahasiswa: user?.nama || 'Amara Marshinta',
-    nim: '2311121017',
-    kegiatan: data.kegiatan,
-    jenis: data.jenis,
-    peran: data.peran,
-    penyelenggara: data.penyelenggara,
-    tanggal: formatTanggal(data.tanggal),
-    status: 'pending',
-    dibuatPada: new Date().toISOString(),
-  }
-
-  list.unshift(newItem)
-  writeJson(PERSETUJUAN_KEY, list)
-  // hapus key v2 lama supaya tidak bentrok
-  localStorage.removeItem('saps_persetujuan_dosen_v2')
-  emitUpdate('persetujuan')
-  return newItem
-}
-
-export async function getPersetujuanDosen(params = {}) {
-  await delay()
-  let list = sanitizePersetujuan(readJson(PERSETUJUAN_KEY))
-  writeJson(PERSETUJUAN_KEY, list)
-
-  if (params.status) list = list.filter((item) => item.status === params.status)
-  if (params.userId) list = list.filter((item) => item.userId === params.userId)
-
-  return sortPersetujuan(list)
-}
-
-export async function getPendingPersetujuanCount() {
-  await delay()
-  return sanitizePersetujuan(readJson(PERSETUJUAN_KEY)).filter((i) => i.status === 'pending').length
-}
-
-export async function setujuiTolak(pengajuanId, status, alasan) {
-  await delay()
-  const list = sanitizePersetujuan(readJson(PERSETUJUAN_KEY))
-  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
-  if (idx === -1) throw new Error('Pengajuan not found')
-
-  list[idx] = {
-    ...list[idx],
-    status,
-    ...(alasan ? { alasan } : {}),
-  }
-  writeJson(PERSETUJUAN_KEY, list)
-  emitUpdate('persetujuan')
-  return list[idx]
-}
-
-/** Pimpinan Ditmawa menyetujui pengajuan eksternal — status jadi 'disetujui' final */
-export async function setujuiPengajuanEksternalPimpinan(pengajuanId) {
-  await delay()
-  const list = readJson(PENGAJUAN_KEY)
-  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
-  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
-  list[idx] = {
-    ...list[idx],
-    status: 'disetujui',
-    tahap: 'selesai',
-    disetujuiPimpinanPada: new Date().toISOString(),
-  }
-  writeJson(PENGAJUAN_KEY, list)
-  emitUpdate('pengajuan')
-  return list[idx]
-}
-
-/** Pimpinan Ditmawa menolak / merevisi pengajuan eksternal */
-export async function tolakPengajuanEksternalPimpinan(pengajuanId, status, alasan) {
-  await delay()
-  const list = readJson(PENGAJUAN_KEY)
-  const idx = list.findIndex((p) => String(p.id) === String(pengajuanId))
-  if (idx === -1) throw new Error('Pengajuan tidak ditemukan')
-  list[idx] = {
-    ...list[idx],
-    status,
-    alasan,
-    tahap: status === 'revisi' ? 'mahasiswa' : 'selesai',
-    diverifikasiPimpinanPada: new Date().toISOString(),
-  }
-  writeJson(PENGAJUAN_KEY, list)
-  emitUpdate('pengajuan')
-  return list[idx]
+  } catch { /* ignore */ }
 }
 
 export function subscribeDataUpdate(callback) {
   const handler = (e) => callback(e?.detail)
   window.addEventListener(EVENT_NAME, handler)
-  window.addEventListener('storage', handler)
-  return () => {
-    window.removeEventListener(EVENT_NAME, handler)
-    window.removeEventListener('storage', handler)
+  return () => window.removeEventListener(EVENT_NAME, handler)
+}
+
+function normalizePersetujuan(item, i = 0) {
+  const id = item.id ?? item.partisipasiId ?? item.izinId ?? i
+  // BE getIzinForDosen kembalikan struktur nested: item.partisipasi.kegiatan, dll.
+  const part = item.partisipasi || {}
+  const kegiatanObj = part.kegiatan || (typeof item.kegiatan === 'object' && item.kegiatan ? item.kegiatan : null)
+  const mhsObj = part.mahasiswa || {}
+  const peranObj = part.peranVerif || {}
+  const tanggalMulai = kegiatanObj?.tanggalMulai
+    ? new Date(kegiatanObj.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
+  return {
+    ...item,
+    id,
+    kegiatan: kegiatanObj?.nama || item.kegiatan || item.namaKegiatan || item.kegiatanNama || item.judul || '-',
+    jenis: kegiatanObj?.kategori?.nama || item.jenis || item.jenisKegiatan || '-',
+    peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
+    penyelenggara: kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
+    tanggal: tanggalMulai || item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan || '-',
+    mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
+    namaMahasiswa: mhsObj?.user?.nama || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
+    status: (item.statusIzin || item.status || 'pending').toLowerCase(),
   }
+}
+
+function normalizePengajuanMahasiswa(item, i = 0) {
+  return {
+    ...item,
+    id: item.id ?? i,
+    kegiatan: item.namaKegiatan || item.kegiatan || '-',
+    namaKegiatan: item.namaKegiatan || item.kegiatan || '-',
+    jenis: item.jenisKegiatan || item.jenis || '-',
+    kategori: item.jenisKegiatan || item.kategori || '-',
+    penyelenggara: item.penyelenggara || '-',
+    tanggal: item.tanggalPelaksanaan || item.tanggal || '-',
+    skala: item.skala || '-',
+    status: (item.status || 'pending').toLowerCase(),
+    alasan: item.alasan || null,
+    dibuatPada: item.tanggalPengajuan || item.createdAt || item.dibuatPada,
+  }
+}
+
+function normalizeKlaimEksternal(item, i = 0) {
+  const part = item.partisipasi || {}
+  const kegiatan = part.kegiatan || {}
+  const mahasiswa = part.mahasiswa || {}
+  const statusRaw = (item.status || '').toLowerCase()
+  let status = statusRaw
+  if (statusRaw === 'menunggu_validasi') status = 'pending'
+  else if (statusRaw === 'menunggu_pimpinan') status = 'diteruskan'
+  else if (statusRaw === 'perlu_revisi') status = 'revisi'
+  else if (statusRaw === 'disetujui') status = 'disetujui'
+  else if (statusRaw === 'ditolak') status = 'ditolak'
+
+  const peran = item.peranUsulan?.nama || part.peranVerif?.nama || item.peran || '-'
+  const tanggalMulai = kegiatan.tanggalMulai
+  const tanggalSelesai = kegiatan.tanggalSelesai
+  let tanggal = '-'
+  try {
+    if (tanggalMulai) {
+      const a = new Date(tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+      tanggal = tanggalSelesai
+        ? `${a} - ${new Date(tanggalSelesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+        : a
+    }
+  } catch { /* ignore */ }
+
+  const capaian = (kegiatan.kegiatanCapaian || [])
+    .map((kc) => kc.subCapaian?.capaian?.nama)
+    .filter(Boolean)
+  const uniqueCapaian = [...new Set(capaian)]
+  const subCapaian = (kegiatan.kegiatanCapaian || []).map((kc) => ({
+    label: kc.subCapaian?.nama || '-',
+    persen: kc.persentase != null ? `${kc.persentase}%` : '-',
+    poin: kc.persentase,
+  }))
+
+  return {
+    ...item,
+    id: String(item.id ?? i),
+    mahasiswa: mahasiswa.user?.nama || item.namaMahasiswa || item.mahasiswa || '-',
+    namaMahasiswa: mahasiswa.user?.nama || item.namaMahasiswa || '-',
+    nim: mahasiswa.nim || item.nim || '-',
+    prodi: mahasiswa.prodi?.nama || item.prodi || '-',
+    kegiatan: kegiatan.nama || item.kegiatan || '-',
+    kategori: kegiatan.kategori?.nama || item.kategori || '-',
+    peran,
+    tanggal,
+    info: kegiatan.penyelenggaraExt || kegiatan.organisasi?.nama || item.info || '-',
+    penyelenggara: kegiatan.penyelenggaraExt || kegiatan.organisasi?.nama || '-',
+    email: kegiatan.emailExt || mahasiswa.user?.email || '-',
+    linkWebsite: kegiatan.linkWebsiteExt || '-',
+    deskripsi: kegiatan.deskripsi || '-',
+    bukti: item.bukti?.[0]?.url || item.buktiUrl || null,
+    capaian: uniqueCapaian.length ? uniqueCapaian : [],
+    subCapaian,
+    skala: kegiatan.skala?.nama || item.skala || '-',
+    status,
+    statusRaw,
+    dibuatPada: item.createdAt || item.dibuatPada,
+    alasan: item.alasan || null,
+  }
+}
+
+function mapKeputusan(status) {
+  const s = String(status || '').toLowerCase()
+  if (s === 'disetujui' || s === 'setujui' || s === 'approved') return 'disetujui'
+  if (s === 'revisi' || s === 'perlu_revisi') return 'perlu_revisi'
+  if (s === 'ditolak' || s === 'tolak' || s === 'rejected') return 'ditolak'
+  return s
+}
+
+// ─── Pengajuan Kegiatan Eksternal (Mahasiswa) ────────────────────────────────
+
+/** POST /api/mahasiswa/kegiatan-eksternal/draft — simpan sebagai draft */
+export async function simpanDraftKegiatanEksternal(data = {}) {
+  const res = await post('/api/mahasiswa/kegiatan-eksternal/draft', data)
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** PUT /api/mahasiswa/kegiatan-eksternal/:id/draft — edit draft */
+export async function editDraftKegiatanEksternal(id, data = {}) {
+  const res = await put(`/api/mahasiswa/kegiatan-eksternal/${id}/draft`, data)
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** DELETE /api/mahasiswa/kegiatan-eksternal/:id/draft — hapus draft */
+export async function hapusDraftKegiatanEksternal(id) {
+  const res = await del(`/api/mahasiswa/kegiatan-eksternal/${id}/draft`)
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** PUT /api/mahasiswa/kegiatan-eksternal/:id/ajukan — kirim draft jadi diajukan */
+export async function ajukanDraftKegiatanEksternal(id) {
+  const res = await put(`/api/mahasiswa/kegiatan-eksternal/${id}/ajukan`, {})
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** POST /api/mahasiswa/kegiatan-eksternal */
+export async function ajukanKegiatan(data = {}) {
+  const body = {
+    kategoriId: data.kategoriId ?? data.jenis,
+    namaKegiatan: data.namaKegiatan || data.kegiatan,
+    penyelenggara: data.penyelenggara,
+    skalaId: data.skalaId ?? data.skala,
+    tanggalPelaksanaan: data.tanggalPelaksanaan || data.tanggal,
+    deskripsi: data.deskripsi || data.deskripsiKegiatan || '',
+    linkWebsite: data.linkWebsite || '',
+    emailPenyelenggara: data.emailPenyelenggara || '',
+  }
+  const res = await post('/api/mahasiswa/kegiatan-eksternal', body)
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** GET /api/mahasiswa/kegiatan-eksternal */
+export async function getPengajuan() {
+  const res = await get('/api/mahasiswa/kegiatan-eksternal')
+  const data = res?.data || res
+  return Array.isArray(data) ? data.map(normalizePengajuanMahasiswa) : []
+}
+
+export async function getRiwayatPengajuan() {
+  return getPengajuan()
+}
+
+// ─── Klaim Eksternal — Admin / Pimpinan Ditmawa ──────────────────────────────
+
+/** GET /api/klaim/verifikasi-eksternal (admin: menunggu_validasi) */
+export async function getPengajuanEksternal(params = {}) {
+  const res = await get('/api/klaim/verifikasi-eksternal', {
+    status: params.status || 'menunggu_validasi',
+    ...params,
+  })
+  const data = res?.data || res
+  return Array.isArray(data) ? data.map(normalizeKlaimEksternal) : []
+}
+
+/** GET /api/klaim/:id */
+export async function getPengajuanEksternalById(id) {
+  const res = await get(`/api/klaim/${id}`)
+  const data = res?.data || res
+  return data ? normalizeKlaimEksternal(data) : null
+}
+
+/** GET /api/klaim/verifikasi-eksternal (pimpinan default statuses) */
+export async function getPengajuanPimpinanDitmawa(params = {}) {
+  const res = await get('/api/klaim/verifikasi-eksternal', params)
+  const data = res?.data || res
+  return Array.isArray(data) ? data.map(normalizeKlaimEksternal) : []
+}
+
+/**
+ * PUT /api/klaim/:id/validasi
+ * Admin: revisi / tolak (keputusan: perlu_revisi | ditolak)
+ */
+export async function verifikasiPengajuanEksternal(id, status, alasan) {
+  const keputusan = mapKeputusan(status)
+  const res = await put(`/api/klaim/${id}/validasi`, {
+    keputusan,
+    ...(alasan ? { alasan } : {}),
+  })
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/**
+ * Admin setujui → diteruskan ke pimpinan
+ * PUT /api/klaim/:id/validasi { keputusan: 'disetujui' }
+ */
+export async function teruskanKePimpinanDitmawa(id, alasan) {
+  const res = await put(`/api/klaim/${id}/validasi`, {
+    keputusan: 'disetujui',
+    ...(alasan ? { alasan } : {}),
+  })
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/**
+ * Pimpinan setujui — pakai validasi-bulk (single validasi hanya untuk menunggu_validasi)
+ */
+export async function setujuiPengajuanEksternalPimpinan(id, alasan) {
+  const res = await put('/api/klaim/validasi-bulk', {
+    klaimIds: [Number(id)],
+    keputusan: 'disetujui',
+    ...(alasan ? { alasan } : {}),
+  })
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+export async function tolakPengajuanEksternalPimpinan(id, alasan) {
+  const res = await put('/api/klaim/validasi-bulk', {
+    klaimIds: [Number(id)],
+    keputusan: 'ditolak',
+    alasan: alasan || 'Ditolak oleh Pimpinan Ditmawa',
+  })
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+/** PUT /api/klaim/validasi-bulk */
+export async function validasiBulk(ids, status, alasan) {
+  const keputusan = mapKeputusan(status)
+  const res = await put('/api/klaim/validasi-bulk', {
+    klaimIds: (ids || []).map(Number),
+    keputusan,
+    ...(alasan ? { alasan } : {}),
+  })
+  emitUpdate('pengajuan')
+  return res?.data || res
+}
+
+// ─── Persetujuan Dosen PA (Mahasiswa) ────────────────────────────────────────
+
+/**
+ * Minta persetujuan dosen PA dari daftar pengajuan kegiatan eksternal.
+ * kegiatanId = ID kegiatan eksternal yang sudah disetujui pimpinan.
+ * POST /api/mahasiswa/izin-pa { kegiatanId, peranId }
+ */
+export async function mintaPersetujuanDosenEksternal(kegiatanId, peranId) {
+  if (!kegiatanId) throw new Error('kegiatanId diperlukan.')
+  if (!peranId) throw new Error('Pilih peran terlebih dahulu.')
+  const body = {
+    kegiatanId: Number(kegiatanId),
+    peranId: Number(peranId),
+  }
+  const res = await post('/api/mahasiswa/izin-pa', body)
+  emitUpdate('persetujuan')
+  return res?.data || res
+}
+
+/**
+ * POST /api/mahasiswa/izin-pa
+ * Body: { kegiatanId, peranId, kategoriId?, penyelenggara?, tanggalPelaksanaan? }
+ */
+export async function mintaPersetujuanDosen(data = {}) {
+  if (!data?.kegiatanId) {
+    throw new Error('API membutuhkan kegiatanId untuk mengajukan izin PA.')
+  }
+  if (!data?.peranId && !data?.peranVerifId) {
+    throw new Error('API membutuhkan peranId untuk mengajukan izin PA.')
+  }
+  const body = {
+    kegiatanId: Number(data.kegiatanId),
+    peranId: Number(data.peranId ?? data.peranVerifId),
+    ...(data.kategoriId ? { kategoriId: Number(data.kategoriId) } : {}),
+    ...(data.penyelenggara ? { penyelenggara: data.penyelenggara } : {}),
+    ...(data.tanggalPelaksanaan || data.tanggal
+      ? { tanggalPelaksanaan: data.tanggalPelaksanaan || data.tanggal }
+      : {}),
+  }
+  const res = await post('/api/mahasiswa/izin-pa', body)
+  emitUpdate('persetujuan')
+  return res?.data || res
+}
+
+/** GET /api/mahasiswa/izin-pa */
+export async function getPersetujuanMahasiswa(params = {}) {
+  const res = await get('/api/mahasiswa/izin-pa', params)
+  const data = res?.data || res
+  return Array.isArray(data) ? data.map(normalizePersetujuan) : []
+}
+
+export async function getPersetujuanDosen(params = {}) {
+  const res = await get('/api/dosen/persetujuan', params)
+  const data = res?.data || res
+  return Array.isArray(data) ? data.map(normalizePersetujuan) : []
+}
+
+export async function setujuiTolak(id, status, alasan) {
+  const res = await put(`/api/dosen/persetujuan/${id}`, { status, alasan })
+  emitUpdate('persetujuan')
+  return res?.data || res
+}
+
+export async function getPendingPersetujuanCount() {
+  const list = await getPersetujuanDosen({ status: 'pending' })
+  return list.length
 }

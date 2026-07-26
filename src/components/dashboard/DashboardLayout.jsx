@@ -6,14 +6,15 @@ import * as menuConfig from '../../config/menuItems'
 
 const roleMenuMap = {
   mahasiswa: menuConfig.mahasiswaMenu,
-  'dosen-pa': menuConfig.dosenPAMenu,
-  'pimpinan-ditmawa': menuConfig.pimpinanDitmawaMenu,
-  'pimpinan-fakultas': menuConfig.pimpinanFakultasMenu,
-  'pimpinan-utama': menuConfig.pimpinanUtamaMenu,
-  'admin-ditmawa': menuConfig.adminDitmawaMenu,
-  'admin-fakultas': menuConfig.adminFakultasMenu,
-  ukm: menuConfig.ukmMenu,
-  ukmf: menuConfig.ukmfMenu,
+  dosen: menuConfig.dosenPAMenu,
+  dosen_pa: menuConfig.dosenPAMenu,
+  pimpinan_ditmawa: menuConfig.pimpinanDitmawaMenu,
+  pimpinan_fakultas: menuConfig.pimpinanFakultasMenu,
+  pimpinan_utama: menuConfig.pimpinanUtamaMenu,
+  admin_ditmawa: menuConfig.adminDitmawaMenu,
+  admin_fakultas: menuConfig.adminFakultasMenu,
+  operator_ukm: menuConfig.ukmMenu,
+  operator_ukmf: menuConfig.ukmfMenu,
 }
 
 const SIDEBAR_FULL = 260

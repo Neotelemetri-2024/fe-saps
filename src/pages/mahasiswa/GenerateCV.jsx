@@ -1,66 +1,142 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Download, Share2 } from 'lucide-react'
+import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { getCurrentUser } from '../../services/authService'
+import { getPortofolio } from '../../services/dashboardService'
 
-const userData = {
-  name: 'AMARA MARSHINTA',
-  initials: 'AR',
-  nim: '2311121017',
-  prodi: 'Teknologi Pangan',
-  universitas: 'Universitas Andalas',
-  email: 'amara.marshinta@student.unand.ac.id',
-  phone: '+62 812-3456-7890',
-  address: 'Padang, Sumatera Barat',
+function initialsFromName(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'AR'
 }
 
-const pendidikanData = [
-  {
-    jenjang: 'S1 Teknologi Pangan',
-    institusi: 'Universitas Andalas, Padang',
-    tahunMulai: '2023',
-    tahunSelesai: 'sekarang',
-    ipk: '3.80',
-  },
-]
+function yearFromDate(val) {
+  if (!val) return ''
+  try {
+    return String(new Date(val).getFullYear())
+  } catch {
+    return ''
+  }
+}
 
-const organisasiData = [
-  {
-    jabatan: 'Ketua Divisi Pengembangan Sumber Daya Manusia',
-    organisasi: 'UKM Teknologi Pangan Unand',
-    tahunMulai: '2023',
-    tahunSelesai: 'sekarang',
-  },
-  {
-    jabatan: 'Anggota Aktif',
-    organisasi: 'UKM Robotika Unand',
-    tahunMulai: '2023',
-    tahunSelesai: '2024',
-  },
-  {
-    jabatan: 'Peserta BAKTI 2023',
-    organisasi: 'Ditmawa Unand',
-    tahunMulai: '',
-    tahunSelesai: 'Jun 2024',
-  },
-]
-
-const sertifikasiData = [
-  { nama: 'Seminar Nasional AI & Teknologi', tahun: '2023' },
-  { nama: 'Workshop UI/UX Design', tahun: '2023' },
-  { nama: 'Pelatihan Kewirausahaan', tahun: '2023' },
-  { nama: 'Seminar Kepemimpinan Nasional', tahun: '2023' },
-]
-
-const prestasiData = [
-  { nama: 'Juara II Lomba KTI Nasional', pemberi: 'Kemendikbud', tahun: '2023' },
-  { nama: 'Finalis Lomba Inovasi Digital', pemberi: 'Fakultas Teknik Unand', tahun: '2023' },
-]
+function findKategoriEntries(riwayatPerKategori = {}, keys) {
+  const entries = Object.entries(riwayatPerKategori)
+  const matched = []
+  for (const [kat, items] of entries) {
+    const lower = kat.toLowerCase()
+    if (keys.some((k) => lower.includes(k))) {
+      matched.push(...(items || []).map((item) => ({ ...item, kategori: kat })))
+    }
+  }
+  return matched
+}
 
 function GenerateCV() {
+  const user = getCurrentUser()
   const [generated, setGenerated] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [userData, setUserData] = useState(null)
+  const [pendidikanData, setPendidikanData] = useState([])
+  const [organisasiData, setOrganisasiData] = useState([])
+  const [sertifikasiData, setSertifikasiData] = useState([])
+  const [prestasiData, setPrestasiData] = useState([])
+
+  useEffect(() => {
+    const userId = user?.id
+    if (!userId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    getPortofolio(userId)
+      .then((data) => {
+        const mhs = data?.mahasiswa || {}
+        const nama = mhs.nama || user?.nama || 'Mahasiswa'
+        setUserData({
+          name: nama.toUpperCase(),
+          initials: initialsFromName(nama),
+          nim: mhs.nim || '-',
+          prodi: mhs.prodi || '-',
+          universitas: 'Universitas Andalas',
+          email: mhs.email || user?.email || '-',
+          phone: mhs.phone || mhs.nomorTelepon || '-',
+          address: mhs.fakultas ? `${mhs.fakultas}, Padang` : 'Padang, Sumatera Barat',
+        })
+
+        setPendidikanData([
+          {
+            jenjang: mhs.prodi ? `S1 ${mhs.prodi}` : 'S1',
+            institusi: `Universitas Andalas, Padang`,
+            tahunMulai: mhs.angkatan ? String(mhs.angkatan) : '',
+            tahunSelesai: 'sekarang',
+            ipk: mhs.ipk || null,
+          },
+        ])
+
+        const riwayat = data?.riwayatPerKategori || {}
+        const orgItems = findKategoriEntries(riwayat, ['organisasi', 'ukm', 'kepanitiaan'])
+        setOrganisasiData(
+          orgItems.length
+            ? orgItems.map((item) => ({
+                jabatan: item.peran || item.kegiatan || '-',
+                organisasi: item.kegiatan || item.organisasi || item.kategori || '-',
+                tahunMulai: '',
+                tahunSelesai: yearFromDate(item.tanggal) || '-',
+              }))
+            : [],
+        )
+
+        const semItems = findKategoriEntries(riwayat, ['seminar', 'pelatihan', 'workshop', 'sertifikasi'])
+        setSertifikasiData(
+          semItems.map((item) => ({
+            nama: item.kegiatan || '-',
+            tahun: yearFromDate(item.tanggal) || '-',
+          })),
+        )
+
+        const prestItems = findKategoriEntries(riwayat, ['prestasi', 'lomba', 'kompetisi', 'penghargaan'])
+        setPrestasiData(
+          prestItems.map((item) => ({
+            nama: item.kegiatan || '-',
+            pemberi: item.skala || item.kategori || '-',
+            tahun: yearFromDate(item.tanggal) || '-',
+          })),
+        )
+      })
+      .catch((err) => {
+        toast.error('Gagal memuat portofolio', { description: err.message })
+        setUserData({
+          name: (user?.nama || 'Mahasiswa').toUpperCase(),
+          initials: initialsFromName(user?.nama),
+          nim: '-',
+          prodi: '-',
+          universitas: 'Universitas Andalas',
+          email: user?.email || '-',
+          phone: '-',
+          address: 'Padang, Sumatera Barat',
+        })
+      })
+      .finally(() => setLoading(false))
+  }, [user?.id, user?.nama, user?.email])
+
+  const displayUser = userData || {
+    name: (user?.nama || 'Mahasiswa').toUpperCase(),
+    initials: initialsFromName(user?.nama),
+    nim: '-',
+    prodi: '-',
+    universitas: 'Universitas Andalas',
+    email: user?.email || '-',
+    phone: '-',
+    address: 'Padang, Sumatera Barat',
+  }
 
   return (
-    <DashboardLayout role="mahasiswa" userName="Amara Marshinta" userRole="Mahasiswa">
+    <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="text-xs text-[#9aa0a6]">
@@ -74,9 +150,10 @@ function GenerateCV() {
           <button
             type="button"
             onClick={() => setGenerated(true)}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            disabled={loading}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
-            Generate CV
+            {loading ? 'Memuat data…' : 'Generate CV'}
           </button>
           <p className="text-sm text-[#616161]">Buat CV profesional dari data aktivitas Anda secara otomatis.</p>
         </div>
@@ -105,16 +182,16 @@ function GenerateCV() {
               {/* Header CV */}
               <div className="mb-7 flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:gap-5">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-[#333] text-xl font-extrabold text-[#333]">
-                  {userData.initials}
+                  {displayUser.initials}
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold tracking-wide text-[#111]">{userData.name}</h2>
+                  <h2 className="text-lg font-extrabold tracking-wide text-[#111]">{displayUser.name}</h2>
                   <p className="text-sm text-[#444]">
-                    {userData.nim} | {userData.prodi} — {userData.universitas}
+                    {displayUser.nim} | {displayUser.prodi} — {displayUser.universitas}
                   </p>
                   <div className="mt-1 space-y-0.5 text-xs text-[#555]">
-                    <p>✉ {userData.email} &nbsp; ✆ {userData.phone}</p>
-                    <p>⊙ {userData.address}</p>
+                    <p>✉ {displayUser.email} &nbsp; ✆ {displayUser.phone}</p>
+                    <p>⊙ {displayUser.address}</p>
                   </div>
                 </div>
               </div>
@@ -124,75 +201,92 @@ function GenerateCV() {
               {/* Pendidikan */}
               <section className="mb-6">
                 <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Pendidikan</h3>
-                {pendidikanData.map((item, i) => (
-                  <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-[#111]">{item.jenjang}</p>
-                      <p className="text-xs text-[#555]">{item.institusi}</p>
+                {pendidikanData.length === 0 ? (
+                  <p className="text-xs text-[#888]">Belum ada data pendidikan.</p>
+                ) : (
+                  pendidikanData.map((item, i) => (
+                    <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-[#111]">{item.jenjang}</p>
+                        <p className="text-xs text-[#555]">{item.institusi}</p>
+                      </div>
+                      <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
+                        <p>{item.tahunMulai} — {item.tahunSelesai}</p>
+                        {item.ipk && <p>IPK: {item.ipk}</p>}
+                      </div>
                     </div>
-                    <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
-                      <p>{item.tahunMulai} — {item.tahunSelesai}</p>
-                      {item.ipk && <p>IPK: {item.ipk}</p>}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </section>
 
               {/* Pengalaman Organisasi */}
               <section className="mb-6">
                 <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Pengalaman Organisasi</h3>
-                <div className="space-y-3">
-                  {organisasiData.map((item, i) => (
-                    <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-[#111]">{item.jabatan}</p>
-                        <p className="text-xs text-[#555]">{item.organisasi}</p>
+                {organisasiData.length === 0 ? (
+                  <p className="text-xs text-[#888]">Belum ada pengalaman organisasi.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {organisasiData.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-[#111]">{item.jabatan}</p>
+                          <p className="text-xs text-[#555]">{item.organisasi}</p>
+                        </div>
+                        <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
+                          {item.tahunMulai && item.tahunSelesai
+                            ? `${item.tahunMulai} — ${item.tahunSelesai}`
+                            : item.tahunSelesai}
+                        </div>
                       </div>
-                      <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
-                        {item.tahunMulai && item.tahunSelesai
-                          ? `${item.tahunMulai} — ${item.tahunSelesai}`
-                          : item.tahunSelesai}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Sertifikasi & Pelatihan */}
               <section className="mb-6">
                 <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Sertifikasi &amp; Pelatihan</h3>
-                <ul className="space-y-1">
-                  {sertifikasiData.map((item, i) => (
-                    <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between text-sm">
-                      <span className="text-[#333]">• {item.nama}</span>
-                      <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
-                    </li>
-                  ))}
-                </ul>
+                {sertifikasiData.length === 0 ? (
+                  <p className="text-xs text-[#888]">Belum ada sertifikasi/pelatihan.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {sertifikasiData.map((item, i) => (
+                      <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between text-sm">
+                        <span className="text-[#333]">• {item.nama}</span>
+                        <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
 
               {/* Prestasi & Penghargaan */}
               <section className="mb-6">
                 <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Prestasi &amp; Penghargaan</h3>
-                <div className="space-y-3">
-                  {prestasiData.map((item, i) => (
-                    <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-[#111]">
-                          <span className="text-brand-dark">⊙</span> {item.nama}
-                        </p>
-                        <p className="ml-5 text-xs text-[#555]">{item.pemberi}</p>
+                {prestasiData.length === 0 ? (
+                  <p className="text-xs text-[#888]">Belum ada prestasi.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {prestasiData.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="flex items-center gap-1.5 text-sm font-bold text-[#111]">
+                            <span className="text-brand-dark">⊙</span> {item.nama}
+                          </p>
+                          <p className="ml-5 text-xs text-[#555]">{item.pemberi}</p>
+                        </div>
+                        <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
                       </div>
-                      <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Footer CV */}
               <hr className="mb-4 border-[#e0e0e0]" />
               <p className="text-center text-[10px] text-[#9aa0a6]">
-                Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas • 14 Juni 2024
+                Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas •{' '}
+                {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
           </div>
