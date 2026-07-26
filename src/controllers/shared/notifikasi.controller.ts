@@ -1,14 +1,27 @@
 import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 
-// ==================== NOTIFIKASI ====================
+function getAuthUserId(req: Request): bigint | null {
+  const fromToken = req.user?.id;
+  if (fromToken) return BigInt(fromToken);
+  const fromQuery = req.query.userId;
+  if (fromQuery) return BigInt(String(fromQuery));
+  const fromBody = (req.body as { userId?: string | number })?.userId;
+  if (fromBody != null) return BigInt(fromBody);
+  return null;
+}
 
-// GET /api/notifikasi?userId=X — Daftar notifikasi pengguna
-export const getNotifikasi = async (req: Request, res: Response) => {
+// GET /api/umum/notifikasi — Daftar notifikasi pengguna login
+export const getNotifikasi = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = BigInt(req.query.userId as string);
+    const userId = getAuthUserId(req);
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      return;
+    }
+
     const { dibaca } = req.query;
-    const where: any = { userId };
+    const where: { userId: bigint; dibaca?: boolean } = { userId };
     if (dibaca !== undefined) where.dibaca = dibaca === 'true';
 
     const data = await prisma.notifikasi.findMany({
@@ -21,32 +34,66 @@ export const getNotifikasi = async (req: Request, res: Response) => {
       where: { userId, dibaca: false },
     });
 
-    res.json({ success: true, data, unreadCount });
+    // BigInt → string agar JSON aman
+    const normalized = data.map((n) => ({
+      ...n,
+      id: String(n.id),
+      userId: String(n.userId),
+      refId: n.refId != null ? String(n.refId) : null,
+    }));
+
+    res.json({ success: true, data: normalized, unreadCount });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
-// PUT /api/notifikasi/:id/baca — Tandai notifikasi sebagai sudah dibaca
+// PUT /api/umum/notifikasi/:id/baca
 export const bacaNotifikasi = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = req.params.id as string;
+    const userId = getAuthUserId(req);
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      return;
+    }
+
+    const id = BigInt(req.params.id as string);
+    const existing = await prisma.notifikasi.findFirst({ where: { id, userId } });
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Notifikasi tidak ditemukan' });
+      return;
+    }
+
     const updated = await prisma.notifikasi.update({
-      where: { id: BigInt(id) },
+      where: { id },
       data: { dibaca: true },
     });
-    res.json({ success: true, data: updated });
+
+    res.json({
+      success: true,
+      data: {
+        ...updated,
+        id: String(updated.id),
+        userId: String(updated.userId),
+        refId: updated.refId != null ? String(updated.refId) : null,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
-// PUT /api/notifikasi/baca-semua — Tandai semua notifikasi sebagai dibaca
-export const bacaSemuaNotifikasi = async (req: Request, res: Response) => {
+// PUT /api/umum/notifikasi/baca-semua
+export const bacaSemuaNotifikasi = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = BigInt(req.body.userId);
+    const userId = getAuthUserId(req);
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      return;
+    }
+
     await prisma.notifikasi.updateMany({
       where: { userId, dibaca: false },
       data: { dibaca: true },
@@ -60,7 +107,6 @@ export const bacaSemuaNotifikasi = async (req: Request, res: Response) => {
 
 // ==================== AUDIT LOG ====================
 
-// GET /api/audit-log — Daftar audit log (filter: entitas, aktorId)
 export const getAuditLog = async (req: Request, res: Response) => {
   try {
     const { entitas, aktorId, aksi } = req.query;

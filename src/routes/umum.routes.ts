@@ -7,15 +7,21 @@ import { dashboardPimpinanFakultas } from '../controllers/pimpinan/fakultas/dash
 import { getDashboardPimpinanUtama, getDetailFakultasPimpinanUtama } from '../controllers/pimpinan/utama/dashboard.controller';
 import { getDashboardFakultas } from '../controllers/admin/fakultas/dashboard.controller';
 import { getPortofolio } from '../controllers/shared/portofolio.controller';
+import { getFakultas, getProdi, getOrganisasi } from '../controllers/shared/referensi.controller';
 
 const router = Router();
 
 router.use(authenticateJWT);
 
+// ─── REFERENSI MASTER (semua role) ────────────────────────────────────────────
+router.get('/fakultas', getFakultas);
+router.get('/prodi', getProdi);
+router.get('/organisasi', getOrganisasi);
+
 // ─── NOTIFIKASI (semua role) ──────────────────────────────────────────────────
 router.get('/notifikasi', getNotifikasi);
-router.put('/notifikasi/:id/baca', bacaNotifikasi);
 router.put('/notifikasi/baca-semua', bacaSemuaNotifikasi);
+router.put('/notifikasi/:id/baca', bacaNotifikasi);
 
 // ─── AUDIT LOG (Pimpinan & Admin) ────────────────────────────────────────────
 router.get('/audit-log', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getAuditLog);

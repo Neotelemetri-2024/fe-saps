@@ -17,6 +17,8 @@ router.get('/:id', authorizeRole('pimpinan_ditmawa'), getKurikulumById);
 router.post('/', authorizeRole('pimpinan_ditmawa'), createKurikulum);
 router.put('/:id/aktivasi', authorizeRole('pimpinan_ditmawa'), aktivasiKurikulum);
 router.put('/:id/non-aktif', authorizeRole('pimpinan_ditmawa'), nonAktifKurikulum);
+router.put('/:id/nonaktifkan', authorizeRole('pimpinan_ditmawa'), nonAktifKurikulum);
+router.delete('/:id/delete', authorizeRole('pimpinan_ditmawa'), deleteKurikulum);
 router.delete('/:id', authorizeRole('pimpinan_ditmawa'), deleteKurikulum);
 
 router.post('/:kurikulumId/capaian', authorizeRole('pimpinan_ditmawa'), createCapaian);

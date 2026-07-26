@@ -163,7 +163,7 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const kegiatanId = parseInt(req.params.kegiatanId as string);
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
     const { search, filter, page = '1', limit = '10' } = req.query;
 
     // Validasi: kegiatan harus milik UKM ini
@@ -289,7 +289,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const kegiatanId = parseInt(req.params.kegiatanId as string);
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
     const operator = await getOrganisasiOperator(BigInt(userId));
     if (!operator) {
@@ -404,7 +404,7 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const kegiatanId = parseInt(req.params.kegiatanId as string);
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
     const operator = await getOrganisasiOperator(BigInt(userId));
     if (!operator) {
@@ -450,7 +450,7 @@ export const updatePesertaUKM = async (req: Request, res: Response, next: NextFu
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const kegiatanId = parseInt(req.params.kegiatanId as string);
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
     const operator = await getOrganisasiOperator(BigInt(userId));
     if (!operator) {
@@ -502,7 +502,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const aktorId = BigInt(userId);
-    const kegiatanId = parseInt(req.params.kegiatanId as string);
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
     const operator = await getOrganisasiOperator(aktorId);
     if (!operator) {

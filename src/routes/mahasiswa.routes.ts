@@ -3,7 +3,14 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { ajukanIzinPA, getRiwayatIzin, getCatatanPA } from '../controllers/mahasiswa/izin_pa.controller';
-import { ajukanKegiatanEksternal, getRiwayatPengajuan } from '../controllers/mahasiswa/kegiatan_eksternal.controller';
+import {
+  ajukanKegiatanEksternal,
+  getRiwayatPengajuan,
+  simpanDraftKegiatanEksternal,
+  editDraftKegiatanEksternal,
+  hapusDraftKegiatanEksternal,
+  ajukanDraftKegiatanEksternal,
+} from '../controllers/mahasiswa/kegiatan_eksternal.controller';
 import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } from '../controllers/mahasiswa/klaim_eksternal.controller';
 import { getDashboard, getRiwayatPoin } from '../controllers/mahasiswa/dashboard.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
@@ -47,8 +54,12 @@ router.get('/saran-pa', getCatatanPA);
 
 
 // Pengajuan Kegiatan Eksternal
-router.post('/kegiatan-eksternal', ajukanKegiatanEksternal);
 router.get('/kegiatan-eksternal', getRiwayatPengajuan);
+router.post('/kegiatan-eksternal', ajukanKegiatanEksternal);
+router.post('/kegiatan-eksternal/draft', simpanDraftKegiatanEksternal);
+router.put('/kegiatan-eksternal/:id/draft', editDraftKegiatanEksternal);
+router.delete('/kegiatan-eksternal/:id/draft', hapusDraftKegiatanEksternal);
+router.put('/kegiatan-eksternal/:id/ajukan', ajukanDraftKegiatanEksternal);
 
 // Klaim Poin Eksternal
 router.get('/klaim-eksternal/kegiatan-tersedia', getKegiatanTersedia);

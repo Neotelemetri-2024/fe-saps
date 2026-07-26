@@ -1,19 +1,18 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client'
+import { PrismaMariaDb } from '@prisma/adapter-mariadb'
+import 'dotenv/config'
 
-dotenv.config();
+const url = new URL(process.env.DATABASE_URL!)
 
-// Setup adapter untuk MySQL/MariaDB (diperlukan Prisma 7)
 const adapter = new PrismaMariaDb({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'saps_db',
+  host: url.hostname,
+  port: Number(url.port || 3306),
+  user: decodeURIComponent(url.username),
+  password: decodeURIComponent(url.password),
+  database: url.pathname.replace(/^\//, ''),
   connectionLimit: 10,
-});
+})
 
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter })
 
-export default prisma;
+export default prisma

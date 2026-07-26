@@ -9,16 +9,12 @@ const router = Router();
 
 router.use(authenticateJWT);
 
-// GET /api/klaim/verifikasi-eksternal — Klaim eksternal menunggu verifikasi Pimpinan
+// Literal paths BEFORE /:id
+router.get('/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), getKlaimForValidasi);
 router.get('/verifikasi-eksternal', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getKlaimEksternalForVerifikasi);
-
-// GET /api/klaim/:id — Detail klaim (semua role)
-router.get('/:id', getKlaimById);
-
-// PUT /api/klaim/validasi-bulk — Bulk validasi klaim
 router.put('/validasi-bulk', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), validasiKlaimBulk);
 
-// PUT /api/klaim/:id/validasi — Validasi satu klaim
+router.get('/:id', getKlaimById);
 router.put('/:id/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'pimpinan_ditmawa'), validasiKlaim);
 
 export default router;
