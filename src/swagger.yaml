@@ -694,8 +694,11 @@ paths:
                 kategoriId: { type: integer, example: 1 }
                 skalaId: { type: integer, example: 1 }
                 asal: { type: string, example: "eksternal" }
+                deskripsi: { type: string, example: "Deskripsi kegiatan lomba web design" }
                 tanggalMulai: { type: string, example: "2024-01-01" }
                 tanggalSelesai: { type: string, example: "2024-01-02" }
+                lokasi: { type: string, example: "Gedung A" }
+                kuota: { type: integer, example: 100 }
                 alokasi:
                   type: array
                   items:
