@@ -1,22 +1,36 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, ImageIcon } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanService'
 
-function DetailRow({ label, value, multiline = false }) {
+function InfoRow({ label, value, href, multiline = false }) {
   return (
-    <div
-      className={`grid grid-cols-1 gap-1 sm:grid-cols-[220px_1fr] sm:gap-6 ${
-        multiline ? 'items-start' : 'items-baseline'
-      }`}
-    >
-      <p className="text-sm font-medium text-[#333]">{label}</p>
-      <p className={`text-sm text-[#111] ${multiline ? 'leading-relaxed' : ''}`}>{value || '-'}</p>
+    <div className={`flex flex-col gap-0.5 sm:flex-row sm:gap-4 ${multiline ? 'sm:items-start' : 'sm:items-baseline'}`}>
+      <p className="w-full shrink-0 text-xs font-semibold uppercase tracking-wide text-[#9aa0a6] sm:w-44">{label}</p>
+      {href && value && value !== '-' ? (
+        <a href={href} target="_blank" rel="noopener noreferrer"
+          className="break-all text-sm text-brand-dark underline hover:opacity-75">{value}</a>
+      ) : (
+        <p className={`text-sm font-medium text-[#111] ${multiline ? 'leading-relaxed' : ''}`}>{value || '-'}</p>
+      )}
+    </div>
+  )
+}
+
+function SectionCard({ title, icon: Icon, children }) {
+  return (
+    <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center gap-2.5 border-b border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5">
+        {Icon && <Icon className="h-4 w-4 text-brand-dark" />}
+        <h3 className="text-sm font-bold text-brand-dark">{title}</h3>
+      </div>
+      <div className="space-y-3.5 p-5">{children}</div>
     </div>
   )
 }
@@ -57,7 +71,6 @@ function normalizeDetail(raw) {
       })
     }
   })
-
   return {
     id: raw.id,
     kegiatan: raw.nama || raw.kegiatan || '-',
@@ -68,10 +81,9 @@ function normalizeDetail(raw) {
     penyelenggara: raw.penyelenggaraExt || raw.organisasi?.nama || raw.penyelenggara || '-',
     email: raw.email || '-',
     linkWebsite: raw.linkWebsite || raw.website || '-',
-    deskripsi: raw.deskripsi || '-',
+    deskripsi: raw.deskripsi || '',
     capaian: capaian.length ? capaian : (raw.capaian || []),
     subCapaian: subCapaian.length ? subCapaian : (raw.subCapaian || []),
-    bukti: raw.bukti || raw.buktiUrl || null,
     status: mapUiStatus(raw.status || raw.rawStatus),
     alasan: raw.alasan || raw.kegiatanApproval?.[0]?.alasan || '',
   }
@@ -134,10 +146,9 @@ function DetailVerifikasiUKMF() {
       const keputusan = actionType === 'revisi' ? 'revisi' : 'tolak'
       await verifikasiKegiatan(id, { keputusan, alasan: alasan.trim() })
       toast.success(actionType === 'revisi' ? 'Revisi dikirim!' : 'Ditolak!', {
-        description:
-          actionType === 'revisi'
-            ? 'Catatan revisi dikirim ke pengaju.'
-            : `Pengajuan "${item?.kegiatan}" ditolak.`,
+        description: actionType === 'revisi'
+          ? 'Catatan revisi dikirim ke pengaju.'
+          : `Pengajuan "${item?.kegiatan}" ditolak.`,
       })
       setShowActionModal(false)
       backToList()
@@ -153,7 +164,7 @@ function DetailVerifikasiUKMF() {
   if (loading) {
     return (
       <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
-        <p className="text-sm text-[#616161]">Memuat detail…</p>
+        <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat detail…</div>
       </DashboardLayout>
     )
   }
@@ -161,208 +172,152 @@ function DetailVerifikasiUKMF() {
   if (!item) {
     return (
       <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
-        <p className="text-sm text-[#616161]">Data tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="mt-3 text-sm font-medium text-brand-dark hover:underline">
-          Kembali
-        </button>
+        <div className="flex flex-col items-center gap-4 py-20">
+          <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
+          <button type="button" onClick={backToList}
+            className="rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
+            Kembali
+          </button>
+        </div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout
-      role="admin_fakultas"
-      userName={user?.nama || 'Admin Fakultas'}
-      userRole="Admin Fakultas"
-    >
+    <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        message="Apakah Anda yakin ingin menyetujui pengajuan ini dan meneruskannya ke Pimpinan Fakultas?"
-        confirmText={submitting ? 'Memproses...' : 'TERUSKAN KE PIMPINAN'}
-        cancelText="BATAL"
+        message={`Pengajuan kegiatan "${item?.kegiatan}" akan diteruskan ke Pimpinan Fakultas.`}
+        confirmText={submitting ? 'Memproses...' : 'Ya, Teruskan'}
+        cancelText="Batal"
         onConfirm={handleSetujui}
         onCancel={() => setShowConfirmSetujui(false)}
       />
 
-      <Modal isOpen={showActionModal} onClose={() => setShowActionModal(false)}>
-        <p className="mb-2 text-sm font-medium text-black">
-          Alasan {actionType === 'revisi' ? 'Revisi' : 'Tolak'}
-          <span className="text-red-500">*</span>
-        </p>
-        <textarea
-          className="w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
-          rows="4"
-          placeholder={
-            actionType === 'revisi' ? 'Tuliskan catatan revisi...' : 'Tuliskan alasan penolakan...'
-          }
-          value={alasan}
-          onChange={(e) => setAlasan(e.target.value)}
-        />
-        <div className="mt-6 flex justify-end gap-4">
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={handleKirimAction}
-            className={`rounded-lg px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 ${
-              actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'
-            }`}
-          >
-            {submitting
-              ? 'Mengirim...'
-              : actionType === 'revisi'
-              ? 'Kirim Revisi'
-              : 'Tolak Pengajuan'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowActionModal(false)}
-            className="rounded-lg border border-gray-400 px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
-          >
-            Batal
-          </button>
+      <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-[#111]">
+              {actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Pengajuan'}
+            </h3>
+            <p className="mt-0.5 text-sm text-[#616161]">
+              {actionType === 'revisi'
+                ? 'Tuliskan catatan yang perlu diperbaiki.'
+                : 'Tuliskan alasan penolakan pengajuan ini.'}
+            </p>
+          </div>
+          <textarea
+            className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+            rows={4}
+            placeholder={actionType === 'revisi' ? 'Tuliskan catatan revisi...' : 'Tuliskan alasan penolakan...'}
+            value={alasan}
+            onChange={(e) => setAlasan(e.target.value)}
+          />
+          <div className="flex gap-3 pt-1">
+            <button type="button" disabled={submitting} onClick={handleKirimAction}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
+              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Pengajuan'}
+            </button>
+            <button type="button" disabled={submitting} onClick={() => setShowActionModal(false)}
+              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+              Batal
+            </button>
+          </div>
         </div>
       </Modal>
 
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Detail</h2>
-
-        <button
-          type="button"
-          onClick={backToList}
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
-        >
+        <button type="button" onClick={backToList}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
           <ArrowLeft className="h-4 w-4" />
-          Kembali
+          Kembali ke Daftar
         </button>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm sm:p-8">
-          <div className="space-y-8">
-            <section className="space-y-3">
-              <h3 className="text-base font-bold text-[#111]">Kegiatan</h3>
-              <div className="space-y-2.5">
-                <DetailRow label="Nama Kegiatan" value={item.kegiatan} />
-                <DetailRow label="Nama UKMF" value={item.namaUkm} />
-                <DetailRow label="Jenis Kegiatan" value={item.jenis} />
-                <DetailRow label="Skala" value={item.skala} />
-                <DetailRow label="Tanggal" value={item.tanggal} />
-                <DetailRow label="Penyelenggara" value={item.penyelenggara} />
-                <DetailRow label="Email" value={item.email} />
-                <DetailRow label="Link Website Penyelenggara" value={item.linkWebsite} />
-                <DetailRow label="Deskripsi Kegiatan" value={item.deskripsi} multiline />
-              </div>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-base font-bold text-[#111]">Bukti</h3>
-              {item.bukti ? (
-                <img
-                  src={item.bukti}
-                  alt="Bukti kegiatan"
-                  className="max-h-64 rounded-lg border border-[#e9ebf8] object-contain"
-                />
-              ) : (
-                <div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed border-[#d9dce7] bg-[#f9fafb]">
-                  <div className="flex flex-col items-center gap-1 text-[#9aa0a6]">
-                    <ImageIcon className="h-8 w-8" />
-                    <p className="text-xs">Tidak ada bukti</p>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-base font-bold text-[#111]">Capaian</h3>
-              <div className="space-y-1.5 text-sm text-[#111]">
-                {(item.capaian || []).length === 0 ? (
-                  <p className="text-[#9aa0a6]">-</p>
-                ) : (
-                  (item.capaian || []).map((c) => (
-                    <p key={typeof c === 'string' ? c : c.label}>
-                      {typeof c === 'string' ? c : c.label}
-                    </p>
-                  ))
-                )}
-              </div>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-base font-bold text-[#111]">Sub Capaian</h3>
-              <div className="space-y-2.5">
-                {(item.subCapaian || []).length === 0 ? (
-                  <p className="text-sm text-[#9aa0a6]">-</p>
-                ) : (
-                  (item.subCapaian || []).map((sc) => (
-                    <DetailRow
-                      key={sc.label}
-                      label={sc.label}
-                      value={sc.persen || `${sc.poin || 0}%`}
-                    />
-                  ))
-                )}
-              </div>
-            </section>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan Kegiatan UKMF</h2>
+            <p className="mt-1 text-sm text-[#616161]">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
           </div>
+          <div className="shrink-0"><StatusBadge status={item.status} /></div>
         </div>
 
-        {!canAct && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-[#9aa0a6]">Status</p>
-            {item.status === 'diteruskan' && (
-              <p className="text-2xl font-extrabold text-brand-dark">
-                SETUJU
-                <span className="ml-2 text-sm font-normal text-[#616161]">
-                  telah diteruskan ke pimpinan
-                </span>
-              </p>
-            )}
-            {item.status === 'revisi' && (
-              <p className="text-2xl font-extrabold text-orange-500">REVISI</p>
-            )}
-            {item.status === 'ditolak' && (
-              <p className="text-2xl font-extrabold text-red-600">DITOLAK</p>
-            )}
-            {item.status === 'disetujui' && (
-              <p className="text-2xl font-extrabold text-brand-dark">DISETUJUI</p>
-            )}
-            {item.alasan && (
-              <p className="mt-1 text-sm text-[#616161]">
-                <span className="font-medium">Alasan:</span> {item.alasan}
-              </p>
-            )}
+        {!canAct && item.alasan && (
+          <div className={`rounded-xl border p-4 ${item.status === 'ditolak' ? 'border-red-200 bg-red-50' : item.status === 'revisi' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}>
+            <p className={`text-xs font-semibold mb-1 ${item.status === 'ditolak' ? 'text-red-700' : item.status === 'revisi' ? 'text-yellow-700' : 'text-green-700'}`}>
+              {item.status === 'ditolak' ? 'Alasan Penolakan' : 'Catatan Revisi'}
+            </p>
+            <p className={`text-sm whitespace-pre-wrap ${item.status === 'ditolak' ? 'text-red-800' : item.status === 'revisi' ? 'text-yellow-800' : 'text-green-800'}`}>
+              {item.alasan}
+            </p>
           </div>
         )}
 
+        {!canAct && !item.alasan && (
+          <div className="rounded-xl border border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+            <p className="text-sm text-[#616161]">
+              Pengajuan ini sudah diverifikasi dengan status <StatusBadge status={item.status} />
+            </p>
+          </div>
+        )}
+
+        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+          <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
+          <InfoRow label="Nama UKMF" value={item.namaUkm} />
+          <InfoRow label="Jenis Kegiatan" value={item.jenis} />
+          <InfoRow label="Skala" value={item.skala} />
+          <InfoRow label="Tanggal Pelaksanaan" value={item.tanggal} />
+          <InfoRow label="Penyelenggara" value={item.penyelenggara} />
+          {item.email && item.email !== '-' && (
+            <InfoRow label="Email Penyelenggara" value={item.email} href={`mailto:${item.email}`} />
+          )}
+          {item.linkWebsite && item.linkWebsite !== '-' && (
+            <InfoRow label="Link Website" value={item.linkWebsite} href={item.linkWebsite} />
+          )}
+          {item.deskripsi && (
+            <InfoRow label="Deskripsi" value={item.deskripsi} multiline />
+          )}
+        </SectionCard>
+
+        {item.capaian.length > 0 && (
+          <SectionCard title="Capaian Kurikulum">
+            <div className="space-y-1.5">
+              {item.capaian.map((c) => (
+                <p key={typeof c === 'string' ? c : c.label} className="text-sm font-medium text-[#111]">
+                  {typeof c === 'string' ? c : c.label}
+                </p>
+              ))}
+            </div>
+          </SectionCard>
+        )}
+
+        {item.subCapaian.length > 0 && (
+          <SectionCard title="Sub Capaian & Bobot">
+            <div className="space-y-3.5">
+              {item.subCapaian.map((sc, i) => (
+                <InfoRow key={i} label={sc.label} value={sc.persen || `${sc.poin || 0}%`} />
+              ))}
+            </div>
+          </SectionCard>
+        )}
+
         {canAct && (
-          <div className="grid gap-3 sm:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => setShowConfirmSetujui(true)}
-              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition hover:opacity-90"
-            >
-              Setuju
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActionType('revisi')
-                setAlasan('')
-                setShowActionModal(true)
-              }}
-              className="rounded-lg bg-orange-500 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-orange-600"
-            >
-              Revisi
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActionType('tolak')
-                setAlasan('')
-                setShowActionModal(true)
-              }}
-              className="rounded-lg bg-red-700 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-red-800"
-            >
-              Tolak
-            </button>
+          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-[#333]">Keputusan Verifikasi</h3>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => setShowConfirmSetujui(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
+                <CheckCircle2 className="h-4 w-4" /> Teruskan ke Pimpinan
+              </button>
+              <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
+                className="inline-flex items-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
+                <RotateCcw className="h-4 w-4" /> Minta Revisi
+              </button>
+              <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
+                <XCircle className="h-4 w-4" /> Tolak
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Search, Plus, Edit3, Trash2, Filter, Clock } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -175,6 +176,56 @@ function ManajemenEvent() {
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(item.rawStatus)
   const bisaKirim = (item) => item.rawStatus === 'draft' || item.rawStatus === 'perlu_revisi'
 
+  const columns = useMemo(() => [
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
+      <div>
+        <p className="font-medium text-[#333]">{row.nama}</p>
+        <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
+          <Clock className="h-3 w-3 shrink-0" />
+          <span>{row.dibuatPada}</span>
+        </div>
+      </div>
+    )},
+    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
+    { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
+    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <div className="flex items-center gap-2">
+        {bisaKirim(row) && (
+          <button
+            type="button"
+            onClick={() => setKirimTarget(row)}
+            className="rounded-full bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
+          >
+            {row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
+          </button>
+        )}
+        {bisaEdit(row) && (
+          <button
+            type="button"
+            onClick={() => navigate('/admin_ditmawa/buat-event', { state: { edit: row } })}
+            className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+          >
+            <Edit3 className="h-4 w-4" />
+          </button>
+        )}
+        {bisaHapus(row) && (
+          <button
+            type="button"
+            onClick={() => setHapusTarget(row)}
+            className="rounded p-1 text-red-600 transition hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    )},
+  ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus])
+
   const resetFilter = () => {
     setSearch('')
     setFilterJenis('')
@@ -274,100 +325,15 @@ function ManajemenEvent() {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3">No</th>
-                    <th className="px-4 py-3">Nama Kegiatan</th>
-                    <th className="px-4 py-3">Jenis</th>
-                    <th className="px-4 py-3">Skala</th>
-                    <th className="px-4 py-3">Tanggal</th>
-                    <th className="px-4 py-3">Peserta</th>
-                    <th className="px-4 py-3">Poin</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">Memuat data…</td>
-                    </tr>
-                  ) : pageItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">Belum ada event.</td>
-                    </tr>
-                  ) : (
-                    pageItems.map((item, idx) => (
-                      <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                        <td className="px-4 py-3 text-[#616161]">{start + idx + 1}</td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-[#333]">{item.nama}</p>
-                          <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-                            <Clock className="h-3 w-3 shrink-0" />
-                            <span>{item.dibuatPada}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-[#616161]">{item.jenis}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.skala}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.tanggal}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.peserta}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.poin}</td>
-                        <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {bisaKirim(item) && (
-                              <button
-                                type="button"
-                                onClick={() => setKirimTarget(item)}
-                                className="rounded-full bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
-                              >
-                                {item.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
-                              </button>
-                            )}
-                            {bisaEdit(item) && (
-                              <button
-                                type="button"
-                                onClick={() => navigate('/admin_ditmawa/buat-event', { state: { edit: item } })}
-                                className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-                              >
-                                <Edit3 className="h-4 w-4" />
-                              </button>
-                            )}
-                            {bisaHapus(item) && (
-                              <button
-                                type="button"
-                                onClick={() => setHapusTarget(item)}
-                                className="rounded p-1 text-red-600 transition hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-4 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-              <span>Showing {filtered.length === 0 ? 0 : start + 1} - {Math.min(start + PAGE_SIZE, filtered.length)} From Total {data.length}</span>
-              <span>Page {currentPage} of {totalPages}</span>
-              <div className="flex items-center gap-1">
-                <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40">Previous</button>
-                {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((n) => (
-                  <button key={n} type="button" onClick={() => setPage(n)}
-                    className={`rounded px-2 py-1 ${n === currentPage ? 'bg-brand-dark text-white' : 'hover:bg-[#f0f4f0]'}`}>
-                    {n}
-                  </button>
-                ))}
-                <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40">Next</button>
-              </div>
-            </div>
+            <DataTable
+              columns={columns}
+              data={pageItems}
+              loading={loading}
+              emptyText="Belum ada event."
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
           </div>
         </section>
       </div>

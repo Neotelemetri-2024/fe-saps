@@ -125,12 +125,34 @@ export async function importPesertaCSV(kegiatanId, file) {
   return res?.data || res
 }
 
+
 export async function submitPoinPeserta(kegiatanId) {
   const res = await post(`/api/kegiatan/${kegiatanId}/peserta/submit-poin`)
   return res?.data || res
 }
 
-export function downloadTemplatePeserta(kegiatanId) {
-  const base = import.meta.env.VITE_API_BASE || 'https://api.saps.neotelemetri.id'
-  return `${base.replace(/\/$/, '')}/api/kegiatan/${kegiatanId}/peserta/template`
+export async function downloadTemplatePeserta(kegiatanId) {
+  const base = (import.meta.env.VITE_API_BASE || 'https://api.saps.neotelemetri.id').replace(/\/$/, '')
+  const url = `${base}/api/kegiatan/${kegiatanId}/peserta/template`
+  let token = null
+  try {
+    const raw = localStorage.getItem('saps_current_user')
+    if (raw) token = JSON.parse(raw)?.token || null
+  } catch { /* ignore */ }
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(errText || `Gagal download template (${res.status})`)
+  }
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = `template_peserta_${kegiatanId}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(objectUrl)
 }

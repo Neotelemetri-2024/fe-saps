@@ -35,6 +35,7 @@ function normalizePersetujuan(item, i = 0) {
     mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     namaMahasiswa: mhsObj?.user?.nama || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     status: (item.statusIzin || item.status || 'pending').toLowerCase(),
+    isUlang: item.isUlang || false,
   }
 }
 
@@ -313,6 +314,13 @@ export async function mintaPersetujuanDosen(data = {}) {
   const res = await post('/api/mahasiswa/izin-pa', body)
   emitUpdate('persetujuan')
   return res?.data || res
+}
+
+/** GET /api/mahasiswa/izin-pa — raw (tanpa normalize, untuk PersetujuanDosen.jsx) */
+export async function getIzinPAMahasiswa(params = {}) {
+  const res = await get('/api/mahasiswa/izin-pa', params)
+  const data = res?.data || res
+  return Array.isArray(data) ? data : []
 }
 
 /** GET /api/mahasiswa/izin-pa */

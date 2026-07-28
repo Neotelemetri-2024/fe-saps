@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Download, Edit3, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardAdminDitmawa } from '../../services/dashboardService'
@@ -102,6 +103,42 @@ function AdminDitmawaDashboard() {
     setSelectedItem(null)
   }
 
+  const kegiatanColumns = useMemo(() => [
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{row.no}</span> },
+    { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
+      <div>
+        <p className="font-medium text-[#333]">{row.nama}</p>
+        <p className="mt-1 text-[11px] text-[#9aa0a6]">{row.meta}</p>
+      </div>
+    )},
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
+    { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
+    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleEdit(row)}
+          className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+          aria-label="Edit kegiatan"
+        >
+          <Edit3 className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDeleteClick(row)}
+          className="rounded p-1 text-red-600 transition hover:bg-red-50"
+          aria-label="Hapus kegiatan"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    )},
+  ], [kegiatanTerbaru])
+
   return (
     <DashboardLayout
       role="admin_ditmawa"
@@ -147,76 +184,12 @@ function AdminDitmawaDashboard() {
         <section>
           <h3 className="mb-3 text-lg font-bold text-brand-dark">Kegiatan terbaru</h3>
           <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3">No</th>
-                    <th className="px-4 py-3">Nama Kegiatan</th>
-                    <th className="px-4 py-3">Kategori</th>
-                    <th className="px-4 py-3">Skala</th>
-                    <th className="px-4 py-3">Tanggal</th>
-                    <th className="px-4 py-3">Peserta</th>
-                    <th className="px-4 py-3">Poin</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">
-                        Memuat data…
-                      </td>
-                    </tr>
-                  ) : kegiatanTerbaru.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">
-                        Belum ada kegiatan.
-                      </td>
-                    </tr>
-                  ) : (
-                    kegiatanTerbaru.map((item) => (
-                      <tr key={item.id || item.no} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                        <td className="px-4 py-3 text-[#616161]">{item.no}</td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-[#333]">{item.nama}</p>
-                          <p className="mt-1 text-[11px] text-[#9aa0a6]">{item.meta}</p>
-                        </td>
-                        <td className="px-4 py-3 text-[#616161]">{item.kategori}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.skala}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.tanggal}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.peserta}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.poin}</td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={item.status} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(item)}
-                              className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-                              aria-label="Edit kegiatan"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteClick(item)}
-                              className="rounded p-1 text-red-600 transition hover:bg-red-50"
-                              aria-label="Hapus kegiatan"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={kegiatanColumns}
+              data={kegiatanTerbaru}
+              loading={loading}
+              emptyText="Belum ada kegiatan."
+            />
           </div>
         </section>
 

@@ -36,12 +36,17 @@ function normalizeKegiatanDetail(k) {
     deskripsi: k.deskripsi || '',
     status: k.status,
     alasan: latestApproval?.alasan || '',
-    capaian: (k.kegiatanCapaian || []).map((kc) => ({
-      label: kc.subCapaian?.capaian?.nama || kc.subCapaian?.nama || '-',
-    })),
+    capaian: (() => {
+      const seen = new Set()
+      return (k.kegiatanCapaian || []).reduce((acc, kc) => {
+        const nama = kc.subCapaian?.capaian?.nama
+        if (nama && !seen.has(nama)) { seen.add(nama); acc.push({ label: nama }) }
+        return acc
+      }, [])
+    })(),
     subCapaian: (k.kegiatanCapaian || []).map((kc) => ({
       label: kc.subCapaian?.nama || '-',
-      poin: kc.subCapaian?.bobotPoin ?? null,
+      persen: kc.alokasiPersen ?? null,
     })),
   }
 }
@@ -248,6 +253,32 @@ function DetailVerifikasiPengajuanEksternal() {
                 <DetailRow label="Deskripsi Kegiatan" value={d.deskripsi} multiline />
               </div>
             </section>
+
+            {d.capaian.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-base font-bold text-[#111]">Capaian</h3>
+                <div className="space-y-1.5">
+                  {d.capaian.map((c, i) => (
+                    <p key={i} className="text-sm text-[#111]">{c.label}</p>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {d.subCapaian.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-base font-bold text-[#111]">Sub Capaian</h3>
+                <div className="space-y-2.5">
+                  {d.subCapaian.map((sc, i) => (
+                    <DetailRow
+                      key={i}
+                      label={sc.label}
+                      value={sc.persen != null ? `${sc.persen}%` : sc.poin != null ? `${sc.poin}%` : '-'}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
           </div>
         </div>

@@ -97,6 +97,13 @@ function DashboardLayout({ role, userName, userRole, children }) {
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
+
+        {/* Footer */}
+        <footer className="flex h-[41px] shrink-0 items-center justify-center border-t border-[#e9ebf8] bg-white px-4 sm:px-6 lg:px-8">
+          <p className="text-sm text-[#616161]">
+            © {new Date().getFullYear()} SAPS  · Neo Telemetri · Universitas Andalas
+          </p>
+        </footer>
       </div>
     </div>
   )

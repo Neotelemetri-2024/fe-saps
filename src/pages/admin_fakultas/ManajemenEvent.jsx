@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { toast } from 'sonner'
 import { getCurrentUser } from '../../services/authService'
@@ -122,6 +123,74 @@ function ManajemenEvent() {
   const bisaHapus = (e) => ['draft', 'perlu_revisi', 'ditolak'].includes(e.rawStatus)
   const bisaKirim = (e) => e.rawStatus === 'draft' || e.rawStatus === 'perlu_revisi'
 
+  const columns = useMemo(() => [
+    {
+      key: 'kegiatan',
+      label: 'NAMA KEGIATAN',
+      render: (row) => (
+        <div>
+          <p className="font-medium text-[#222]">{row.kegiatan}</p>
+          <p className="mt-0.5 text-xs text-[#9aa0a6]">⏱ {row.submitted}</p>
+        </div>
+      ),
+    },
+    { key: 'kategori', label: 'KATEGORI' },
+    { key: 'skala', label: 'SKALA' },
+    { key: 'tanggal', label: 'TANGGAL' },
+    { key: 'peserta', label: 'PESERTA' },
+    {
+      key: 'poin',
+      label: 'POIN',
+      render: (row) => <span>{row.poin ?? '–'}</span>,
+    },
+    {
+      key: 'status',
+      label: 'STATUS',
+      render: (row) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      key: 'aksi',
+      label: 'AKSI',
+      stopPropagation: true,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          {bisaKirim(row) && (
+            <button
+              type="button"
+              onClick={() => setKirimTarget(row)}
+              className="rounded-lg bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
+            >
+              {row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
+            </button>
+          )}
+          {bisaEdit(row) && (
+            <button
+              type="button"
+              onClick={() => navigate(`/admin_fakultas/buat-event?edit=${row.id}`)}
+              className="rounded-lg border border-brand-dark p-1.5 text-brand-dark transition hover:bg-brand-dark hover:text-white"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {bisaHapus(row) && (
+            <button
+              type="button"
+              onClick={() => setDeleteId(row.id)}
+              className="rounded-lg border border-red-400 p-1.5 text-red-500 transition hover:bg-red-500 hover:text-white"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ], [navigate])
+
   return (
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
       <ConfirmModal
@@ -210,88 +279,12 @@ function ManajemenEvent() {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-max text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NO</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NAMA KEGIATAN</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">KATEGORI</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">SKALA</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">TANGGAL</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">PESERTA</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">POIN</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">STATUS</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">AKSI</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td>
-                  </tr>
-                ) : filtered.map((event, i) => (
-                  <tr key={event.id} className="hover:bg-[#f9fafb]">
-                    <td className="px-4 py-3.5 text-[#616161]">{i + 1}.</td>
-                    <td className="px-4 py-3.5">
-                      <p className="font-medium text-[#222]">{event.kegiatan}</p>
-                      <p className="mt-0.5 text-xs text-[#9aa0a6]">⏱ {event.submitted}</p>
-                    </td>
-                    <td className="px-4 py-3.5 text-[#616161]">{event.kategori}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{event.skala}</td>
-                    <td className="px-4 py-3.5 text-[#616161] whitespace-nowrap">{event.tanggal}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{event.peserta}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{event.poin ?? '–'}</td>
-                    <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[event.status] ?? ''}`}>
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        {event.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        {bisaKirim(event) && (
-                          <button
-                            type="button"
-                            onClick={() => setKirimTarget(event)}
-                            className="rounded-lg bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
-                          >
-                            {event.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
-                          </button>
-                        )}
-                        {bisaEdit(event) && (
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/admin_fakultas/buat-event?edit=${event.id}`)}
-                            className="rounded-lg border border-brand-dark p-1.5 text-brand-dark transition hover:bg-brand-dark hover:text-white"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        {bisaHapus(event) && (
-                          <button
-                            type="button"
-                            onClick={() => setDeleteId(event.id)}
-                            className="rounded-lg border border-red-400 p-1.5 text-red-500 transition hover:bg-red-500 hover:text-white"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {!loading && filtered.length === 0 && (
-            <div className="py-10 text-center text-sm text-[#9aa0a6]">Tidak ada event ditemukan.</div>
-          )}
-          <div className="flex flex-col gap-3 border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing 1 – {filtered.length} From Total {data.length}</span>
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={filtered}
+          loading={loading}
+          emptyText="Tidak ada event ditemukan."
+        />
       </div>
     </DashboardLayout>
   )

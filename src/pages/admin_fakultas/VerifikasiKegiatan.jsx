@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Search, Filter } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
 
@@ -56,7 +57,6 @@ function VerifikasiKegiatan() {
 
   useEffect(() => {
     setLoading(true)
-    // Event admin fakultas: asal universitas (event pusat) atau kurikuler_ukmf
     getKegiatan()
       .then((res) => {
         const list = Array.isArray(res) ? res : []
@@ -101,6 +101,48 @@ function VerifikasiKegiatan() {
     setPage(1)
   }
 
+  const columns = useMemo(() => [
+    {
+      key: 'kegiatan',
+      label: 'NAMA KEGIATAN',
+      render: (row) => (
+        <div>
+          <p className="font-medium text-[#222]">{row.kegiatan}</p>
+          <p className="mt-0.5 text-xs text-[#9aa0a6]">⏱ {row.submitted}</p>
+        </div>
+      ),
+    },
+    { key: 'kategori', label: 'KATEGORI' },
+    { key: 'skala', label: 'SKALA' },
+    { key: 'tanggal', label: 'TANGGAL' },
+    { key: 'peserta', label: 'PESERTA' },
+    { key: 'poin', label: 'POIN' },
+    {
+      key: 'status',
+      label: 'STATUS',
+      render: (row) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      key: 'aksi',
+      label: 'AKSI',
+      stopPropagation: true,
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => navigate(`/admin_fakultas/verifikasi-kegiatan/${row.id}/peserta`)}
+          className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-yellow-500"
+        >
+          Manajemen Peserta
+        </button>
+      ),
+    },
+  ], [navigate])
+
   return (
     <DashboardLayout
       role="admin_fakultas"
@@ -117,7 +159,6 @@ function VerifikasiKegiatan() {
 
         <p className="text-sm font-medium text-[#333]">Event yang telah dibuat</p>
 
-        {/* Search + Filter bar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
@@ -169,102 +210,15 @@ function VerifikasiKegiatan() {
           </button>
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-max text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NO</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NAMA KEGIATAN</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">KATEGORI</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">SKALA</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">TANGGAL</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">PESERTA</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">POIN</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">STATUS</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">AKSI</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-[#888]">Memuat data…</td>
-                  </tr>
-                ) : (
-                  pageItems.map((e, i) => (
-                    <tr key={e.id} className="hover:bg-[#f9fafb]">
-                      <td className="px-4 py-3.5 text-[#616161]">{start + i + 1}.</td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium text-[#222]">{e.kegiatan}</p>
-                        <p className="mt-0.5 text-xs text-[#9aa0a6]">⏱ {e.submitted}</p>
-                      </td>
-                      <td className="px-4 py-3.5 text-[#616161]">{e.kategori}</td>
-                      <td className="px-4 py-3.5 text-[#616161]">{e.skala}</td>
-                      <td className="px-4 py-3.5 text-[#616161] whitespace-nowrap">{e.tanggal}</td>
-                      <td className="px-4 py-3.5 text-[#616161]">{e.peserta}</td>
-                      <td className="px-4 py-3.5 text-[#616161]">{e.poin}</td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[e.status] ?? ''}`}>
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          {e.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/admin_fakultas/verifikasi-kegiatan/${e.id}/peserta`)}
-                          className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-yellow-500"
-                        >
-                          Manajemen Peserta
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          {!loading && filtered.length === 0 && (
-            <div className="py-10 text-center text-sm text-[#9aa0a6]">Tidak ada data ditemukan.</div>
-          )}
-          <div className="flex flex-col gap-3 border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing {filtered.length ? start + 1 : 0} – {Math.min(start + PAGE_SIZE, filtered.length)} From Total {filtered.length}
-            </span>
-            <div className="flex flex-wrap items-center gap-1">
-              <span>Page {currentPage} of {totalPages}</span>
-              <div className="ml-3 flex flex-wrap gap-1">
-                <button
-                  type="button"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded border border-[#d1d5db] px-2 py-1 text-xs text-[#555] hover:bg-[#f5f5f5] disabled:opacity-40"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`rounded px-2 py-1 text-xs ${p === currentPage ? 'bg-brand-dark text-white' : 'border border-[#d1d5db] text-[#555] hover:bg-[#f5f5f5]'}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="rounded border border-[#d1d5db] px-2 py-1 text-xs text-[#555] hover:bg-[#f5f5f5] disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={pageItems}
+          loading={loading}
+          emptyText="Tidak ada data ditemukan."
+          page={currentPage}
+          totalPages={totalPages}
+          onPageChange={(p) => setPage(p)}
+        />
       </div>
     </DashboardLayout>
   )

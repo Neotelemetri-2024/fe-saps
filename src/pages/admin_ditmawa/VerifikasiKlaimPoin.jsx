@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Filter, Search, Check } from 'lucide-react'
+import { Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimForValidasi, validasiBulk } from '../../services/poinService'
@@ -13,8 +14,7 @@ const PAGE_SIZE = 10
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
-  if (['menunggu_validasi', 'pending'].includes(s)) return 'pending'
-  if (['menunggu_pimpinan'].includes(s)) return 'diteruskan'
+  if (['menunggu_validasi', 'pending', 'menunggu_pimpinan'].includes(s)) return 'pending'
   if (['perlu_revisi', 'revisi'].includes(s)) return 'revisi'
   if (['disetujui'].includes(s)) return 'disetujui'
   if (['ditolak'].includes(s)) return 'ditolak'
@@ -157,6 +157,32 @@ function VerifikasiKlaimPoin() {
     }
   }
 
+  const columns = useMemo(() => [
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
+      <div>
+        <p className="font-semibold text-brand-dark">{row.mahasiswa}</p>
+        <p className="text-[11px] text-orange-500">{row.nim}</p>
+        <p className="text-[11px] text-sky-500">{row.prodi}</p>
+      </div>
+    )},
+    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-brand-light">{row.kategori}</span> },
+    { key: 'peran', label: 'Peran', render: (row) => <span className="text-[#616161]">{row.peran}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-[#616161]">{row.info}</span> },
+    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <button
+        type="button"
+        onClick={() => navigate(`/admin_ditmawa/verifikasi-klaim/${row.id}`, { state: { item: row } })}
+        className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+      >
+        Detail dan verifikasi
+      </button>
+    )},
+  ], [pageItems, start, navigate])
+
   const resetFilter = () => {
     setSearch('')
     setKategori('')
@@ -252,8 +278,7 @@ function VerifikasiKlaimPoin() {
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Status</option>
-              <option value="pending">Pending</option>
-              <option value="diteruskan">Diteruskan</option>
+              <option value="pending">Menunggu Verifikasi</option>
               <option value="disetujui">Disetujui</option>
               <option value="ditolak">Ditolak</option>
               <option value="revisi">Revisi</option>
@@ -341,152 +366,19 @@ function VerifikasiKlaimPoin() {
         </div>
 
         <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  {pilihanMode && (
-                    <th className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={centangSemua}
-                        className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${
-                          allPageSelected ? 'border-white bg-white' : 'border-white/70 hover:bg-white/20'
-                        }`}
-                      >
-                        {allPageSelected && <Check className="h-3 w-3 text-brand-dark" />}
-                      </button>
-                    </th>
-                  )}
-                  <th className="px-4 py-3">No</th>
-                  <th className="px-4 py-3">Mahasiswa</th>
-                  <th className="px-4 py-3">Kegiatan</th>
-                  <th className="px-4 py-3">Kategori</th>
-                  <th className="px-4 py-3">Peran</th>
-                  <th className="px-4 py-3">Tanggal</th>
-                  <th className="px-4 py-3">Info Penyelenggara</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={pilihanMode ? 10 : 9} className="px-4 py-10 text-center text-[#616161]">
-                      Memuat data...
-                    </td>
-                  </tr>
-                ) : pageItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={pilihanMode ? 10 : 9} className="px-4 py-10 text-center text-[#616161]">
-                      Tidak ada data klaim poin.
-                    </td>
-                  </tr>
-                ) : (
-                  pageItems.map((item, idx) => (
-                    <tr
-                      key={item.id}
-                      className={`border-b border-[#e9ebf8] last:border-0 ${
-                        selected.has(item.id) ? 'bg-green-50' : 'hover:bg-[#f9fafb]'
-                      }`}
-                    >
-                      {pilihanMode && (
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => toggleSelect(item.id)}
-                            className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${
-                              selected.has(item.id)
-                                ? 'border-brand-dark bg-brand-dark'
-                                : 'border-[#c4c6cf] bg-white hover:border-brand-dark'
-                            }`}
-                          >
-                            {selected.has(item.id) && <Check className="h-3 w-3 text-white" />}
-                          </button>
-                        </td>
-                      )}
-                      <td className="px-4 py-3 text-[#616161]">{start + idx + 1}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-brand-dark">{item.mahasiswa}</p>
-                        <p className="text-[11px] text-orange-500">{item.nim}</p>
-                        <p className="text-[11px] text-sky-500">{item.prodi}</p>
-                      </td>
-                      <td className="px-4 py-3 text-[#616161]">{item.kegiatan}</td>
-                      <td className="px-4 py-3 text-brand-light">{item.kategori}</td>
-                      <td className="px-4 py-3 text-[#616161]">{item.peran}</td>
-                      <td className="px-4 py-3 text-[#616161]">{item.tanggal}</td>
-                      <td className="px-4 py-3 text-xs text-[#616161]">{item.info}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={item.status} />
-                      </td>
-                      <td className="px-4 py-3">
-                        {pilihanMode ? (
-                          <button
-                            type="button"
-                            onClick={() => toggleSelect(item.id)}
-                            className={`flex h-6 w-6 items-center justify-center rounded border-2 transition ${
-                              selected.has(item.id)
-                                ? 'border-brand-dark bg-brand-dark text-white'
-                                : 'border-[#c4c6cf] text-transparent'
-                            }`}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(`/admin_ditmawa/verifikasi-klaim/${item.id}`, { state: { item } })
-                            }
-                            className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
-                          >
-                            Detail dan verifikasi
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-4 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing {filtered.length === 0 ? 0 : start + 1} - {Math.min(start + PAGE_SIZE, filtered.length)}{' '}
-              From Total {filtered.length}
-            </span>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={currentPage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40"
-              >
-                Previous
-              </button>
-              {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setPage(n)}
-                  className={`rounded px-2 py-1 ${n === currentPage ? 'bg-brand-dark text-white' : 'hover:bg-[#f0f4f0]'}`}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <DataTable
+            columns={columns}
+            data={pageItems}
+            loading={loading}
+            emptyText="Tidak ada data klaim poin."
+            selectable={pilihanMode}
+            selected={selected}
+            onSelect={toggleSelect}
+            onSelectAll={centangSemua}
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
         </div>
       </div>
     </DashboardLayout>

@@ -1,9 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Search } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Search, FileText, UploadCloud, Eye } from 'lucide-react'
+import DataTable from '../../components/dashboard/DataTable'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
-import { getPersetujuanMahasiswa, subscribeDataUpdate } from '../../services/pengajuanService'
+import Modal from '../../components/ui/Modal'
+import { getIzinPAMahasiswa, mintaPersetujuanDosenEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
+import { getPeranKegiatan } from '../../services/matriksService'
+import { klaimPoin } from '../../services/poinService'
 import { getCurrentUser } from '../../services/authService'
 
 function formatTanggal(value) {
@@ -17,19 +22,9 @@ function formatTanggal(value) {
   }
 }
 
-/**
- * Normalise data dari /api/mahasiswa/izin-pa
- * BE response format:
- * {
- *   id, statusIzin, alasanDitolak, tanggalDiajukan,
- *   kegiatan: { id, nama, kategori, penyelenggara, tanggalMulai },
- *   peran: string
- * }
- */
 function normalizeIzinPA(item, i = 0) {
   const kegiatan = typeof item.kegiatan === 'object' && item.kegiatan ? item.kegiatan : {}
   const statusRaw = (item.statusIzin || item.status || 'diajukan').toLowerCase()
-  // Map status BE ke label UI
   let statusUI = statusRaw
   if (statusRaw === 'diajukan') statusUI = 'pending'
   else if (statusRaw === 'disetujui') statusUI = 'disetujui'
@@ -38,6 +33,13 @@ function normalizeIzinPA(item, i = 0) {
 
   return {
     id: item.id ?? i,
+    kegiatanId: kegiatan.id || item.kegiatanId || null,
+    partisipasiId: item.partisipasiId || null,
+    kategoriId: kegiatan.kategoriId || null,
+    skalaId: kegiatan.skalaId || null,
+    peranId: item.peranId || null,
+    sudahDiklaim: item.sudahDiklaim || false,
+    // field display
     kegiatan: kegiatan.nama || item.namaKegiatan || item.kegiatan || '-',
     jenis: kegiatan.kategori || item.jenis || '-',
     peran: item.peran || '-',
@@ -49,18 +51,55 @@ function normalizeIzinPA(item, i = 0) {
 }
 
 function PersetujuanDosen() {
+  const navigate = useNavigate()
   const user = getCurrentUser()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
 
+  // Modal info (alasan/catatan)
+  const [infoModal, setInfoModal] = useState(null) // { judul, isi }
+
+  // Modal revisi izin PA
+  const [revisiTarget, setRevisiTarget] = useState(null) // row
+  const [peranList, setPeranList] = useState([])
+  const [peranId, setPeranId] = useState('')
+  const [loadingPeran, setLoadingPeran] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Checkbox klaim poin
+  const [pilihanMode, setPilihanMode] = useState(false)
+  const [selected, setSelected] = useState(new Set()) // set of row.id
+
+  // Modal klaim poin
+  const [showKlaimModal, setShowKlaimModal] = useState(false)
+  const [klaimItems, setKlaimItems] = useState([]) // [{id, partisipasiId, peranId, peranUsulanId, kegiatan, peranList, loadingPeran}]
+  const [klaimBukti, setKlaimBukti] = useState(null) // File PDF
+  const [submittingKlaim, setSubmittingKlaim] = useState(false)
+  const fileInputRef = useRef(null)
+
   const load = () => {
     setLoading(true)
-    getPersetujuanMahasiswa()
+    getIzinPAMahasiswa()
       .then((res) => {
         const items = Array.isArray(res) ? res : []
-        setData(items.map(normalizeIzinPA))
+        // Deteksi kegiatan yang pernah diajukan ulang: kegiatanId muncul > 1x
+        const kegiatanCount = {}
+        items.forEach((it) => {
+          const kid = it.kegiatan?.id || it.kegiatanId
+          if (kid) kegiatanCount[kid] = (kegiatanCount[kid] || 0) + 1
+        })
+        // Data sudah diurutkan terbaru di atas (orderBy createdAt desc)
+        // kegiatanId yang muncul >1x → yang pertama (index 0) = terbaru = "diajukan ulang"
+        const seenKid = new Set()
+        const normalized = items.map((it, i) => {
+          const kid = it.kegiatan?.id || it.kegiatanId
+          const isUlang = kid && kegiatanCount[kid] > 1 && !seenKid.has(kid)
+          if (kid) seenKid.add(kid)
+          return { ...normalizeIzinPA(it, i), no: i + 1, isUlang: !!isUlang }
+        })
+        setData(normalized)
       })
       .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
       .finally(() => setLoading(false))
@@ -72,6 +111,136 @@ function PersetujuanDosen() {
       if (!detail?.type || detail.type === 'persetujuan') load()
     })
   }, [])
+
+  // Fetch peran saat modal revisi dibuka
+  useEffect(() => {
+    if (!revisiTarget?.kategoriId) {
+      setPeranList([])
+      setPeranId(revisiTarget?.peranId || '')
+      return
+    }
+    setPeranId(revisiTarget.peranId || '')
+    setLoadingPeran(true)
+    getPeranKegiatan(revisiTarget.kategoriId)
+      .then((l) => setPeranList(Array.isArray(l) ? l : []))
+      .catch(() => setPeranList([]))
+      .finally(() => setLoadingPeran(false))
+  }, [revisiTarget])
+
+  const handleOpenRevisi = (row) => {
+    setRevisiTarget(row)
+  }
+
+  const handleCloseRevisi = () => {
+    setRevisiTarget(null)
+    setPeranList([])
+    setPeranId('')
+  }
+
+  const handleSubmitRevisi = async () => {
+    if (!peranId) {
+      toast.error('Pilih peran terlebih dahulu')
+      return
+    }
+    if (!revisiTarget?.kegiatanId) {
+      toast.error('Data kegiatan tidak lengkap')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await mintaPersetujuanDosenEksternal(revisiTarget.kegiatanId, peranId)
+      toast.success('Berhasil diajukan ulang ke Dosen PA!')
+      handleCloseRevisi()
+      load()
+    } catch (err) {
+      toast.error('Gagal mengajukan ulang', { description: err.message })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // --- Checkbox & Klaim Handlers ---
+  const toggleSelect = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBatalPilih = () => {
+    setPilihanMode(false)
+    setSelected(new Set())
+  }
+
+  const handleOpenKlaimModal = () => {
+    if (selected.size === 0) {
+      toast.error('Pilih minimal satu kegiatan')
+      return
+    }
+    const selectedRows = data.filter((row) => selected.has(row.id))
+    const items = selectedRows.map((row) => ({
+      id: row.id,
+      partisipasiId: row.partisipasiId,
+      kegiatan: row.kegiatan,
+      peran: row.peran || '-',
+      peranId: row.peranId || '',
+    }))
+    setKlaimItems(items)
+    setKlaimBukti(null)
+    setShowKlaimModal(true)
+  }
+
+  const handleKlaimFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      toast.error('Hanya file PDF yang diizinkan')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 10 MB')
+      return
+    }
+    setKlaimBukti(file)
+  }
+
+  const handleSubmitKlaim = async () => {
+    if (!klaimBukti) {
+      toast.error('Upload bukti PDF terlebih dahulu')
+      return
+    }
+    setSubmittingKlaim(true)
+    let berhasil = 0
+    let gagal = 0
+    try {
+      for (const item of klaimItems) {
+        try {
+          await klaimPoin({
+            partisipasiId: item.partisipasiId,
+            peranUsulanId: item.peranId,
+            bukti: klaimBukti,
+          })
+          berhasil++
+        } catch {
+          gagal++
+        }
+      }
+      if (berhasil > 0) {
+        toast.success(`${berhasil} klaim poin berhasil diajukan ke Admin Ditmawa!`)
+      }
+      if (gagal > 0) {
+        toast.error(`${gagal} klaim gagal diajukan (mungkin sudah pernah diklaim).`)
+      }
+      setShowKlaimModal(false)
+      setSelected(new Set())
+      setPilihanMode(false)
+      load()
+    } finally {
+      setSubmittingKlaim(false)
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -95,6 +264,153 @@ function PersetujuanDosen() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
+      {/* Modal info catatan/alasan */}
+      <Modal isOpen={!!infoModal} onClose={() => setInfoModal(null)}>
+        <div className="space-y-3">
+          <h3 className="text-base font-bold text-[#333]">{infoModal?.judul}</h3>
+          <p className="text-sm text-[#616161] whitespace-pre-wrap">{infoModal?.isi || 'Tidak ada keterangan.'}</p>
+          <button
+            type="button"
+            onClick={() => setInfoModal(null)}
+            className="w-full rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+          >
+            Tutup
+          </button>
+        </div>
+      </Modal>
+
+      {/* Modal klaim poin — upload bukti PDF + pilih peran per kegiatan */}
+      <Modal isOpen={showKlaimModal} onClose={() => !submittingKlaim && setShowKlaimModal(false)} size="md">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-[#333]">Ajukan Klaim Poin Capaian</h3>
+            <p className="mt-0.5 text-sm text-[#616161]">
+              Upload 1 bukti PDF untuk semua kegiatan yang dipilih, dan tentukan peran di masing-masing kegiatan.
+            </p>
+          </div>
+
+          {/* Daftar kegiatan yang diklaim */}
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {klaimItems.map((item) => (
+              <div key={item.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] p-3">
+                <p className="text-sm font-medium text-[#333]">{item.kegiatan}</p>
+                <p className="text-xs text-[#616161] mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
+              </div>
+            ))}
+          </div>
+
+          {/* Upload bukti PDF */}
+          <div>
+            <label className="block text-sm font-medium text-[#333] mb-1">
+              Bukti Dokumen (PDF)<span className="text-red-500">*</span>
+              <span className="ml-1 text-xs font-normal text-[#888]">maks 10 MB</span>
+            </label>
+            <div
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d1d5db] bg-[#fafafa] px-4 py-6 transition hover:border-brand-dark hover:bg-green-50"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e9ebf8]">
+                {klaimBukti ? (
+                  <FileText className="h-5 w-5 text-brand-dark" />
+                ) : (
+                  <UploadCloud className="h-5 w-5 text-[#9aa0a6]" />
+                )}
+              </div>
+              {klaimBukti ? (
+                <p className="text-sm font-semibold text-brand-dark">{klaimBukti.name}</p>
+              ) : (
+                <p className="text-sm text-[#616161]">Klik untuk upload file PDF</p>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf"
+              onChange={handleKlaimFileChange}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              disabled={submittingKlaim}
+              onClick={handleSubmitKlaim}
+              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+            >
+              {submittingKlaim ? 'Mengirim…' : 'Ajukan Klaim Poin'}
+            </button>
+            <button
+              type="button"
+              disabled={submittingKlaim}
+              onClick={() => setShowKlaimModal(false)}
+              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal revisi izin PA — hanya ganti peran, data kegiatan tidak berubah */}
+      <Modal isOpen={!!revisiTarget} onClose={handleCloseRevisi} size="md">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-[#333]">Ajukan Ulang ke Dosen PA</h3>
+            <p className="mt-0.5 text-sm text-[#616161]">
+              Kegiatan: <span className="font-medium">{revisiTarget?.kegiatan}</span>
+            </p>
+          </div>
+
+          {revisiTarget?.alasan && (
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+              <p className="text-xs font-semibold text-yellow-700 mb-1">Catatan Revisi Dosen PA</p>
+              <p className="text-sm text-yellow-800 whitespace-pre-wrap">{revisiTarget.alasan}</p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-[#333] mb-1">
+              Peran / Pencapaian<span className="text-red-500">*</span>
+            </label>
+            {loadingPeran ? (
+              <p className="text-sm text-[#9aa0a6]">Memuat pilihan peran…</p>
+            ) : peranList.length === 0 ? (
+              <p className="text-sm text-red-400">Peran tidak tersedia untuk kategori ini.</p>
+            ) : (
+              <select
+                value={peranId}
+                onChange={(e) => setPeranId(e.target.value)}
+                className="block w-full rounded-lg border border-[#e9ebf8] p-2.5 text-sm text-[#333] focus:border-brand-dark"
+              >
+                <option value="">Pilih peran</option>
+                {peranList.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nama || p.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              disabled={submitting || !peranId}
+              onClick={handleSubmitRevisi}
+              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+            >
+              {submitting ? 'Mengirim…' : 'Ajukan Ulang'}
+            </button>
+            <button
+              type="button"
+              onClick={handleCloseRevisi}
+              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div className="space-y-4 sm:space-y-6">
         <div>
           <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Persetujuan Dosen PA</h2>
@@ -140,75 +456,118 @@ function PersetujuanDosen() {
             )}
           </div>
 
-          <div className="mt-4 overflow-x-auto">
-            {loading ? (
-              <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat data…</p>
-            ) : filtered.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-sm text-[#9aa0a6]">
-                  {data.length === 0
-                    ? 'Belum ada permintaan izin ke Dosen PA.'
-                    : 'Tidak ada data yang sesuai filter.'}
-                </p>
-                {data.length === 0 && (
-                  <p className="mt-1 text-xs text-[#c0c0c0]">
-                    Centang kegiatan yang sudah disetujui di halaman Daftar Pengajuan, lalu klik "Minta Persetujuan Dosen PA".
-                  </p>
-                )}
-              </div>
-            ) : (
-              <table className="w-full min-w-[700px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3">NO</th>
-                    <th className="px-4 py-3">KEGIATAN</th>
-                    <th className="px-4 py-3">JENIS</th>
-                    <th className="px-4 py-3">PERAN</th>
-                    <th className="px-4 py-3">PENYELENGGARA</th>
-                    <th className="px-4 py-3">TANGGAL</th>
-                    <th className="px-4 py-3">STATUS</th>
-                    <th className="px-4 py-3">KETERANGAN</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((row, i) => (
-                    <tr
-                      key={row.id}
-                      className={`border-b border-[#e9ebf8] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}`}
-                    >
-                      <td className="px-4 py-3 text-[#616161]">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-[#333]">{row.kegiatan}</td>
-                      <td className="px-4 py-3 text-[#616161]">{row.jenis}</td>
-                      <td className="px-4 py-3 text-[#616161]">{row.peran}</td>
-                      <td className="px-4 py-3 text-[#616161]">{row.penyelenggara}</td>
-                      <td className="px-4 py-3 text-[#616161]">{row.tanggal}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={row.status} />
-                      </td>
-                      <td className="px-4 py-3">
-                        {row.status === 'ditolak' || row.status === 'revisi' ? (
+          <div className="mt-4">
+            <DataTable
+              columns={[
+                { key: 'no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan' },
+                { key: 'jenis', label: 'Jenis' },
+                { key: 'peran', label: 'Peran' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'tanggal', label: 'Tanggal' },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (row) =>
+                    row.isUlang && row.status === 'pending' ? (
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                        Diajukan Ulang
+                      </span>
+                    ) : (
+                      <StatusBadge status={row.status} />
+                    ),
+                },
+                {
+                  key: 'keterangan',
+                  label: 'Keterangan',
+                  stopPropagation: true,
+                  render: (row) => (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/mahasiswa/persetujuan-dosen/${row.id}`, { state: { row } })}
+                        className="flex items-center gap-1 rounded-lg border border-brand-dark px-2 py-1 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Detail
+                      </button>
+                      {row.status === 'revisi' && (
+                        <>
                           <button
                             type="button"
-                            onClick={() =>
-                              toast.info(
-                                row.status === 'revisi' ? 'Catatan Revisi' : 'Alasan Penolakan',
-                                { description: row.alasan || 'Tidak ada keterangan.' }
-                              )
-                            }
-                            className="text-sm font-medium text-red-600 underline hover:text-red-800"
+                            onClick={() => setInfoModal({ judul: 'Catatan Revisi Dosen PA', isi: row.alasan || 'Tidak ada catatan.' })}
+                            className="text-xs font-medium text-yellow-600 underline hover:text-yellow-800"
                           >
                             Lihat Catatan
                           </button>
-                        ) : row.status === 'disetujui' ? (
-                          <span className="text-sm font-medium text-green-600">Disetujui Dosen PA ✓</span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">Menunggu</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRevisi(row)}
+                            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-1 text-xs font-semibold text-white hover:opacity-90"
+                          >
+                            Ajukan Ulang
+                          </button>
+                        </>
+                      )}
+                      {row.status === 'ditolak' && (
+                        <button
+                          type="button"
+                          onClick={() => setInfoModal({ judul: 'Alasan Penolakan Dosen PA', isi: row.alasan || 'Tidak ada alasan tercantum.' })}
+                          className="text-xs font-medium text-red-600 underline hover:text-red-800"
+                        >
+                          Lihat Alasan
+                        </button>
+                      )}
+                      {row.status === 'disetujui' && (
+                        row.sudahDiklaim
+                          ? <span className="text-xs font-medium text-brand-dark">Klaim diajukan ✓</span>
+                          : <span className="text-xs font-medium text-green-600">Disetujui Dosen PA ✓</span>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+              data={filtered}
+              loading={loading}
+              emptyText={data.length === 0 ? 'Belum ada permintaan izin ke Dosen PA.' : 'Tidak ada data yang sesuai filter.'}
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              isSelectable={(row) => row.status === 'disetujui' && !row.sudahDiklaim}
+            />
+          </div>
+
+          {/* Tombol klaim poin — di bawah tabel */}
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+            {pilihanMode ? (
+              <>
+                <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>
+                <div className="ml-auto flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleBatalPilih}
+                    className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenKlaimModal}
+                    disabled={selected.size === 0}
+                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    Klaim Poin Capaian
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPilihanMode(true)}
+                className="ml-auto rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+              >
+                Klaim Poin Capaian
+              </button>
             )}
           </div>
         </div>

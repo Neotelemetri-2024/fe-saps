@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import { getKegiatan } from '../../services/kegiatanService'
 
 const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Ditolak', 'Revisi']
@@ -72,6 +72,34 @@ function VerifikasiPengajuanUKMF() {
     revisi: 'bg-orange-100 text-orange-600 border border-orange-300',
   }
 
+  const columns = [
+    { key: 'no', label: 'No' },
+    { key: 'kegiatan', label: 'Kegiatan', render: (item) => <span className="font-semibold text-brand-dark">{item.kegiatan}</span> },
+    { key: 'namaUkmf', label: 'Nama UKMF' },
+    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-brand-light">{item.jenis}</span> },
+    { key: 'skala', label: 'Skala' },
+    { key: 'tanggal', label: 'Tanggal', render: (item) => <span className="whitespace-nowrap">{item.tanggal}</span> },
+    {
+      key: 'status', label: 'Status',
+      render: (item) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[item.status?.toLowerCase()] ?? 'bg-gray-100 text-gray-500'}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {item.status}
+        </span>
+      ),
+    },
+    {
+      key: 'aksi', label: 'Aksi', stopPropagation: true,
+      render: (item) => (
+        <button type="button"
+          onClick={() => navigate(`/pimpinan_fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })}
+          className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
+          {item.status?.toLowerCase() === 'pending' ? 'Detail dan verifikasi' : 'Detail'}
+        </button>
+      ),
+    },
+  ]
+
   return (
     <DashboardLayout role="pimpinan_fakultas" userName="Dr. Eng. Ir. Dendi Adi Saputra M, S.T, M.T" userRole="Pimpinan">
       <div className="space-y-6">
@@ -136,69 +164,12 @@ function VerifikasiPengajuanUKMF() {
           )}
         </div>
 
-        {/* Tabel */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">No</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Kegiatan</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Nama UKMF</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Jenis</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Skala</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Tanggal</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-sm text-[#9aa0a6]">Memuat data...</td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-sm text-[#9aa0a6]">Tidak ada data ditemukan.</td>
-                  </tr>
-                ) : filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-[#f9fafb]">
-                    <td className="px-4 py-3.5 text-[#616161]">{item.no}</td>
-                    <td className="px-4 py-3.5 font-semibold text-brand-dark">{item.kegiatan}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{item.namaUkmf}</td>
-                    <td className="px-4 py-3.5 text-brand-light">{item.jenis}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{item.skala}</td>
-                    <td className="px-4 py-3.5 text-[#616161] whitespace-nowrap">{item.tanggal}</td>
-                    <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[item.status?.toLowerCase()] ?? 'bg-gray-100 text-gray-500'}`}>
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/pimpinan_fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })}
-                        className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
-                      >
-                        {item.status?.toLowerCase() === 'pending' ? 'Detail dan verifikasi' : 'Detail'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-5 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing 1 - {filtered.length} dari Total {ukmfData.length}</span>
-            <span>Page 1 of {Math.max(1, Math.ceil(ukmfData.length / 10))}</span>
-            <div className="flex items-center gap-1">
-              {['Previous', '1', '2', '...', '3', '4', 'Next'].map((p) => (
-                <button key={p} type="button" className={`rounded px-2 py-1 text-xs ${p === '1' ? 'bg-brand-dark text-white' : 'border border-[#d1d5db] text-[#555] hover:bg-[#f5f5f5]'}`}>{p}</button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <DataTable
+          loading={loading}
+          data={filtered}
+          emptyText="Tidak ada data ditemukan."
+          columns={columns}
+        />
       </div>
     </DashboardLayout>
   )

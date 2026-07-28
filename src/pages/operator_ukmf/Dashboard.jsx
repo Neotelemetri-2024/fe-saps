@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
 
@@ -96,54 +97,31 @@ function UKMFDashboard() {
             </button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-4 text-center">No</th>
-                    <th className="px-4 py-4 text-center">Kegiatan</th>
-                    <th className="px-4 py-4 text-center">Jenis</th>
-                    <th className="px-4 py-4 text-center">Skala</th>
-                    <th className="px-4 py-4 text-center">Tanggal</th>
-                    <th className="px-4 py-4 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td>
-                    </tr>
-                  ) : preview.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Belum ada kegiatan.</td>
-                    </tr>
-                  ) : (
-                    preview.map((r, i) => (
-                      <tr key={r.id ?? i} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                        <td className="px-4 py-4 text-[#616161]">{i + 1}</td>
-                        <td className="px-4 py-4">
-                          <p className="font-medium text-[#333]">{r.nama || '-'}</p>
-                          {r.createdAt && (
-                            <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9a9a9a]">
-                              <Clock className="h-3 w-3" />
-                              {formatTanggal(r.createdAt)}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-[#616161]">{r.kategori?.nama || r.jenis || '-'}</td>
-                        <td className="px-4 py-4 text-[#616161]">{r.skala?.nama || r.skala || '-'}</td>
-                        <td className="px-4 py-4 text-[#616161]">{formatTanggal(r.tanggalMulai || r.tanggal)}</td>
-                        <td className="px-4 py-4">
-                          <StatusBadge status={mapStatus(r.status)} />
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable
+            loading={loading}
+            data={preview}
+            emptyText="Belum ada kegiatan."
+            columns={[
+              { key: 'no', label: 'No', render: (_r, _col, i) => i + 1 },
+              {
+                key: 'kegiatan', label: 'Kegiatan',
+                render: (r) => (
+                  <div>
+                    <p className="font-medium text-[#333]">{r.nama || '-'}</p>
+                    {r.createdAt && (
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9a9a9a]">
+                        <Clock className="h-3 w-3" />{formatTanggal(r.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                ),
+              },
+              { key: 'jenis', label: 'Jenis', render: (r) => r.kategori?.nama || r.jenis || '-' },
+              { key: 'skala', label: 'Skala', render: (r) => r.skala?.nama || r.skala || '-' },
+              { key: 'tanggal', label: 'Tanggal', render: (r) => formatTanggal(r.tanggalMulai || r.tanggal) },
+              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={mapStatus(r.status)} /> },
+            ]}
+          />
         </div>
 
         <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">

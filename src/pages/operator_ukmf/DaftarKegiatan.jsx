@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Bell, Pencil, Plus, RefreshCw, Send, Trash2, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -148,95 +149,67 @@ function DaftarKegiatan() {
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-4">Nama Kegiatan</th>
-                  <th className="px-4 py-4">Jenis</th>
-                  <th className="px-4 py-4">Skala</th>
-                  <th className="px-4 py-4">Tanggal</th>
-                  <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat…</td></tr>
-                ) : data.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Belum ada kegiatan.</td></tr>
-                ) : data.map((item) => (
-                  <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="px-4 py-4 font-medium text-[#333]">{item.nama || '-'}</td>
-                    <td className="px-4 py-4 text-[#616161]">{labelOf(item.jenis || item.kategori)}</td>
-                    <td className="px-4 py-4 text-[#616161]">{labelOf(item.skala)}</td>
-                    <td className="px-4 py-4 text-[#616161]">{formatTanggal(item.tanggalMulai || item.tanggal)}</td>
-                    <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap items-center justify-center gap-1.5">
-                        {bisaPeserta(item) && (
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`)}
-                            className="inline-flex items-center gap-1 rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-white hover:bg-yellow-500"
-                          >
-                            <Users className="h-3 w-3" /> Peserta
-                          </button>
-                        )}
-                        {bisaEdit(item) && (
-                          <button
-                            type="button"
-                            onClick={() => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } })}
-                            className="inline-flex items-center gap-1 rounded-full border border-brand-dark px-3 py-1 text-xs font-semibold text-brand-dark"
-                          >
-                            <Pencil className="h-3 w-3" /> Edit
-                          </button>
-                        )}
-                        {bisaKirim(item) && (
-                          <button
-                            type="button"
-                            onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
-                            className="inline-flex items-center gap-1 rounded-full bg-brand-dark px-3 py-1 text-xs font-semibold text-white"
-                          >
-                            <Send className="h-3 w-3" /> Kirim
-                          </button>
-                        )}
-                        {bisaAjukanUlang(item) && (
-                          <button
-                            type="button"
-                            onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
-                            className="inline-flex items-center gap-1 rounded-full border border-amber-500 px-3 py-1 text-xs font-semibold text-amber-600"
-                          >
-                            <RefreshCw className="h-3 w-3" /> Ajukan Ulang
-                          </button>
-                        )}
-                        {bisaHapus(item) && (
-                          <button
-                            type="button"
-                            onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
-                            className="inline-flex items-center gap-1 rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-600"
-                          >
-                            <Trash2 className="h-3 w-3" /> Hapus
-                          </button>
-                        )}
-                        {bisaPublish(item) && (
-                          <button
-                            type="button"
-                            onClick={() => setKonfirmasi({ type: 'publish', id: item.id })}
-                            className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
-                          >
-                            Publikasi
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          loading={loading}
+          data={data}
+          emptyText="Belum ada kegiatan."
+          columns={[
+            { key: 'nama', label: 'Nama Kegiatan', render: (item) => item.nama || '-' },
+            { key: 'jenis', label: 'Jenis', render: (item) => labelOf(item.jenis || item.kategori) },
+            { key: 'skala', label: 'Skala', render: (item) => labelOf(item.skala) },
+            { key: 'tanggal', label: 'Tanggal', render: (item) => formatTanggal(item.tanggalMulai || item.tanggal) },
+            { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
+            {
+              key: 'aksi', label: 'Aksi', stopPropagation: true,
+              render: (item) => (
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {bisaPeserta(item) && (
+                    <button type="button"
+                      onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`)}
+                      className="inline-flex items-center gap-1 rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-white hover:bg-yellow-500">
+                      <Users className="h-3 w-3" /> Peserta
+                    </button>
+                  )}
+                  {bisaEdit(item) && (
+                    <button type="button"
+                      onClick={() => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } })}
+                      className="inline-flex items-center gap-1 rounded-full border border-brand-dark px-3 py-1 text-xs font-semibold text-brand-dark">
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                  )}
+                  {bisaKirim(item) && (
+                    <button type="button"
+                      onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
+                      className="inline-flex items-center gap-1 rounded-full bg-brand-dark px-3 py-1 text-xs font-semibold text-white">
+                      <Send className="h-3 w-3" /> Kirim
+                    </button>
+                  )}
+                  {bisaAjukanUlang(item) && (
+                    <button type="button"
+                      onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
+                      className="inline-flex items-center gap-1 rounded-full border border-amber-500 px-3 py-1 text-xs font-semibold text-amber-600">
+                      <RefreshCw className="h-3 w-3" /> Ajukan Ulang
+                    </button>
+                  )}
+                  {bisaHapus(item) && (
+                    <button type="button"
+                      onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
+                      className="inline-flex items-center gap-1 rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-600">
+                      <Trash2 className="h-3 w-3" /> Hapus
+                    </button>
+                  )}
+                  {bisaPublish(item) && (
+                    <button type="button"
+                      onClick={() => setKonfirmasi({ type: 'publish', id: item.id })}
+                      className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                      Publikasi
+                    </button>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+        />
 
         <ConfirmModal
           isOpen={!!konfirmasi}

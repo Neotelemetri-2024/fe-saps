@@ -107,10 +107,10 @@ const initialSections = [
 
 function EditableCell({ value, onChange, editing }) {
   const [editing_, setEditing_] = useState(false)
-  const [val, setVal] = useState(value)
+  const [val, setVal] = useState(value ?? '')
   const inputRef = useRef(null)
 
-  useEffect(() => { setVal(value) }, [value])
+  useEffect(() => { setVal(value ?? '') }, [value])
   useEffect(() => { if (editing_) inputRef.current?.focus() }, [editing_])
 
   function commit() {
@@ -137,17 +137,17 @@ function EditableCell({ value, onChange, editing }) {
       onClick={() => { if (editing) setEditing_(true) }}
       title={editing ? 'Klik untuk mengedit' : ''}
     >
-      {value}
+      {value ?? ''}
     </span>
   )
 }
 
 function EditableRowLabel({ value, onChange, editing }) {
   const [editing_, setEditing_] = useState(false)
-  const [val, setVal] = useState(value)
+  const [val, setVal] = useState(value ?? '')
   const inputRef = useRef(null)
 
-  useEffect(() => { setVal(value) }, [value])
+  useEffect(() => { setVal(value ?? '') }, [value])
   useEffect(() => { if (editing_) inputRef.current?.focus() }, [editing_])
 
   function commit() {
@@ -175,7 +175,7 @@ function EditableRowLabel({ value, onChange, editing }) {
       onClick={() => { if (editing) setEditing_(true) }}
       title={editing ? 'Klik untuk mengedit' : ''}
     >
-      {value}
+      {value ?? ''}
     </span>
   )
 }

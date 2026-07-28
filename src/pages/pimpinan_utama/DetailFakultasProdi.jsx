@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardFakultasDetail } from '../../services/dashboardService'
 
@@ -274,43 +275,17 @@ function DetailFakultasProdi() {
           <div className="border-b border-[#e9ebf8] px-5 py-4">
             <h3 className="text-lg font-bold text-brand-dark">Peringkat Prodi</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="w-20 px-4 py-3 text-center">Ranking</th>
-                  <th className="px-4 py-3 text-left">Program Studi</th>
-                  <th className="w-32 px-4 py-3 text-left">Total Poin</th>
-                  <th className="w-40 px-4 py-3 text-left">Kategori Poin</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#eef0f7]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-[#888]">Memuat data…</td>
-                  </tr>
-                ) : filteredProdi.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-[#888]">Belum ada data prodi.</td>
-                  </tr>
-                ) : (
-                  filteredProdi.map((item) => (
-                    <tr key={item.prodi} className="transition duration-150 hover:bg-[#f9fafb]">
-                      <td className="px-4 py-4 text-center font-semibold text-[#616161]">{item.rank}.</td>
-                      <td className="px-4 py-4 font-semibold text-brand-dark">{item.prodi}</td>
-                      <td className="px-4 py-4 font-bold text-[#333]">{item.poin}</td>
-                      <td className="px-4 py-4">
-                        <KategoriPoinBar item={item} />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="border-t border-[#e9ebf8] px-6 py-3 text-xs text-[#616161]">
-            Menampilkan {filteredProdi.length} dari {prodiList.length} program studi
-          </div>
+          <DataTable
+            loading={loading}
+            data={filteredProdi}
+            emptyText="Belum ada data prodi."
+            columns={[
+              { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-[#616161]">{item.rank}.</span> },
+              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="font-semibold text-brand-dark">{item.prodi}</span> },
+              { key: 'poin', label: 'Total Poin', render: (item) => <span className="font-bold text-[#333]">{item.poin}</span> },
+              { key: 'kategori', label: 'Kategori Poin', render: (item) => <KategoriPoinBar item={item} /> },
+            ]}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-5">

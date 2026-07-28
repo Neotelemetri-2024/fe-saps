@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Search, Filter, Clock } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
 
@@ -85,6 +86,44 @@ function VerifikasiKegiatan() {
     navigate(`/admin_ditmawa/manajemen-peserta-event/${item.id}`, { state: { event: item } })
   }
 
+  const columns = useMemo(() => [
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
+      <div>
+        <p className="font-medium text-[#333]">{row.nama}</p>
+        <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
+          <Clock className="h-3 w-3 shrink-0" />
+          <span>{row.dibuatPada}</span>
+        </div>
+      </div>
+    )},
+    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
+    { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
+    { key: 'status', label: 'Status', render: (row) => {
+      const pendaftaran = STATUS_PENDAFTARAN[row.statusPendaftaran] || STATUS_PENDAFTARAN.belum
+      return (
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${pendaftaran.bg} ${pendaftaran.text}`}>
+          {pendaftaran.label}
+        </span>
+      )
+    }},
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => {
+      const btnColor = row.statusPendaftaran === 'sudah' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600'
+      return (
+        <button
+          type="button"
+          onClick={() => handleManajemenPeserta(row)}
+          className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold text-white transition ${btnColor}`}
+        >
+          Manajemen Peserta
+        </button>
+      )
+    }},
+  ], [pageItems, start, navigate])
+
   const resetFilter = () => {
     setSearch('')
     setFilterJenis('')
@@ -158,88 +197,15 @@ function VerifikasiKegiatan() {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3">No</th>
-                    <th className="px-4 py-3">Nama Kegiatan</th>
-                    <th className="px-4 py-3">Jenis</th>
-                    <th className="px-4 py-3">Skala</th>
-                    <th className="px-4 py-3">Tanggal</th>
-                    <th className="px-4 py-3">Peserta</th>
-                    <th className="px-4 py-3">Poin</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">Memuat data…</td>
-                    </tr>
-                  ) : pageItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-10 text-center text-[#616161]">Belum ada data kegiatan.</td>
-                    </tr>
-                  ) : (
-                    pageItems.map((item, idx) => {
-                      const pendaftaran = STATUS_PENDAFTARAN[item.statusPendaftaran] || STATUS_PENDAFTARAN.belum
-                      const btnColor = item.statusPendaftaran === 'sudah'
-                        ? 'bg-green-600 hover:bg-green-700'
-                        : 'bg-yellow-500 hover:bg-yellow-600'
-                      return (
-                        <tr key={item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                          <td className="px-4 py-3 text-[#616161]">{start + idx + 1}</td>
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-[#333]">{item.nama}</p>
-                            <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-                              <Clock className="h-3 w-3 shrink-0" />
-                              <span>{item.dibuatPada}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-[#616161]">{item.jenis}</td>
-                          <td className="px-4 py-3 text-[#616161]">{item.skala}</td>
-                          <td className="px-4 py-3 text-[#616161]">{item.tanggal}</td>
-                          <td className="px-4 py-3 text-[#616161]">{item.peserta}</td>
-                          <td className="px-4 py-3 text-[#616161]">{item.poin}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${pendaftaran.bg} ${pendaftaran.text}`}>
-                              {pendaftaran.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() => handleManajemenPeserta(item)}
-                              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold text-white transition ${btnColor}`}
-                            >
-                              Manajemen Peserta
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-4 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-              <span>Showing {filtered.length === 0 ? 0 : start + 1} - {Math.min(start + PAGE_SIZE, filtered.length)} From Total {data.length}</span>
-              <span>Page {currentPage} of {totalPages}</span>
-              <div className="flex items-center gap-1">
-                <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40">Previous</button>
-                {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((n) => (
-                  <button key={n} type="button" onClick={() => setPage(n)}
-                    className={`rounded px-2 py-1 ${n === currentPage ? 'bg-brand-dark text-white' : 'hover:bg-[#f0f4f0]'}`}>
-                    {n}
-                  </button>
-                ))}
-                <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="rounded px-2 py-1 hover:bg-[#f0f4f0] disabled:opacity-40">Next</button>
-              </div>
-            </div>
+            <DataTable
+              columns={columns}
+              data={pageItems}
+              loading={loading}
+              emptyText="Belum ada data kegiatan."
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
           </div>
         </section>
       </div>

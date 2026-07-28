@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getAkunUKM,
@@ -235,6 +236,35 @@ function ManajemenAkunUKM() {
     }
   }
 
+  const columns = useMemo(() => [
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{filtered.indexOf(row) + 1}</span> },
+    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-[#333]">{row.nama}</span> },
+    { key: 'username', label: 'Username', render: (row) => <span className="text-[#616161]">{row.username}</span> },
+    { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
+      <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
+        <StatusBadge status={row.status} />
+      </button>
+    )},
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setResetTarget(row)}
+          className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+        >
+          <Key className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(row)}
+          className="rounded p-1 text-red-600 transition hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    )},
+  ], [filtered, handleToggleStatus])
+
   return (
     <DashboardLayout role="admin_ditmawa" userName="Admin Ditmawa" userRole="Admin Ditmawa">
       {showTambah && (
@@ -281,65 +311,12 @@ function ManajemenAkunUKM() {
         <div>
           <h3 className="mb-3 text-lg font-bold text-brand-dark">Akun UKM yang telah dibuat</h3>
           <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3">No</th>
-                    <th className="px-4 py-3">Nama UKM</th>
-                    <th className="px-4 py-3">Username</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-10 text-center text-[#616161]">Memuat data…</td>
-                    </tr>
-                  ) : filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-10 text-center text-[#616161]">Tidak ada data UKM.</td>
-                    </tr>
-                  ) : (
-                    filtered.map((item, idx) => (
-                      <tr key={item.userId || item.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                        <td className="px-4 py-3 text-[#616161]">{idx + 1}</td>
-                        <td className="px-4 py-3 font-medium text-[#333]">{item.nama}</td>
-                        <td className="px-4 py-3 text-[#616161]">{item.username}</td>
-                        <td className="px-4 py-3">
-                          <button type="button" onClick={() => handleToggleStatus(item)} title="Klik untuk ubah status">
-                            <StatusBadge status={item.status} />
-                          </button>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setResetTarget(item)}
-                              className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-                            >
-                              <Key className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDelete(item)}
-                              className="rounded p-1 text-red-600 transition hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-col gap-3 border-t border-[#e9ebf8] px-4 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-              <span>Showing 1 - {filtered.length} From Total {data.length}</span>
-              <span>Page 1 of 1</span>
-            </div>
+            <DataTable
+              columns={columns}
+              data={filtered}
+              loading={loading}
+              emptyText="Tidak ada data UKM."
+            />
           </div>
         </div>
       </div>

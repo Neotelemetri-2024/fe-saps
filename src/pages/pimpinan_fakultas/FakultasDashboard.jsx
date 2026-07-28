@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanFakultas } from '../../services/dashboardService'
 
@@ -252,51 +253,35 @@ function PimpinanFakultasDashboard() {
               ))}
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[500px] text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">RANKING</th>
-                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">PROGRAM STUDI</th>
-                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">TOTAL POIN</th>
-                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">KATEGORI POIN</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-sm text-[#888]">Memuat data…</td>
-                  </tr>
-                ) : mappedPeringkat.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-sm text-[#888]">Belum ada data peringkat prodi.</td>
-                  </tr>
-                ) : (
-                  mappedPeringkat.map((item, i) => (
-                    <tr key={item.prodi} className="hover:bg-[#f9fafb]">
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
-                          i === 0 ? 'bg-yellow-400' : i === 1 ? 'bg-gray-400' : 'bg-amber-700'
-                        }`}>
-                          {i + 1}.
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-center text-[#333]">{item.prodi}</td>
-                      <td className="px-5 py-3.5 text-center font-semibold text-[#333]">{item.total}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <div className="inline-flex justify-center">
-                          <KategoriPoinBar organisasi={item.organisasi} prestasi={item.prestasi} seminar={item.seminar} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="border-t border-[#e9ebf8] px-5 py-3 text-right text-xs text-[#888]">
-            Menampilkan 1-{mappedPeringkat.length} dari {mappedPeringkat.length} Program Studi
-          </div>
+          <DataTable
+            loading={loading}
+            data={mappedPeringkat}
+            emptyText="Belum ada data peringkat prodi."
+            columns={[
+              {
+                key: 'ranking', label: 'Ranking',
+                render: (item, _col, i) => (
+                  <div className="flex justify-center">
+                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
+                      i === 0 ? 'bg-yellow-400' : i === 1 ? 'bg-gray-400' : 'bg-amber-700'
+                    }`}>
+                      {i + 1}.
+                    </span>
+                  </div>
+                ),
+              },
+              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="text-center block text-[#333]">{item.prodi}</span> },
+              { key: 'total', label: 'Total Poin', render: (item) => <span className="text-center block font-semibold text-[#333]">{item.total}</span> },
+              {
+                key: 'kategori', label: 'Kategori Poin',
+                render: (item) => (
+                  <div className="flex justify-center">
+                    <KategoriPoinBar organisasi={item.organisasi} prestasi={item.prestasi} seminar={item.seminar} />
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
 
         {/* Charts Row */}

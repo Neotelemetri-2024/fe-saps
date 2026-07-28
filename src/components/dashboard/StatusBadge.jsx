@@ -29,8 +29,7 @@ function StatusBadge({ status }) {
     label: status || 'Pending',
   }
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
       {cfg.label}
     </span>
   )

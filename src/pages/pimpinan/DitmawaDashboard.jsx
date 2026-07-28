@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { HorizontalBarChart } from '../../components/charts'
 import { toast } from 'sonner'
 import { get } from '../../services/apiClient'
@@ -101,46 +102,19 @@ function PimpinanDitmawaDashboard() {
           <div className="border-b border-[#e9ebf8] px-6 py-4">
             <h3 className="text-lg font-bold text-brand-dark">Daftar Event Terpublikasi</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-3 text-center">No</th>
-                  <th className="px-4 py-3">Nama Kegiatan</th>
-                  <th className="px-4 py-3">Tipe</th>
-                  <th className="px-4 py-3">Penyelenggara</th>
-                  <th className="px-4 py-3 text-center">Peserta</th>
-                  <th className="px-4 py-3">Skala</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-[#9aa0a6]">
-                      Memuat…
-                    </td>
-                  </tr>
-                ) : events.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-[#9aa0a6]">
-                      Belum ada event terpublikasi.
-                    </td>
-                  </tr>
-                ) : (
-                  events.map((e) => (
-                    <tr key={e.no} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                      <td className="px-4 py-3 text-center text-[#616161]">{e.no}</td>
-                      <td className="px-4 py-3 font-medium text-[#333]">{e.nama}</td>
-                      <td className="px-4 py-3 text-[#616161]">{e.tipe}</td>
-                      <td className="px-4 py-3 text-[#616161]">{e.penyelenggara}</td>
-                      <td className="px-4 py-3 text-center text-[#616161]">{e.peserta}</td>
-                      <td className="px-4 py-3 text-[#616161]">{e.skala}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            loading={loading}
+            data={events}
+            emptyText="Belum ada event terpublikasi."
+            columns={[
+              { key: 'no', label: 'No', render: (e) => <span className="block text-center">{e.no}</span> },
+              { key: 'nama', label: 'Nama Kegiatan', render: (e) => <span className="font-medium text-[#333]">{e.nama}</span> },
+              { key: 'tipe', label: 'Tipe' },
+              { key: 'penyelenggara', label: 'Penyelenggara' },
+              { key: 'peserta', label: 'Peserta', render: (e) => <span className="block text-center">{e.peserta}</span> },
+              { key: 'skala', label: 'Skala' },
+            ]}
+          />
         </div>
       </div>
     </DashboardLayout>

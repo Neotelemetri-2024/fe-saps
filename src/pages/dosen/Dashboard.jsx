@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Download, Clock, ChevronRight } from 'lucide-react'
+import DataTable from '../../components/dashboard/DataTable'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -261,72 +262,45 @@ function DosenPADashboard() {
         {/* Progres Capaian Tahunan */}
         <div>
           <h3 className="mb-3 text-base font-bold text-[#222]">Progres Capaian Tahunan</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3 text-center">NO</th>
-                    <th className="px-4 py-3 text-left">MAHASISWA</th>
-                    <th className="px-4 py-3 text-left">NIM</th>
-                    <th className="px-4 py-3 text-left">IPK</th>
-                    <th className="px-4 py-3 text-left">CAPAIAN</th>
-                    <th className="px-4 py-3 text-center">STATUS</th>
-                    <th className="px-4 py-3 text-center">AKSI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-[#888]">Memuat data…</td>
-                    </tr>
-                  ) : progresTahunan.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-[#888]">Belum ada data mahasiswa bimbingan.</td>
-                    </tr>
-                  ) : (
-                    progresTahunan.map((row, i) => (
-                      <tr key={row.nim || i} className="border-b border-[#f0f2f8] last:border-0 hover:bg-[#f9fafb]">
-                        <td className="px-4 py-3.5 text-center text-[#616161]">{i + 1}.</td>
-                        <td className="px-4 py-3.5">
-                          <p className="font-semibold text-[#222]">{row.nama}</p>
-                          <p className="text-xs text-sky-600">{row.prodi}</p>
-                          <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9aa0a6]">
-                            <Clock className="h-3 w-3 shrink-0" /> {row.tanggalInput}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3.5 text-[#444]">{row.nim}</td>
-                        <td className="px-4 py-3.5 text-[#444]">{row.ipk}</td>
-                        <td className="px-4 py-3.5">
-                          <CapaianBar pct={row.pct} status={row.status} />
-                        </td>
-                        <td className="px-4 py-3.5 text-center">
-                          <StatusDot status={row.status} />
-                        </td>
-                        <td className="px-4 py-3.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } })}
-                            className="text-xs font-semibold text-brand-dark hover:underline"
-                          >
-                            Lihat Detail
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex flex-col gap-2 border-t border-[#e9ebf8] px-5 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-              <span>
-                Showing 1 - {progresTahunan.length || 0} From Total {progresTahunan.length || 0}
-              </span>
-              <span>Page 1 of 1</span>
-            </div>
-          </div>
+          <DataTable
+            columns={[
+              { key: '_no', label: 'No' },
+              {
+                key: 'nama',
+                label: 'Mahasiswa',
+                render: (row) => (
+                  <div>
+                    <p className="font-semibold text-[#222]">{row.nama}</p>
+                    <p className="text-xs text-sky-600">{row.prodi}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9aa0a6]">
+                      <Clock className="h-3 w-3 shrink-0" /> {row.tanggalInput}
+                    </p>
+                  </div>
+                ),
+              },
+              { key: 'nim', label: 'NIM' },
+              { key: 'ipk', label: 'IPK' },
+              { key: 'capaian', label: 'Capaian', render: (row) => <CapaianBar pct={row.pct} status={row.status} /> },
+              { key: 'status', label: 'Status', render: (row) => <StatusDot status={row.status} /> },
+              {
+                key: 'aksi',
+                label: 'Aksi',
+                stopPropagation: true,
+                render: (row) => (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } })}
+                    className="text-xs font-semibold text-brand-dark hover:underline"
+                  >
+                    Lihat Detail
+                  </button>
+                ),
+              },
+            ]}
+            data={progresTahunan.map((r, i) => ({ ...r, _no: i + 1 }))}
+            loading={loading}
+            emptyText="Belum ada data mahasiswa bimbingan."
+          />
         </div>
 
       </div>

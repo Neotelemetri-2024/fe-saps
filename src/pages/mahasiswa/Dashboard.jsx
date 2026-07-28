@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { RadarChartCJ } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -33,44 +34,17 @@ function TahunBadge({ status }) {
 
 function KegiatanCell({ nama, tanggal }) {
   return (
-    <td className="px-4 py-4 align-top">
+    <div className="align-top">
       <p className="font-semibold text-[#333]">{nama || '-'}</p>
       {tanggal && (
         <p className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
           <Clock className="h-3 w-3" /> {tanggal}
         </p>
       )}
-    </td>
-  )
-}
-
-function RiwayatTable({ title, columns, rows, renderRow, loading }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-      <div className="p-6 pb-0">
-        <h3 className="text-lg font-bold text-brand-dark">{title}</h3>
-      </div>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[700px] border-collapse text-sm">
-          <thead>
-            <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
-              {columns.map((c) => <th key={c} className="whitespace-nowrap px-4 py-3">{c}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={columns.length} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data...</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={columns.length} className="px-4 py-8 text-center text-[#9aa0a6]">Belum ada data.</td></tr>
-            ) : rows.map((row, i) => (
-              <tr key={i} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">{renderRow(row, i)}</tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   )
 }
+
 
 const FALLBACK_RADAR = [
   { label: 'Fondasi', value: 0 },
@@ -181,60 +155,72 @@ function MahasiswaDashboard() {
         </div>
 
         {/* Tabel Persetujuan Dosen */}
-        <RiwayatTable
-          title="Riwayat Persetujuan Dosen PA"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'STATUS']}
-          rows={persetujuan.slice(0, 5)}
-          loading={loadingTables}
-          renderRow={(row, i) => (
-            <>
-              <td className="px-4 py-4">{i + 1}</td>
-              <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.dibuatPada || row.tanggal} />
-              <td className="px-4 py-4">{row.jenis || '-'}</td>
-              <td className="px-4 py-4">{row.peran || '-'}</td>
-              <td className="px-4 py-4">{row.penyelenggara || '-'}</td>
-              <td className="px-4 py-4">{row.tanggal || '-'}</td>
-              <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
-            </>
-          )}
-        />
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <div className="p-6 pb-0">
+            <h3 className="text-lg font-bold text-brand-dark">Riwayat Persetujuan Dosen PA</h3>
+          </div>
+          <div className="mt-4">
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.dibuatPada || row.tanggal} /> },
+                { key: 'jenis', label: 'Jenis' },
+                { key: 'peran', label: 'Peran' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+              ]}
+              data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
+              loading={loadingTables}
+              emptyText="Belum ada data."
+            />
+          </div>
+        </div>
 
         {/* Tabel Pengajuan Eksternal */}
-        <RiwayatTable
-          title="Riwayat Pengajuan Kegiatan Eksternal"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'PENYELENGGARA', 'TANGGAL', 'STATUS']}
-          rows={pengajuan.slice(0, 5)}
-          loading={loadingTables}
-          renderRow={(row, i) => (
-            <>
-              <td className="px-4 py-4">{i + 1}</td>
-              <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.diajukanPada} />
-              <td className="px-4 py-4">{row.jenis || '-'}</td>
-              <td className="px-4 py-4">{row.peran || '-'}</td>
-              <td className="px-4 py-4">{row.penyelenggara || '-'}</td>
-              <td className="px-4 py-4">{row.tanggal || '-'}</td>
-              <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
-            </>
-          )}
-        />
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <div className="p-6 pb-0">
+            <h3 className="text-lg font-bold text-brand-dark">Riwayat Pengajuan Kegiatan Eksternal</h3>
+          </div>
+          <div className="mt-4">
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.diajukanPada} /> },
+                { key: 'jenis', label: 'Jenis' },
+                { key: 'peran', label: 'Peran' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+              ]}
+              data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
+              loading={loadingTables}
+              emptyText="Belum ada data."
+            />
+          </div>
+        </div>
 
         {/* Tabel Klaim Poin */}
-        <RiwayatTable
-          title="Riwayat Klaim Poin"
-          columns={['NO', 'KEGIATAN', 'JENIS', 'PERAN', 'POIN', 'STATUS']}
-          rows={klaim.slice(0, 5)}
-          loading={loadingTables}
-          renderRow={(row, i) => (
-            <>
-              <td className="px-4 py-4">{i + 1}</td>
-              <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.tanggal} />
-              <td className="px-4 py-4">{row.jenis || '-'}</td>
-              <td className="px-4 py-4">{row.peran || '-'}</td>
-              <td className="px-4 py-4 font-bold text-brand-dark">{row.poin ?? '-'}</td>
-              <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
-            </>
-          )}
-        />
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <div className="p-6 pb-0">
+            <h3 className="text-lg font-bold text-brand-dark">Riwayat Klaim Poin</h3>
+          </div>
+          <div className="mt-4">
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.tanggal} /> },
+                { key: 'jenis', label: 'Jenis' },
+                { key: 'peran', label: 'Peran' },
+                { key: 'poin', label: 'Poin', render: (row) => <span className="font-bold text-brand-dark">{row.poin ?? '-'}</span> },
+                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+              ]}
+              data={klaim.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
+              loading={loadingTables}
+              emptyText="Belum ada data."
+            />
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

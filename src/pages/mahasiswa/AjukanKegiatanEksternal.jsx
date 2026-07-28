@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { PlusCircle, Search, Filter, UserCheck, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { PlusCircle, Search, Filter, UserCheck, Pencil, Trash2, RefreshCw, Eye } from 'lucide-react'
+import DataTable from '../../components/dashboard/DataTable'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -60,6 +61,7 @@ function AjukanKegiatanEksternal() {
   const [filterKategori, setFilterKategori] = useState('')
 
   // Checkbox selection — hanya baris yg disetujui
+  const [pilihanMode, setPilihanMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
 
   // Hapus draft confirm
@@ -93,8 +95,9 @@ function AjukanKegiatanEksternal() {
     })
   }, [])
 
+  // Bisa dipilih: disetujui + belum ajukan PA + belum klaim
   const disetujuiRows = useMemo(
-    () => data.filter((r) => r.statusRaw === 'disetujui'),
+    () => data.filter((r) => r.statusRaw === 'disetujui' && !r.sudahAjukanPA && !r.sudahKlaim),
     [data]
   )
 
@@ -134,8 +137,9 @@ function AjukanKegiatanEksternal() {
     }
   }
 
-  const toggleRow = (id, statusRaw) => {
+  const toggleRow = (id, statusRaw, row) => {
     if (statusRaw !== 'disetujui') return
+    if (row?.sudahAjukanPA || row?.sudahKlaim) return
     setSelected((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -387,140 +391,136 @@ function AjukanKegiatanEksternal() {
           </div>
 
           {/* Tabel */}
-          <div className="mt-6 overflow-x-auto">
-            {loading ? (
-              <p className="py-8 text-center text-sm text-[#616161]">Memuat data...</p>
-            ) : filtered.length === 0 ? (
-              <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada pengajuan.</p>
-            ) : (
-              <table className="w-full min-w-[700px] text-left text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={allChecked}
-                        onChange={toggleAll}
-                        title="Pilih semua yang sudah disetujui"
-                        className="h-4 w-4 cursor-pointer accent-white"
-                      />
-                    </th>
-                    <th className="px-4 py-3">NO</th>
-                    <th className="px-4 py-3">KEGIATAN</th>
-                    <th className="px-4 py-3">JENIS</th>
-                    <th className="px-4 py-3">PENYELENGGARA</th>
-                    <th className="px-4 py-3">TANGGAL</th>
-                    <th className="px-4 py-3">SKALA</th>
-                    <th className="px-4 py-3">STATUS</th>
-                    <th className="px-4 py-3">AKSI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((row, i) => {
-                    const isApproved = row.statusRaw === 'disetujui'
-                    const isChecked = selected.has(row.id)
-                    return (
-                      <tr
-                        key={row.id}
-                        className={`border-b border-[#e9ebf8] last:border-0 transition ${
-                          isChecked ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'
-                        } ${isApproved ? 'cursor-pointer hover:bg-green-50/70' : ''}`}
-                        onClick={() => toggleRow(row.id, row.statusRaw)}
+          <div className="mt-6">
+            <DataTable
+              columns={[
+                { key: 'no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan' },
+                { key: 'jenis', label: 'Jenis' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'skala', label: 'Skala' },
+                {
+                  key: 'statusRaw',
+                  label: 'Status',
+                  render: (row) => <StatusBadge status={row.statusRaw} />,
+                },
+                {
+                  key: 'aksi',
+                  label: 'Aksi',
+                  stopPropagation: true,
+                  render: (row) => (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/mahasiswa/kegiatan-eksternal/${row.id}`, { state: { row } })}
+                        className="flex items-center gap-1 rounded-lg border border-brand-dark px-2 py-1 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
                       >
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            disabled={!isApproved}
-                            onChange={() => toggleRow(row.id, row.statusRaw)}
-                            title={isApproved ? 'Pilih untuk minta persetujuan PA' : 'Hanya kegiatan yang disetujui yang dapat dipilih'}
-                            className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-[#616161]">{row.no}</td>
-                        <td className="px-4 py-3 font-medium text-[#333]">{row.kegiatan}</td>
-                        <td className="px-4 py-3 text-[#616161]">{row.jenis}</td>
-                        <td className="px-4 py-3 text-[#616161]">{row.penyelenggara}</td>
-                        <td className="px-4 py-3 text-[#616161]">{row.tanggal}</td>
-                        <td className="px-4 py-3 text-[#616161]">{row.skala}</td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={row.statusRaw} />
-                        </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {row.statusRaw === 'draft' ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleEditDraft(row)}
-                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setHapusDraftTarget(row)}
-                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                Hapus
-                              </button>
-                            </div>
-                          ) : row.statusRaw === 'revisi' ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setAlasanModal({ judul: 'Catatan Revisi', isi: row.alasan || 'Tidak ada catatan.' })}
-                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-yellow-600 hover:bg-yellow-50"
-                              >
-                                Lihat Catatan
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleEditRevisi(row)}
-                                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
-                              >
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                Ajukan Ulang
-                              </button>
-                            </div>
-                          ) : row.statusRaw === 'ditolak' ? (
-                            <button
-                              type="button"
-                              onClick={() => setAlasanModal({ judul: 'Alasan Penolakan', isi: row.alasan || 'Tidak ada alasan tercantum.' })}
-                              className="text-xs font-medium text-red-600 underline hover:text-red-800"
-                            >
-                              Lihat Alasan
-                            </button>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
+                        <Eye className="h-3.5 w-3.5" />
+                        Detail
+                      </button>
+                      {row.statusRaw === 'draft' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleEditDraft(row)}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHapusDraftTarget(row)}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Hapus
+                          </button>
+                        </>
+                      )}
+                      {row.statusRaw === 'revisi' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAlasanModal({ judul: 'Catatan Revisi', isi: row.alasan || 'Tidak ada catatan.' })}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-yellow-600 hover:bg-yellow-50"
+                          >
+                            Lihat Catatan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEditRevisi(row)}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Ajukan Ulang
+                          </button>
+                        </>
+                      )}
+                      {row.statusRaw === 'ditolak' && (
+                        <button
+                          type="button"
+                          onClick={() => setAlasanModal({ judul: 'Alasan Penolakan', isi: row.alasan || 'Tidak ada alasan tercantum.' })}
+                          className="text-xs font-medium text-red-600 underline hover:text-red-800"
+                        >
+                          Lihat Alasan
+                        </button>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+              data={filtered}
+              loading={loading}
+              emptyText="Belum ada pengajuan."
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={(id) => {
+                const row = data.find((r) => r.id === id)
+                toggleRow(id, row?.statusRaw, row)
+              }}
+              onSelectAll={toggleAll}
+              isSelectable={(row) => row.statusRaw === 'disetujui' && !row.sudahAjukanPA && !row.sudahKlaim}
+              onRowClick={pilihanMode ? (row) => toggleRow(row.id, row.statusRaw, row) : undefined}
+            />
           </div>
 
           {/* Tombol bawah tabel */}
           {!loading && (
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="text-xs text-[#9aa0a6]">
-                {selected.size > 0
-                  ? `${selected.size} kegiatan dipilih`
-                  : 'Centang kegiatan yang sudah disetujui untuk meminta izin Dosen PA'}
-              </p>
-              <button
-                type="button"
-                disabled={selected.size === 0 || submittingIzin}
-                onClick={handleOpenPeranModal}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <UserCheck className="h-4 w-4" />
-                Minta Persetujuan Dosen PA
-              </button>
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+              {pilihanMode ? (
+                <>
+                  <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>
+                  <div className="ml-auto flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
+                      className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      disabled={selected.size === 0 || submittingIzin}
+                      onClick={handleOpenPeranModal}
+                      className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <UserCheck className="h-4 w-4" />
+                      Minta Persetujuan Dosen PA
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPilihanMode(true)}
+                  className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                >
+                  <UserCheck className="h-4 w-4" />
+                  Minta Persetujuan Dosen PA
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -197,13 +197,12 @@ function ManajemenPeserta() {
                 {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
               </button>
             ))}
-            <a
-              href={downloadTemplatePeserta(id)}
-              download
+            <button
+              onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
               className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"
             >
               <Download className="h-4 w-4" /> Template CSV
-            </a>
+            </button>
             <button
               onClick={() => fileRef.current?.click()}
               disabled={importing}
@@ -214,7 +213,7 @@ function ManajemenPeserta() {
             <input
               ref={fileRef}
               type="file"
-              accept=".csv"
+              accept=".xlsx"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]

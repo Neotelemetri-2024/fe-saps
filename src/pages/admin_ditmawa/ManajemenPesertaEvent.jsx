@@ -238,13 +238,13 @@ function ManajemenPesertaEvent() {
             ))}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <a
-              href={downloadTemplatePeserta(id)}
-              download
+            <button
+              type="button"
+              onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
               className="flex items-center gap-1.5 rounded-lg border border-[#d1d5db] bg-white px-3 py-2 text-xs font-semibold text-[#444] hover:bg-[#f5f5f5]"
             >
               <Download className="h-3.5 w-3.5" /> unduh template
-            </a>
+            </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -255,7 +255,7 @@ function ManajemenPesertaEvent() {
             <input
               ref={fileRef}
               type="file"
-              accept=".csv"
+              accept=".xlsx"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]

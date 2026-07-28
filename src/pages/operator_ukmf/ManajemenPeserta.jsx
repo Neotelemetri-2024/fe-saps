@@ -160,13 +160,12 @@ function ManajemenPeserta() {
               <input type="text" placeholder="Cari mahasiswa atau kegiatan..." className="w-full text-sm outline-none" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <a
-                href={downloadTemplatePeserta(id)}
-                download
+              <button
+                onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]"
               >
                 <Download className="h-4 w-4" /> Unduh Template
-              </a>
+              </button>
               <button className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161]">
                 <Upload className="h-4 w-4" /> Import File
               </button>

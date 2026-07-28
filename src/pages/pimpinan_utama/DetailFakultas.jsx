@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanUtama } from '../../services/dashboardService'
 
@@ -96,104 +97,34 @@ function DetailFakultas() {
           </span>
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px] text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-5 py-3 text-center">Ranking</th>
-                  <th className="px-5 py-3">Fakultas</th>
-                  <th className="px-5 py-3 text-center">Total Poin</th>
-                  <th className="px-5 py-3">Kategori Poin</th>
-                  <th className="px-5 py-3 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-sm text-[#888]">Memuat data…</td>
-                  </tr>
-                ) : pageItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-sm text-[#888]">Belum ada data fakultas.</td>
-                  </tr>
-                ) : (
-                  pageItems.map((item) => (
-                    <tr
-                      key={item.fakultasId || item.rank}
-                      className="border-b border-[#f0f2f8] last:border-0 hover:bg-[#f9fafb]"
-                    >
-                      <td className="px-5 py-3.5 text-center font-semibold text-[#333]">{item.rank}.</td>
-                      <td className="px-5 py-3.5 text-[#333]">{item.nama}</td>
-                      <td className="px-5 py-3.5 text-center font-medium text-[#444]">{item.total}%</td>
-                      <td className="px-5 py-3.5">
-                        <KategoriBar
-                          organisasi={item.organisasi}
-                          seminar={item.seminar}
-                          prestasi={item.prestasi}
-                        />
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, {
-                              state: { namaFakultas: item.nama },
-                            })
-                          }
-                          className="text-xs font-semibold text-brand-dark hover:underline"
-                        >
-                          detail
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex flex-col gap-2 border-t border-[#e9ebf8] px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-[#616161]">
-              menampilkan {fakultasData.length ? start + 1 : 0} -{' '}
-              {Math.min(start + PAGE_SIZE, fakultasData.length)} dari {fakultasData.length} Fakultas
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={currentPage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded px-2 py-1 text-xs text-[#616161] hover:bg-[#f0f4f0] disabled:opacity-40"
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setPage(n)}
-                  className={`h-7 w-7 rounded text-xs font-semibold transition ${
-                    n === currentPage
-                      ? 'bg-brand-dark text-white'
-                      : 'text-[#444] hover:bg-[#f0f4f0]'
-                  }`}
-                >
-                  {n}
+        <DataTable
+          loading={loading}
+          data={pageItems}
+          emptyText="Belum ada data fakultas."
+          page={currentPage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          onRowClick={(item) => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
+          columns={[
+            { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-[#333]">{item.rank}.</span> },
+            { key: 'nama', label: 'Fakultas' },
+            { key: 'total', label: 'Total Poin', render: (item) => <span className="block text-center font-medium text-[#444]">{item.total}%</span> },
+            {
+              key: 'kategori', label: 'Kategori Poin',
+              render: (item) => <KategoriBar organisasi={item.organisasi} seminar={item.seminar} prestasi={item.prestasi} />,
+            },
+            {
+              key: 'aksi', label: 'Aksi', stopPropagation: true,
+              render: (item) => (
+                <button type="button"
+                  onClick={() => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
+                  className="text-xs font-semibold text-brand-dark hover:underline">
+                  detail
                 </button>
-              ))}
-              <button
-                type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded px-2 py-1 text-xs text-[#616161] hover:bg-[#f0f4f0] disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        </div>
+              ),
+            },
+          ]}
+        />
       </div>
     </DashboardLayout>
   )

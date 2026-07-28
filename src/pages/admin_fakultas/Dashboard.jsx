@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { StackedBarChart } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -68,6 +69,51 @@ function Dashboard() {
     { label: 'DITOLAK', value: stats.ditolak ?? 0, border: 'border-red-400', numColor: 'text-red-500' },
   ]
 
+  const columns = useMemo(() => [
+    {
+      key: 'kegiatan',
+      label: 'KEGIATAN',
+      render: (row) => <p className="font-medium text-[#222]">{row.kegiatan}</p>,
+    },
+    { key: 'namaUKMF', label: 'NAMA UKMF' },
+    { key: 'jenis', label: 'JENIS' },
+    { key: 'skala', label: 'SKALA' },
+    { key: 'tanggal', label: 'TANGGAL' },
+    {
+      key: 'status',
+      label: 'STATUS',
+      render: (row) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] || statusStyle.Pending}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      key: 'aksi',
+      label: 'AKSI',
+      stopPropagation: true,
+      render: (row) => (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
+            className="rounded border border-brand-dark px-2.5 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-dark hover:text-white"
+          >
+            Detail
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
+            className="rounded border border-[#2563eb] px-2.5 py-1 text-xs font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white"
+          >
+            verifikasi
+          </button>
+        </div>
+      ),
+    },
+  ], [navigate])
+
   return (
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
       <div className="space-y-6">
@@ -91,72 +137,13 @@ function Dashboard() {
           <div className="border-b border-[#e5e7eb] px-6 py-4">
             <h3 className="text-base font-bold text-[#222]">Riwayat Terbaru Pengajuan kegiatan dari UKMF</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-max text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NO</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">KEGIATAN</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">NAMA UKMF</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">JENIS</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">SKALA</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">TANGGAL</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">STATUS</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide">AKSI</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td>
-                  </tr>
-                ) : riwayat.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-[#9aa0a6]">Belum ada pengajuan.</td>
-                  </tr>
-                ) : (
-                  riwayat.map((row, i) => (
-                    <tr key={row.id} className="hover:bg-[#f9fafb]">
-                      <td className="px-4 py-3.5 text-[#616161]">{i + 1}.</td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium text-[#222]">{row.kegiatan}</p>
-                      </td>
-                      <td className="px-4 py-3.5 text-[#616161]">{row.namaUKMF}</td>
-                      <td className="px-4 py-3.5 text-[#616161]">{row.jenis}</td>
-                      <td className="px-4 py-3.5 text-[#616161]">{row.skala}</td>
-                      <td className="px-4 py-3.5 text-[#616161] whitespace-nowrap">{row.tanggal}</td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] || statusStyle.Pending}`}>
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-                            className="rounded border border-brand-dark px-2.5 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-dark hover:text-white"
-                          >
-                            Detail
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-                            className="rounded border border-[#2563eb] px-2.5 py-1 text-xs font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white"
-                          >
-                            verifikasi
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-3 border-t border-[#f0f0f0] px-6 py-3 text-xs text-[#888] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing {riwayat.length === 0 ? 0 : 1} – {riwayat.length} from Total {riwayat.length}</span>
+          <div className="p-4">
+            <DataTable
+              columns={columns}
+              data={riwayat}
+              loading={loading}
+              emptyText="Belum ada pengajuan."
+            />
           </div>
         </div>
 

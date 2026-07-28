@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
@@ -124,87 +125,61 @@ function MahasiswaBimbingan() {
           </select>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px] text-left text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-3 text-center">NO</th>
-                  <th className="px-4 py-3">MAHASISWA</th>
-                  <th className="px-4 py-3">NIM</th>
-                  <th className="px-4 py-3">IPK</th>
-                  <th className="px-4 py-3">CAPAIAN</th>
-                  <th className="px-4 py-3 text-center">STATUS</th>
-                  <th className="px-4 py-3 text-center">AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-[#888]">
-                      Memuat data…
-                    </td>
-                  </tr>
-                ) : pageItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-[#888]">
-                      Tidak ada mahasiswa ditemukan.
-                    </td>
-                  </tr>
-                ) : (
-                  pageItems.map((m, i) => (
-                    <tr key={m.mahasiswaId || m.nim} className="border-b border-[#f0f2f8] last:border-0 hover:bg-[#f9fafb]">
-                      <td className="px-4 py-3.5 text-center text-[#616161]">{start + i + 1}.</td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-bold uppercase text-[#222]">{m.nama}</p>
-                        <p className="text-xs font-medium text-sky-600">{m.prodi}</p>
-                        {m.tanggalInput && m.tanggalInput !== '-' && (
-                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#9aa0a6]">
-                            <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5 text-[#444]">{m.nim}</td>
-                      <td className="px-4 py-3.5 text-[#444]">{m.ipk}</td>
-                      <td className="px-4 py-3.5">
-                        <CapaianBar poin={m.poin} persen={m.capaianPersen} />
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <StatusDot poin={m.poin} persen={m.capaianPersen} status={m.status} />
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/dosen/lihat-detail/${m.mahasiswaId || m.nim}`, { state: { mahasiswa: m } })}
-                          className="text-xs font-semibold text-brand-dark hover:underline"
-                        >
-                          Lihat Detail
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex flex-col gap-2 border-t border-[#e9ebf8] px-5 py-3 text-xs text-[#616161] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing {filtered.length === 0 ? 0 : start + 1} - {Math.min(start + PAGE_SIZE, filtered.length)} From Total {filtered.length}</span>
-            <span>Page {currentPage} of {totalPages}</span>
-            <div className="flex items-center gap-1">
-              <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => p - 1)}
-                className="rounded border border-[#e9ebf8] px-2.5 py-1 hover:bg-[#f5f5f5] disabled:opacity-40">Previous</button>
-              {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" onClick={() => setPage(n)}
-                  className={`rounded px-2.5 py-1 ${n === currentPage ? 'bg-brand-dark text-white' : 'border border-[#e9ebf8] hover:bg-[#f5f5f5]'}`}>
-                  {n}
+        <DataTable
+          columns={[
+            {
+              key: '_no',
+              label: 'No',
+            },
+            {
+              key: 'nama',
+              label: 'Mahasiswa',
+              render: (m) => (
+                <div>
+                  <p className="font-bold uppercase text-[#222]">{m.nama}</p>
+                  <p className="text-xs font-medium text-sky-600">{m.prodi}</p>
+                  {m.tanggalInput && m.tanggalInput !== '-' && (
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#9aa0a6]">
+                      <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}
+                    </p>
+                  )}
+                </div>
+              ),
+            },
+            { key: 'nim', label: 'NIM' },
+            { key: 'ipk', label: 'IPK' },
+            {
+              key: 'capaian',
+              label: 'Capaian',
+              render: (m) => <CapaianBar poin={m.poin} persen={m.capaianPersen} />,
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              render: (m) => <StatusDot poin={m.poin} persen={m.capaianPersen} status={m.status} />,
+            },
+            {
+              key: 'aksi',
+              label: 'Aksi',
+              stopPropagation: true,
+              render: (m) => (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/dosen/lihat-detail/${m.mahasiswaId || m.nim}`, { state: { mahasiswa: m } })}
+                  className="text-xs font-semibold text-brand-dark hover:underline"
+                >
+                  Lihat Detail
                 </button>
-              ))}
-              <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => p + 1)}
-                className="rounded border border-[#e9ebf8] px-2.5 py-1 hover:bg-[#f5f5f5] disabled:opacity-40">Next</button>
-            </div>
-          </div>
-        </div>
+              ),
+            },
+          ]}
+          data={pageItems.map((m, i) => ({ ...m, _no: start + i + 1 }))}
+          loading={loading}
+          emptyText="Tidak ada mahasiswa ditemukan."
+          page={currentPage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </DashboardLayout>
   )

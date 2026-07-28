@@ -11,11 +11,14 @@ import PersetujuanDosen from './pages/mahasiswa/PersetujuanDosen'
 import KlaimPoinCapaian from './pages/mahasiswa/KlaimPoinCapaian'
 import RiwayatPoin from './pages/mahasiswa/RiwayatPoin'
 import AkunPengaturan from './pages/mahasiswa/AkunPengaturan'
+import DetailPengajuanMahasiswa from './pages/mahasiswa/DetailPengajuan'
+import DetailIzinPAMahasiswa from './pages/mahasiswa/DetailIzinPA'
 import Notifikasi from './pages/Notifikasi'
 import DosenPADashboard from './pages/dosen/Dashboard'
 import DosenPAMahasiswaBimbingan from './pages/dosen/MahasiswaBimbingan'
 import DosenPADetail from './pages/dosen/Detail'
 import PermintaanPersetujuan from './pages/dosen/PermintaanPersetujuan'
+import DetailPersetujuanDosen from './pages/dosen/DetailPersetujuan'
 import MahasiswaPerluPerhatian from './pages/dosen/MahasiswaPerluPerhatian'
 import PimpinanDitmawaDashboard from './pages/pimpinan/DitmawaDashboard'
 import PimpinanDitmawaVerifikasiPengajuanEksternal from './pages/pimpinan/VerifikasiPengajuanEksternal'
@@ -85,8 +88,10 @@ function App() {
           <Route path="dashboard" element={<MahasiswaDashboard />} />
           <Route path="kegiatan-eksternal" element={<AjukanKegiatanEksternal />} />
           <Route path="kegiatan-eksternal/ajukan" element={<AjukanKegiatanForm />} />
+          <Route path="kegiatan-eksternal/:id" element={<DetailPengajuanMahasiswa />} />
           <Route path="generate-cv" element={<GenerateCV />} />
           <Route path="persetujuan-dosen" element={<PersetujuanDosen />} />
+          <Route path="persetujuan-dosen/:id" element={<DetailIzinPAMahasiswa />} />
           <Route path="klaim-poin" element={<KlaimPoinCapaian />} />
           <Route path="riwayat-poin" element={<RiwayatPoin />} />
           <Route path="pengaturan" element={<AkunPengaturan />} />
@@ -99,6 +104,7 @@ function App() {
           <Route path="mahasiswa-bimbingan" element={<DosenPAMahasiswaBimbingan />} />
           <Route path="lihat-detail/:nim" element={<DosenPADetail />} />
           <Route path="permintaan-persetujuan" element={<PermintaanPersetujuan />} />
+          <Route path="permintaan-persetujuan/:id" element={<DetailPersetujuanDosen />} />
           <Route path="mahasiswa-perlu-perhatian" element={<MahasiswaPerluPerhatian />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />

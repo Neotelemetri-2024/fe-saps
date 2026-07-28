@@ -116,7 +116,6 @@ export const adminFakultasMenu = [
 export const ukmMenu = [
   { path: '/operator_ukm/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/operator_ukm/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '/operator_ukm/buat-kegiatan', label: 'Buat Kegiatan', icon: <PlusCircle className="h-4 w-4" /> },
   { path: '/operator_ukm/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
   { path: '/operator_ukm/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
