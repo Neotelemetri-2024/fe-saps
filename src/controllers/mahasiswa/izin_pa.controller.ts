@@ -133,7 +133,8 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
           include: {
             kegiatan: {
               include: {
-                kategori: true
+                kategori: true,
+                skala: true,
               }
             },
             klaimPoin: {
@@ -150,20 +151,36 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
     });
 
     // Formatting response agar mudah dipakai Frontend
-    const formattedData = riwayat.map((item: any) => ({
-      id: item.id.toString(),
-      statusIzin: item.status,
-      alasanDitolak: item.alasan,
-      tanggalDiajukan: item.createdAt,
-      kegiatan: {
-        id: item.partisipasi.kegiatan.id,
-        nama: item.partisipasi.kegiatan.nama,
-        kategori: item.partisipasi.kegiatan.kategori.nama,
-        penyelenggara: item.partisipasi.kegiatan.penyelenggaraExt,
-        tanggalMulai: item.partisipasi.kegiatan.tanggalMulai,
-      },
-      peran: item.partisipasi.klaimPoin ? item.partisipasi.klaimPoin.peranUsulan?.nama : '-'
-    }));
+    const formattedData = riwayat
+      .filter((item: any) => item.partisipasi && item.partisipasi.kegiatan)
+      .map((item: any) => {
+        const kg = item.partisipasi.kegiatan;
+        const klaim = item.partisipasi.klaimPoin;
+        // Sudah diklaim jika KlaimPoin sudah ada bukti (bukan hanya draft)
+        const sudahDiklaim = klaim ? (klaim.status !== 'draft') : false;
+        return {
+          id: item.id.toString(),
+          partisipasiId: item.partisipasi.id.toString(),
+          statusIzin: item.status,
+          alasanDitolak: item.alasan,
+          tanggalDiajukan: item.createdAt,
+          sudahDiklaim,
+          kegiatan: {
+            id: kg.id,
+            nama: kg.nama,
+            kategori: kg.kategori?.nama,
+            kategoriId: kg.kategoriId,
+            skalaId: kg.skalaId,
+            penyelenggara: kg.penyelenggaraExt,
+            tanggalMulai: kg.tanggalMulai,
+            deskripsi: kg.deskripsi,
+            linkPenyelenggara: kg.linkPenyelenggara,
+            emailPenyelenggara: kg.emailPenyelenggara,
+          },
+          peran: klaim ? klaim.peranUsulan?.nama : '-',
+          peranId: klaim ? klaim.peranUsulanId?.toString() : null,
+        };
+      });
 
     res.status(200).json({
       success: true,

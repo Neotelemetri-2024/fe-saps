@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import { getDashboardUKM } from '../controllers/ukm/dashboard.controller';
 import {
@@ -11,6 +12,7 @@ import {
 } from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
+const uploadXlsx = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Middleware: Hanya role operator_org (UKM/UKMF) yang bisa mengakses rute ini
 router.use(authenticateJWT);
@@ -25,7 +27,7 @@ router.get('/kegiatan', getDaftarKegiatanUKM);
 // Manajemen Peserta per Kegiatan
 router.get('/kegiatan/:kegiatanId/peserta', getManajemenPeserta);
 router.get('/kegiatan/:kegiatanId/peserta/template', downloadTemplatePesertaUKM);
-router.post('/kegiatan/:kegiatanId/peserta/import', importPesertaUKM);
+router.post('/kegiatan/:kegiatanId/peserta/import', uploadXlsx.single('file'), importPesertaUKM);
 router.put('/kegiatan/:kegiatanId/peserta', updatePesertaUKM);
 router.post('/kegiatan/:kegiatanId/peserta/submit', submitPoinPesertaUKM);
 

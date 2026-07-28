@@ -27,6 +27,10 @@ const createKegiatanSchema = z.object({
 const approvalSchema = z.object({
   keputusan: z.enum(['setuju', 'revisi', 'tolak']),
   alasan: z.string().max(500, 'Alasan maksimal 500 karakter').optional(),
+  alokasi: z.array(z.object({
+    subCapaianId: z.number(),
+    alokasiPersen: z.number().min(0).max(100),
+  })).optional(),
 });
 
 // ==================== KEGIATAN CRUD ====================
@@ -600,7 +604,7 @@ export const getKegiatanForVerifikasi = async (req: Request, res: Response) => {
     if (status && status !== 'semua') {
       where.status = status as string;
     } else {
-      where.status = { in: ['diajukan', 'terverifikasi', 'perlu_revisi', 'ditolak'] };
+      where.status = { in: ['diajukan', 'terverifikasi', 'perlu_revisi', 'ditolak', 'disetujui'] };
     }
 
     // ── Filter berdasarkan jabatan Admin dan asal kegiatan ──
@@ -756,6 +760,18 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       where: { id: Number(id) },
       data: { status: statusBaru as any },
     });
+
+    // Jika setuju dan ada alokasi capaian, simpan kegiatanCapaian
+    if (body.keputusan === 'setuju' && body.alokasi && body.alokasi.length > 0) {
+      await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } });
+      await prisma.kegiatanCapaian.createMany({
+        data: body.alokasi.map((a) => ({
+          kegiatanId: Number(id),
+          subCapaianId: a.subCapaianId,
+          alokasiPersen: a.alokasiPersen,
+        })),
+      });
+    }
 
     // Notifikasi ke pembuat kegiatan
     await prisma.notifikasi.create({

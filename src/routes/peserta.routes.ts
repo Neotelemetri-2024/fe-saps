@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
   getManajemenPeserta as getPesertaKegiatan,
@@ -9,6 +10,7 @@ import {
 } from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
+const uploadXlsx = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Semua rute peserta membutuhkan login
 router.use(authenticateJWT);
@@ -27,10 +29,11 @@ router.get(
   downloadTemplatePeserta
 );
 
-// POST /api/kegiatan/:id/peserta/import — Import peserta dari CSV
+// POST /api/kegiatan/:id/peserta/import — Import peserta dari Excel (.xlsx)
 router.post(
   '/:id/peserta/import',
   authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  uploadXlsx.single('file'),
   importPeserta
 );
 

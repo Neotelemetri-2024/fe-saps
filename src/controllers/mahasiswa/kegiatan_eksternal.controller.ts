@@ -267,13 +267,35 @@ export const getRiwayatPengajuan = async (req: Request, res: Response, next: Nex
       include: {
         kategori: { select: { id: true, nama: true } },
         skala: { select: { id: true, nama: true } },
-        kegiatanApproval: { orderBy: { createdAt: 'desc' }, take: 1 }
+        kegiatanApproval: { orderBy: { createdAt: 'desc' }, take: 1 },
+        partisipasi: {
+          where: { mahasiswaId: userIdBig },
+          include: {
+            izinPA: { orderBy: { createdAt: 'desc' }, take: 1 },
+            klaimPoin: true,
+          },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' }
     });
 
     const result = data.map((k) => {
       const lastApproval = k.kegiatanApproval[0];
+      const partisipasi = (k as any).partisipasi?.[0];
+      const lastIzinPA = partisipasi?.izinPA?.[0];
+      const klaimPoin = partisipasi?.klaimPoin;
+
+      // sudahAjukanPA: ada IzinPA aktif (bukan ditolak)
+      const sudahAjukanPA = lastIzinPA
+        ? lastIzinPA.status !== 'ditolak'
+        : false;
+
+      // sudahKlaim: ada KlaimPoin yang sudah bukan draft
+      const sudahKlaim = klaimPoin
+        ? klaimPoin.status !== 'draft'
+        : false;
+
       return {
         id: k.id.toString(),
         namaKegiatan: k.nama,
@@ -290,7 +312,9 @@ export const getRiwayatPengajuan = async (req: Request, res: Response, next: Nex
         linkWebsite: k.linkPenyelenggara || null,
         emailPenyelenggara: k.emailPenyelenggara || null,
         alasan: lastApproval?.alasan || null,
-        tanggalPengajuan: k.createdAt
+        tanggalPengajuan: k.createdAt,
+        sudahAjukanPA,
+        sudahKlaim,
       };
     });
 

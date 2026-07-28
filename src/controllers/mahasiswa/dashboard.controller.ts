@@ -231,8 +231,9 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
     // Filter query params
     const { kategoriId, peranId, status, penyelenggara, tahun, search } = req.query;
 
-    // Ambil seluruh klaim poin mahasiswa ini (tabel riwayat)
+    // Ambil seluruh klaim poin mahasiswa ini (tabel riwayat) — exclude draft
     const whereKlaim: any = {
+      status: { not: 'draft' },
       partisipasi: {
         mahasiswaId: BigInt(userId)
       }
@@ -296,23 +297,25 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       orderBy: { createdAt: 'desc' }
     });
 
-    const tabelRiwayat = klaimData.map((k, i) => {
-      let statusStr = 'Pending';
-      if (k.status === 'disetujui') statusStr = 'Disetujui';
-      else if (k.status === 'ditolak') statusStr = 'Ditolak';
+    const tabelRiwayat = klaimData
+      .filter((k) => k.partisipasi && k.partisipasi.kegiatan)
+      .map((k, i) => {
+        let statusStr = 'Pending';
+        if (k.status === 'disetujui') statusStr = 'Disetujui';
+        else if (k.status === 'ditolak') statusStr = 'Ditolak';
 
-      return {
-        no: i + 1,
-        namaKegiatan: k.partisipasi.kegiatan.nama,
-        jenisKegiatan: k.partisipasi.kegiatan.kategori?.nama,
-        peran: k.peranUsulan?.nama || '-',
-        penyelenggara: k.partisipasi.kegiatan.penyelenggaraExt || '-',
-        tanggal: k.partisipasi.kegiatan.tanggalMulai,
-        bukti: k.bukti[0]?.url || null,
-        poin: k.perolehanPoin?.totalPoin || '-',
-        status: statusStr
-      };
-    });
+        return {
+          no: i + 1,
+          namaKegiatan: k.partisipasi.kegiatan.nama,
+          jenisKegiatan: k.partisipasi.kegiatan.kategori?.nama,
+          peran: k.peranUsulan?.nama || '-',
+          penyelenggara: k.partisipasi.kegiatan.penyelenggaraExt || '-',
+          tanggal: k.partisipasi.kegiatan.tanggalMulai,
+          bukti: k.bukti[0]?.url || null,
+          poin: k.perolehanPoin?.totalPoin || '-',
+          status: statusStr
+        };
+      });
 
     res.status(200).json({
       success: true,

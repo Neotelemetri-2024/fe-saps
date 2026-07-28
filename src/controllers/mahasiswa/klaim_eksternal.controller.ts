@@ -27,7 +27,10 @@ export const getKegiatanTersedia = async (req: Request, res: Response, next: Nex
         izinPA: {
           some: { status: 'disetujui' } // Sudah diizinkan PA
         },
-        klaimPoin: null // Belum pernah diklaim
+        OR: [
+          { klaimPoin: null },
+          { klaimPoin: { status: 'draft' } }
+        ]
       },
       include: {
         kegiatan: {
@@ -92,21 +95,35 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
       return res.status(400).json({ success: false, message: 'Izin Dosen PA belum disetujui. Tidak dapat mengklaim poin.' });
     }
 
-    if (partisipasi.klaimPoin) {
+    if (partisipasi.klaimPoin && partisipasi.klaimPoin.status !== 'draft') {
       return res.status(400).json({ success: false, message: 'Kegiatan ini sudah pernah diklaim.' });
     }
 
-    // Buat Klaim
-    const klaim = await prisma.klaimPoin.create({
-      data: {
-        partisipasiId: partisipasiIdBigInt,
-        peranUsulanId: peranUsulanIdInt,
-        status: 'menunggu_validasi',
-        bukti: {
-          create: [{ tipe: 'pdf', url: buktiUrl }]
+    // Update draft yang ada, atau buat baru
+    let klaim;
+    if (partisipasi.klaimPoin) {
+      klaim = await prisma.klaimPoin.update({
+        where: { id: partisipasi.klaimPoin.id },
+        data: {
+          peranUsulanId: peranUsulanIdInt,
+          status: 'menunggu_validasi',
+          bukti: {
+            create: [{ tipe: 'pdf', url: buktiUrl }]
+          }
         }
-      }
-    });
+      });
+    } else {
+      klaim = await prisma.klaimPoin.create({
+        data: {
+          partisipasiId: partisipasiIdBigInt,
+          peranUsulanId: peranUsulanIdInt,
+          status: 'menunggu_validasi',
+          bukti: {
+            create: [{ tipe: 'pdf', url: buktiUrl }]
+          }
+        }
+      });
+    }
 
     res.status(201).json({
       success: true,

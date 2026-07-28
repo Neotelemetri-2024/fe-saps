@@ -463,36 +463,7 @@ export const validasiKlaim = async (
         return;
       }
 
-      // Khusus Kegiatan Eksternal: Lapis 1 (Admin Ditmawa) -> menunggu_pimpinan
-      if (kegiatan.asal === "eksternal") {
-        await prisma.klaimPoin.update({
-          where: { id: BigInt(id) },
-          data: {
-            status: "menunggu_pimpinan",
-            validatorId: aktorId, // Admin Ditmawa
-            alasan: body.alasan,
-          },
-        });
-
-        await logAudit({
-          entitas: "klaim_poin",
-          entitasId: BigInt(id),
-          aksi: "validasi.diteruskan",
-          statusLama: "menunggu_validasi",
-          statusBaru: "menunggu_pimpinan",
-          aktorId,
-        });
-
-        res.json({
-          success: true,
-          message: "Klaim disetujui dan telah diteruskan ke Pimpinan Ditmawa",
-          data: { klaim: { id: klaim.id, status: "menunggu_pimpinan" } },
-        });
-        return;
-      }
-
-      // --- LOGIKA UNTUK KEGIATAN INTERNAL (Tetap 1-Lapis mencetak poin langsung) ---
-      // Lookup matriks poin [BR-030]
+      // Lookup matriks poin [BR-030] — berlaku untuk semua asal kegiatan (internal & eksternal)
       const matriks = await prisma.matriksPoin.findFirst({
         where: {
           kurikulumId: kegiatan.kurikulumId,
@@ -510,6 +481,27 @@ export const validasiKlaim = async (
         return;
       }
 
+      // Untuk kegiatan eksternal: ambil subCapaian dari kurikulum aktif jika tidak ada kegiatanCapaian
+      let detailData: { subCapaianId: number; poin: number }[] = kegiatan.kegiatanCapaian.map((kc) => ({
+        subCapaianId: kc.subCapaianId,
+        poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
+      }));
+
+      if (detailData.length === 0) {
+        const kurikulum = await prisma.kurikulum.findFirst({
+          where: { status: 'aktif' },
+          include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
+        });
+        const allSub = kurikulum?.capaian.flatMap((c) => c.subCapaian) ?? [];
+        if (allSub.length > 0) {
+          const totalBobot = allSub.reduce((s, sc) => s + Number(sc.bobotPersen), 0) || 100;
+          detailData = allSub.map((sc) => ({
+            subCapaianId: sc.id,
+            poin: Math.round((matriks.poin * Number(sc.bobotPersen)) / totalBobot),
+          }));
+        }
+      }
+
       // Buat perolehan_poin + detail [BR-032] [BR-020]
       const perolehan = await prisma.perolehanPoin.create({
         data: {
@@ -518,12 +510,7 @@ export const validasiKlaim = async (
           kegiatanId: kegiatan.id,
           totalPoin: matriks.poin,
           status: "sah",
-          detail: {
-            create: kegiatan.kegiatanCapaian.map((kc) => ({
-              subCapaianId: kc.subCapaianId,
-              poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
-            })),
-          },
+          detail: { create: detailData },
         },
         include: { detail: true },
       });
@@ -641,7 +628,7 @@ export const validasiKlaimBulk = async (
     const klaims = await prisma.klaimPoin.findMany({
       where: {
         id: { in: klaimIds },
-        status: "menunggu_pimpinan",
+        status: { in: ["menunggu_validasi", "menunggu_pimpinan"] },
       },
       include: {
         partisipasi: {
@@ -664,6 +651,13 @@ export const validasiKlaimBulk = async (
 
     const processedIds: bigint[] = [];
     const errors: string[] = [];
+
+    // Ambil subCapaian kurikulum aktif sekali untuk fallback kegiatan eksternal
+    const kurikulumAktif = await prisma.kurikulum.findFirst({
+      where: { status: 'aktif' },
+      include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
+    });
+    const allSubCapaian = kurikulumAktif?.capaian.flatMap((c) => c.subCapaian) ?? [];
 
     // Gunakan transaction untuk memastikan integritas
     await prisma.$transaction(async (tx) => {
@@ -701,6 +695,18 @@ export const validasiKlaimBulk = async (
              continue;
           }
 
+          let bulkDetailData: { subCapaianId: number; poin: number }[] = kegiatan.kegiatanCapaian.map((kc) => ({
+            subCapaianId: kc.subCapaianId,
+            poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
+          }));
+          if (bulkDetailData.length === 0 && allSubCapaian.length > 0) {
+            const totalBobot = allSubCapaian.reduce((s, sc) => s + Number(sc.bobotPersen), 0) || 100;
+            bulkDetailData = allSubCapaian.map((sc) => ({
+              subCapaianId: sc.id,
+              poin: Math.round((matriks.poin * Number(sc.bobotPersen)) / totalBobot),
+            }));
+          }
+
           const perolehan = await tx.perolehanPoin.create({
             data: {
               klaimPoinId: klaim.id,
@@ -708,12 +714,7 @@ export const validasiKlaimBulk = async (
               kegiatanId: kegiatan.id,
               totalPoin: matriks.poin,
               status: "sah",
-              detail: {
-                create: kegiatan.kegiatanCapaian.map((kc) => ({
-                  subCapaianId: kc.subCapaianId,
-                  poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
-                })),
-              },
+              detail: { create: bulkDetailData },
             },
           });
 
@@ -774,7 +775,6 @@ export const validasiKlaimBulk = async (
         entitas: "klaim_poin",
         entitasId: id,
         aksi: `validasi_bulk.${body.keputusan}`,
-        statusLama: "menunggu_pimpinan",
         statusBaru: body.keputusan,
         aktorId,
       }))

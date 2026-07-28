@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma';
 
 // Helper: dapatkan organisasiId operator yang sedang login
@@ -283,7 +284,7 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
 // ==================== IMPORT PESERTA ====================
 
 // POST /api/ukm/kegiatan/:kegiatanId/peserta/import
-// Import peserta via JSON (frontend parsing CSV)
+// Import peserta via file Excel (.xlsx)
 export const importPesertaUKM = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -291,17 +292,29 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const operator = await getOrganisasiOperator(BigInt(userId));
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+    // Validasi file
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'File Excel (.xlsx) wajib diupload.' });
     }
 
-    // Validasi kegiatan milik UKM ini
-    const kegiatan = await prisma.kegiatan.findFirst({
-      where: { id: kegiatanId, organisasiId: operator.organisasiId }
-    });
-    if (!kegiatan) {
-      return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+    // Cek kegiatan — untuk admin, tidak perlu cek operator
+    let kegiatan: any;
+    if (req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas') {
+      kegiatan = await prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
+      if (!kegiatan) {
+        return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
+      }
+    } else {
+      const operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId }
+      });
+      if (!kegiatan) {
+        return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+      }
     }
 
     // Status harus disetujui/terpublikasi
@@ -324,14 +337,40 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // Validasi body: array peserta [{ nim, hadir, peranId? }]
-    const { peserta } = req.body;
-    if (!Array.isArray(peserta) || peserta.length === 0) {
-      return res.status(400).json({ success: false, message: 'Data peserta tidak boleh kosong.' });
+    // Parse Excel
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+    const sheet = workbook.worksheets[0];
+
+    if (!sheet) {
+      return res.status(400).json({ success: false, message: 'File Excel tidak memiliki sheet.' });
+    }
+
+    const peserta: { nim: string; hadir: boolean; peranId: number | null }[] = [];
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // skip header
+      const nimCell = row.getCell(1).value;
+      const hadirCell = row.getCell(2).value;
+      const peranCell = row.getCell(3).value;
+
+      const nim = nimCell != null ? String(nimCell).trim() : '';
+      if (!nim) return; // skip baris kosong
+
+      const hadirStr = String(hadirCell ?? '').trim().toLowerCase();
+      const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes';
+
+      const peranIdRaw = peranCell != null ? String(peranCell).trim() : '';
+      const peranId = peranIdRaw && !isNaN(Number(peranIdRaw)) ? Number(peranIdRaw) : null;
+
+      peserta.push({ nim, hadir, peranId });
+    });
+
+    if (peserta.length === 0) {
+      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file Excel.' });
     }
 
     // Cari mahasiswa berdasarkan NIM
-    const nimList: string[] = peserta.map((p: any) => p.nim);
+    const nimList = peserta.map(p => p.nim);
     const mahasiswaList = await prisma.mahasiswa.findMany({
       where: { nim: { in: nimList } },
       include: {
@@ -361,14 +400,14 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
               }
             },
             update: {
-              kehadiran: p.hadir ?? false,
+              kehadiran: p.hadir,
               peranVerifId: p.peranId ?? null,
               status: p.hadir ? 'hadir' : 'tidak_hadir'
             },
             create: {
               kegiatanId,
               mahasiswaId: mahasiswa.userId,
-              kehadiran: p.hadir ?? false,
+              kehadiran: p.hadir,
               peranVerifId: p.peranId ?? null,
               status: p.hadir ? 'hadir' : 'tidak_hadir'
             }
@@ -406,35 +445,88 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
 
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const operator = await getOrganisasiOperator(BigInt(userId));
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
-    }
+    // Untuk route admin (peserta.routes.ts), tidak perlu cek operator
+    let namaKegiatan = 'Kegiatan';
+    let kategoriId: number | null = null;
 
-    const kegiatan = await prisma.kegiatan.findFirst({
-      where: { id: kegiatanId, organisasiId: operator.organisasiId },
-      select: { nama: true, kategoriId: true }
-    });
-
-    if (!kegiatan) {
-      return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
+    if (req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas') {
+      const kegiatan = await prisma.kegiatan.findUnique({
+        where: { id: kegiatanId },
+        select: { nama: true, kategoriId: true }
+      });
+      if (!kegiatan) {
+        return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
+      }
+      namaKegiatan = kegiatan.nama;
+      kategoriId = kegiatan.kategoriId;
+    } else {
+      const operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      const kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId },
+        select: { nama: true, kategoriId: true }
+      });
+      if (!kegiatan) {
+        return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
+      }
+      namaKegiatan = kegiatan.nama;
+      kategoriId = kegiatan.kategoriId;
     }
 
     const peranList = await prisma.mpPeran.findMany({
-      where: { kategoriId: kegiatan.kategoriId },
+      where: kategoriId ? { kategoriId } : {},
       orderBy: { urutan: 'asc' }
     });
 
-    const header = 'NIM,HADIR (true/false),PERAN_ID';
-    const komentar1 = `# Template Import Peserta - ${kegiatan.nama}`;
-    const komentar2 = `# Daftar PERAN_ID yang tersedia:`;
-    const daftarPeran = peranList.map(p => `# ${p.id} = ${p.nama}`).join('\n');
-    const contoh = '# Contoh: 2311210001,true,1';
-    const csvContent = [komentar1, komentar2, daftarPeran, contoh, '', header, ''].join('\n');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'SAPS';
+    workbook.created = new Date();
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="template_peserta_kegiatan_${kegiatanId}.csv"`);
-    res.send(csvContent);
+    // Sheet 1: Data import
+    const sheet = workbook.addWorksheet('Data Peserta');
+
+    sheet.columns = [
+      { header: 'NIM', key: 'nim', width: 20 },
+      { header: 'HADIR (true/false)', key: 'hadir', width: 20 },
+      { header: 'PERAN_ID', key: 'peranId', width: 15 },
+    ];
+
+    // Style header row
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B4332' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.height = 20;
+
+    // Contoh baris
+    sheet.addRow({ nim: '2311210001', hadir: 'true', peranId: peranList[0]?.id ?? 1 });
+    const exampleRow = sheet.getRow(2);
+    exampleRow.font = { italic: true, color: { argb: 'FF888888' } };
+
+    // Freeze header
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    // Sheet 2: Referensi peran
+    const refSheet = workbook.addWorksheet('Referensi Peran');
+    refSheet.columns = [
+      { header: 'PERAN_ID', key: 'id', width: 15 },
+      { header: 'NAMA PERAN', key: 'nama', width: 35 },
+    ];
+    const refHeader = refSheet.getRow(1);
+    refHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    refHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B4332' } };
+    refHeader.alignment = { vertical: 'middle', horizontal: 'center' };
+    refHeader.height = 20;
+
+    peranList.forEach(p => refSheet.addRow({ id: p.id, nama: p.nama }));
+
+    // Tulis ke response
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="template_peserta_kegiatan_${kegiatanId}.xlsx"`);
+    await workbook.xlsx.write(res);
+    res.end();
 
   } catch (error: any) {
     next(error);

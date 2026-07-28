@@ -30,30 +30,50 @@ export const getIzinForDosen = async (req: Request, res: Response, next: NextFun
               },
             },
             peranVerif: true,
+            klaimPoin: {
+              select: { peranUsulanId: true, peranUsulan: { select: { nama: true } } },
+            },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
     
+    // Deteksi pengajuan ulang: partisipasiId yang muncul >1x
+    const partisipasiCount: Record<string, number> = {};
+    data.forEach(izin => {
+      const pid = izin.partisipasiId.toString();
+      partisipasiCount[pid] = (partisipasiCount[pid] || 0) + 1;
+    });
+    const seenPid = new Set<string>();
+
     // Serialisasi data agar bigint menjadi string
-    const serializedData = data.map(izin => ({
-        ...izin,
-        id: izin.id.toString(),
-        partisipasiId: izin.partisipasiId.toString(),
-        dosenPaId: izin.dosenPaId.toString(),
-        partisipasi: {
-            ...izin.partisipasi,
-            id: izin.partisipasi.id.toString(),
-            mahasiswaId: izin.partisipasi.mahasiswaId.toString(),
-            kegiatanId: izin.partisipasi.kegiatanId,
-            mahasiswa: {
-                ...izin.partisipasi.mahasiswa,
-                userId: izin.partisipasi.mahasiswa.userId.toString(),
-                dosenPaId: izin.partisipasi.mahasiswa.dosenPaId?.toString()
-            }
-        }
-    }));
+    const serializedData = data.map(izin => {
+        const pid = izin.partisipasiId.toString();
+        const isUlang = partisipasiCount[pid] > 1 && !seenPid.has(pid);
+        seenPid.add(pid);
+        const klaim = (izin.partisipasi as any).klaimPoin;
+        return {
+          ...izin,
+          id: izin.id.toString(),
+          partisipasiId: pid,
+          dosenPaId: izin.dosenPaId.toString(),
+          isUlang,
+          peran: klaim?.peranUsulan?.nama || izin.partisipasi.peranVerif?.nama || null,
+          peranId: klaim?.peranUsulanId?.toString() || null,
+          partisipasi: {
+              ...izin.partisipasi,
+              id: izin.partisipasi.id.toString(),
+              mahasiswaId: izin.partisipasi.mahasiswaId.toString(),
+              kegiatanId: izin.partisipasi.kegiatanId,
+              mahasiswa: {
+                  ...izin.partisipasi.mahasiswa,
+                  userId: izin.partisipasi.mahasiswa.userId.toString(),
+                  dosenPaId: izin.partisipasi.mahasiswa.dosenPaId?.toString()
+              }
+          }
+        };
+    });
     
     res.json({ success: true, data: serializedData });
   } catch (error) {
