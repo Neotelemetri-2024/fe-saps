@@ -150,10 +150,12 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
       res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
       return;
     }
-    if (kurikulum.status !== 'draft') {
-      res.status(400).json({ success: false, message: 'Hanya kurikulum draft yang bisa diaktifkan' });
+    if (kurikulum.status === 'aktif') {
+      res.status(400).json({ success: false, message: 'Kurikulum sudah aktif' });
       return;
     }
+
+    const statusLama = kurikulum.status;
 
     // Arsipkan kurikulum aktif saat ini (jika ada) [BR-001]
     await prisma.kurikulum.updateMany({
@@ -171,7 +173,7 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
       entitas: 'kurikulum',
       entitasId: updated.id,
       aksi: 'aktivasi',
-      statusLama: 'draft',
+      statusLama,
       statusBaru: 'aktif',
       aktorId,
     });

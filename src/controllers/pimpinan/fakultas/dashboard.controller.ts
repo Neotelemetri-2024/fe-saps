@@ -52,11 +52,11 @@ export const buildPimpinanDashboard = async (fakultasId?: number) => {
       mhs.perolehanPoin.forEach((pp: any) => {
         poinMhs += pp.totalPoin;
         totalPoinProdi += pp.totalPoin;
-        const kategoriName = pp.kegiatan.kategori?.nama.toLowerCase() || 'lainnya';
+        const kategoriName = (pp.kegiatan?.kategori?.nama ?? 'lainnya').toLowerCase();
         if (!kategoriMap[kategoriName]) kategoriMap[kategoriName] = 0;
         kategoriMap[kategoriName] += pp.totalPoin;
 
-        const skalaName = pp.kegiatan.skala?.nama || 'Lainnya';
+        const skalaName = pp.kegiatan?.skala?.nama ?? 'Lainnya';
         if (!skalaGlobalMap[skalaName]) skalaGlobalMap[skalaName] = 0;
         skalaGlobalMap[skalaName] += pp.totalPoin;
       });

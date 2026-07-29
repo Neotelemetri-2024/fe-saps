@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma';
 
 // Helper: dapatkan organisasiId operator yang sedang login
@@ -284,7 +283,7 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
 // ==================== IMPORT PESERTA ====================
 
 // POST /api/ukm/kegiatan/:kegiatanId/peserta/import
-// Import peserta via file Excel (.xlsx)
+// Import peserta via file CSV
 export const importPesertaUKM = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -294,7 +293,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
     // Validasi file
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'File Excel (.xlsx) wajib diupload.' });
+      return res.status(400).json({ success: false, message: 'File CSV wajib diupload.' });
     }
 
     // Cek kegiatan — untuk admin, tidak perlu cek operator
@@ -337,36 +336,34 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // Parse Excel
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(req.file.buffer);
-    const sheet = workbook.worksheets[0];
+    // Parse CSV
+    const csvText = req.file.buffer.toString('utf-8');
+    const lines = csvText.split(/\r?\n/).filter(line => {
+      const t = line.trim()
+      return t !== '' && !t.startsWith('#')
+    });
 
-    if (!sheet) {
-      return res.status(400).json({ success: false, message: 'File Excel tidak memiliki sheet.' });
+    if (lines.length < 2) {
+      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file CSV.' });
     }
 
     const peserta: { nim: string; hadir: boolean; peranId: number | null }[] = [];
-    sheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // skip header
-      const nimCell = row.getCell(1).value;
-      const hadirCell = row.getCell(2).value;
-      const peranCell = row.getCell(3).value;
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      const nim = (cols[0] ?? '').trim();
+      if (!nim) continue;
 
-      const nim = nimCell != null ? String(nimCell).trim() : '';
-      if (!nim) return; // skip baris kosong
-
-      const hadirStr = String(hadirCell ?? '').trim().toLowerCase();
+      const hadirStr = (cols[1] ?? '').trim().toLowerCase();
       const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes';
 
-      const peranIdRaw = peranCell != null ? String(peranCell).trim() : '';
+      const peranIdRaw = (cols[2] ?? '').trim();
       const peranId = peranIdRaw && !isNaN(Number(peranIdRaw)) ? Number(peranIdRaw) : null;
 
       peserta.push({ nim, hadir, peranId });
-    });
+    }
 
     if (peserta.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file Excel.' });
+      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file CSV.' });
     }
 
     // Cari mahasiswa berdasarkan NIM
@@ -480,53 +477,20 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
       orderBy: { urutan: 'asc' }
     });
 
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'SAPS';
-    workbook.created = new Date();
+    // Build CSV: sheet utama + referensi peran digabung dalam satu file
+    const rows: string[] = [];
+    rows.push('NIM,HADIR (true/false),PERAN_ID');
+    rows.push(`2311210001,true,${peranList[0]?.id ?? 1}`);
+    rows.push('');
+    rows.push('# Referensi Peran:');
+    rows.push('PERAN_ID,NAMA PERAN');
+    peranList.forEach(p => rows.push(`${p.id},"${p.nama}"`));
 
-    // Sheet 1: Data import
-    const sheet = workbook.addWorksheet('Data Peserta');
+    const csv = rows.join('\n');
 
-    sheet.columns = [
-      { header: 'NIM', key: 'nim', width: 20 },
-      { header: 'HADIR (true/false)', key: 'hadir', width: 20 },
-      { header: 'PERAN_ID', key: 'peranId', width: 15 },
-    ];
-
-    // Style header row
-    const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B4332' } };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-    headerRow.height = 20;
-
-    // Contoh baris
-    sheet.addRow({ nim: '2311210001', hadir: 'true', peranId: peranList[0]?.id ?? 1 });
-    const exampleRow = sheet.getRow(2);
-    exampleRow.font = { italic: true, color: { argb: 'FF888888' } };
-
-    // Freeze header
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-    // Sheet 2: Referensi peran
-    const refSheet = workbook.addWorksheet('Referensi Peran');
-    refSheet.columns = [
-      { header: 'PERAN_ID', key: 'id', width: 15 },
-      { header: 'NAMA PERAN', key: 'nama', width: 35 },
-    ];
-    const refHeader = refSheet.getRow(1);
-    refHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    refHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B4332' } };
-    refHeader.alignment = { vertical: 'middle', horizontal: 'center' };
-    refHeader.height = 20;
-
-    peranList.forEach(p => refSheet.addRow({ id: p.id, nama: p.nama }));
-
-    // Tulis ke response
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="template_peserta_kegiatan_${kegiatanId}.xlsx"`);
-    await workbook.xlsx.write(res);
-    res.end();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="template_peserta_kegiatan_${kegiatanId}.csv"`);
+    res.send(csv);
 
   } catch (error: any) {
     next(error);
