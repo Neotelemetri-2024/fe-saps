@@ -8,6 +8,7 @@ import Modal from '../../components/ui/Modal'
 import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { getCurrentUser } from '../../services/authService'
+import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
 function normalizeKegiatanDetail(k) {
   if (!k) return null
@@ -49,34 +50,6 @@ function normalizeKegiatanDetail(k) {
       persen: kc.alokasiPersen ?? null,
     })),
   }
-}
-
-function InfoRow({ label, value, href, multiline = false }) {
-  return (
-    <div className={`flex flex-col gap-0.5 sm:flex-row sm:gap-4 ${multiline ? 'sm:items-start' : 'sm:items-baseline'}`}>
-      <p className="w-full shrink-0 text-xs font-semibold uppercase tracking-wide text-[#9aa0a6] sm:w-44">{label}</p>
-      {href && value && value !== '-' ? (
-        <a href={href} target="_blank" rel="noopener noreferrer"
-          className="break-all text-sm text-brand-dark underline hover:opacity-75">
-          {value}
-        </a>
-      ) : (
-        <p className={`text-sm font-medium text-[#111] ${multiline ? 'leading-relaxed' : ''}`}>{value || '-'}</p>
-      )}
-    </div>
-  )
-}
-
-function SectionCard({ title, icon: Icon, children }) {
-  return (
-    <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center gap-2.5 border-b border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5">
-        {Icon && <Icon className="h-4 w-4 text-brand-dark" />}
-        <h3 className="text-sm font-bold text-brand-dark">{title}</h3>
-      </div>
-      <div className="space-y-3.5 p-5">{children}</div>
-    </div>
-  )
 }
 
 function DetailVerifikasiPengajuanEksternal() {

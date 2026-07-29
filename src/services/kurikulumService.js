@@ -11,8 +11,12 @@ export async function getKurikulumById(id) {
 }
 
 export async function getKurikulumAktif() {
-  const res = await get('/api/kurikulum/aktif')
-  return res?.data || res
+  try {
+    const res = await get('/api/kurikulum/aktif')
+    return res?.data || res
+  } catch {
+    return null
+  }
 }
 
 export async function createKurikulum(data) {

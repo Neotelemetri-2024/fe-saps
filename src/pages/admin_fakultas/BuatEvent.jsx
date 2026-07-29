@@ -155,7 +155,7 @@ function BuatEvent() {
                 <input
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
-                  placeholder="masukkan nama kegiatan..."
+                  placeholder="Masukkan nama kegiatan..."
                   className={inputCls}
                 />
               </div>
@@ -213,7 +213,7 @@ function BuatEvent() {
                     onChange={(e) => {
                       if (e.target.value.length <= 500) setDeskripsi(e.target.value)
                     }}
-                    placeholder="tujuan, agenda, dan manfaat kegiatan."
+                    placeholder="Tujuan, agenda, dan manfaat kegiatan."
                     rows={5}
                     className={`${inputCls} resize-none`}
                   />
@@ -427,7 +427,6 @@ function BuatEvent() {
 
           <div className="flex items-center gap-2 rounded-lg border border-[#d1fae5] bg-[#f0fdf4] px-4 py-3">
             <Info className="h-4 w-4 shrink-0 text-brand-dark" />
-            <p className="text-xs text-[#555]">Pastikan informasi sudah benar sebelum dikirim !</p>
           </div>
         </form>
       </div>

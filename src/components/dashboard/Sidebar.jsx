@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, LogOut, Menu, X, ChevronRight } from 'lucide-react'
-import { logout } from '../../services/authService'
+import { NavLink } from 'react-router-dom'
+import { ChevronDown, Menu, X, ChevronRight } from 'lucide-react'
 import logoUnand from '../../assets/logo_unand.png'
 
 function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
-  const navigate = useNavigate()
   const [openMenus, setOpenMenus] = useState(() =>
     menuItems.reduce((acc, item) => {
       if (item.children?.length) acc[item.label] = true
@@ -149,24 +147,12 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
         </ul>
       </nav>
 
-      {/* Logout */}
-      <div className="shrink-0 border-t border-[#e9ebf8] px-2 py-3">
-        <button
-          onClick={() => { logout(); navigate('/login') }}
-          title={collapsed ? 'Logout' : undefined}
-          className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-red-50 hover:text-red-600"
-        >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </button>
-      </div>
     </aside>
   )
 }
 
 /* Mobile overlay sidebar */
 function MobileSidebar({ menuItems, isOpen, onClose }) {
-  const navigate = useNavigate()
   const [openMenus, setOpenMenus] = useState(() =>
     menuItems.reduce((acc, item) => {
       if (item.children?.length) acc[item.label] = true
@@ -289,15 +275,6 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
           </ul>
         </nav>
 
-        <div className="shrink-0 border-t border-[#e9ebf8] px-2 py-3">
-          <button
-            onClick={() => { logout(); navigate('/login') }}
-            className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] hover:bg-red-50 hover:text-red-600"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span>Logout</span>
-          </button>
-        </div>
       </aside>
     </>
   )

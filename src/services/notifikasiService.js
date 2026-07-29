@@ -2,10 +2,14 @@ import { get, put } from './apiClient'
 
 export async function getNotifikasi() {
   const res = await get('/api/umum/notifikasi')
-  // BE: { success, data, unreadCount }
   if (Array.isArray(res?.data)) return res.data
   if (Array.isArray(res)) return res
   return []
+}
+
+export async function getUnreadCount() {
+  const res = await get('/api/umum/notifikasi')
+  return res?.unreadCount ?? 0
 }
 
 export async function bacaNotifikasi(id) {

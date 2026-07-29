@@ -48,7 +48,7 @@ async function handleResponse(res) {
     if (!window.location.pathname.includes('/login')) {
       window.location.href = '/login'
     }
-    throw new Error('Sesi berakhir. Silakan login ulang.')
+    throw new Error('Email atau password yang Anda masukkan salah.')
   }
 
   if (!res.ok) {

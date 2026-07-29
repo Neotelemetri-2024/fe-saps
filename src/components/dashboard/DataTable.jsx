@@ -127,7 +127,7 @@ function DataTable({
                             className="h-4 w-4 cursor-pointer accent-brand-dark"
                           />
                         ) : (
-                          <span className="block h-4 w-4 rounded border-2 border-[#e0e0e0] bg-[#f5f5f5] cursor-not-allowed" />
+                          <span className="block h-4 w-4 rounded border-2 border-[#e0e0e0] bg-[#f5f5f5] cursor-not-allowed"></span>
                         )}
                       </td>
                     )}

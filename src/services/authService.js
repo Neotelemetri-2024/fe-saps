@@ -43,7 +43,7 @@ export async function login(email, password) {
   const res = await post('/api/auth/login', { email: emailLower, password })
 
   if (!res?.success) {
-    throw new Error(res?.message || 'Email atau password salah.')
+    throw new Error('Username atau password yang Anda masukkan salah.')
   }
 
   const token = res.data?.token

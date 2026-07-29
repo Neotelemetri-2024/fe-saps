@@ -186,7 +186,7 @@ function BuatEvent() {
                   type="text"
                   value={form.nama}
                   onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
-                  placeholder="masukkan nama kegiatan..."
+                  placeholder="Masukkan nama kegiatan..."
                   className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
                   required
                 />
@@ -243,7 +243,7 @@ function BuatEvent() {
                 <textarea
                   value={form.deskripsi}
                   onChange={(e) => setForm((p) => ({ ...p, deskripsi: e.target.value }))}
-                  placeholder="tujuan, agenda, dan manfaat kegiatan..."
+                  placeholder="Tujuan, agenda, dan manfaat kegiatan..."
                   rows={4}
                   maxLength={500}
                   className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"

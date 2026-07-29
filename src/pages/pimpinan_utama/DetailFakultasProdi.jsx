@@ -78,7 +78,7 @@ function HorizontalStackedBar({ data, maxVal }) {
       <div className="mt-6 flex flex-wrap items-center justify-center gap-5 text-xs font-medium text-[#616161]">
         {KATEGORI.map((k) => (
           <span key={k.key} className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded" style={{ backgroundColor: k.color }} />
+            <span className="h-3 w-3 rounded" style={{ backgroundColor: k.color }}></span>
             {k.label}
           </span>
         ))}
@@ -335,7 +335,7 @@ function DetailFakultasProdi() {
             <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-xs font-semibold">
               {skalaKegiatan.map((s) => (
                 <div key={s.label} className="flex items-center gap-3 text-[#616161]">
-                  <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: s.color }} />
+                  <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: s.color }}></span>
                   <span>{s.label} ({s.percentage}%)</span>
                 </div>
               ))}

@@ -21,7 +21,7 @@ function StatusBadge({ status }) {
   const style = map[s] || { cls: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', label: status }
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.cls}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`}></span>
       {style.label}
     </span>
   )

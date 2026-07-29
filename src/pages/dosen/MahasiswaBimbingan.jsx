@@ -34,7 +34,7 @@ function StatusDot({ poin, persen, status }) {
     : Math.round((poin / TARGET_POIN) * 100)
   const isLow = status === 'perlu_perhatian' || pct < 50
   return (
-    <span className={`inline-block h-3.5 w-3.5 rounded-full ${isLow ? 'bg-red-500' : 'bg-emerald-600'}`} />
+    <span className={`inline-block h-3.5 w-3.5 rounded-full ${isLow ? 'bg-red-500' : 'bg-emerald-600'}`}></span>
   )
 }
 

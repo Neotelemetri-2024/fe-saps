@@ -119,7 +119,7 @@ function LandingPage() {
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 px-4 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-2 lg:pt-20">
           <div className="py-8 lg:py-12">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs text-white sm:text-sm">
-              <span className="h-2 w-2 rounded-full bg-[#4caf50]" />
+              <span className="h-2 w-2 rounded-full bg-[#4caf50]"></span>
               Sistem Resmi Universitas Andalas
             </div>
             <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-7xl">

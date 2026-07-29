@@ -87,13 +87,13 @@ function DetailFakultas() {
         <div className="flex flex-wrap items-center gap-5 text-sm text-[#444]">
           <span className="text-xs font-semibold uppercase tracking-wide text-[#888]">Kategori Poin</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-[#16a34a]" /> Organisasi
+            <span className="h-3 w-3 rounded-sm bg-[#16a34a]"></span> Organisasi
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-[#3b82f6]" /> Seminar
+            <span className="h-3 w-3 rounded-sm bg-[#3b82f6]"></span> Seminar
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-[#eab308]" /> Prestasi
+            <span className="h-3 w-3 rounded-sm bg-[#eab308]"></span> Prestasi
           </span>
         </div>
 

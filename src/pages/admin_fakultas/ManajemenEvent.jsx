@@ -148,7 +148,7 @@ function ManajemenEvent() {
       label: 'STATUS',
       render: (row) => (
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
           {row.status}
         </span>
       ),

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
-import { getKegiatan } from '../../services/kegiatanService'
+import { getKegiatanApproval } from '../../services/kegiatanService'
 
 const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Ditolak', 'Revisi']
 
@@ -24,14 +24,14 @@ function VerifikasiPengajuanUKMF() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const res = await getKegiatan()
+      const res = await getKegiatanApproval()
       setUkmfData(res.map((item, i) => ({
         id: item.id,
         no: i + 1,
         kegiatan: item.nama || item.kegiatan,
-        namaUkmf: item.namaUkmf || 'UKMF',
-        jenis: item.jenis,
-        skala: item.skala,
+        namaUkmf: item.organisasi?.nama || item.namaUkmf || 'UKMF',
+        jenis: typeof item.kategori === 'object' ? item.kategori?.nama : (item.jenis || item.kategori || ''),
+        skala: typeof item.skala === 'object' ? item.skala?.nama : (item.skala || ''),
         tanggal: item.tgl || item.tanggal || '',
         status: item.status || 'pending',
         penyelenggara: item.penyelenggara,
@@ -83,7 +83,7 @@ function VerifikasiPengajuanUKMF() {
       key: 'status', label: 'Status',
       render: (item) => (
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[item.status?.toLowerCase()] ?? 'bg-gray-100 text-gray-500'}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
           {item.status}
         </span>
       ),

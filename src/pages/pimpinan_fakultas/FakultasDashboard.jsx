@@ -86,7 +86,7 @@ function VerticalStackedBar({ data }) {
       <div className="mt-3 flex flex-wrap items-center justify-center gap-5 text-xs font-medium text-[#616161]">
         {[['organisasi', COLORS.organisasi], ['seminar', COLORS.seminar], ['prestasi', COLORS.prestasi]].map(([k, c]) => (
           <span key={k} className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
             {LABELS[k]}
           </span>
         ))}
@@ -247,7 +247,7 @@ function PimpinanFakultasDashboard() {
             <div className="mt-2 flex gap-4 text-xs font-medium text-[#555]">
               {[['#15803d', 'Organisasi'], ['#3b82f6', 'Seminar'], ['#eab308', 'Prestasi']].map(([c, l]) => (
                 <span key={l} className="flex items-center gap-1.5">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }} />
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
                   {l}
                 </span>
               ))}
@@ -260,7 +260,7 @@ function PimpinanFakultasDashboard() {
             columns={[
               {
                 key: 'ranking', label: 'Ranking',
-                render: (item, _col, i) => (
+                render: (item, i) => (
                   <div className="flex justify-center">
                     <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
                       i === 0 ? 'bg-yellow-400' : i === 1 ? 'bg-gray-400' : 'bg-amber-700'
@@ -309,7 +309,7 @@ function PimpinanFakultasDashboard() {
                   <div className="mt-5 w-full space-y-2.5">
                     {distribusiData.map((d) => (
                       <div key={d.label} className="flex items-center gap-2 text-xs font-medium">
-                        <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
+                        <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }}></span>
                         <span className="flex-1 text-[#333]">{d.label}</span>
                         <span className="text-[#616161]">{d.value} %</span>
                       </div>

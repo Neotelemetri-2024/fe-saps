@@ -69,6 +69,11 @@ h2 {
 .bg-brand-dark {
   background-color: var(--brand-dark);
 }
+
+/* override text-brand-dark jadi hitam */
+.text-brand-dark {
+  color: #111 !important;
+}
 .bg-brand-light {
   background-color: var(--brand-light);
 }

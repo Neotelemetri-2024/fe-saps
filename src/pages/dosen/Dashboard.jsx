@@ -49,7 +49,7 @@ function CapaianBar({ pct, status }) {
 
 function StatusDot({ status }) {
   return (
-    <span className={`inline-block h-3 w-3 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`} />
+    <span className={`inline-block h-3 w-3 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`}></span>
   )
 }
 

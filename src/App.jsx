@@ -1,5 +1,5 @@
 import { Toaster } from 'sonner'
-import { Route, Routes, Outlet } from 'react-router-dom'
+import { Route, Routes, Outlet, Navigate } from 'react-router-dom'
 import AuthGuard, { RoleGuard } from './components/AuthGuard'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -80,7 +80,7 @@ function App() {
     <>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* Mahasiswa */}

@@ -150,7 +150,7 @@ export async function downloadTemplatePeserta(kegiatanId) {
   const objectUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = objectUrl
-  a.download = `template_peserta_${kegiatanId}.xlsx`
+  a.download = `template_peserta_${kegiatanId}.csv`
   document.body.appendChild(a)
   a.click()
   a.remove()

@@ -3,13 +3,9 @@ import {
   LayoutDashboard,
   Users,
   CheckCircle,
-  Bell,
-  Settings,
   BookOpen,
   BarChart3,
   FileText,
-  History,
-  UserCircle,
   LayoutGrid,
   UserCheck,
   PlusCircle,
@@ -27,8 +23,6 @@ export const mahasiswaMenu = [
   { path: '/mahasiswa/klaim-poin', label: 'Klaim Poin Eksternal', icon: <CheckSquare className="h-4 w-4" /> },
   { path: '/mahasiswa/riwayat-poin', label: 'Riwayat Poin', icon: <Award className="h-4 w-4" /> },
   { path: '/mahasiswa/generate-cv', label: 'Generate CV', icon: <FileText className="h-4 w-4" /> },
-  { path: '/mahasiswa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/mahasiswa/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── DOSEN PA ── */
@@ -36,8 +30,6 @@ export const dosenPAMenu = [
   { path: '/dosen/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" />, end: true },
   { path: '/dosen/mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: <Users className="h-4 w-4" />, end: false },
   { path: '/dosen/permintaan-persetujuan', label: 'Persetujuan Mahasiswa', icon: <UserCheck className="h-4 w-4" /> },
-  { path: '/dosen/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/dosen/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 export const pimpinanDitmawaMenu = [
   { path: '/pimpinan_ditmawa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
@@ -52,21 +44,15 @@ export const pimpinanDitmawaMenu = [
       { path: '/pimpinan_ditmawa/verifikasi-pengajuan-eksternal', label: 'Verifikasi Pengajuan Eksternal' },
     ],
   },
-  { path: '/pimpinan_ditmawa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/pimpinan_ditmawa/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
-  { path: '/pimpinan_fakultas/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/pimpinan_fakultas/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 export const pimpinanUtamaMenu = [
   { path: '/pimpinan_utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_utama/detail-fakultas', label: 'Detail Fakultas', icon: <BarChart3 className="h-4 w-4" /> },
   { path: '#', label: 'Laporan', icon: <FileText className="h-4 w-4" /> },
-  { path: '/pimpinan_utama/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/pimpinan_utama/pengaturan', label: 'Akun', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN DITMAWA ── */
@@ -92,8 +78,6 @@ export const adminDitmawaMenu = [
     ],
   },
   { path: '/admin_ditmawa/manajemen-akun-ukm', label: 'Manajemen akun UKM', icon: <UserCog className="h-4 w-4" /> },
-  { path: '/admin_ditmawa/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/admin_ditmawa/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN FAKULTAS ── */
@@ -110,21 +94,15 @@ export const adminFakultasMenu = [
     ],
   },
   { path: '/admin_fakultas/manajemen-akun-ukmf', label: 'Manajemen akun UKMF', icon: <UserCog className="h-4 w-4" /> },
-  { path: '/admin_fakultas/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/admin_fakultas/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 export const ukmMenu = [
   { path: '/operator_ukm/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/operator_ukm/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '/operator_ukm/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/operator_ukm/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 export const ukmfMenu = [
   { path: '/operator_ukmf/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/operator_ukmf/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <FileText className="h-4 w-4" /> },
   { path: '/operator_ukmf/buat-kegiatan', label: 'Buat Kegiatan', icon: <PlusCircle className="h-4 w-4" /> },
-  { path: '/operator_ukmf/notifikasi', label: 'Notifikasi', icon: <Bell className="h-4 w-4" /> },
-  { path: '/operator_ukmf/pengaturan', label: 'Akun dan Pengaturan', icon: <Settings className="h-4 w-4" /> },
 ]
 // Objek ini berfungsi memetakan string role dari backend ke menu yang sesuai
 export const roleMenus = {

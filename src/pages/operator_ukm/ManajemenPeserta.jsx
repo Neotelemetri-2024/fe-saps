@@ -112,8 +112,19 @@ function ManajemenPeserta() {
   const handleImport = async (file) => {
     setImporting(true)
     try {
-      await importPesertaCSV(id, file)
-      toast.success('Import peserta berhasil')
+      const res = await importPesertaCSV(id, file)
+      const body = res?.data || res || {}
+      const importedCount = body.imported?.length ?? 0
+      const errors = body.errors ?? []
+      if (errors.length > 0) {
+        const msg = errors.slice(0, 3).map((e) => `NIM ${e.nim}: ${e.error}`).join('\n')
+        toast.warning(
+          `${importedCount} peserta berhasil, ${errors.length} gagal`,
+          { description: msg },
+        )
+      } else {
+        toast.success(`Import berhasil: ${importedCount} peserta`)
+      }
       loadData()
     } catch (err) {
       toast.error('Gagal import', { description: err.message })
@@ -174,9 +185,9 @@ function ManajemenPeserta() {
           <StatCard label="Tidak Hadir" value={tidakHadir} color="green" />
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
-          <Info className="h-5 w-5 shrink-0" />
-          Centang kehadiran dan pilih peran, lalu klik <b>Simpan Perubahan</b>. Setelah selesai, klik <b>Submit Poin</b> agar peserta yang hadir mendapat poin otomatis.
+        <div className="flex items-start gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
+          <Info className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>Centang kehadiran dan pilih peran, lalu klik <strong>Simpan Perubahan</strong>. Setelah selesai, klik <strong>Submit Poin</strong> agar peserta yang hadir mendapat poin otomatis.</p>
         </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -213,7 +224,7 @@ function ManajemenPeserta() {
             <input
               ref={fileRef}
               type="file"
-              accept=".xlsx"
+              accept=".csv"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]

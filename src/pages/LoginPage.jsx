@@ -9,6 +9,7 @@ function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
   // Hapus session lama saat halaman login dibuka
@@ -19,9 +20,9 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg('')
     try {
       const user = await login(email, password)
-      console.log('[DEBUG LOGIN] user object:', JSON.stringify(user, null, 2))
       toast.success('Login berhasil')
       const roleRoutes = {
         mahasiswa: '/mahasiswa/dashboard',
@@ -36,11 +37,11 @@ function LoginPage() {
         pimpinan_utama: '/pimpinan_utama/dashboard',
       }
       const dest = roleRoutes[user.role]
-      console.log('[DEBUG LOGIN] role:', user.role, '→ dest:', dest)
-      if (!dest) toast.error(`Role "${user.role}" tidak ada di roleRoutes — cek console`)
+      if (!dest) toast.error(`Role "${user.role}" tidak dikenali`)
       navigate(dest || '/login')
     } catch (err) {
-      toast.error('Login gagal', { description: err.message })
+      setPassword('')
+      setErrorMsg(err.message || 'Username atau password yang Anda masukkan salah.')
     } finally {
       setLoading(false)
     }
@@ -159,7 +160,7 @@ function LoginPage() {
           <form className="mt-6 space-y-4 lg:mt-10 lg:space-y-[18px]" onSubmit={handleSubmit}>
             {/* Username */}
             <div>
-              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Username</label>
+              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Email</label>
               <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-brand-dark px-4 lg:h-16 lg:gap-4 lg:px-5">
                 <svg className="h-5 w-5 shrink-0 text-[#969696]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -167,9 +168,9 @@ function LoginPage() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="dendi_unand"
+                  placeholder=""
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
                   className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
                 />
               </div>
@@ -185,9 +186,9 @@ function LoginPage() {
                 </svg>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="123456"
+                  placeholder=""
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
                   className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
                 />
                 <button
@@ -213,6 +214,18 @@ function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {/* Error message */}
+            {errorMsg && (
+              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <svg className="h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <p className="text-sm text-red-600">{errorMsg}</p>
+              </div>
+            )}
 
             {/* Login Button */}
             <button

@@ -26,10 +26,12 @@ function UKMDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const pending   = stats?.pending   ?? stats?.totalPending   ?? '-'
-  const disetujui = stats?.disetujui ?? stats?.totalDisetujui ?? '-'
-  const ditolak   = stats?.ditolak   ?? stats?.totalDitolak   ?? '-'
-  const aktif     = stats?.aktif     ?? stats?.totalAktif     ?? '-'
+  function statusLower(item) { return String(item?.status || '').toLowerCase() }
+  const allKegiatan = stats?.riwayatKegiatan || stats?.kegiatan || []
+  const draftCount  = allKegiatan.filter((d) => statusLower(d) === 'draft').length
+  const pending     = allKegiatan.filter((d) => ['diajukan', 'terverifikasi'].includes(statusLower(d))).length
+  const disetujui   = allKegiatan.filter((d) => ['disetujui', 'terpublikasi'].includes(statusLower(d))).length
+  const aktif       = allKegiatan.filter((d) => ['terpublikasi', 'berlangsung'].includes(statusLower(d))).length
 
   return (
     <DashboardLayout role="operator_ukm" userName={user?.nama || 'Operator UKM'} userRole="Operator UKM">
@@ -43,10 +45,10 @@ function UKMDashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Pending',      value: loading ? '…' : pending },
-            { label: 'Disetujui',    value: loading ? '…' : disetujui },
-            { label: 'Ditolak',      value: loading ? '…' : ditolak },
-            { label: 'Event Aktif',  value: loading ? '…' : aktif },
+            { label: 'Draft',       value: loading ? '…' : draftCount },
+            { label: 'Menunggu',    value: loading ? '…' : pending },
+            { label: 'Disetujui',   value: loading ? '…' : disetujui },
+            { label: 'Event Aktif', value: loading ? '…' : aktif },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-xl border-2 border-brand-dark bg-white p-5 shadow-sm">
               <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{label}</p>
@@ -71,7 +73,7 @@ function UKMDashboard() {
             data={riwayat}
             emptyText="Belum ada kegiatan."
             columns={[
-              { key: 'no', label: 'No', render: (_r, _col, i) => i + 1 },
+              { key: 'no', label: 'No', render: (_r, i) => i + 1 },
               {
                 key: 'kegiatan', label: 'Kegiatan',
                 render: (r) => (

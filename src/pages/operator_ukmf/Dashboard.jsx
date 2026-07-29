@@ -102,7 +102,7 @@ function UKMFDashboard() {
             data={preview}
             emptyText="Belum ada kegiatan."
             columns={[
-              { key: 'no', label: 'No', render: (_r, _col, i) => i + 1 },
+              { key: 'no', label: 'No', render: (_r, i) => i + 1 },
               {
                 key: 'kegiatan', label: 'Kegiatan',
                 render: (r) => (

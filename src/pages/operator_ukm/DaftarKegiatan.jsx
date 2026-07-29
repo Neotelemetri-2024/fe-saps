@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Bell, Pencil, Plus, RefreshCw, Send, Trash2 } from 'lucide-react'
+import { Pencil, Plus, RefreshCw, Send, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -46,17 +46,6 @@ function DaftarKegiatan() {
   }
 
   useEffect(() => { load() }, [])
-
-  const draftCount = data.filter((d) => statusLower(d) === 'draft').length
-  const pending = data.filter((d) => ['diajukan', 'terverifikasi'].includes(statusLower(d))).length
-  const disetujui = data.filter((d) => ['disetujui', 'terpublikasi'].includes(statusLower(d))).length
-  const aktif = data.filter((d) => ['terpublikasi', 'berlangsung'].includes(statusLower(d))).length
-  const stats = [
-    { label: 'DRAFT', value: draftCount },
-    { label: 'MENUNGGU', value: pending },
-    { label: 'DISETUJUI', value: disetujui },
-    { label: 'EVENT AKTIF', value: aktif },
-  ]
 
   function statusLower(item) {
     return String(item?.status || '').toLowerCase()
@@ -167,20 +156,10 @@ function DaftarKegiatan() {
         </div>
 
         <div className="flex items-start gap-3 rounded-lg bg-[#fff6ad] px-5 py-4 text-sm text-brand-dark shadow-sm">
-          <Bell className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
           <p>
             Kegiatan berstatus <b>draft</b> bisa diedit/dihapus. Setelah <b>Kirim</b>, tidak dapat diedit.
             Setelah disetujui, klik <b>Publikasi</b> agar mahasiswa bisa mendaftar.
           </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map(({ label, value }) => (
-            <div key={label} className="rounded-xl border-2 border-brand-dark bg-white p-5 shadow-sm">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{label}</p>
-              <p className="mt-2 text-3xl font-extrabold text-brand-dark">{value}</p>
-            </div>
-          ))}
         </div>
 
         <div className="space-y-3">

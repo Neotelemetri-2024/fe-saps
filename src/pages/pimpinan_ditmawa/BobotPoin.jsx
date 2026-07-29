@@ -395,7 +395,7 @@ function TambahMatriksModal({ isOpen, onClose, onNext }) {
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleNext() }}
-            placeholder="masukkan nama matriks"
+            placeholder="Masukkan nama matriks"
             className="w-full rounded-lg border border-[#d1d5db] px-3 py-2.5 text-sm outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
           />
         </div>
@@ -501,10 +501,10 @@ function apiToSections(data) {
   // Kelompokkan berdasarkan kategori
   const map = {}
   data.forEach((item) => {
-    const kat = item.kategori || item.namaKategori || 'Lainnya'
+    const kat = (typeof item.kategori === 'object' ? item.kategori?.nama : item.kategori) || item.namaKategori || 'Lainnya'
     if (!map[kat]) map[kat] = { skalaSet: [], peranSet: [], poinMap: {} }
-    const skala = item.skala || item.namaSkala || '-'
-    const peran = item.peran || item.namaPeran || '-'
+    const skala = (typeof item.skala === 'object' ? item.skala?.nama : item.skala) || item.namaSkala || '-'
+    const peran = (typeof item.peran === 'object' ? item.peran?.nama : item.peran) || item.namaPeran || '-'
     if (!map[kat].skalaSet.includes(skala)) map[kat].skalaSet.push(skala)
     if (!map[kat].peranSet.includes(peran)) map[kat].peranSet.push(peran)
     map[kat].poinMap[`${peran}__${skala}`] = `${item.poin ?? 0} Poin`

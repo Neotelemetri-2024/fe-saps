@@ -113,9 +113,9 @@ function ProdiStackedChart({ data }) {
         <line x1={paddingLeft} y1={height - paddingBottom} x2={width} y2={height - paddingBottom} stroke="#e9ebf8" strokeWidth="1" />
       </svg>
       <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-[#616161]">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.organisasi }} />organisasi</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.seminar }} />seminar</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.prestasi }} />prestasi</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.organisasi }}></span>organisasi</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.seminar }}></span>seminar</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.prestasi }}></span>prestasi</span>
       </div>
     </div>
   )

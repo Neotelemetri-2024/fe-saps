@@ -255,7 +255,7 @@ function ManajemenPesertaEvent() {
             <input
               ref={fileRef}
               type="file"
-              accept=".xlsx"
+              accept=".csv"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]

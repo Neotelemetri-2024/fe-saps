@@ -54,16 +54,14 @@ function BuatKegiatan() {
   }, [])
 
   useEffect(() => {
-    Promise.all([
-      getKurikulumAktif(),
-      getKategoriKegiatan(),
-    ])
-      .then(([kur, kat]) => {
-        setKurikulum(kur)
-        setKategoriList(Array.isArray(kat) ? kat : [])
-      })
+    getKurikulumAktif()
+      .then((kur) => setKurikulum(kur))
       .catch(() => {})
       .finally(() => setLoadingKur(false))
+
+    getKategoriKegiatan()
+      .then((kat) => setKategoriList(Array.isArray(kat) ? kat : []))
+      .catch(() => {})
   }, [])
 
   // Reload skala saat kategori berubah
@@ -262,7 +260,7 @@ function BuatKegiatan() {
                   type="text"
                   value={form.nama}
                   onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
-                  placeholder="masukkan nama kegiatan..."
+                  placeholder="Masukkan nama kegiatan..."
                   className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
                   required
                 />
@@ -305,7 +303,7 @@ function BuatKegiatan() {
                   value={form.deskripsi}
                   onChange={(e) => setForm((p) => ({ ...p, deskripsi: e.target.value }))}
                   rows={4}
-                  placeholder="tujuan, agenda, dan manfaat kegiatan."
+                  placeholder="Tujuan, agenda, dan manfaat kegiatan."
                   className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark resize-none"
                   maxLength={500}
                 />

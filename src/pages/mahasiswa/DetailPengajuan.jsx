@@ -3,40 +3,12 @@ import { ArrowLeft, CalendarDays } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
-
-function InfoRow({ label, value, href, multiline = false }) {
-  return (
-    <div className={`flex flex-col gap-0.5 sm:flex-row sm:gap-4 ${multiline ? 'sm:items-start' : 'sm:items-baseline'}`}>
-      <p className="w-full shrink-0 text-xs font-semibold uppercase tracking-wide text-[#9aa0a6] sm:w-44">{label}</p>
-      {href && value && value !== '-' ? (
-        <a href={href} target="_blank" rel="noopener noreferrer"
-          className="break-all text-sm text-brand-dark underline hover:opacity-75">{value}</a>
-      ) : (
-        <p className={`text-sm font-medium text-[#111] ${multiline ? 'leading-relaxed' : ''}`}>{value || '-'}</p>
-      )}
-    </div>
-  )
-}
-
-function SectionCard({ title, icon: Icon, children }) {
-  return (
-    <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center gap-2.5 border-b border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5">
-        {Icon && <Icon className="h-4 w-4 text-brand-dark" />}
-        <h3 className="text-sm font-bold text-brand-dark">{title}</h3>
-      </div>
-      <div className="space-y-3.5 p-5">{children}</div>
-    </div>
-  )
-}
+import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
   if (!val) return '-'
-  try {
-    return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-  } catch {
-    return String(val)
-  }
+  try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
+  catch { return String(val) }
 }
 
 function DetailPengajuanMahasiswa() {
@@ -59,34 +31,26 @@ function DetailPengajuanMahasiswa() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-      <div className="space-y-6">
-        {/* Back */}
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline"
-        >
+      <div className="space-y-5">
+        <button type="button" onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
-        {/* Header */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan Kegiatan</h2>
             <p className="mt-1 text-sm text-[#616161]">Informasi lengkap kegiatan yang telah diajukan.</p>
           </div>
-          <StatusBadge status={row.status} />
+          <div className="shrink-0"><StatusBadge status={row.status} /></div>
         </div>
 
-        {/* Catatan revisi / alasan ditolak */}
         {(isRevisi || isDitolak) && row.alasan && (
           <div className={`rounded-xl border p-4 ${isRevisi ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'}`}>
             <p className={`text-xs font-semibold mb-1 ${isRevisi ? 'text-yellow-700' : 'text-red-700'}`}>
               {isRevisi ? 'Catatan Revisi' : 'Alasan Penolakan'}
             </p>
-            <p className={`text-sm whitespace-pre-wrap ${isRevisi ? 'text-yellow-800' : 'text-red-800'}`}>
-              {row.alasan}
-            </p>
+            <p className={`text-sm whitespace-pre-wrap ${isRevisi ? 'text-yellow-800' : 'text-red-800'}`}>{row.alasan}</p>
           </div>
         )}
 
@@ -103,9 +67,7 @@ function DetailPengajuanMahasiswa() {
           {row.emailPenyelenggara && row.emailPenyelenggara !== '-' && (
             <InfoRow label="Email Penyelenggara" value={row.emailPenyelenggara} href={`mailto:${row.emailPenyelenggara}`} />
           )}
-          {row.deskripsi && (
-            <InfoRow label="Deskripsi" value={row.deskripsi} multiline />
-          )}
+          {row.deskripsi && <InfoRow label="Deskripsi" value={row.deskripsi} multiline />}
         </SectionCard>
       </div>
     </DashboardLayout>

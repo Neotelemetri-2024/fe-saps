@@ -244,7 +244,7 @@ function VerifikasiPengajuanEksternal() {
           totalPages={totalPages}
           onPageChange={setPage}
           columns={[
-            { key: 'no', label: 'No', render: (_item, _col, index) => start + index + 1 },
+            { key: 'no', label: 'No', render: (_item, index) => start + index + 1 },
             {
               key: 'mahasiswa', label: 'Mahasiswa',
               render: (item) => (

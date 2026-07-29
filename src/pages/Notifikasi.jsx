@@ -198,7 +198,7 @@ function Notifikasi() {
                         <p className="font-semibold text-brand-dark">
                           {notif.title}
                           {notif.belumDibaca && (
-                            <span className="ml-2 inline-block h-2 w-2 rounded-full bg-brand-dark align-middle" />
+                            <span className="ml-2 inline-block h-2 w-2 rounded-full bg-brand-dark align-middle"></span>
                           )}
                         </p>
                         <div className="flex shrink-0 items-center gap-3">

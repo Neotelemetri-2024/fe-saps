@@ -48,13 +48,14 @@ function FormBuatKegiatan() {
   }, [])
 
   useEffect(() => {
-    Promise.all([getKurikulumAktif(), getKategoriKegiatan()])
-      .then(([kur, kat]) => {
-        setKurikulum(kur)
-        setKategoriList(Array.isArray(kat) ? kat : [])
-      })
+    getKurikulumAktif()
+      .then((kur) => setKurikulum(kur))
       .catch(() => {})
       .finally(() => setLoadingKur(false))
+
+    getKategoriKegiatan()
+      .then((kat) => setKategoriList(Array.isArray(kat) ? kat : []))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -290,15 +291,14 @@ function FormBuatKegiatan() {
             </div>
           </div>
 
+          {!loadingKur && kurikulum && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-bold text-brand-dark">2. Pemetaan Capaian Kurikulum</h3>
             <p className="mb-6 text-sm text-[#616161]">Tentukan capaian kurikulum yang dicapai melalui kegiatan ini</p>
 
             {loadingKur ? (
               <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
-            ) : !kurikulum ? (
-              <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Admin.</p>
-            ) : (
+            ) : !kurikulum ? null : (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-black">
@@ -405,6 +405,7 @@ function FormBuatKegiatan() {
               </div>
             )}
           </div>
+          )}
 
           <div className="flex justify-end gap-3">
             <button
@@ -434,7 +435,6 @@ function FormBuatKegiatan() {
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Pastikan informasi sudah benar sebelum dikirim !
           </div>
         </form>
       </div>

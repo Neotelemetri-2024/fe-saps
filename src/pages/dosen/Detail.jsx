@@ -318,7 +318,7 @@ function DosenPADetail() {
               {timelineAktivitas.map((act, i) => (
                 <div key={i} className="flex items-start gap-4">
                   <div className="flex flex-col items-center pt-1">
-                    <span className={`h-3 w-3 shrink-0 rounded-full ${act.dotColor}`} />
+                    <span className={`h-3 w-3 shrink-0 rounded-full ${act.dotColor}`}></span>
                     {i < timelineAktivitas.length - 1 && (
                       <div className="mt-1 h-8 w-px bg-[#e0e0e0]" />
                     )}
