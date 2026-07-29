@@ -204,6 +204,8 @@ model Mahasiswa {
   saranPA       SaranPA[]       @relation("MahasiswaSaran")
   cvGenerated   CvGenerated[]
 
+  publicCvToken String? @unique @map("public_cv_token") @db.VarChar(50)
+
   @@map("mahasiswa")
 }
 

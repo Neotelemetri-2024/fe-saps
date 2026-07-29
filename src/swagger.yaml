@@ -1606,6 +1606,37 @@ paths:
   # =================================================================
   # MAHASISWA ROUTES
   # =================================================================
+
+  /api/mahasiswa/cv:
+    get:
+      summary: (Mahasiswa) Ambil Data Portofolio / CV Pribadi
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: "Berhasil" }
+
+  /api/mahasiswa/cv/generate-link:
+    post:
+      summary: (Mahasiswa) Aktifkan Link CV Publik & Dapatkan Token
+      tags: ["Role: Mahasiswa"]
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: "Berhasil mengaktifkan link publik" }
+
+  /api/umum/cv/public/{token}:
+    get:
+      summary: (Semua Orang) Akses CV/Portofolio Publik Tanpa Login
+      tags: ["Umum (Semua Role)"]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: "Berhasil mendapatkan data CV" }
+
   /api/mahasiswa/kegiatan-eksternal:
     post:
       summary: (Mahasiswa) Pengajuan Kegiatan Eksternal
