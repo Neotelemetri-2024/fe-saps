@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
-  getMatriksPoin, upsertMatriksPoin, getMatriksHistori,
+  getMatriksPoin, upsertMatriksPoin, syncMatriksPoin, getMatriksHistori,
   getKategori, createKategori, 
   getSkala, createSkala, updateSkala, deleteSkala, 
   getPeran, createPeran, updatePeran, deletePeran
@@ -14,6 +14,7 @@ router.use(authenticateJWT);
 // Matriks CRUD — hanya Pimpinan Ditmawa
 router.get('/', authorizeRole('pimpinan_ditmawa'), getMatriksPoin);
 router.post('/', authorizeRole('pimpinan_ditmawa'), upsertMatriksPoin);
+router.post('/sync', authorizeRole('pimpinan_ditmawa'), syncMatriksPoin);
 router.get('/histori/:matriksPoinId', authorizeRole('pimpinan_ditmawa'), getMatriksHistori);
 
 // Master data READ — semua role terautentikasi (untuk dropdown FE)

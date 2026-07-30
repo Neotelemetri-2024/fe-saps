@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../../../lib/prisma";
 import { z } from "zod";
 import { logAudit } from "../../../lib/auditLog";
+import { bagiPoin } from "../../../lib/distribusiPoin";
 
 // ==================== VALIDASI ====================
 const createKlaimSchema = z.object({
@@ -482,10 +483,10 @@ export const validasiKlaim = async (
       }
 
       // Untuk kegiatan eksternal: ambil subCapaian dari kurikulum aktif jika tidak ada kegiatanCapaian
-      let detailData: { subCapaianId: number; poin: number }[] = kegiatan.kegiatanCapaian.map((kc) => ({
-        subCapaianId: kc.subCapaianId,
-        poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
-      }));
+      let detailData = bagiPoin(
+        matriks.poin,
+        kegiatan.kegiatanCapaian.map((kc) => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) })),
+      ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
 
       if (detailData.length === 0) {
         const kurikulum = await prisma.kurikulum.findFirst({
@@ -493,13 +494,18 @@ export const validasiKlaim = async (
           include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
         });
         const allSub = kurikulum?.capaian.flatMap((c) => c.subCapaian) ?? [];
-        if (allSub.length > 0) {
-          const totalBobot = allSub.reduce((s, sc) => s + Number(sc.bobotPersen), 0) || 100;
-          detailData = allSub.map((sc) => ({
-            subCapaianId: sc.id,
-            poin: Math.round((matriks.poin * Number(sc.bobotPersen)) / totalBobot),
-          }));
-        }
+        detailData = bagiPoin(
+          matriks.poin,
+          allSub.map((sc) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
+        ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
+      }
+
+      if (detailData.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Kurikulum aktif belum memiliki sub capaian, poin tidak dapat dirinci. Hubungi Pimpinan Ditmawa.',
+        });
+        return;
       }
 
       // Buat perolehan_poin + detail [BR-032] [BR-020]
@@ -695,16 +701,21 @@ export const validasiKlaimBulk = async (
              continue;
           }
 
-          let bulkDetailData: { subCapaianId: number; poin: number }[] = kegiatan.kegiatanCapaian.map((kc) => ({
-            subCapaianId: kc.subCapaianId,
-            poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100),
-          }));
-          if (bulkDetailData.length === 0 && allSubCapaian.length > 0) {
-            const totalBobot = allSubCapaian.reduce((s, sc) => s + Number(sc.bobotPersen), 0) || 100;
-            bulkDetailData = allSubCapaian.map((sc) => ({
-              subCapaianId: sc.id,
-              poin: Math.round((matriks.poin * Number(sc.bobotPersen)) / totalBobot),
-            }));
+          let bulkDetailData = bagiPoin(
+            matriks.poin,
+            kegiatan.kegiatanCapaian.map((kc) => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) })),
+          ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
+
+          if (bulkDetailData.length === 0) {
+            bulkDetailData = bagiPoin(
+              matriks.poin,
+              allSubCapaian.map((sc) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
+            ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
+          }
+
+          if (bulkDetailData.length === 0) {
+            errors.push(`Klaim ID ${klaim.id}: Kurikulum aktif belum memiliki sub capaian.`);
+            continue;
           }
 
           const perolehan = await tx.perolehanPoin.create({

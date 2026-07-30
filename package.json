@@ -11,7 +11,8 @@
     "seed:master": "tsx prisma/seed-master-matriks.ts",
     "seed:ditmawa": "tsx prisma/seed-ditmawa.ts",
     "seed:dummy": "tsx prisma/seed-dummy-pimpinan.ts",
-    "seed:all": "tsx prisma/seed-all-pimpinan.ts"
+    "seed:all": "tsx prisma/seed-all-pimpinan.ts",
+    "seed:pimpinan-utama": "tsx prisma/seed-pimpinan-utama.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

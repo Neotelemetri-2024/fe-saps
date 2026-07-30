@@ -45,9 +45,6 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       }
     });
 
-    // Hitung total poin
-    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-
     // Hitung target total dari seluruh capaian
     const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
 
@@ -59,6 +56,10 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
         capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
       }
     }
+
+    // Total dijumlahkan dari rincian capaian aktif, bukan dari PerolehanPoin.totalPoin,
+    // agar angka total selalu sama dengan penjumlahan progres per tahun.
+    const totalPoin = kurikulumAktif.capaian.reduce((sum, c) => sum + (capaianMap[c.id] || 0), 0);
 
     const progresTahunan = kurikulumAktif.capaian.map(c => ({
       id: c.id,
@@ -213,7 +214,9 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       }
     }
 
-    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
+    // Total dijumlahkan dari rincian capaian aktif, bukan dari PerolehanPoin.totalPoin,
+    // agar angka total selalu sama dengan penjumlahan progres per tahun.
+    const totalPoin = kurikulumAktif.capaian.reduce((sum, c) => sum + (capaianMap[c.id] || 0), 0);
     const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
 
     const progressTahun = kurikulumAktif.capaian.map(c => ({
@@ -280,19 +283,20 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
     const klaimData = await prisma.klaimPoin.findMany({
       where: whereKlaim,
       include: {
-        peranUsulan: { select: { nama: true } },
-        bukti: { select: { url: true, tipe: true }, take: 1 },
-        perolehanPoin: { select: { totalPoin: true } },
         partisipasi: {
           include: {
             kegiatan: {
               include: {
                 kategori: { select: { nama: true } },
-                skala: { select: { nama: true } }
+                skala: { select: { nama: true } },
+                organisasi: { select: { nama: true } }
               }
             }
           }
-        }
+        },
+        peranUsulan: { select: { nama: true } },
+        bukti: { select: { url: true, tipe: true }, take: 1 },
+        perolehanPoin: { select: { totalPoin: true } },
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -309,7 +313,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
           namaKegiatan: k.partisipasi.kegiatan.nama,
           jenisKegiatan: k.partisipasi.kegiatan.kategori?.nama,
           peran: k.peranUsulan?.nama || '-',
-          penyelenggara: k.partisipasi.kegiatan.penyelenggaraExt || '-',
+          penyelenggara: k.partisipasi.kegiatan.organisasi?.nama || k.partisipasi.kegiatan.penyelenggaraExt || 'Ditmawa/Universitas',
           tanggal: k.partisipasi.kegiatan.tanggalMulai,
           bukti: k.bukti[0]?.url || null,
           poin: k.perolehanPoin?.totalPoin || '-',
@@ -326,6 +330,87 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
         riwayat: tabelRiwayat
       }
     });
+
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// ==================== RIWAYAT KEGIATAN INTERNAL ====================
+
+export const getRiwayatKegiatanInternal = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { search, kategoriId, kehadiran, tahun } = req.query;
+
+    const whereKegiatan: any = {
+      asal: { in: ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] }
+    };
+
+    if (search) {
+      whereKegiatan.nama = { contains: search as string };
+    }
+    if (kategoriId) {
+      whereKegiatan.kategoriId = parseInt(kategoriId as string);
+    }
+    if (tahun) {
+      const yearStart = new Date(`${tahun}-01-01`);
+      const yearEnd = new Date(`${parseInt(tahun as string) + 1}-01-01`);
+      whereKegiatan.tanggalMulai = { gte: yearStart, lt: yearEnd };
+    }
+
+    const where: any = {
+      mahasiswaId: BigInt(userId),
+      kegiatan: whereKegiatan
+    };
+
+    if (kehadiran === 'hadir') where.kehadiran = true;
+    else if (kehadiran === 'tidak_hadir') where.kehadiran = false;
+    else if (kehadiran === 'belum') where.kehadiran = null;
+
+    const partisipasi = await prisma.partisipasi.findMany({
+      where,
+      include: {
+        kegiatan: {
+          include: {
+            kategori: { select: { nama: true } },
+            skala: { select: { nama: true } },
+            organisasi: { select: { nama: true, tipe: true } }
+          }
+        },
+        peranVerif: { select: { nama: true } },
+        klaimPoin: {
+          include: { perolehanPoin: { select: { totalPoin: true } } }
+        }
+      },
+      orderBy: { kegiatan: { tanggalMulai: 'desc' } }
+    });
+
+    const riwayat = partisipasi.map((p, i) => {
+      let statusKehadiran = 'Belum Tercatat';
+      if (p.kehadiran === true) statusKehadiran = 'Hadir';
+      else if (p.kehadiran === false) statusKehadiran = 'Tidak Hadir';
+
+      return {
+        no: i + 1,
+        id: p.id.toString(),
+        namaKegiatan: p.kegiatan.nama,
+        jenisKegiatan: p.kegiatan.kategori?.nama || '-',
+        skala: p.kegiatan.skala?.nama || '-',
+        asal: p.kegiatan.asal,
+        penyelenggara: p.kegiatan.organisasi?.nama || 'Ditmawa/Universitas',
+        tanggalMulai: p.kegiatan.tanggalMulai,
+        tanggalSelesai: p.kegiatan.tanggalSelesai,
+        kehadiran: statusKehadiran,
+        peran: p.peranVerif?.nama || '-',
+        poin: p.klaimPoin?.perolehanPoin?.totalPoin ?? (p.klaimPoin?.status === 'disetujui' ? 0 : '-'),
+        statusKegiatan: p.kegiatan.status
+      };
+    });
+
+    res.status(200).json({ success: true, data: { riwayat } });
 
   } catch (error: any) {
     next(error);

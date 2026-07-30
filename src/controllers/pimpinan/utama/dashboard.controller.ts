@@ -51,7 +51,7 @@ export const getDashboardPimpinanUtama = async (req: Request, res: Response): Pr
             poinMhs += pp.totalPoin;
             totalPoinFakultas += pp.totalPoin;
             
-            const kategoriName = pp.kegiatan.kategori?.nama.toLowerCase() || 'lainnya';
+            const kategoriName = pp.kegiatan?.kategori?.nama?.toLowerCase() || 'lainnya';
             if (!kategoriMap[kategoriName]) kategoriMap[kategoriName] = 0;
             kategoriMap[kategoriName] += pp.totalPoin;
           });

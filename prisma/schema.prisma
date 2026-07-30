@@ -28,6 +28,7 @@ enum JabatanStaff {
   pimpinan_ditmawa
   admin_fakultas
   pimpinan_fakultas
+  pimpinan_utama
 }
 
 enum TipeOrg {

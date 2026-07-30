@@ -761,7 +761,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       data: { status: statusBaru as any },
     });
 
-    // Jika setuju dan ada alokasi capaian, simpan kegiatanCapaian
+    // Hanya timpa capaian jika Admin mengirim alokasi baru (kegiatan eksternal mahasiswa)
     if (body.keputusan === 'setuju' && body.alokasi && body.alokasi.length > 0) {
       await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } });
       await prisma.kegiatanCapaian.createMany({

@@ -115,6 +115,15 @@ app.use('/api/ukm', ukmRoutes);
 // Umum: Notifikasi, Audit Log, Dashboard, Portofolio
 app.use('/api/umum', umumRoutes);
 
+// ==================== GLOBAL ERROR HANDLER ====================
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error('[ERROR]', err?.stack || err?.message || err);
+  res.status(err?.status || 500).json({
+    success: false,
+    message: err?.message || 'Terjadi kesalahan internal server',
+  });
+});
+
 // ==================== START SERVER ====================
 app.listen(port, () => {
   console.log(`[server]: MyUnand Student Connect API v2.0`);

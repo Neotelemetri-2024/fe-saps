@@ -12,7 +12,7 @@ import {
   ajukanDraftKegiatanEksternal,
 } from '../controllers/mahasiswa/kegiatan_eksternal.controller';
 import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } from '../controllers/mahasiswa/klaim_eksternal.controller';
-import { getDashboard, getRiwayatPoin } from '../controllers/mahasiswa/dashboard.controller';
+import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal } from '../controllers/mahasiswa/dashboard.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -46,6 +46,9 @@ router.get('/dashboard', getDashboard);
 
 // Riwayat Poin
 router.get('/riwayat-poin', getRiwayatPoin);
+
+// Riwayat Kegiatan Internal
+router.get('/riwayat-kegiatan-internal', getRiwayatKegiatanInternal);
 
 // Izin Dosen PA
 router.post('/izin-pa', ajukanIzinPA);

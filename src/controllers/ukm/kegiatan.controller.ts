@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
+import { bagiPoin } from '../../lib/distribusiPoin';
 
 // Helper: dapatkan organisasiId operator yang sedang login
 async function getOrganisasiOperator(userId: bigint) {
@@ -573,17 +574,6 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
       return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
     }
 
-    // Cek belum submit sebelumnya
-    const sudahSubmit = await prisma.klaimPoin.count({
-      where: { partisipasi: { kegiatanId }, status: 'disetujui' }
-    });
-    if (sudahSubmit > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Poin peserta sudah pernah di-submit. Status: Telah Tercatat.'
-      });
-    }
-
     // Pastikan kegiatanCapaian sudah terisi (UKM wajib set alokasi capaian dulu)
     if (kegiatan.kegiatanCapaian.length === 0) {
       return res.status(400).json({
@@ -611,8 +601,17 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
       });
     }
 
-    const processed: string[] = [];
     const errors: string[] = [];
+    let dibuat = 0;
+    let diperbarui = 0;
+    let tetap = 0;
+    let dibatalkan = 0;
+
+    const detailUntuk = (totalPoin: number) =>
+      bagiPoin(
+        totalPoin,
+        kegiatan.kegiatanCapaian.map(kc => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) }))
+      ).map(b => ({ subCapaianId: b.ref, poin: b.poin }));
 
     await prisma.$transaction(async (tx) => {
       for (const partisipasi of pesertaHadir) {
@@ -633,12 +632,70 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
           continue;
         }
 
-        // Cek klaim sudah ada
         const existingKlaim = await tx.klaimPoin.findUnique({
-          where: { partisipasiId: partisipasi.id }
+          where: { partisipasiId: partisipasi.id },
+          include: { perolehanPoin: true }
         });
+
+        // Submit ulang bersifat idempoten: peserta yang datanya tidak berubah
+        // dilewati agar poinnya tidak tercatat dua kali.
         if (existingKlaim) {
-          errors.push(`${partisipasi.mahasiswa.user.nama}: Klaim sudah ada`);
+          const perolehan = existingKlaim.perolehanPoin;
+          const samaPeran = existingKlaim.peranUsulanId === peranId;
+          const samaPoin = perolehan?.totalPoin === matriks.poin;
+          const masihSah = perolehan?.status === 'sah';
+
+          if (samaPeran && samaPoin && masihSah) {
+            tetap++;
+            continue;
+          }
+
+          await tx.klaimPoin.update({
+            where: { id: existingKlaim.id },
+            data: {
+              peranUsulanId: peranId,
+              status: 'disetujui',
+              validatorId: aktorId,
+              alasan: 'Diperbarui oleh penyelenggara kegiatan setelah perubahan peran/bobot'
+            }
+          });
+
+          let perolehanId: bigint;
+          if (perolehan) {
+            await tx.perolehanPoin.update({
+              where: { id: perolehan.id },
+              data: { totalPoin: matriks.poin, status: 'sah' }
+            });
+            await tx.perolehanDetail.deleteMany({ where: { perolehanPoinId: perolehan.id } });
+            perolehanId = perolehan.id;
+          } else {
+            const dibuatBaru = await tx.perolehanPoin.create({
+              data: {
+                klaimPoinId: existingKlaim.id,
+                mahasiswaId: partisipasi.mahasiswaId,
+                kegiatanId,
+                totalPoin: matriks.poin,
+                status: 'sah'
+              }
+            });
+            perolehanId = dibuatBaru.id;
+          }
+
+          await tx.perolehanDetail.createMany({
+            data: detailUntuk(matriks.poin).map(d => ({ ...d, perolehanPoinId: perolehanId }))
+          });
+
+          await tx.notifikasi.create({
+            data: {
+              userId: partisipasi.mahasiswaId,
+              judul: 'Poin Kegiatan Diperbarui',
+              isi: `Poin Anda untuk kegiatan "${kegiatan.nama}" diperbarui menjadi ${matriks.poin} poin oleh ${operator.organisasi.nama}.`,
+              refType: 'perolehan_poin',
+              refId: perolehanId
+            }
+          });
+
+          diperbarui++;
           continue;
         }
 
@@ -661,12 +718,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
             kegiatanId,
             totalPoin: matriks.poin,
             status: 'sah',
-            detail: {
-              create: kegiatan.kegiatanCapaian.map(kc => ({
-                subCapaianId: kc.subCapaianId,
-                poin: Math.round((matriks.poin * Number(kc.alokasiPersen)) / 100)
-              }))
-            }
+            detail: { create: detailUntuk(matriks.poin) }
           }
         });
 
@@ -681,25 +733,56 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
           }
         });
 
-        processed.push(partisipasi.mahasiswaId.toString());
+        dibuat++;
       }
 
-      if (processed.length === 0) {
+      // Peserta yang kehadiran/perannya dicabut tidak boleh menyisakan poin aktif
+      const idPesertaAktif = pesertaHadir.map(p => p.id);
+      const klaimTidakAktif = await tx.klaimPoin.findMany({
+        where: {
+          partisipasi: { kegiatanId },
+          partisipasiId: { notIn: idPesertaAktif },
+          perolehanPoin: { status: { not: 'dibatalkan' } }
+        },
+        include: { perolehanPoin: true }
+      });
+      for (const klaim of klaimTidakAktif) {
+        if (!klaim.perolehanPoin) continue;
+        await tx.perolehanPoin.update({
+          where: { id: klaim.perolehanPoin.id },
+          data: { status: 'dibatalkan' }
+        });
+        dibatalkan++;
+      }
+
+      if (dibuat + diperbarui + tetap === 0) {
         throw new Error('Tidak ada peserta yang berhasil diproses. ' + errors.join(' | '));
       }
     });
 
+    const ringkasan = [
+      dibuat > 0 ? `${dibuat} peserta baru dicetak` : null,
+      diperbarui > 0 ? `${diperbarui} peserta diperbarui` : null,
+      tetap > 0 ? `${tetap} peserta tanpa perubahan` : null,
+      dibatalkan > 0 ? `${dibatalkan} poin dibatalkan` : null,
+      errors.length > 0 ? `${errors.length} gagal` : null
+    ].filter(Boolean).join(', ');
+
     res.status(200).json({
       success: true,
-      message: `Berhasil mencetak poin untuk ${processed.length} dari ${pesertaHadir.length} peserta yang hadir.`,
+      message: `Submit poin selesai: ${ringkasan}.`,
       data: {
-        totalDiproses: processed.length,
+        totalDibuat: dibuat,
+        totalDiperbarui: diperbarui,
+        totalTanpaPerubahan: tetap,
+        totalDibatalkan: dibatalkan,
         totalGagal: errors.length,
         errors: errors.length > 0 ? errors : undefined
       }
     });
 
   } catch (error: any) {
+    console.error('[submitPoinPesertaUKM]', error?.stack || error?.message || error);
     next(error);
   }
 };
