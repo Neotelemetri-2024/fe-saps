@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Plus, Edit3, Trash2, Filter, Clock } from 'lucide-react'
+import { Search, Plus, Edit3, Trash2, Filter, Clock, Send, RefreshCw } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -100,7 +100,7 @@ function normalizeEvent(item) {
     status: mapStatus(item.status),
     rawStatus,
     dibuatPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleString('id-ID')
+      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       : '-',
   }
 }
@@ -182,7 +182,7 @@ function ManajemenEvent() {
       <div>
         <p className="font-medium text-[#333]">{row.nama}</p>
         <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-          <Clock className="h-3 w-3 shrink-0" />
+          <Clock className="h-3 w-3 shrink-0 text-[#616161]" />
           <span>{row.dibuatPada}</span>
         </div>
       </div>
@@ -195,33 +195,47 @@ function ManajemenEvent() {
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <div className="flex items-center gap-2">
-        {bisaKirim(row) && (
-          <button
-            type="button"
-            onClick={() => setKirimTarget(row)}
-            className="rounded-full bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
-          >
-            {row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
-          </button>
-        )}
-        {bisaEdit(row) && (
-          <button
+        {bisaKirim(row)
+          ? row.rawStatus === 'perlu_revisi' ? (
+            <button
+              type="button"
+              onClick={() => setKirimTarget(row)}
+              disabled={!bisaKirim(row)}
+              title="Ajukan Ulang"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setKirimTarget(row)}
+              disabled={!bisaKirim(row)}
+              title="Kirim"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          )
+          : null}
+        <button
             type="button"
             onClick={() => navigate('/admin_ditmawa/buat-event', { state: { edit: row } })}
-            className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+            disabled={!bisaEdit(row)}
+            title="Edit"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Edit3 className="h-4 w-4" />
           </button>
-        )}
-        {bisaHapus(row) && (
-          <button
+        <button
             type="button"
             onClick={() => setHapusTarget(row)}
-            className="rounded p-1 text-red-600 transition hover:bg-red-50"
+            disabled={!bisaHapus(row)}
+            title="Hapus"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="h-4 w-4" />
           </button>
-        )}
       </div>
     )},
   ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus])

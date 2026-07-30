@@ -341,7 +341,7 @@ function FormBuatKegiatan() {
                           <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full bg-[#e9ebf8] px-3 py-1 text-xs font-medium text-[#333]">
                             {c.nama}
                             <button type="button" onClick={() => toggleCapaian(c.id)} className="text-[#616161] hover:text-[#333]">
-                              <X className="h-3 w-3" />
+                              <X className="h-3 w-3 text-red-600" />
                             </button>
                           </span>
                         ))}

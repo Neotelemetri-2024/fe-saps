@@ -4,17 +4,25 @@ import { toast } from 'sonner'
 import { ArrowLeft, Download, Info, Upload } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
-import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatanById,
-  getPesertaKegiatan,
+  getPesertaKegiatanFull,
   updatePesertaKegiatan,
   importPesertaCSV,
   downloadTemplatePeserta,
   submitPoinPeserta,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
+
+function formatTanggal(val) {
+  if (!val) return ''
+  try {
+    return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return String(val)
+  }
+}
 
 function mapPesertaRow(p, i) {
   const peranId = p.peran?.id ?? p.peranVerifId ?? p.peranId ?? ''
@@ -23,9 +31,10 @@ function mapPesertaRow(p, i) {
     no: i + 1,
     id: p.partisipasiId ?? p.id,
     partisipasiId: p.partisipasiId ?? p.id,
-    nama: p.namaMahasiswa || p.nama || p.mahasiswa?.nama || '-',
-    prodi: p.programStudi || p.prodi || p.mahasiswa?.prodi || '-',
-    fakultas: p.fakultas || '-',
+    nama: p.namaMahasiswa || p.nama || p.mahasiswa?.user?.nama || '-',
+    nim: p.nim || p.mahasiswa?.nim || '-',
+    prodi: p.programStudi || p.prodi || p.mahasiswa?.prodi?.nama || '-',
+    fakultas: p.fakultas || p.mahasiswa?.prodi?.fakultas?.nama || '-',
     hadir: p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true,
     peranVerifId: peranId !== '' && peranId != null ? String(peranId) : '',
   }
@@ -41,11 +50,12 @@ function ManajemenPeserta() {
   const [pesertaData, setPesertaData] = useState([])
   const [peranOptions, setPeranOptions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [importing, setImporting] = useState(false)
   const [search, setSearch] = useState('')
   const [filterKehadiran, setFilterKehadiran] = useState('semua')
+  const [isEditing, setIsEditing] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const loadData = () => {
     setLoading(true)
@@ -54,7 +64,7 @@ function ManajemenPeserta() {
         if (keg) {
           setKegiatan({
             nama: keg.nama || keg.judul || 'Kegiatan',
-            tanggal: keg.tanggalMulai || keg.tanggal || keg.tgl || '',
+            tanggal: formatTanggal(keg.tanggalMulai || keg.tanggal || keg.tgl || ''),
             lokasi: keg.lokasi || '',
           })
           const kategoriId = keg.kategoriId || keg.kategori?.id
@@ -67,9 +77,10 @@ function ManajemenPeserta() {
             }
           }
         }
-        const peserta = await getPesertaKegiatan(id)
-        const list = Array.isArray(peserta) ? peserta : []
+        const full = await getPesertaKegiatanFull(id)
+        const list = Array.isArray(full.peserta) ? full.peserta : []
         setPesertaData(list.map(mapPesertaRow))
+        setSubmitted(full.statusSubmit === 'sudah_submit')
       })
       .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
       .finally(() => setLoading(false))
@@ -78,12 +89,14 @@ function ManajemenPeserta() {
   useEffect(() => { loadData() }, [id])
 
   const handleKehadiranChange = (pesertaId, checked) => {
+    if (!isEditing) return
     setPesertaData((prev) =>
       prev.map((p) => (p.id === pesertaId || p.partisipasiId === pesertaId ? { ...p, hadir: checked } : p)),
     )
   }
 
   const handlePeranChange = (pesertaId, value) => {
+    if (!isEditing) return
     setPesertaData((prev) =>
       prev.map((p) =>
         p.id === pesertaId || p.partisipasiId === pesertaId
@@ -100,12 +113,29 @@ function ManajemenPeserta() {
       ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
     }))
 
-  const handleSimpan = async () => {
+  const handleSubmitPoin = async () => {
+    setSubmitLoading(true)
     try {
       await updatePesertaKegiatan(id, buildPayload())
-      toast.success('Data kehadiran & peran berhasil disimpan')
+
+      // Submit selalu dikirim ulang: backend hanya memproses peserta yang
+      // kehadiran atau perannya berubah, sehingga poin tidak tercatat dua kali.
+      const res = await submitPoinPeserta(id)
+      const gagal = res?.data?.errors
+      if (gagal?.length) {
+        toast.warning(res?.message || 'Sebagian peserta gagal diproses', {
+          description: gagal.join(' | '),
+        })
+      } else {
+        toast.success(res?.message || 'Poin peserta berhasil diproses otomatis!')
+      }
+      setSubmitted(true)
+      setIsEditing(false)
+      loadData()
     } catch (err) {
-      toast.error('Gagal menyimpan', { description: err.message })
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setSubmitLoading(false)
     }
   }
 
@@ -130,21 +160,6 @@ function ManajemenPeserta() {
       toast.error('Gagal import', { description: err.message })
     } finally {
       setImporting(false)
-    }
-  }
-
-  const handleSubmitPoin = async () => {
-    setShowSubmitModal(false)
-    setSubmitLoading(true)
-    try {
-      await updatePesertaKegiatan(id, buildPayload())
-      await submitPoinPeserta(id)
-      toast.success('Poin peserta berhasil diproses otomatis!')
-      loadData()
-    } catch (err) {
-      toast.error('Gagal submit poin', { description: err.message })
-    } finally {
-      setSubmitLoading(false)
     }
   }
 
@@ -187,7 +202,10 @@ function ManajemenPeserta() {
 
         <div className="flex items-start gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
           <Info className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>Centang kehadiran dan pilih peran, lalu klik <strong>Simpan Perubahan</strong>. Setelah selesai, klik <strong>Submit Poin</strong> agar peserta yang hadir mendapat poin otomatis.</p>
+          <p>
+            Centang kehadiran dan pilih peran, lalu klik <strong>Submit Poin Peserta</strong>.
+            Peserta yang sudah pernah di-submit sebelumnya tidak akan di-submit ulang.
+          </p>
         </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -264,14 +282,16 @@ function ManajemenPeserta() {
                         type="checkbox"
                         checked={!!p.hadir}
                         onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.checked)}
-                        className="h-4 w-4 cursor-pointer accent-brand-dark"
+                        disabled={!isEditing}
+                        className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-default"
                       />
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={p.peranVerifId || ''}
                         onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
-                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark"
+                        disabled={!isEditing}
+                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
                       >
                         <option value="">Pilih Peran</option>
                         {peranOptions.map((opt) => (
@@ -284,32 +304,44 @@ function ManajemenPeserta() {
               </tbody>
             </table>
           </div>
+
+          {!loading && (
+            <div className="flex items-center justify-between border-t border-[#e9ebf8] px-6 py-3">
+              <span className="text-xs text-[#888]">
+                Menampilkan {filtered.length} dari {pesertaData.length} peserta
+              </span>
+              <div className="flex items-center gap-3">
+                {!isEditing && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+                  >
+                    Edit
+                  </button>
+                )}
+                {isEditing && (
+                  <button
+                    onClick={handleSubmitPoin}
+                    disabled={submitLoading}
+                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                  >
+                    {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <button
-            onClick={handleSimpan}
-            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-bold text-brand-dark shadow-sm hover:bg-brand-dark hover:text-white transition"
-          >
-            Simpan Perubahan
-          </button>
-          <button
-            onClick={() => setShowSubmitModal(true)}
-            disabled={submitLoading}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-          >
-            {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
-          </button>
-        </div>
-
-        <ConfirmModal
-          isOpen={showSubmitModal}
-          message="Poin akan dicetak otomatis untuk semua peserta yang Hadir. Tindakan ini tidak bisa dibatalkan."
-          confirmText="Ya, Submit Poin"
-          cancelText="Batal"
-          onConfirm={handleSubmitPoin}
-          onCancel={() => setShowSubmitModal(false)}
-        />
+        {submitted && (
+          <div className="pt-2">
+            <p className="text-sm font-semibold text-[#444]">Status</p>
+            <p className="mt-1 text-2xl font-extrabold">
+              <span className="text-[#222]">Telah </span>
+              <span className="text-brand-dark">Tercatat</span>
+            </p>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

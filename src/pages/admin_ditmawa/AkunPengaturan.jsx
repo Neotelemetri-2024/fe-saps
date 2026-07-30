@@ -70,7 +70,9 @@ function AkunPengaturan() {
           </div>
 
           <div className="flex flex-col justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-6 shadow-sm">
-            <Lock className="mb-2 h-8 w-8 text-white" />
+            <span className="mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
+              <Lock className="h-8 w-8" />
+            </span>
             <p className="text-lg font-semibold text-white">KEAMANAN</p>
             <p className="mt-1 text-sm text-white/80">
               Data login dan kata sandi Anda terintegrasi dengan portal utama universitas.
@@ -81,7 +83,9 @@ function AkunPengaturan() {
         {/* Informasi Akun */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
-            <User className="h-5 w-5 text-brand-dark" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
+              <User className="h-5 w-5" />
+            </span>
             <h3 className="text-lg font-bold text-brand-dark">Informasi Akun</h3>
           </div>
           <div className="space-y-4">
@@ -149,7 +153,9 @@ function AkunPengaturan() {
         {/* Ganti Password */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
-            <Lock className="h-5 w-5 text-brand-dark" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
+              <Lock className="h-5 w-5" />
+            </span>
             <h3 className="text-lg font-bold text-brand-dark">Ganti Password</h3>
           </div>
           <div className="space-y-4">

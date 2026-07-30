@@ -228,7 +228,7 @@ function TambahMatriks() {
                               onClick={() => removeKolom(k.id)}
                               className="shrink-0 rounded p-0.5 text-white/70 hover:text-white"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5 text-red-600" />
                             </button>
                           </div>
                         </th>
@@ -269,9 +269,9 @@ function TambahMatriks() {
                             onClick={() => removeBaris(b.id)}
                             className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </button>
+                    </td>
                       </tr>
                     ))}
                   </tbody>

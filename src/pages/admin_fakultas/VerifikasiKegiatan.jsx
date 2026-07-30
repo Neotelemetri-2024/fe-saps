@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
@@ -32,7 +32,7 @@ function normalizeItem(item) {
     id: item.id,
     kegiatan: item.nama || item.kegiatan || '-',
     submitted: item.createdAt
-      ? new Date(item.createdAt).toLocaleString('id-ID')
+      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       : '-',
     kategori: item.kategori?.nama || item.kategori || item.jenis || '-',
     skala: item.skala?.nama || item.skala || '-',
@@ -121,8 +121,7 @@ function VerifikasiKegiatan() {
       key: 'status',
       label: 'STATUS',
       render: (row) => (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
           {row.status}
         </span>
       ),
@@ -135,9 +134,10 @@ function VerifikasiKegiatan() {
         <button
           type="button"
           onClick={() => navigate(`/admin_fakultas/verifikasi-kegiatan/${row.id}/peserta`)}
-          className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-yellow-500"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white"
+          title="Manajemen Peserta"
         >
-          Manajemen Peserta
+          <Users className="h-4 w-4" />
         </button>
       ),
     },

@@ -180,7 +180,7 @@ function BuatEvent() {
                         }`}
                       >
                         {j.nama || j.name}
-                        {active && <X className="h-3 w-3" />}
+                        {active && <X className="h-3 w-3 text-red-600" />}
                       </button>
                     )
                   })}
@@ -330,7 +330,7 @@ function BuatEvent() {
                           <span key={c.id} className="inline-flex items-center gap-1.5 rounded-lg border border-brand-dark px-3 py-1 text-xs font-semibold text-brand-dark">
                             {c.nama}
                             <button type="button" onClick={() => toggleCapaian(c.id)} className="hover:text-red-500">
-                              <X className="h-3 w-3" />
+                              <X className="h-3 w-3 text-red-600" />
                             </button>
                           </span>
                         ))}

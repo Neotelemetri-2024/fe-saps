@@ -88,13 +88,30 @@ export async function approvalBulk(ids, status, catatan) {
 
 export async function getPesertaKegiatan(kegiatanId, params = {}) {
   const res = await get(`/api/kegiatan/${kegiatanId}/peserta`, {
-    limit: 100,
+    limit: 9999,
     ...params,
   })
   const data = res?.data || res
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.peserta)) return data.peserta
   return []
+}
+
+/**
+ * Ambil data peserta lengkap dengan statusSubmit dari backend.
+ * Returns { peserta: [], statusSubmit: 'belum_submit'|'sudah_submit', peranTersedia: [] }
+ */
+export async function getPesertaKegiatanFull(kegiatanId, params = {}) {
+  const res = await get(`/api/kegiatan/${kegiatanId}/peserta`, {
+    limit: 9999,
+    ...params,
+  })
+  const data = res?.data || res
+  return {
+    peserta: Array.isArray(data?.peserta) ? data.peserta : (Array.isArray(data) ? data : []),
+    statusSubmit: data?.statusSubmit || 'belum_submit',
+    peranTersedia: data?.peranTersedia || [],
+  }
 }
 
 /**
@@ -127,8 +144,13 @@ export async function importPesertaCSV(kegiatanId, file) {
 
 
 export async function submitPoinPeserta(kegiatanId) {
-  const res = await post(`/api/kegiatan/${kegiatanId}/peserta/submit-poin`)
-  return res?.data || res
+  // Body utuh dikembalikan agar pemanggil bisa membaca ringkasan & daftar gagal.
+  return post(`/api/kegiatan/${kegiatanId}/peserta/submit-poin`)
+}
+
+export async function getRiwayatKegiatanInternal(params = {}) {
+  const res = await get('/api/mahasiswa/riwayat-kegiatan-internal', params)
+  return res?.data || res || {}
 }
 
 export async function downloadTemplatePeserta(kegiatanId) {

@@ -596,7 +596,7 @@ function ManajemenKurikulum() {
                                 </span>
                                 <button type="button" onClick={() => handleHapusCapaian(cap)}
                                   className="rounded p-0.5 text-red-400 hover:text-red-600">
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-3.5 w-3.5 text-red-600" />
                                 </button>
                               </div>
                             </td>
@@ -642,7 +642,7 @@ function ManajemenKurikulum() {
                                     onClick={() => handleHapusSubCapaian(sc)}
                                     className="rounded p-1 text-red-500 hover:bg-red-50"
                                   >
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
                                   </button>
                                 </div>
                               </td>

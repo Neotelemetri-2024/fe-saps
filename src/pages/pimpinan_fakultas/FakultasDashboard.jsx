@@ -213,25 +213,25 @@ function PimpinanFakultasDashboard() {
 
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">TOTAL MAHASISWA AKTIF</p>
             <p className="mt-2 text-3xl font-extrabold text-brand-dark">
               {loading ? '…' : Number(totalMahasiswa).toLocaleString('id-ID')}
             </p>
           </div>
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">RATA RATA CAPAIAN</p>
             <p className="mt-2 text-3xl font-extrabold text-brand-dark">
               {loading ? '…' : `${statistik?.rataRataCapaian ?? 0}%`}
             </p>
           </div>
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">KEGIATAN PERLU PERSETUJUAN</p>
             <p className="mt-2 text-3xl font-extrabold text-brand-dark">
               {loading ? '…' : String(statistik?.kegiatanPending ?? 0)}
             </p>
           </div>
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#616161]">KURIKULUM AKTIF</p>
             <p className="text-sm font-extrabold leading-snug text-brand-dark">
               {loading ? '…' : kurikulumLabel}

@@ -1,13 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, History, Pencil, X } from 'lucide-react'
+import { Plus, History, Pencil, X, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getMatriks,
-  updateMatriks,
-  getMatriksKategori,
-  getMatriksSkala,
-  getMatriksPeran,
+  syncMatriks,
   getHistoriMatriks,
 } from '../../services/kurikulumService'
 
@@ -66,44 +64,13 @@ function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, 
   )
 }
 
-const initialSections = [
-  {
-    id: 's1',
-    title: '1. Prestasi & Kompetisi',
-    rowHeader: 'SKALA KEGIATAN',
-    columns: ['Internasional', 'Nasional (Pusprenas/ DIKTISAINTEK)', 'Regional/ Provinsi', 'Internal UNAND (universitas/ fakultas)'],
-    rows: [
-      { label: 'JUARA 1/ EMAS', values: ['100 Poin', '90 Poin', '80 Poin', '50 Poin'] },
-      { label: 'JUARA 2/ PERAK', values: ['80 Poin', '70 Poin', '60 Poin', '40 Poin'] },
-      { label: 'JUARA 3/ PERUNGGU', values: ['50 Poin', '45 Poin', '40 Poin', '25 Poin'] },
-      { label: 'PENGHARGAAN/ FINALIS/PESERTA', values: ['30 Poin', '25 Poin', '20 Poin', '10 Poin'] },
-    ],
-  },
-  {
-    id: 's2',
-    title: '2. Organisasi',
-    rowHeader: 'JABATAN',
-    columns: ['SKALA UNIVERSITAS', 'SKALA FAKULTAS/ KEDEPUTIAN', 'SKALA DEPARTEMEN'],
-    rows: [
-      { label: 'Ketua umum/ Presiden Mahasiswa', values: ['80 Poin', '60 Poin', '40 Poin'] },
-      { label: 'Pengurus Inti (sekretaris, Bendahara/ Kabid)', values: ['50 Poin', '40 Poin', '30 Poin'] },
-      { label: 'Anggota Aktif/ Staff', values: ['25 Poin', '20 Poin', '15 Poin'] },
-      { label: 'Ketua Panitia/ Pelaksana Event', values: ['40 Poin', '30 Poin', '20 Poin'] },
-    ],
-  },
-  {
-    id: 's3',
-    title: '3. Pelatihan dan Seminar',
-    rowHeader: 'JENIS KETERLIBATAN',
-    columns: ['SKALA INTERNATIONAL', 'SKALA NASIONAL', 'SKALA LOKAL/ UNAND'],
-    rows: [
-      { label: 'Pembicara/ Narasumber/ Fasilitator', values: ['60 Poin', '50 Poin', '30 Poin'] },
-      { label: 'Moderator/ Panitia Eksekutif', values: ['35 Poin', '25 Poin', '15 Poin'] },
-      { label: 'Peserta Pelatihan Terstruktur', values: ['30 Poin', '20 Poin', '15 Poin'] },
-      { label: 'Peserta Pelatihan Umum/ Kuliah Umum/ Webinar', values: ['15 Poin', '10 Poin', '5 Poin'] },
-    ],
-  },
-]
+function colName(col) {
+  return typeof col === 'object' ? (col?.nama ?? '') : String(col ?? '')
+}
+
+function colId(col) {
+  return typeof col === 'object' ? col?.id : undefined
+}
 
 function EditableCell({ value, onChange, editing }) {
   const [editing_, setEditing_] = useState(false)
@@ -185,46 +152,93 @@ function SectionTable({ section, onUpdate }) {
   const [draft, setDraft] = useState(() => structuredClone(section))
   const [saved, setSaved] = useState(() => structuredClone(section))
   const [editing, setEditing] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { type: 'row'|'col', index, label }
+
+  // Blur input terjadi tepat sebelum klik tombol simpan, sehingga state draft
+  // belum ter-render ulang. Ref ini menyimpan nilai terbaru secara sinkron.
+  const draftRef = useRef(draft)
 
   useEffect(() => {
-    setDraft(structuredClone(section))
+    const fresh = structuredClone(section)
+    draftRef.current = fresh
+    setDraft(fresh)
     setSaved(structuredClone(section))
     setEditing(false)
-  }, [section.id])
+    setDeleteConfirm(null)
+  }, [section])
 
   function updateDraft(updated) {
+    draftRef.current = updated
     setDraft(updated)
   }
 
   function updateCell(rowIdx, colIdx, newVal) {
-    const updated = structuredClone(draft)
+    const updated = structuredClone(draftRef.current)
     updated.rows[rowIdx].values[colIdx] = newVal
     updateDraft(updated)
   }
 
   function updateRowLabel(rowIdx, newVal) {
-    const updated = structuredClone(draft)
+    const updated = structuredClone(draftRef.current)
     updated.rows[rowIdx].label = newVal
     updateDraft(updated)
   }
 
   function updateColLabel(colIdx, newVal) {
-    const updated = structuredClone(draft)
-    updated.columns[colIdx] = newVal
+    const updated = structuredClone(draftRef.current)
+    const prev = updated.columns[colIdx]
+    updated.columns[colIdx] = typeof prev === 'object'
+      ? { ...prev, nama: newVal }
+      : { nama: newVal }
     updateDraft(updated)
   }
 
   function addRow(label) {
-    const updated = structuredClone(draft)
-    updated.rows.push({ label, values: draft.columns.map(() => '0 Poin') })
+    const updated = structuredClone(draftRef.current)
+    updated.rows.push({
+      id: undefined,
+      label,
+      values: updated.columns.map(() => '0 Poin'),
+    })
     updateDraft(updated)
   }
 
   function addCol(colName) {
-    const updated = structuredClone(draft)
-    updated.columns.push(colName)
+    const updated = structuredClone(draftRef.current)
+    updated.columns.push({ id: undefined, nama: colName })
     updated.rows = updated.rows.map((r) => ({ ...r, values: [...r.values, '0 Poin'] }))
     updateDraft(updated)
+  }
+
+  function deleteRow(rowIdx) {
+    const updated = structuredClone(draftRef.current)
+    if (updated.rows.length <= 1) {
+      toast.error('Minimal harus ada 1 baris')
+      return
+    }
+    updated.rows.splice(rowIdx, 1)
+    updateDraft(updated)
+  }
+
+  function deleteCol(colIdx) {
+    const updated = structuredClone(draftRef.current)
+    if (updated.columns.length <= 1) {
+      toast.error('Minimal harus ada 1 kolom')
+      return
+    }
+    updated.columns.splice(colIdx, 1)
+    updated.rows = updated.rows.map((r) => ({
+      ...r,
+      values: r.values.filter((_, i) => i !== colIdx),
+    }))
+    updateDraft(updated)
+  }
+
+  function handleConfirmDelete() {
+    if (!deleteConfirm) return
+    if (deleteConfirm.type === 'row') deleteRow(deleteConfirm.index)
+    else deleteCol(deleteConfirm.index)
+    setDeleteConfirm(null)
   }
 
   function handleEdit() {
@@ -232,14 +246,19 @@ function SectionTable({ section, onUpdate }) {
   }
 
   function handleSimpan() {
-    setSaved(structuredClone(draft))
+    const latest = draftRef.current
+    setSaved(structuredClone(latest))
     setEditing(false)
-    onUpdate(draft)
+    setDeleteConfirm(null)
+    onUpdate(latest)
   }
 
   function handleBatal() {
-    setDraft(structuredClone(saved))
+    const restored = structuredClone(saved)
+    draftRef.current = restored
+    setDraft(restored)
     setEditing(false)
+    setDeleteConfirm(null)
   }
 
   return (
@@ -251,6 +270,20 @@ function SectionTable({ section, onUpdate }) {
         defaultValue={modal?.defaultValue ?? ''}
         onConfirm={modal?.onConfirm ?? (() => {})}
         onClose={() => setModal(null)}
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        title={deleteConfirm?.type === 'row' ? 'Hapus Baris?' : 'Hapus Kolom?'}
+        message={
+          deleteConfirm?.type === 'row'
+            ? `Baris "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
+            : `Kolom "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
+        }
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirm(null)}
       />
 
       <div className="space-y-2">
@@ -302,22 +335,37 @@ function SectionTable({ section, onUpdate }) {
                     {draft.rowHeader}
                   </th>
                   {draft.columns.map((col, ci) => (
-                    <th key={ci} className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
-                      <span
-                        className={`block ${editing ? 'cursor-pointer hover:opacity-80' : ''}`}
-                        title={editing ? 'Klik untuk mengedit' : ''}
-                        onClick={() => {
-                          if (!editing) return
-                          setModal({
-                            title: 'Edit Nama Kolom',
-                            placeholder: 'Nama kolom...',
-                            defaultValue: col,
-                            onConfirm: (v) => updateColLabel(ci, v),
-                          })
-                        }}
-                      >
-                        {col}
-                      </span>
+                    <th key={colId(col) ?? `col-${ci}`} className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`block flex-1 ${editing ? 'cursor-pointer hover:opacity-80' : ''}`}
+                          title={editing ? 'Klik untuk mengedit' : ''}
+                          onClick={() => {
+                            if (!editing) return
+                            setModal({
+                              title: 'Edit Nama Kolom',
+                              placeholder: 'Nama kolom...',
+                              defaultValue: colName(col),
+                              onConfirm: (v) => updateColLabel(ci, v),
+                            })
+                          }}
+                        >
+                          {colName(col)}
+                        </span>
+                        {editing && (
+                          <button
+                            type="button"
+                            title="Hapus kolom"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteConfirm({ type: 'col', index: ci, label: colName(col) })
+                            }}
+                            className="shrink-0 rounded bg-white p-0.5 text-red-500 transition hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                          </button>
+                        )}
+                      </div>
                     </th>
                   ))}
                 </tr>
@@ -326,7 +374,21 @@ function SectionTable({ section, onUpdate }) {
                 {draft.rows.map((row, ri) => (
                   <tr key={ri} className="hover:bg-[#f9fafb]">
                     <td className="px-5 py-4">
-                      <EditableRowLabel value={row.label} onChange={(v) => updateRowLabel(ri, v)} editing={editing} />
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <EditableRowLabel value={row.label} onChange={(v) => updateRowLabel(ri, v)} editing={editing} />
+                        </div>
+                        {editing && (
+                          <button
+                            type="button"
+                            title="Hapus baris"
+                            onClick={() => setDeleteConfirm({ type: 'row', index: ri, label: row.label })}
+                            className="mt-0.5 shrink-0 rounded p-0.5 text-red-500 transition hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {row.values.map((val, ci) => (
                       <td key={ci} className="px-5 py-4">
@@ -354,7 +416,7 @@ function SectionTable({ section, onUpdate }) {
               onClick={handleSimpan}
               className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
             >
-              simpan
+              Simpan
             </button>
           </div>
         )}
@@ -493,67 +555,121 @@ function HistoryModal({ isOpen, onClose }) {
 
 /**
  * Konversi data matriks dari API ke format sections yang dipakai komponen.
- * API mengembalikan array kategori, masing-masing punya skala (kolom) dan peran (baris) beserta poin.
+ * Menyimpan ID kategori/peran/skala agar sync bisa create/rename dengan benar.
  */
 function apiToSections(data) {
-  if (!Array.isArray(data) || data.length === 0) return initialSections
+  if (!Array.isArray(data) || data.length === 0) return []
 
-  // Kelompokkan berdasarkan kategori
   const map = {}
   data.forEach((item) => {
-    const kat = (typeof item.kategori === 'object' ? item.kategori?.nama : item.kategori) || item.namaKategori || 'Lainnya'
-    if (!map[kat]) map[kat] = { skalaSet: [], peranSet: [], poinMap: {} }
-    const skala = (typeof item.skala === 'object' ? item.skala?.nama : item.skala) || item.namaSkala || '-'
-    const peran = (typeof item.peran === 'object' ? item.peran?.nama : item.peran) || item.namaPeran || '-'
-    if (!map[kat].skalaSet.includes(skala)) map[kat].skalaSet.push(skala)
-    if (!map[kat].peranSet.includes(peran)) map[kat].peranSet.push(peran)
-    map[kat].poinMap[`${peran}__${skala}`] = `${item.poin ?? 0} Poin`
+    const katObj = typeof item.kategori === 'object' ? item.kategori : null
+    const katNama = katObj?.nama || item.kategori || item.namaKategori || 'Lainnya'
+    const katId = katObj?.id || item.kategoriId
+    if (String(katNama).startsWith('(tidak digunakan)')) return
+
+    if (!map[katNama]) {
+      map[katNama] = {
+        kategoriId: katId,
+        skalaMap: new Map(), // nama -> {id, nama}
+        peranMap: new Map(),
+        poinMap: {},
+      }
+    }
+    if (!map[katNama].kategoriId && katId) map[katNama].kategoriId = katId
+
+    const skalaObj = typeof item.skala === 'object' ? item.skala : null
+    const skalaNama = skalaObj?.nama || item.skala || item.namaSkala || '-'
+    const skalaId = skalaObj?.id || item.skalaId
+    if (String(skalaNama).startsWith('(tidak digunakan)')) return
+
+    const peranObj = typeof item.peran === 'object' ? item.peran : null
+    const peranNama = peranObj?.nama || item.peran || item.namaPeran || '-'
+    const peranId = peranObj?.id || item.peranId
+    if (String(peranNama).startsWith('(tidak digunakan)')) return
+
+    if (!map[katNama].skalaMap.has(skalaNama)) {
+      map[katNama].skalaMap.set(skalaNama, { id: skalaId, nama: skalaNama })
+    }
+    if (!map[katNama].peranMap.has(peranNama)) {
+      map[katNama].peranMap.set(peranNama, { id: peranId, nama: peranNama })
+    }
+    map[katNama].poinMap[`${peranNama}__${skalaNama}`] = `${item.poin ?? 0} Poin`
   })
 
-  return Object.entries(map).map(([kat, { skalaSet, peranSet, poinMap }], i) => ({
-    id: `api-${i}`,
-    title: `${i + 1}. ${kat}`,
-    rowHeader: 'PERAN',
-    columns: skalaSet,
-    rows: peranSet.map((peran) => ({
-      label: peran,
-      values: skalaSet.map((skala) => poinMap[`${peran}__${skala}`] || '0 Poin'),
-    })),
-  }))
+  return Object.entries(map).map(([kat, { kategoriId, skalaMap, peranMap, poinMap }], i) => {
+    const columns = [...skalaMap.values()]
+    const rows = [...peranMap.values()].map((peran) => ({
+      id: peran.id,
+      label: peran.nama,
+      values: columns.map((skala) => poinMap[`${peran.nama}__${skala.nama}`] || '0 Poin'),
+    }))
+    return {
+      id: `api-${kategoriId || i}`,
+      kategoriId,
+      title: `${i + 1}. ${kat}`,
+      rowHeader: 'PERAN',
+      columns,
+      rows,
+    }
+  })
 }
 
 function BobotPoin() {
-  const [sections, setSections] = useState(initialSections)
+  const [sections, setSections] = useState([])
   const [loadingMatriks, setLoadingMatriks] = useState(true)
   const [showTambahMatriks, setShowTambahMatriks] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  useEffect(() => {
-    getMatriks()
+  const loadMatriks = () => {
+    setLoadingMatriks(true)
+    return getMatriks()
       .then((data) => {
-        const converted = apiToSections(data)
-        if (converted.length) setSections(converted)
+        setSections(apiToSections(data))
       })
-      .catch(() => {})
+      .catch(() => setSections([]))
       .finally(() => setLoadingMatriks(false))
-  }, [])
+  }
+
+  useEffect(() => { loadMatriks() }, [])
 
   async function handleUpdate(idx, updated) {
     setSections((prev) => prev.map((s, i) => (i === idx ? updated : s)))
-    // Kirim perubahan poin ke API
     try {
-      const payload = []
-      updated.rows.forEach((row) => {
+      const kategoriNama = updated.title.replace(/^\d+\.\s*/, '')
+      const columns = updated.columns.map((c) => ({
+        ...(colId(c) ? { id: Number(colId(c)) } : {}),
+        nama: colName(c),
+      }))
+      const rows = updated.rows.map((r) => ({
+        ...(r.id ? { id: Number(r.id) } : {}),
+        nama: r.label,
+      }))
+      const cells = []
+      updated.rows.forEach((row, ri) => {
         row.values.forEach((val, ci) => {
-          payload.push({
-            kategori: updated.title.replace(/^\d+\.\s*/, ''),
-            peran: row.label,
-            skala: updated.columns[ci],
-            poin: parseInt(val) || 0,
+          const peranKey = row.id ? Number(row.id) : row.label
+          const col = updated.columns[ci]
+          const skalaKey = colId(col) ? Number(colId(col)) : colName(col)
+          cells.push({
+            peranKey,
+            skalaKey,
+            poin: parseInt(String(val).replace(/\D/g, ''), 10) || 0,
           })
         })
       })
-      await updateMatriks(payload)
+
+      const res = await syncMatriks({
+        ...(updated.kategoriId ? { kategoriId: Number(updated.kategoriId) } : {}),
+        kategoriNama,
+        columns,
+        rows,
+        cells,
+      })
+
+      toast.success('Bobot poin tersimpan & tersinkronisasi', {
+        description: res?.message || `${cells.length} sel diperbarui`,
+      })
+      await loadMatriks()
     } catch (err) {
       toast.error('Gagal menyimpan ke server', { description: err.message })
     }
@@ -566,10 +682,11 @@ function BobotPoin() {
       ...prev,
       {
         id: `s${Date.now()}`,
+        kategoriId: undefined,
         title: `${idx}. ${namaMatriks}`,
-        rowHeader: 'KATEGORI',
-        columns: ['Kolom 1'],
-        rows: [{ label: 'Baris 1', values: ['0 Poin'] }],
+        rowHeader: 'PERAN',
+        columns: [{ id: undefined, nama: 'Kolom 1' }],
+        rows: [{ id: undefined, label: 'Baris 1', values: ['0 Poin'] }],
       },
     ])
   }
@@ -620,6 +737,10 @@ function BobotPoin() {
         <div className="space-y-10">
           {loadingMatriks ? (
             <p className="text-sm text-[#9aa0a6]">Memuat data bobot poin...</p>
+          ) : sections.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[#d1d5db] bg-white px-6 py-10 text-center text-sm text-[#9aa0a6]">
+              Belum ada data matriks poin. Klik tombol Matriks untuk menambah kategori baru.
+            </p>
           ) : (
             sections.map((sec, idx) => (
               <SectionTable

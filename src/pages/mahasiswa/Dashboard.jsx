@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -13,15 +12,14 @@ import { getKlaim } from '../../services/poinService'
 function StatusBadge({ status }) {
   const s = String(status || '').toLowerCase()
   const map = {
-    pending:    { cls: 'bg-amber-50 text-amber-700 border border-amber-200', dot: 'bg-amber-500', label: 'Pending' },
-    disetujui:  { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500', label: 'Disetujui' },
-    ditolak:    { cls: 'bg-red-50 text-red-600 border border-red-200', dot: 'bg-red-500', label: 'Ditolak' },
-    diteruskan: { cls: 'bg-blue-50 text-blue-600 border border-blue-200', dot: 'bg-blue-500', label: 'Diteruskan' },
+    pending:    { cls: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Pending' },
+    disetujui:  { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', label: 'Disetujui' },
+    ditolak:    { cls: 'bg-red-50 text-red-600 border border-red-200', label: 'Ditolak' },
+    diteruskan: { cls: 'bg-blue-50 text-blue-600 border border-blue-200', label: 'Diteruskan' },
   }
-  const style = map[s] || { cls: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', label: status }
+  const style = map[s] || { cls: 'bg-gray-100 text-gray-600', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending' }
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.cls}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`}></span>
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${style.cls}`}>
       {style.label}
     </span>
   )
@@ -32,17 +30,8 @@ function TahunBadge({ status }) {
   return <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${map[status] || 'bg-gray-100 text-gray-400'}`}>{status}</span>
 }
 
-function KegiatanCell({ nama, tanggal }) {
-  return (
-    <div className="align-top">
-      <p className="font-semibold text-[#333]">{nama || '-'}</p>
-      {tanggal && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-          <Clock className="h-3 w-3" /> {tanggal}
-        </p>
-      )}
-    </div>
-  )
+function KegiatanCell({ nama }) {
+  return <p className="font-semibold text-[#333]">{nama || '-'}</p>
 }
 
 
@@ -81,18 +70,19 @@ function MahasiswaDashboard() {
     }).finally(() => setLoadingTables(false))
   }, [])
 
-  const totalPoin = dashData?.totalPoin ?? dashData?.poin ?? 0
-  const maxPoin = dashData?.targetPoin ?? dashData?.maxPoin ?? 550
+  const rawProgres = dashData?.progresTahunan || []
+  const tahunanProgress = [
+    { no: '01', label: 'Tahun 1: Dasar', target: 100, poin: rawProgres[0]?.poinTerkumpul ?? 0 },
+    { no: '02', label: 'Tahun 2: Menengah', target: 150, poin: rawProgres[1]?.poinTerkumpul ?? 0 },
+    { no: '03', label: 'Tahun 3: Mahir', target: 200, poin: rawProgres[2]?.poinTerkumpul ?? 0 },
+    { no: '04', label: 'Tahun 4: Akhir', target: 100, poin: rawProgres[3]?.poinTerkumpul ?? 0 },
+  ].map((t) => ({ ...t, status: t.poin >= t.target ? 'TUNTAS' : t.poin > 0 ? 'BERJALAN' : 'BELUM' }))
+
+  const totalPoin = tahunanProgress.reduce((sum, t) => sum + (t.poin || 0), 0)
+  const maxPoin = 550
   const pctTotal = maxPoin > 0 ? Math.round((totalPoin / maxPoin) * 100) : 0
 
-  const tahunanProgress = dashData?.progresCapaian || dashData?.tahunan || [
-    { no: '01', label: 'Tahun 1: Dasar', target: 100, poin: 0, status: 'BELUM' },
-    { no: '02', label: 'Tahun 2: Menengah', target: 150, poin: 0, status: 'BELUM' },
-    { no: '03', label: 'Tahun 3: Mahir', target: 200, poin: 0, status: 'BELUM' },
-    { no: '04', label: 'Tahun 4: Akhir', target: 100, poin: 0, status: 'BELUM' },
-  ]
-
-  const radarRaw = dashData?.radar || dashData?.capaian || FALLBACK_RADAR
+  const radarRaw = dashData?.radarData || dashData?.radar || dashData?.capaian || FALLBACK_RADAR
   const radarLabels = radarRaw.map((d) => d.label || d.nama || '')
   const radarValues = radarRaw.map((d) => d.value ?? d.poin ?? 0)
 
@@ -102,7 +92,7 @@ function MahasiswaDashboard() {
         {/* Welcome + Radar */}
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm sm:p-6">
-            <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-xl font-extrabold text-transparent sm:text-2xl lg:text-3xl">
+            <h2 className="text-xl font-extrabold text-black sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />{user?.nama || 'Mahasiswa'}!
             </h2>
             <p className="mt-3 max-w-lg text-sm text-[#616161]">
@@ -115,8 +105,8 @@ function MahasiswaDashboard() {
                 <span className="text-lg font-semibold text-[#9aa0a6]">/ {maxPoin}</span>
               </div>
               <div className="min-w-[200px] flex-1">
-                <div className="h-2.5 w-full rounded-full bg-[#e9ebf8]">
-                  <div className="h-2.5 rounded-full bg-brand-dark transition-all" style={{ width: `${pctTotal}%` }} />
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
+                  <div className="h-2.5 rounded-full bg-brand-dark transition-all" style={{ width: `${Math.min(pctTotal, 100)}%` }} />
                 </div>
               </div>
               <span className="text-xs text-[#616161]">{pctTotal}% Selesai</span>
@@ -137,15 +127,15 @@ function MahasiswaDashboard() {
               const pct = t.target > 0 ? Math.round(((t.poin || 0) / t.target) * 100) : 0
               const inactive = (t.status || 'BELUM') === 'BELUM'
               return (
-                <div key={i} className={`rounded-xl border p-5 shadow-sm ${t.status === 'BERJALAN' ? 'border-brand-dark' : 'border-[#e9ebf8]'} bg-white`}>
+                <div key={i} className="rounded-xl p-5 shadow-sm bg-white">
                   <div className="flex items-start justify-between">
                     <span className={`text-2xl font-extrabold ${inactive ? 'text-gray-300' : 'text-brand-dark'}`}>{t.no || String(i+1).padStart(2,'0')}</span>
                     <TahunBadge status={t.status || 'BELUM'} />
                   </div>
                   <p className={`mt-3 text-sm font-bold ${inactive ? 'text-gray-400' : 'text-brand-dark'}`}>{t.label}</p>
                   <p className="text-xs text-[#9aa0a6]">Target: {t.target} Poin</p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-[#e9ebf8]">
-                    <div className={`h-2 rounded-full ${inactive ? 'bg-gray-300' : 'bg-brand-dark'}`} style={{ width: `${pct}%` }} />
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
+                    <div className={`h-2 rounded-full ${inactive ? 'bg-gray-300' : 'bg-brand-dark'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                   </div>
                   <p className="mt-2 text-right text-xs font-semibold text-[#616161]">{t.poin || 0} / {t.target}</p>
                 </div>
@@ -154,43 +144,17 @@ function MahasiswaDashboard() {
           </div>
         </div>
 
-        {/* Tabel Persetujuan Dosen */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="p-6 pb-0">
-            <h3 className="text-lg font-bold text-brand-dark">Riwayat Persetujuan Dosen PA</h3>
-          </div>
-          <div className="mt-4">
-            <DataTable
-              columns={[
-                { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.dibuatPada || row.tanggal} /> },
-                { key: 'jenis', label: 'Jenis' },
-                { key: 'peran', label: 'Peran' },
-                { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal' },
-                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-              ]}
-              data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
-              loading={loadingTables}
-              emptyText="Belum ada data."
-            />
-          </div>
-        </div>
-
         {/* Tabel Pengajuan Eksternal */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="p-6 pb-0">
-            <h3 className="text-lg font-bold text-brand-dark">Riwayat Pengajuan Kegiatan Eksternal</h3>
-          </div>
-          <div className="mt-4">
+        <div>
+          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Pengajuan Kegiatan Eksternal</h3>
+          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.diajukanPada} /> },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} /> },
                 { key: 'jenis', label: 'Jenis' },
-                { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
@@ -200,17 +164,36 @@ function MahasiswaDashboard() {
           </div>
         </div>
 
-        {/* Tabel Klaim Poin */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="p-6 pb-0">
-            <h3 className="text-lg font-bold text-brand-dark">Riwayat Klaim Poin</h3>
-          </div>
-          <div className="mt-4">
+        {/* Tabel Persetujuan Dosen */}
+        <div>
+          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Persetujuan Dosen PA</h3>
+          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} tanggal={row.tanggal} /> },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} /> },
                 { key: 'jenis', label: 'Jenis' },
+                { key: 'peran', label: 'Peran' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-' },
+                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+              ]}
+              data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
+              loading={loadingTables}
+              emptyText="Belum ada data."
+            />
+          </div>
+        </div>
+
+        {/* Tabel Klaim Poin */}
+        <div>
+          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Klaim Poin</h3>
+          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.namaKegiatan || row.kegiatan} /> },
+                { key: 'jenis', label: 'Jenis', render: (row) => row.jenisKegiatan || row.jenis || '-' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'poin', label: 'Poin', render: (row) => <span className="font-bold text-brand-dark">{row.poin ?? '-'}</span> },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },

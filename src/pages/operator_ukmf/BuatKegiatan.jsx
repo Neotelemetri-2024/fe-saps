@@ -355,7 +355,7 @@ function BuatKegiatan() {
                           >
                             {c.nama}
                             <button type="button" onClick={() => toggleCapaian(c.id)}>
-                              <X className="h-3 w-3" />
+                              <X className="h-3 w-3 text-red-600" />
                             </button>
                           </span>
                         ))}

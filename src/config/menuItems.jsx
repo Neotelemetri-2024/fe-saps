@@ -13,6 +13,7 @@ import {
   Award,
   Search,
   UserCog,
+  History,
 } from 'lucide-react'
 
 /* ── MAHASISWA ── */
@@ -22,6 +23,7 @@ export const mahasiswaMenu = [
   { path: '/mahasiswa/persetujuan-dosen', label: 'Persetujuan Dosen', icon: <UserCheck className="h-4 w-4" /> },
   { path: '/mahasiswa/klaim-poin', label: 'Klaim Poin Eksternal', icon: <CheckSquare className="h-4 w-4" /> },
   { path: '/mahasiswa/riwayat-poin', label: 'Riwayat Poin', icon: <Award className="h-4 w-4" /> },
+  { path: '/mahasiswa/riwayat-kegiatan-internal', label: 'Riwayat Kegiatan Internal', icon: <History className="h-4 w-4" /> },
   { path: '/mahasiswa/generate-cv', label: 'Generate CV', icon: <FileText className="h-4 w-4" /> },
 ]
 
@@ -52,7 +54,6 @@ export const pimpinanFakultasMenu = [
 export const pimpinanUtamaMenu = [
   { path: '/pimpinan_utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_utama/detail-fakultas', label: 'Detail Fakultas', icon: <BarChart3 className="h-4 w-4" /> },
-  { path: '#', label: 'Laporan', icon: <FileText className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN DITMAWA ── */

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Pencil, Plus, RefreshCw, Send, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Plus, RefreshCw, Send, Trash2, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -10,7 +10,6 @@ import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatan,
   ajukanKegiatan,
-  publikasiKegiatan,
   deleteKegiatan,
   importPesertaCSV,
 } from '../../services/kegiatanService'
@@ -55,7 +54,6 @@ function DaftarKegiatan() {
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(statusLower(item))
   const bisaKirim = (item) => statusLower(item) === 'draft'
   const bisaAjukanUlang = (item) => statusLower(item) === 'perlu_revisi'
-  const bisaPublish = (item) => statusLower(item) === 'disetujui'
   const bisaPeserta = (item) => !['draft'].includes(statusLower(item))
 
   const handleAjukan = async (id) => {
@@ -63,20 +61,6 @@ function DaftarKegiatan() {
     try {
       await ajukanKegiatan(id)
       toast.success('Kegiatan berhasil dikirim')
-      load()
-    } catch (err) {
-      toast.error('Gagal', { description: err.message })
-    } finally {
-      setActionLoading(false)
-      setKonfirmasi(null)
-    }
-  }
-
-  const handlePublish = async (id) => {
-    setActionLoading(true)
-    try {
-      await publikasiKegiatan(id)
-      toast.success('Kegiatan berhasil dipublikasikan')
       load()
     } catch (err) {
       toast.error('Gagal', { description: err.message })
@@ -116,24 +100,19 @@ function DaftarKegiatan() {
     if (konfirmasi?.type === 'ajukan') {
       return 'Ajukan ulang kegiatan ini setelah revisi?'
     }
-    if (konfirmasi?.type === 'hapus') {
-      return 'Hapus kegiatan draft ini secara permanen?'
-    }
-    return 'Publikasikan kegiatan ini agar mahasiswa bisa mendaftar?'
+    return 'Hapus kegiatan draft ini secara permanen?'
   }
 
   const confirmText = () => {
     if (konfirmasi?.type === 'kirim') return actionLoading ? 'Mengirim…' : 'Ya, Kirim'
     if (konfirmasi?.type === 'ajukan') return 'Ya, Ajukan Ulang'
-    if (konfirmasi?.type === 'hapus') return 'Ya, Hapus'
-    return 'Ya, Publikasi'
+    return 'Ya, Hapus'
   }
 
   const onConfirm = () => {
     if (!konfirmasi) return
     if (konfirmasi.type === 'kirim' || konfirmasi.type === 'ajukan') return handleAjukan(konfirmasi.id)
-    if (konfirmasi.type === 'hapus') return handleHapus(konfirmasi.id)
-    return handlePublish(konfirmasi.id)
+    return handleHapus(konfirmasi.id)
   }
 
   return (
@@ -158,7 +137,6 @@ function DaftarKegiatan() {
         <div className="flex items-start gap-3 rounded-lg bg-[#fff6ad] px-5 py-4 text-sm text-brand-dark shadow-sm">
           <p>
             Kegiatan berstatus <b>draft</b> bisa diedit/dihapus. Setelah <b>Kirim</b>, tidak dapat diedit.
-            Setelah disetujui, klik <b>Publikasi</b> agar mahasiswa bisa mendaftar.
           </p>
         </div>
 
@@ -180,48 +158,41 @@ function DaftarKegiatan() {
                 key: 'aksi', label: 'Aksi', stopPropagation: true,
                 render: (item) => (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {bisaPeserta(item) && (
-                      <button type="button"
+                    <button type="button" title="Detail"
+                      onClick={() => navigate(`/operator_ukm/daftar-kegiatan/${item.id}`)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button type="button" title="Manajemen Peserta"
                         onClick={() => navigate(`/operator_ukm/daftar-kegiatan/${item.id}/manajemen-peserta`)}
-                        className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-yellow-500">
-                        Manajemen Peserta
+                        disabled={!bisaPeserta(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Users className="h-4 w-4" />
                       </button>
-                    )}
-                    {bisaEdit(item) && (
-                      <button type="button"
+                    <button type="button" title="Edit"
                         onClick={() => navigate('/operator_ukm/buat-kegiatan', { state: { edit: item } })}
-                        className="inline-flex items-center gap-1 rounded-full border border-brand-dark px-3 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-dark hover:text-white">
-                        <Pencil className="h-3 w-3" /> Edit
+                        disabled={!bisaEdit(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Pencil className="h-4 w-4" />
                       </button>
-                    )}
-                    {bisaKirim(item) && (
-                      <button type="button"
+                    <button type="button" title="Kirim"
                         onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
-                        className="inline-flex items-center gap-1 rounded-full bg-brand-dark px-3 py-1 text-xs font-semibold text-white hover:opacity-90">
-                        <Send className="h-3 w-3" /> Kirim
+                        disabled={!bisaKirim(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Send className="h-4 w-4" />
                       </button>
-                    )}
-                    {bisaAjukanUlang(item) && (
-                      <button type="button"
+                    <button type="button" title="Ajukan Ulang"
                         onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
-                        className="inline-flex items-center gap-1 rounded-full border border-amber-500 px-3 py-1 text-xs font-semibold text-amber-600 hover:bg-amber-50">
-                        <RefreshCw className="h-3 w-3" /> Ajukan Ulang
+                        disabled={!bisaAjukanUlang(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <RefreshCw className="h-4 w-4" />
                       </button>
-                    )}
-                    {bisaHapus(item) && (
-                      <button type="button"
+                    <button type="button" title="Hapus"
                         onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
-                        className="inline-flex items-center gap-1 rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">
-                        <Trash2 className="h-3 w-3" /> Hapus
+                        disabled={!bisaHapus(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Trash2 className="h-4 w-4" />
                       </button>
-                    )}
-                    {bisaPublish(item) && (
-                      <button type="button"
-                        onClick={() => setKonfirmasi({ type: 'publish', id: item.id })}
-                        className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700">
-                        Publikasi
-                      </button>
-                    )}
                   </div>
                 ),
               },

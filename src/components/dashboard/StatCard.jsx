@@ -1,4 +1,6 @@
-function StatCard({ icon, label, value, sublabel, color = 'brand-dark' }) {
+import IconBadge from './IconBadge'
+
+function StatCard({ icon, label, value, sublabel, color = 'brand-dark', iconTone = 'neutral' }) {
   return (
     <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between">
@@ -10,9 +12,7 @@ function StatCard({ icon, label, value, sublabel, color = 'brand-dark' }) {
           )}
         </div>
         {icon && (
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f0f4f0] text-brand-dark">
-            {icon}
-          </div>
+          <IconBadge icon={icon} tone={iconTone} size="md" />
         )}
       </div>
     </div>

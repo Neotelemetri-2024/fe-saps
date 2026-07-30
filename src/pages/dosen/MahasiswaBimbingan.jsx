@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Clock } from 'lucide-react'
+import { Search, Clock, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -50,7 +50,7 @@ function normalizeMahasiswa(item) {
     capaianPersen: item.capaianPersen,
     status: item.status,
     tanggalInput: item.updatedAt
-      ? new Date(item.updatedAt).toLocaleString('id-ID')
+      ? new Date(item.updatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       : item.tanggalInput || '-',
   }
 }
@@ -165,10 +165,11 @@ function MahasiswaBimbingan() {
               render: (m) => (
                 <button
                   type="button"
+                  title="Detail"
                   onClick={() => navigate(`/dosen/lihat-detail/${m.mahasiswaId || m.nim}`, { state: { mahasiswa: m } })}
-                  className="text-xs font-semibold text-brand-dark hover:underline"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
                 >
-                  Lihat Detail
+                  <Eye className="h-4 w-4" />
                 </button>
               ),
             },

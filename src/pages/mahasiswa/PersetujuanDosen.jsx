@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Search, FileText, UploadCloud, Eye } from 'lucide-react'
+import { Search, FileText, UploadCloud, Eye, RefreshCw } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -485,39 +485,21 @@ function PersetujuanDosen() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
+                        title="Detail"
                         onClick={() => navigate(`/mahasiswa/persetujuan-dosen/${row.id}`, { state: { row } })}
-                        className="flex items-center gap-1 rounded-lg border border-brand-dark px-2 py-1 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
                       >
-                        <Eye className="h-3.5 w-3.5" />
-                        Detail
+                        <Eye className="h-4 w-4" />
                       </button>
-                      {row.status === 'revisi' && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setInfoModal({ judul: 'Catatan Revisi Dosen PA', isi: row.alasan || 'Tidak ada catatan.' })}
-                            className="text-xs font-medium text-yellow-600 underline hover:text-yellow-800"
-                          >
-                            Lihat Catatan
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenRevisi(row)}
-                            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-1 text-xs font-semibold text-white hover:opacity-90"
-                          >
-                            Ajukan Ulang
-                          </button>
-                        </>
-                      )}
-                      {row.status === 'ditolak' && (
-                        <button
-                          type="button"
-                          onClick={() => setInfoModal({ judul: 'Alasan Penolakan Dosen PA', isi: row.alasan || 'Tidak ada alasan tercantum.' })}
-                          className="text-xs font-medium text-red-600 underline hover:text-red-800"
-                        >
-                          Lihat Alasan
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        title="Ajukan Ulang"
+                        disabled={row.status !== 'revisi'}
+                        onClick={() => handleOpenRevisi(row)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
                       {row.status === 'disetujui' && (
                         row.sudahDiklaim
                           ? <span className="text-xs font-medium text-brand-dark">Klaim diajukan ✓</span>

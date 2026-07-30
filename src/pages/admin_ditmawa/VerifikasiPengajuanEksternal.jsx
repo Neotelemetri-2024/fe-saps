@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Filter, Search } from 'lucide-react'
+import { Clock, Eye, Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -184,7 +184,7 @@ function VerifikasiPengajuanEksternal() {
         <p className="text-sm font-medium text-orange-500">{row.nim || '-'}</p>
         <p className="text-sm text-sky-500">{row.prodi || '-'}</p>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-          <Clock className="h-3.5 w-3.5 shrink-0" />
+          <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
           <span>{row.diajukanPada || '-'}</span>
         </div>
       </div>
@@ -205,9 +205,10 @@ function VerifikasiPengajuanEksternal() {
       <button
         type="button"
         onClick={() => navigate(`/admin_ditmawa/verifikasi-pengajuan-eksternal/${row.id}`, { state: { item: row } })}
-        className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+        title="Detail"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
       >
-        Detail dan verifikasi
+        <Eye className="h-4 w-4" />
       </button>
     )},
   ], [pageItems, start, navigate])

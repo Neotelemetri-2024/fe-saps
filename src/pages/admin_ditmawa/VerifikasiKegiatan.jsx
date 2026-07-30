@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Filter, Clock } from 'lucide-react'
+import { Search, Filter, Clock, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
@@ -38,7 +38,7 @@ function normalizeItem(item) {
     poin: item.poin ?? '-',
     statusPendaftaran: pesertaCount > 0 ? 'sudah' : 'belum',
     dibuatPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleString('id-ID')
+      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       : '-',
   }
 }
@@ -92,8 +92,7 @@ function VerifikasiKegiatan() {
       <div>
         <p className="font-medium text-[#333]">{row.nama}</p>
         <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-          <Clock className="h-3 w-3 shrink-0" />
-          <span>{row.dibuatPada}</span>
+          <Clock className="h-3 w-3 shrink-0 text-[#616161]" />
         </div>
       </div>
     )},
@@ -110,18 +109,16 @@ function VerifikasiKegiatan() {
         </span>
       )
     }},
-    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => {
-      const btnColor = row.statusPendaftaran === 'sudah' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600'
-      return (
-        <button
-          type="button"
-          onClick={() => handleManajemenPeserta(row)}
-          className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold text-white transition ${btnColor}`}
-        >
-          Manajemen Peserta
-        </button>
-      )
-    }},
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <button
+        type="button"
+        onClick={() => handleManajemenPeserta(row)}
+        title="Manajemen Peserta"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white"
+      >
+        <Users className="h-4 w-4" />
+      </button>
+    )},
   ], [pageItems, start, navigate])
 
   const resetFilter = () => {

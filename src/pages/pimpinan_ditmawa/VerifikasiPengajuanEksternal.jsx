@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Filter, Search } from 'lucide-react'
+import { Clock, Eye, Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -9,6 +9,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
+import { getKategoriKegiatanValid, getSkalaKegiatan } from '../../services/matriksService'
 
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
@@ -20,7 +21,7 @@ function normalizeKegiatan(k) {
     prodi: mhs.prodi?.nama || '-',
     kegiatan: k.nama || '-',
     kategori: k.kategori?.nama || '-',
-    skala: k.skala?.nama?.toLowerCase() || '',
+    skala: k.skala?.nama || '-',
     tanggal: k.tanggalMulai
       ? new Date(k.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       : '-',
@@ -34,22 +35,17 @@ function normalizeKegiatan(k) {
 
 const PAGE_SIZE = 10
 
-const SKALA_LABEL = {
-  internasional: 'Internasional',
-  nasional: 'Nasional',
-  regional: 'Regional',
-  lokal: 'Internal (UNAND)',
-}
-
 function VerifikasiPengajuanEksternal() {
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
+  const [kategoriOptions, setKategoriOptions] = useState([])
   const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
   const [skala, setSkala] = useState('')
+  const [skalaOptions, setSkalaOptions] = useState([])
   const [page, setPage] = useState(1)
 
   const [pilihanMode, setPilihanMode] = useState(false)
@@ -72,6 +68,22 @@ function VerifikasiPengajuanEksternal() {
     load()
     const u = getCurrentUser()
     if (u?.nama) setUserName(u.nama)
+    getKategoriKegiatanValid()
+      .then((list) => setKategoriOptions(Array.isArray(list) ? list : []))
+      .catch(() => setKategoriOptions([]))
+    getSkalaKegiatan()
+      .then((list) => {
+        const unique = []
+        const seen = new Set()
+        ;(Array.isArray(list) ? list : []).forEach((s) => {
+          if (s.nama && !seen.has(s.nama)) {
+            seen.add(s.nama)
+            unique.push(s)
+          }
+        })
+        setSkalaOptions(unique)
+      })
+      .catch(() => setSkalaOptions([]))
     return subscribeDataUpdate((detail) => {
       if (!detail?.type || detail.type === 'pengajuan') load()
     })
@@ -176,10 +188,9 @@ function VerifikasiPengajuanEksternal() {
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Kategori</option>
-              <option value="Kompetisi">Kompetisi</option>
-              <option value="Seminar">Seminar</option>
-              <option value="Pelatihan">Pelatihan</option>
-              <option value="Organisasi">Organisasi</option>
+              {kategoriOptions.map((k) => (
+                <option key={k.id} value={k.nama}>{k.nama}</option>
+              ))}
             </select>
             <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
@@ -197,8 +208,8 @@ function VerifikasiPengajuanEksternal() {
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Skala</option>
-              {Object.entries(SKALA_LABEL).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
+              {skalaOptions.map((s) => (
+                <option key={s.id} value={s.nama}>{s.nama}</option>
               ))}
             </select>
             <button type="button"
@@ -253,7 +264,7 @@ function VerifikasiPengajuanEksternal() {
                   <p className="text-sm font-medium text-orange-500">{item.nim}</p>
                   <p className="text-sm text-sky-500">{item.prodi}</p>
                   <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
                     <span>{item.diajukanPada}</span>
                   </div>
                 </div>
@@ -268,8 +279,9 @@ function VerifikasiPengajuanEksternal() {
               render: (item) => pilihanMode ? null : (
                 <button type="button"
                   onClick={() => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-eksternal/${item.id}`, { state: { item } })}
-                  className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
-                  Detail dan verifikasi
+                  title="Detail & Verifikasi"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+                  <Eye className="h-4 w-4" />
                 </button>
               ),
             },

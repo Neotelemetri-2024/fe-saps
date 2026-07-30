@@ -10,6 +10,7 @@ import GenerateCV from './pages/mahasiswa/GenerateCV'
 import PersetujuanDosen from './pages/mahasiswa/PersetujuanDosen'
 import KlaimPoinCapaian from './pages/mahasiswa/KlaimPoinCapaian'
 import RiwayatPoin from './pages/mahasiswa/RiwayatPoin'
+import RiwayatKegiatanInternal from './pages/mahasiswa/RiwayatKegiatanInternal'
 import AkunPengaturan from './pages/mahasiswa/AkunPengaturan'
 import DetailPengajuanMahasiswa from './pages/mahasiswa/DetailPengajuan'
 import DetailIzinPAMahasiswa from './pages/mahasiswa/DetailIzinPA'
@@ -68,10 +69,12 @@ import UKMDashboard from './pages/operator_ukm/Dashboard'
 import UKMDaftarKegiatan from './pages/operator_ukm/DaftarKegiatan'
 import UKMBuatKegiatan from './pages/operator_ukm/BuatKegiatan'
 import UKMManajemenPeserta from './pages/operator_ukm/ManajemenPeserta'
+import UKMDetailKegiatan from './pages/operator_ukm/DetailKegiatan'
 import UKMFDashboard from './pages/operator_ukmf/Dashboard'
 import UKMFDaftarKegiatan from './pages/operator_ukmf/DaftarKegiatan'
 import UKMFBuatKegiatan from './pages/operator_ukmf/BuatKegiatan'
 import UKMFManajemenPeserta from './pages/operator_ukmf/ManajemenPeserta'
+import UKMFDetailKegiatan from './pages/operator_ukmf/DetailKegiatan'
 import UKMFAkunDanPengaturan from './pages/operator_ukmf/AkunDanPengaturan'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -94,6 +97,7 @@ function App() {
           <Route path="persetujuan-dosen/:id" element={<DetailIzinPAMahasiswa />} />
           <Route path="klaim-poin" element={<KlaimPoinCapaian />} />
           <Route path="riwayat-poin" element={<RiwayatPoin />} />
+          <Route path="riwayat-kegiatan-internal" element={<RiwayatKegiatanInternal />} />
           <Route path="pengaturan" element={<AkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
         </Route>
@@ -187,6 +191,7 @@ function App() {
           <Route path="dashboard" element={<UKMDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMDaftarKegiatan />} />
           <Route path="buat-kegiatan" element={<UKMBuatKegiatan />} />
+          <Route path="daftar-kegiatan/:id" element={<UKMDetailKegiatan />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMManajemenPeserta />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
@@ -196,6 +201,7 @@ function App() {
         <Route path="operator_ukmf" element={<AuthGuard><RoleGuard allowedRoles={['operator_ukmf']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<UKMFDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMFDaftarKegiatan />} />
+          <Route path="daftar-kegiatan/:id" element={<UKMFDetailKegiatan />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMFManajemenPeserta />} />
           <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
           <Route path="pengaturan" element={<UKMFAkunDanPengaturan />} />

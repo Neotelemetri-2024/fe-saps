@@ -79,6 +79,12 @@ export async function updateMatriks(data) {
   return res?.data || res
 }
 
+/** Sinkronisasi penuh 1 kategori matriks (baris/kolom/nilai) */
+export async function syncMatriks(payload) {
+  const res = await post('/api/matriks/sync', payload)
+  return res?.data || res
+}
+
 export async function getMatriksKategori() {
   const res = await get('/api/matriks/kategori')
   return res?.data || res || []

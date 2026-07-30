@@ -260,14 +260,16 @@ function ManajemenAkunUKMF() {
           <button
             type="button"
             onClick={() => setResetTarget(row)}
-            className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white"
+            title="Reset Password"
           >
             <Key className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => setConfirmDelete(row)}
-            className="rounded p-1 text-red-600 transition hover:bg-red-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
+            title="Hapus"
           >
             <Trash2 className="h-4 w-4" />
           </button>

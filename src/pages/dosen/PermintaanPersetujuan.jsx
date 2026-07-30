@@ -66,11 +66,11 @@ const columns = (navigate) => [
     label: "AKSI",
     render: (row) => (
       <button
+        title="Detail & Verifikasi"
         onClick={() => navigate(`/dosen/permintaan-persetujuan/${row.id}`, { state: { row } })}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
       >
-        <Eye className="h-3.5 w-3.5" />
-        Detail & Verifikasi
+        <Eye className="h-4 w-4" />
       </button>
     ),
   },

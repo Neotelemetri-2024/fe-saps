@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { getKegiatanApproval } from '../../services/kegiatanService'
@@ -82,8 +82,7 @@ function VerifikasiPengajuanUKMF() {
     {
       key: 'status', label: 'Status',
       render: (item) => (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[item.status?.toLowerCase()] ?? 'bg-gray-100 text-gray-500'}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[item.status?.toLowerCase()] ?? 'bg-gray-100 text-gray-500'}`}>
           {item.status}
         </span>
       ),
@@ -93,8 +92,9 @@ function VerifikasiPengajuanUKMF() {
       render: (item) => (
         <button type="button"
           onClick={() => navigate(`/pimpinan_fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })}
-          className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white">
-          {item.status?.toLowerCase() === 'pending' ? 'Detail dan verifikasi' : 'Detail'}
+          title="Detail & Verifikasi"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+          <Eye className="h-4 w-4" />
         </button>
       ),
     },

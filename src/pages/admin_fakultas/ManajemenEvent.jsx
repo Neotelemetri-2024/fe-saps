@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Filter, Pencil, Trash2, Send, RefreshCw } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -44,7 +44,7 @@ function normalizeEvent(item) {
   return {
     id: item.id,
     kegiatan: item.nama || '-',
-    submitted: item.createdAt ? new Date(item.createdAt).toLocaleString('id-ID') : '-',
+    submitted: item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
     kategori: item.kategori?.nama || '-',
     skala: item.skala?.nama || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
@@ -147,8 +147,7 @@ function ManajemenEvent() {
       key: 'status',
       label: 'STATUS',
       render: (row) => (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] ?? ''}`}>
           {row.status}
         </span>
       ),
@@ -159,33 +158,39 @@ function ManajemenEvent() {
       stopPropagation: true,
       render: (row) => (
         <div className="flex items-center gap-2">
-          {bisaKirim(row) && (
+          {bisaKirim(row) ? (
             <button
               type="button"
               onClick={() => setKirimTarget(row)}
-              className="rounded-lg bg-brand-dark px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90"
+              disabled={!bisaKirim(row)}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition hover:text-white disabled:opacity-40 disabled:cursor-not-allowed ${
+                row.rawStatus === 'perlu_revisi'
+                  ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-500'
+                  : 'border-brand-dark bg-[#eaf5ec] text-brand-dark hover:bg-brand-dark'
+              }`}
+              title={row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
             >
-              {row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'}
+              {row.rawStatus === 'perlu_revisi' ? <RefreshCw className="h-4 w-4" /> : <Send className="h-4 w-4" />}
             </button>
-          )}
-          {bisaEdit(row) && (
-            <button
+          ) : null}
+          <button
               type="button"
               onClick={() => navigate(`/admin_fakultas/buat-event?edit=${row.id}`)}
-              className="rounded-lg border border-brand-dark p-1.5 text-brand-dark transition hover:bg-brand-dark hover:text-white"
+              disabled={!bisaEdit(row)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Edit"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
             </button>
-          )}
-          {bisaHapus(row) && (
-            <button
+          <button
               type="button"
               onClick={() => setDeleteId(row.id)}
-              className="rounded-lg border border-red-400 p-1.5 text-red-500 transition hover:bg-red-500 hover:text-white"
+              disabled={!bisaHapus(row)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Hapus"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
-          )}
         </div>
       ),
     },

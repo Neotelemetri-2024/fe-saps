@@ -300,7 +300,7 @@ function DetailVerifikasiPengajuanEksternal() {
 
         {!canAct && !item.alasan && (
           <div className="rounded-xl border border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
             <p className="text-sm text-[#616161]">
               Pengajuan ini sudah diverifikasi dengan status <StatusBadge status={item.status} />
             </p>
@@ -457,7 +457,7 @@ function DetailVerifikasiPengajuanEksternal() {
                           >
                             {c.nama}
                             <button type="button" onClick={() => toggleCapaian(c.id)}>
-                              <X className="h-3 w-3" />
+                              <X className="h-3 w-3 text-red-600" />
                             </button>
                           </span>
                         ))}

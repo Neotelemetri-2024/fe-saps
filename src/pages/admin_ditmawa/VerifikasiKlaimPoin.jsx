@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Filter, Search } from 'lucide-react'
+import { Eye, Filter, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -176,9 +176,10 @@ function VerifikasiKlaimPoin() {
       <button
         type="button"
         onClick={() => navigate(`/admin_ditmawa/verifikasi-klaim/${row.id}`, { state: { item: row } })}
-        className="whitespace-nowrap rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+        title="Detail"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
       >
-        Detail dan verifikasi
+        <Eye className="h-4 w-4" />
       </button>
     )},
   ], [pageItems, start, navigate])

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
@@ -29,9 +30,10 @@ function PimpinanFakultasPersetujuan() {
       key: 'aksi',
       label: 'Aksi',
       render: (row) => (
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
-            className="rounded-lg bg-brand-dark px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+            title="Setujui"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-500 hover:text-white"
             onClick={async () => {
               try {
                 await updateKegiatan(row.id, { status: 'disetujui' })
@@ -41,10 +43,11 @@ function PimpinanFakultasPersetujuan() {
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >
-            Setujui
+            <CheckCircle2 className="h-4 w-4" />
           </button>
           <button
-            className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+            title="Tolak"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
             onClick={async () => {
               try {
                 await updateKegiatan(row.id, { status: 'ditolak' })
@@ -54,7 +57,7 @@ function PimpinanFakultasPersetujuan() {
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >
-            Tolak
+            <XCircle className="h-4 w-4" />
           </button>
         </div>
       ),

@@ -185,7 +185,7 @@ function DetailVerifikasiPengajuanInternal() {
 
         {!canAct && !item.alasan && (
           <div className="rounded-xl border border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
             <p className="text-sm text-[#616161]">Pengajuan sudah diverifikasi dengan status <StatusBadge status={item.status} /></p>
           </div>
         )}
@@ -262,7 +262,7 @@ function DetailVerifikasiPengajuanInternal() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {allCapaian.filter((c) => selectedCapaianIds.includes(c.id)).map((c) => (
                         <span key={c.id} className="inline-flex items-center gap-1 rounded-full border border-brand-dark/30 bg-brand-dark/5 px-3 py-1 text-xs font-medium text-brand-dark">
-                          {c.nama}<button type="button" onClick={() => toggleCapaian(c.id)}><X className="h-3 w-3" /></button>
+                          {c.nama}<button type="button" onClick={() => toggleCapaian(c.id)}><X className="h-3 w-3 text-red-600" /></button>
                         </span>
                       ))}
                     </div>

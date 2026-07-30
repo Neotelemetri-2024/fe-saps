@@ -171,7 +171,7 @@ function AdminDitmawaDashboard() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className={`rounded-xl border-2 ${stat.border} bg-white p-4 shadow-sm sm:p-5 lg:p-6`}
+              className="rounded-xl bg-white p-4 shadow-sm sm:p-5 lg:p-6"
             >
               <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{stat.label}</p>
               <p className={`mt-2 text-3xl font-extrabold ${stat.valueColor}`}>

@@ -176,7 +176,7 @@ function RiwayatPoin() {
                     <ProgressBar value={item.current} max={item.target || 1} height={6} />
                   </div>
                   <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
-                    {item.onTrack && <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
                     <span>{item.label}</span>
                     {item.remaining && <span className="font-medium text-brand-dark">{item.remaining}</span>}
                     {item.status && <span className="font-medium text-[#616161]">{item.status}</span>}

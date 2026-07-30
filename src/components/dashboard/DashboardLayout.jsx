@@ -5,6 +5,7 @@ import { getCurrentUser, logout } from '../../services/authService'
 import { getUnreadCount } from '../../services/notifikasiService'
 import Sidebar, { MobileSidebar } from './Sidebar'
 import * as menuConfig from '../../config/menuItems'
+import IconBadge from './IconBadge'
 
 const roleMenuMap = {
   mahasiswa: menuConfig.mahasiswaMenu,
@@ -143,12 +144,12 @@ function DashboardLayout({ role, userName, userRole, children }) {
                 <button
                   type="button"
                   onClick={() => navigate(notifikasiPath)}
-                  className="relative rounded-xl p-2 text-[#616161] transition hover:bg-[#f0f4f0] hover:text-brand-dark"
+                  className="relative"
                   title="Notifikasi"
                 >
-                  <Bell className="h-5 w-5" />
+                  <IconBadge icon={<Bell className="h-5 w-5" />} tone="neutral" size="md" />
                   {unreadCount > 0 && (
-                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
@@ -166,9 +167,7 @@ function DashboardLayout({ role, userName, userRole, children }) {
                     <p className="text-xs font-medium text-black sm:text-sm">{resolvedName}</p>
                     <p className="text-[10px] text-[#616161] sm:text-xs">{resolvedUserRole}</p>
                   </div>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e9ebf8] bg-[#f5f6f8] text-[#616161] sm:h-[50px] sm:w-[50px]">
-                    <UserCircle className="h-6 w-6 sm:h-8 sm:w-8" />
-                  </div>
+                  <IconBadge icon={<UserCircle className="h-6 w-6 sm:h-8 sm:w-8" />} tone="neutral" size="lg" rounded="rounded-full" />
                 </button>
 
                 {/* Dropdown */}

@@ -413,61 +413,41 @@ function AjukanKegiatanEksternal() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
+                        title="Detail"
                         onClick={() => navigate(`/mahasiswa/kegiatan-eksternal/${row.id}`, { state: { row } })}
-                        className="flex items-center gap-1 rounded-lg border border-brand-dark px-2 py-1 text-xs font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
                       >
-                        <Eye className="h-3.5 w-3.5" />
-                        Detail
+                        <Eye className="h-4 w-4" />
                       </button>
-                      {row.statusRaw === 'draft' && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleEditDraft(row)}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setHapusDraftTarget(row)}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Hapus
-                          </button>
-                        </>
-                      )}
-                      {row.statusRaw === 'revisi' && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setAlasanModal({ judul: 'Catatan Revisi', isi: row.alasan || 'Tidak ada catatan.' })}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-yellow-600 hover:bg-yellow-50"
-                          >
-                            Lihat Catatan
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditRevisi(row)}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-dark hover:bg-brand-dark/10"
-                          >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            Ajukan Ulang
-                          </button>
-                        </>
-                      )}
-                      {row.statusRaw === 'ditolak' && (
-                        <button
-                          type="button"
-                          onClick={() => setAlasanModal({ judul: 'Alasan Penolakan', isi: row.alasan || 'Tidak ada alasan tercantum.' })}
-                          className="text-xs font-medium text-red-600 underline hover:text-red-800"
-                        >
-                          Lihat Alasan
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        title="Edit"
+                        disabled={row.statusRaw !== 'draft'}
+                        onClick={() => handleEditDraft(row)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Hapus"
+                        disabled={row.statusRaw !== 'draft'}
+                        onClick={() => setHapusDraftTarget(row)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Ajukan Ulang"
+                        disabled={row.statusRaw !== 'revisi'}
+                        onClick={() => handleEditRevisi(row)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
                     </div>
+
                   ),
                 },
               ]}

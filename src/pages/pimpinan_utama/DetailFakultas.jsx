@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Eye } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { getCurrentUser } from '../../services/authService'
@@ -118,8 +119,9 @@ function DetailFakultas() {
               render: (item) => (
                 <button type="button"
                   onClick={() => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
-                  className="text-xs font-semibold text-brand-dark hover:underline">
-                  detail
+                  title="Detail"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+                  <Eye className="h-4 w-4" />
                 </button>
               ),
             },

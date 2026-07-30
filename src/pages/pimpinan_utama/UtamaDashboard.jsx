@@ -9,13 +9,13 @@ import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
 const toneStyles = {
-  emerald: { border: 'border-emerald-300', label: 'text-emerald-700', value: 'text-brand-dark' },
+  emerald: { label: 'text-emerald-700', value: 'text-brand-dark' },
 }
 
 function StatBox({ label, value, tone }) {
   const s = toneStyles[tone] || toneStyles.emerald
   return (
-    <div className={`rounded-xl border-2 bg-white p-5 shadow-sm ${s.border}`}>
+    <div className="rounded-xl bg-white p-5 shadow-sm">
       <p className={`text-xs font-semibold tracking-wide ${s.label}`}>{label}</p>
       <p className={`mt-2 text-3xl font-extrabold ${s.value}`}>{value}</p>
     </div>

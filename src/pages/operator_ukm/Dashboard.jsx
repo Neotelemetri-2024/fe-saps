@@ -50,7 +50,7 @@ function UKMDashboard() {
             { label: 'Disetujui',   value: loading ? '…' : disetujui },
             { label: 'Event Aktif', value: loading ? '…' : aktif },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-xl border-2 border-brand-dark bg-white p-5 shadow-sm">
+            <div key={label} className="rounded-xl bg-white p-5 shadow-sm">
               <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{label}</p>
               <p className="mt-2 text-3xl font-extrabold text-brand-dark">{value}</p>
             </div>
@@ -81,7 +81,7 @@ function UKMDashboard() {
                     <p className="font-medium text-[#333]">{r.nama || r.kegiatan || '-'}</p>
                     {r.diajukanPada && (
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9a9a9a]">
-                        <Clock className="h-3 w-3" />{r.diajukanPada}
+                        <Clock className="h-3 w-3 text-[#616161]" />{r.diajukanPada}
                       </p>
                     )}
                   </div>

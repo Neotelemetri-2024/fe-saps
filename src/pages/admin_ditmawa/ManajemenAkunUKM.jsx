@@ -250,14 +250,16 @@ function ManajemenAkunUKM() {
         <button
           type="button"
           onClick={() => setResetTarget(row)}
-          className="rounded p-1 text-brand-dark transition hover:bg-green-50"
+          title="Reset Password"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white"
         >
           <Key className="h-4 w-4" />
         </button>
         <button
           type="button"
           onClick={() => setConfirmDelete(row)}
-          className="rounded p-1 text-red-600 transition hover:bg-red-50"
+          title="Hapus"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -293,11 +295,15 @@ function ManajemenAkunUKM() {
             onClick={() => setShowTambah(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
           >
-            <Plus className="h-4 w-4" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
+              <Plus className="h-4 w-4" />
+            </span>
             Akun UKM
           </button>
           <div className="flex flex-1 items-center gap-2 rounded-lg border border-brand-dark px-4 py-2 sm:max-w-md">
-            <Search className="h-4 w-4 shrink-0 text-[#8e98a8]" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
+              <Search className="h-4 w-4" />
+            </span>
             <input
               type="text"
               value={search}

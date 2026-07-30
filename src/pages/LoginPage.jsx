@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { login } from '../services/authService'
+import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import logoUnand from '../assets/logo_unand.png'
 
 function LoginPage() {
@@ -50,7 +51,7 @@ function LoginPage() {
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-white font-poppins">
       {/* Left Panel — desktop only */}
-      <div className="relative hidden min-h-screen w-1/2 flex-col justify-center overflow-hidden bg-brand-gradient lg:flex">
+      <div className="relative hidden min-h-screen w-1/2 flex-col justify-center overflow-hidden login-bg-gradient lg:flex">
         {/* Decorative SVG Ellipses */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <svg className="login-shape-1 absolute -left-[49.6%] -top-[27.8%] aspect-square w-[123.5%]" viewBox="0 0 889 889" fill="none">
@@ -118,8 +119,7 @@ function LoginPage() {
             <span className="block text-6xl font-bold leading-tight">Selamat Datang !</span>
           </h1>
           <p className="mt-8 max-w-[423px] text-base leading-relaxed text-white">
-            Program Kreativitas Mahasiswa (PKM) adalah kompetisi yang diselenggarakan untuk
-            mengembangkan ide dan kreativitas mahasiswa dalam berbagai bidang ilmiah dan teknologi.
+          SAPS adalah sistem berbasis web yang dirancang untuk mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara efektif, transparan, dan terintegrasi.
           </p>
         </div>
       </div>
@@ -127,7 +127,7 @@ function LoginPage() {
       {/* Right Panel — Form */}
       <div className="flex w-full min-h-screen flex-col bg-white lg:w-1/2">
         {/* Mobile top banner */}
-        <div className="flex items-center justify-center gap-3 bg-brand-gradient px-6 py-6 lg:hidden">
+        <div className="flex items-center justify-center gap-3 login-bg-gradient px-6 py-6 lg:hidden">
           <img src={logoUnand} alt="Logo" className="h-12 w-12 rounded-full object-cover" />
           <div>
             <p className="text-base font-bold leading-tight text-white">MyUnand Student Connect</p>
@@ -141,7 +141,7 @@ function LoginPage() {
             <img src={logoUnand} alt="Logo Universitas Andalas" className="h-[60px] w-[60px] rounded-full object-cover" />
             <div>
               <p className="text-lg font-bold leading-[22px]">
-                <span className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0e3b1e] to-[#48a757] bg-clip-text text-transparent">
                   MyUnand Student Connect
                 </span>
               </p>
@@ -161,11 +161,8 @@ function LoginPage() {
             {/* Username */}
             <div>
               <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Email</label>
-              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-brand-dark px-4 lg:h-16 lg:gap-4 lg:px-5">
-                <svg className="h-5 w-5 shrink-0 text-[#969696]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                </svg>
+              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-[#0e3b1e] px-4 lg:h-16 lg:gap-4 lg:px-5">
+                <User className="h-5 w-5 shrink-0 text-[#969696]" />
                 <input
                   type="text"
                   placeholder=""
@@ -179,11 +176,8 @@ function LoginPage() {
             {/* Password */}
             <div>
               <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Password</label>
-              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-brand-dark px-4 lg:h-16 lg:gap-4 lg:px-5">
-                <svg className="h-5 w-5 shrink-0 text-[#969696]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
+              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-[#0e3b1e] px-4 lg:h-16 lg:gap-4 lg:px-5">
+                <Lock className="h-5 w-5 shrink-0 text-[#969696]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder=""
@@ -197,20 +191,7 @@ function LoginPage() {
                   aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                   className="shrink-0 text-[#969696]"
                 >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    {showPassword ? (
-                      <>
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </>
-                    )}
-                  </svg>
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
@@ -218,11 +199,7 @@ function LoginPage() {
             {/* Error message */}
             {errorMsg && (
               <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                <svg className="h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
                 <p className="text-sm text-red-600">{errorMsg}</p>
               </div>
             )}
@@ -231,7 +208,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-brand-dark to-brand-light text-base font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:mt-[8px] lg:h-16 lg:text-[20px]"
+              className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0e3b1e] to-[#2f7a3c] text-base font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:mt-[8px] lg:h-16 lg:text-[20px]"
             >
               {loading ? 'Memproses...' : 'Login'}
             </button>

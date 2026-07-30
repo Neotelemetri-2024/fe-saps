@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Download, Clock, ChevronRight } from 'lucide-react'
+import { Download, Clock, ChevronRight, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -9,12 +9,12 @@ import { getCurrentUser } from '../../services/authService'
 import { getDashboardDosen } from '../../services/dashboardService'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-function StatCard({ label, value, border, numColor, link, sublabel, sublink, action }) {
+function StatCard({ label, value, numColor, link, sublabel, sublink, action }) {
   const navigate = useNavigate()
   return (
     <div
       onClick={() => action && navigate(action)}
-      className={`rounded-xl border-2 bg-white p-5 shadow-sm ${border} ${action ? 'cursor-pointer' : ''}`}
+      className={`rounded-xl bg-white p-5 shadow-sm ${action ? 'cursor-pointer' : ''}`}
     >
       <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">{label}</p>
       <p className={`mt-2 text-3xl font-extrabold ${numColor}`}>{value}</p>
@@ -56,13 +56,10 @@ function StatusDot({ status }) {
 function formatTanggal(val) {
   if (!val) return '-'
   try {
-    return new Date(val).toLocaleString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
+    return new Date(val).toLocaleDateString('id-ID', {
+      day: '2-digit',
       month: 'short',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     })
   } catch {
     return String(val)
@@ -289,10 +286,11 @@ function DosenPADashboard() {
                 render: (row) => (
                   <button
                     type="button"
+                    title="Detail"
                     onClick={() => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } })}
-                    className="text-xs font-semibold text-brand-dark hover:underline"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
                   >
-                    Lihat Detail
+                    <Eye className="h-4 w-4" />
                   </button>
                 ),
               },

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -65,7 +66,8 @@ function MahasiswaPerluPerhatian() {
       render: (row) => (
         <button
           type="button"
-          className="text-sm font-medium text-brand-dark hover:underline"
+          title="Detail"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
           onClick={() => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, {
             state: {
               mahasiswa: {
@@ -80,7 +82,7 @@ function MahasiswaPerluPerhatian() {
             },
           })}
         >
-          Lihat detail
+          <Eye className="h-4 w-4" />
         </button>
       ),
     },

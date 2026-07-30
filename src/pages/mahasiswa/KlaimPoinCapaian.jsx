@@ -20,18 +20,7 @@ const columns = [
   {
     key: 'aksi',
     label: 'AKSI',
-    render: (row) =>
-      row.status === 'ditolak' || row.status === 'Ditolak' ? (
-        <button
-          type="button"
-          onClick={() => toast.info('Alasan Penolakan', { description: row.alasan })}
-          className="text-sm font-medium text-red-600 underline hover:text-red-800"
-        >
-          Lihat Alasan
-        </button>
-      ) : (
-        <span className="text-gray-400">-</span>
-      ),
+    render: () => <span className="text-gray-400">-</span>,
   },
 ]
 

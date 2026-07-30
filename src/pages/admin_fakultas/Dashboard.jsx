@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -83,8 +84,7 @@ function Dashboard() {
       key: 'status',
       label: 'STATUS',
       render: (row) => (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] || statusStyle.Pending}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] || statusStyle.Pending}`}>
           {row.status}
         </span>
       ),
@@ -98,16 +98,18 @@ function Dashboard() {
           <button
             type="button"
             onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-            className="rounded border border-brand-dark px-2.5 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-dark hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
+            title="Detail"
           >
-            Detail
+            <Eye className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-            className="rounded border border-[#2563eb] px-2.5 py-1 text-xs font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
+            title="Verifikasi"
           >
-            verifikasi
+            <Eye className="h-4 w-4" />
           </button>
         </div>
       ),
@@ -126,7 +128,7 @@ function Dashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
-            <div key={card.label} className={`rounded-xl border-2 ${card.border} bg-white p-4 shadow-sm sm:p-5 lg:p-6`}>
+            <div key={card.label} className="rounded-xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">{card.label}</p>
               <p className={`mt-2 text-3xl font-extrabold ${card.numColor}`}>{loading ? '…' : card.value}</p>
             </div>

@@ -55,7 +55,7 @@ function Dashboard() {
             { label: 'Total Pending',   value: loading ? '…' : totalPending },
             { label: 'Kurikulum Aktif', value: loading ? '…' : kurikulumAktif, small: true },
           ].map(({ label, value, small }) => (
-            <div key={label} className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+            <div key={label} className="rounded-xl bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#616161]">{label}</p>
               <p className={`mt-2 font-extrabold text-brand-dark ${small ? 'text-sm mt-3' : 'text-3xl'}`}>{value}</p>
             </div>
