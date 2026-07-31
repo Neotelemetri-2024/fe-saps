@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getDashboardDosen, getDaftarMahasiswaBimbingan, getDetailMahasiswa, getMahasiswaPerluPerhatian } from '../controllers/dosen/dashboard.controller';
-import { getIzinForDosen, putuskanIzinPA, createSaranPA, getSaranPA } from '../controllers/dosen/persetujuan.controller';
+import { getIzinForDosen, putuskanIzinPA, putuskanIzinPABulk, createSaranPA, getSaranPA } from '../controllers/dosen/persetujuan.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -23,6 +23,7 @@ router.get('/mahasiswa-perlu-perhatian', getMahasiswaPerluPerhatian);
 
 // Persetujuan Mahasiswa (izin PA) - dipindahkan dari partisipasi.routes
 router.get('/persetujuan', getIzinForDosen);
+router.put('/persetujuan-bulk', putuskanIzinPABulk);
 router.put('/persetujuan/:id', putuskanIzinPA);
 
 // Saran PA

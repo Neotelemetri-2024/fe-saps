@@ -167,22 +167,48 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
     const { search, filter, page = '1', limit = '10' } = req.query;
 
-    // Validasi: kegiatan harus milik UKM ini
-    const operator = await getOrganisasiOperator(BigInt(userId));
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
-    }
+    // Admin Ditmawa/Fakultas boleh mengelola peserta event miliknya (tanpa organisasi)
+    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
 
-    const kegiatan = await prisma.kegiatan.findFirst({
-      where: { id: kegiatanId, organisasiId: operator.organisasiId },
-      include: {
-        kategori: { select: { nama: true } },
-        skala: { select: { nama: true } }
+    let kegiatan: any;
+    if (isAdmin) {
+      kegiatan = await prisma.kegiatan.findUnique({
+        where: { id: kegiatanId },
+        include: {
+          kategori: { select: { nama: true } },
+          skala: { select: { nama: true } },
+          organisasi: { select: { nama: true } }
+        }
+      });
+    } else {
+      // Validasi: kegiatan harus milik UKM ini
+      const operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
       }
-    });
+      kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId },
+        include: {
+          kategori: { select: { nama: true } },
+          skala: { select: { nama: true } },
+          organisasi: { select: { nama: true } }
+        }
+      });
+    }
 
     if (!kegiatan) {
       return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+    }
+
+    // Manajemen peserta oleh Admin hanya setelah kegiatan disetujui pimpinan
+    if (isAdmin) {
+      const allowedStatuses = ['disetujui', 'terpublikasi'];
+      if (!allowedStatuses.includes(kegiatan.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Kegiatan masih berstatus '${kegiatan.status}'. Manajemen peserta hanya bisa dilakukan setelah kegiatan disetujui.`
+        });
+      }
     }
 
     // Cek status submit
@@ -257,7 +283,7 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
           nama: kegiatan.nama,
           tanggalMulai: kegiatan.tanggalMulai,
           lokasi: kegiatan.lokasi,
-          organisasi: operator.organisasi.nama
+          organisasi: kegiatan.organisasi?.nama || null
         },
         statistik: {
           totalTerdaftar: totalPartisipasi,
@@ -509,16 +535,36 @@ export const updatePesertaUKM = async (req: Request, res: Response, next: NextFu
 
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const operator = await getOrganisasiOperator(BigInt(userId));
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+
+    let kegiatan: any;
+    if (isAdmin) {
+      kegiatan = await prisma.kegiatan.findUnique({
+        where: { id: kegiatanId }
+      });
+    } else {
+      const operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId }
+      });
     }
 
-    const kegiatan = await prisma.kegiatan.findFirst({
-      where: { id: kegiatanId, organisasiId: operator.organisasiId }
-    });
     if (!kegiatan) {
       return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+    }
+
+    // Manajemen peserta oleh Admin hanya setelah kegiatan disetujui pimpinan
+    if (isAdmin) {
+      const allowedStatuses = ['disetujui', 'terpublikasi'];
+      if (!allowedStatuses.includes(kegiatan.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Kegiatan masih berstatus '${kegiatan.status}'. Manajemen peserta hanya bisa dilakukan setelah kegiatan disetujui.`
+        });
+      }
     }
 
     const { peserta } = req.body; // [{ partisipasiId, hadir, peranId }]
@@ -561,17 +607,40 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     const aktorId = BigInt(userId);
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const operator = await getOrganisasiOperator(aktorId);
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+
+    let kegiatan: any;
+    if (isAdmin) {
+      kegiatan = await prisma.kegiatan.findUnique({
+        where: { id: kegiatanId },
+        include: { kegiatanCapaian: true, organisasi: { select: { nama: true } } }
+      });
+    } else {
+      const operator = await getOrganisasiOperator(aktorId);
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId },
+        include: { kegiatanCapaian: true, organisasi: { select: { nama: true } } }
+      });
     }
 
-    const kegiatan = await prisma.kegiatan.findFirst({
-      where: { id: kegiatanId, organisasiId: operator.organisasiId },
-      include: { kegiatanCapaian: true }
-    });
     if (!kegiatan) {
       return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+    }
+
+    const penyelenggaraNama = kegiatan.organisasi?.nama || kegiatan.nama;
+
+    // Klaim poin oleh Admin hanya setelah kegiatan disetujui pimpinan
+    if (isAdmin) {
+      const allowedStatuses = ['disetujui', 'terpublikasi'];
+      if (!allowedStatuses.includes(kegiatan.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Kegiatan masih berstatus '${kegiatan.status}'. Klaim poin hanya bisa dilakukan setelah kegiatan disetujui.`
+        });
+      }
     }
 
     // Pastikan kegiatanCapaian sudah terisi (UKM wajib set alokasi capaian dulu)
@@ -607,10 +676,10 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     let tetap = 0;
     let dibatalkan = 0;
 
-    const detailUntuk = (totalPoin: number) =>
-      bagiPoin(
+    const detailUntuk = (totalPoin: number): { subCapaianId: number; poin: number }[] =>
+      bagiPoin<number>(
         totalPoin,
-        kegiatan.kegiatanCapaian.map(kc => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) }))
+        kegiatan.kegiatanCapaian.map((kc: any) => ({ ref: kc.subCapaianId as number, bobot: Number(kc.alokasiPersen) }))
       ).map(b => ({ subCapaianId: b.ref, poin: b.poin }));
 
     await prisma.$transaction(async (tx) => {
@@ -689,7 +758,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
             data: {
               userId: partisipasi.mahasiswaId,
               judul: 'Poin Kegiatan Diperbarui',
-              isi: `Poin Anda untuk kegiatan "${kegiatan.nama}" diperbarui menjadi ${matriks.poin} poin oleh ${operator.organisasi.nama}.`,
+              isi: `Poin Anda untuk kegiatan "${kegiatan.nama}" diperbarui menjadi ${matriks.poin} poin oleh ${penyelenggaraNama}.`,
               refType: 'perolehan_poin',
               refId: perolehanId
             }
@@ -727,7 +796,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
           data: {
             userId: partisipasi.mahasiswaId,
             judul: 'Poin Kegiatan Diperoleh! 🎉',
-            isi: `Selamat! Anda mendapatkan ${matriks.poin} poin dari kegiatan "${kegiatan.nama}" yang diselenggarakan oleh ${operator.organisasi.nama}.`,
+            isi: `Selamat! Anda mendapatkan ${matriks.poin} poin dari kegiatan "${kegiatan.nama}" yang diselenggarakan oleh ${penyelenggaraNama}.`,
             refType: 'perolehan_poin',
             refId: perolehan.id
           }

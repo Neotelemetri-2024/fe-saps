@@ -81,6 +81,74 @@ export const getIzinForDosen = async (req: Request, res: Response, next: NextFun
   }
 };
 
+// ==================== KEPUTUSAN IZIN (BULK) ====================
+
+const izinBulkSchema = z.object({
+  ids: z.array(z.union([z.string(), z.number()])).min(1),
+});
+
+// PUT /api/dosen/persetujuan-bulk — Dosen PA menyetujui beberapa izin (status diajukan) sekaligus
+export const putuskanIzinPABulk = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const dosenPaId = BigInt(req.user!.id);
+    const body = izinBulkSchema.parse(req.body);
+    const ids = body.ids.map((id) => BigInt(id));
+
+    const izinList = await prisma.izinPA.findMany({
+      where: { id: { in: ids } },
+      include: { partisipasi: true },
+    });
+
+    const invalid = izinList.find(
+      (izin) => izin.dosenPaId !== dosenPaId || izin.status !== 'diajukan'
+    );
+    if (izinList.length !== ids.length || invalid) {
+      return res.status(403).json({
+        success: false,
+        message: 'Beberapa izin tidak valid, bukan milik Anda, atau bukan berstatus Diajukan.',
+      });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.izinPA.updateMany({
+        where: { id: { in: ids } },
+        data: { status: 'disetujui', decidedAt: new Date() },
+      });
+      await tx.partisipasi.updateMany({
+        where: { id: { in: izinList.map((izin) => izin.partisipasiId) } },
+        data: { status: 'disetujui_pa' as any },
+      });
+      for (const izin of izinList) {
+        await tx.notifikasi.create({
+          data: {
+            userId: izin.partisipasi.mahasiswaId,
+            judul: 'Izin Kegiatan disetujui ✅',
+            isi: 'Izin Anda untuk mengikuti kegiatan telah disetujui oleh Dosen PA.',
+            refType: 'izin_pa',
+            refId: izin.id,
+          },
+        });
+      }
+    });
+
+    await logAudit({
+      entitas: 'izin_pa',
+      entitasId: ids[0],
+      aksi: 'setujui',
+      statusLama: 'diajukan',
+      statusBaru: 'disetujui',
+      aktorId: dosenPaId,
+    });
+
+    res.json({ success: true, message: `${ids.length} izin berhasil disetujui.` });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+    }
+    next(error);
+  }
+};
+
 // ==================== KEPUTUSAN IZIN ====================
 
 // PUT /api/dosen/persetujuan/:id — Dosen PA menyetujui / menolak izin

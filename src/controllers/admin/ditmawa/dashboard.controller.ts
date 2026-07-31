@@ -23,6 +23,9 @@ export const dashboardAdminDitmawa = async (req: Request, res: Response) => {
     ]);
 
     const riwayatTerbaru = await prisma.kegiatan.findMany({
+      where: {
+        status: { notIn: ['draft'] }
+      },
       include: { 
         kategori: { select: { nama: true } }, 
         skala: { select: { nama: true } },

@@ -42,11 +42,12 @@ export const getPortofolio = async (req: Request, res: Response): Promise<void> 
 
     const riwayatPerKategori: Record<string, any[]> = {};
     for (const p of perolehan) {
-      const kat = p.kegiatan.kategori.nama;
+      if (!p.kegiatan) continue;
+      const kat = p.kegiatan.kategori?.nama || 'Lainnya';
       if (!riwayatPerKategori[kat]) riwayatPerKategori[kat] = [];
       riwayatPerKategori[kat].push({
         kegiatan: p.kegiatan.nama,
-        skala: p.kegiatan.skala.nama,
+        skala: p.kegiatan.skala?.nama || '-',
         totalPoin: p.totalPoin,
         tanggal: p.kegiatan.tanggalMulai,
       });
@@ -58,7 +59,7 @@ export const getPortofolio = async (req: Request, res: Response): Promise<void> 
         generatedAt: new Date().toISOString(),
         mahasiswa: {
           nim: mahasiswa.nim, nama: mahasiswa.user.nama, email: mahasiswa.user.email,
-          prodi: mahasiswa.prodi.nama, fakultas: mahasiswa.prodi.fakultas.nama, angkatan: mahasiswa.angkatan,
+          prodi: mahasiswa.prodi?.nama || '-', fakultas: mahasiswa.prodi?.fakultas?.nama || '-', angkatan: mahasiswa.angkatan,
         },
         ringkasan: { totalPoin, totalKegiatan: perolehan.length },
         capaianProgress: Array.from(capaianMap.entries()).map(([id, c]) => ({

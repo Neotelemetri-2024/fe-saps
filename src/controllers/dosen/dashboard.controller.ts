@@ -64,8 +64,8 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
 
     const permintaanPersetujuan = permintaanTerbaru.map(izin => ({
       id: izin.id.toString(),
-      namaMahasiswa: izin.partisipasi.mahasiswa.user.nama,
-      namaKegiatan: izin.partisipasi.kegiatan.nama,
+      namaMahasiswa: izin.partisipasi?.mahasiswa?.user?.nama || '-',
+      namaKegiatan: izin.partisipasi?.kegiatan?.nama || '-',
       tanggal: izin.createdAt
     }));
 
@@ -130,7 +130,7 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
     });
 
     for (const kl of klaimBimbingan) {
-      const kategoriNama = kl.partisipasi.kegiatan.kategori?.nama || 'Lainnya';
+      const kategoriNama = kl.partisipasi?.kegiatan?.kategori?.nama || 'Lainnya';
       const poin = kl.perolehanPoin?.totalPoin || 0;
       kategoriPoinMap[kategoriNama] = (kategoriPoinMap[kategoriNama] || 0) + poin;
     }

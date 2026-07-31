@@ -41,7 +41,13 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
     const { status, asal, kategoriId, search } = req.query;
     const where: any = {};
     if (status) where.status = status as string;
-    if (asal) where.asal = asal as string;
+    if (asal) {
+      where.asal = asal as string;
+    } else {
+      // Kegiatan pengajuan eksternal mahasiswa dikelola lewat alur verifikasi
+      // tersendiri, tidak ditampilkan di daftar kegiatan/event umum.
+      where.asal = { not: 'eksternal' };
+    }
     if (kategoriId) where.kategoriId = Number(kategoriId);
     if (search) {
       where.OR = [
@@ -52,7 +58,8 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
     }
 
     const userPeran = req.user!.peran;
-    
+    const userJabatan = req.user!.jabatan;
+
     // Jika operator UKM/UKMF, hanya lihat kegiatan organisasinya
     if (userPeran === 'operator_org') {
       const operatorData = await prisma.organisasiOperator.findUnique({
@@ -60,6 +67,32 @@ export const getAllKegiatan = async (req: Request, res: Response) => {
       });
       if (operatorData) {
         where.organisasiId = operatorData.organisasiId;
+      }
+    }
+
+    // Admin Fakultas: hanya lihat kegiatan milik fakultasnya
+    // (event kurikuler_ukmf yang dibuat admin fakultas fakultas ini + kegiatan UKMF fakultas ini),
+    // bukan kegiatan universitas milik Admin Ditmawa.
+    if (userJabatan === 'admin_fakultas' && !asal) {
+      const staffData = await prisma.staff.findUnique({
+        where: { userId: BigInt(req.user!.id) },
+      });
+      if (staffData?.fakultasId) {
+        const adminsFakultas = await prisma.staff.findMany({
+          where: { jabatan: 'admin_fakultas', fakultasId: staffData.fakultasId },
+          select: { userId: true },
+        });
+        const adminUserIds = adminsFakultas.map((a) => a.userId);
+        where.AND = [
+          {
+            OR: [
+              // Event yang dibuat langsung oleh admin fakultas fakultas ini
+              { asal: 'kurikuler_ukmf', organisasiId: null, dibuatOleh: { in: adminUserIds } },
+              // Kegiatan UKMF yang berada di bawah fakultas ini
+              { organisasi: { tipe: 'UKMF', fakultasId: staffData.fakultasId } },
+            ],
+          },
+        ];
       }
     }
 
@@ -337,6 +370,13 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       kegiatanIds: z.array(z.number()).min(1),
       keputusan: z.enum(['setuju', 'tolak', 'revisi']),
       alasan: z.string().optional(),
+      alokasiBulk: z.array(z.object({
+        kegiatanId: z.number(),
+        alokasi: z.array(z.object({
+          subCapaianId: z.number(),
+          alokasiPersen: z.number().min(0.01).max(100),
+        })).min(1),
+      })).optional(),
     });
 
     const body = schema.parse(req.body);
@@ -359,9 +399,25 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       return res.status(400).json({ success: false, message: 'Tidak ada kegiatan valid yang bisa diverifikasi.' });
     }
 
+    // Pemetaan capaian wajib untuk kegiatan eksternal yang akan disetujui
+    if (body.keputusan === 'setuju') {
+      const alokasiMap = new Map((body.alokasiBulk || []).map((a) => [a.kegiatanId, a.alokasi]));
+      const tanpaPemetaan = kegiatans.filter(
+        (k) => k.asal === 'eksternal' && !alokasiMap.has(k.id)
+      );
+      if (tanpaPemetaan.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Kegiatan eksternal wajib diisi pemetaan capaian kurikulum sebelum diteruskan: ${tanpaPemetaan.map((k) => `"${k.nama}"`).join(', ')}`,
+        });
+      }
+    }
+
     let statusBaru = 'terverifikasi';
     if (body.keputusan === 'revisi') statusBaru = 'perlu_revisi';
     if (body.keputusan === 'tolak') statusBaru = 'ditolak';
+
+    const alokasiByKegiatan = new Map((body.alokasiBulk || []).map((a) => [a.kegiatanId, a.alokasi]));
 
     // Proses satu per satu agar notifikasi dan audit log berjalan lancar
     let successCount = 0;
@@ -372,6 +428,19 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
         if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {
           continue; // skip
         }
+      }
+
+      // Simpan pemetaan capaian bila dikirim (kegiatan eksternal mahasiswa)
+      const alokasi = alokasiByKegiatan.get(kegiatan.id);
+      if (body.keputusan === 'setuju' && alokasi && alokasi.length > 0) {
+        await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: kegiatan.id } });
+        await prisma.kegiatanCapaian.createMany({
+          data: alokasi.map((a) => ({
+            kegiatanId: kegiatan.id,
+            subCapaianId: a.subCapaianId,
+            alokasiPersen: a.alokasiPersen,
+          })),
+        });
       }
 
       await prisma.kegiatan.update({
@@ -846,12 +915,13 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
     const where: any = {};
 
     // Jika tidak ada filter status spesifik, tampilkan semua yang relevan untuk Pimpinan
-    // (terverifikasi = menunggu approval, disetujui = sudah disetujui, perlu_revisi, ditolak)
+    // (terverifikasi = menunggu approval, disetujui = sudah disetujui, perlu_revisi = revisi)
+    // Kegiatan ditolak Admin tidak ditampilkan karena sudah tidak lagi memerlukan approval Pimpinan.
     if (status && status !== 'semua') {
       where.status = status as string;
     } else {
       // Default: tampilkan kegiatan yang sudah melewati tahap verifikasi Admin
-      where.status = { in: ['terverifikasi', 'disetujui', 'perlu_revisi', 'ditolak'] };
+      where.status = { in: ['terverifikasi', 'disetujui', 'perlu_revisi'] };
     }
 
     // â”€â”€ Filter berdasarkan jabatan Pimpinan â”€â”€
@@ -861,8 +931,26 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
         where: { userId: BigInt(req.user!.id) },
       });
       if (staffData?.fakultasId) {
-        where.organisasi = { fakultasId: staffData.fakultasId };
-        where.asal = 'kurikuler_ukmf';
+        if (asal === 'internal') {
+          // Verifikasi Kegiatan Internal: event kurikuler_ukmf yang dibuat langsung
+          // oleh Admin Fakultas fakultas ini (tanpa organisasi). Kegiatan yang diajukan
+          // operator UKMF (punya organisasi) tetap tampil di Verifikasi Pengajuan UKMF.
+          const adminsFakultas = await prisma.staff.findMany({
+            where: { jabatan: 'admin_fakultas', fakultasId: staffData.fakultasId },
+            select: { userId: true },
+          });
+          const adminUserIds = adminsFakultas.map((a) => a.userId);
+          where.AND = [
+            {
+              asal: 'kurikuler_ukmf',
+              organisasiId: null,
+              dibuatOleh: { in: adminUserIds },
+            },
+          ];
+        } else {
+          where.organisasi = { fakultasId: staffData.fakultasId };
+          where.asal = 'kurikuler_ukmf';
+        }
       }
     } else {
       // Pimpinan Ditmawa: kegiatan UKM, universitas, dan eksternal mahasiswa
@@ -872,12 +960,16 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
     if (kategoriId) where.kategoriId = Number(kategoriId);
     if (skalaId) where.skalaId = Number(skalaId);
 
-    if (asal === 'universitas' || asal === 'internal') {
-      where.asal = 'universitas';
-    } else if (asal === 'kurikuler_ukm') {
-      where.asal = 'kurikuler_ukm';
-    } else if (asal === 'eksternal') {
-      where.asal = 'eksternal';
+    if (userJabatan !== 'pimpinan_fakultas') {
+      if (asal === 'internal') {
+        where.asal = { in: ['universitas', 'kurikuler_ukm'] };
+      } else if (asal === 'universitas') {
+        where.asal = 'universitas';
+      } else if (asal === 'kurikuler_ukm') {
+        where.asal = 'kurikuler_ukm';
+      } else if (asal === 'eksternal') {
+        where.asal = 'eksternal';
+      }
     }
 
     // Filter berdasarkan tahun (dari tanggalMulai)
@@ -979,7 +1071,23 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
       const staffData = await prisma.staff.findUnique({
         where: { userId: aktorId },
       });
-      if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {
+      if (!staffData?.fakultasId) {
+        res.status(403).json({ success: false, message: 'Anda tidak berhak menyetujui kegiatan ini.' });
+        return;
+      }
+      // Kegiatan UKMF: cocokkan via organisasi. Kegiatan internal buatan Admin Fakultas
+      // (tanpa organisasi): cocokkan via pembuat kegiatan yang admin fakultas yang sama.
+      let milikFakultas = false;
+      if (kegiatan.organisasi) {
+        milikFakultas = kegiatan.organisasi.fakultasId === staffData.fakultasId;
+      } else {
+        const adminsFakultas = await prisma.staff.findMany({
+          where: { jabatan: 'admin_fakultas', fakultasId: staffData.fakultasId },
+          select: { userId: true },
+        });
+        milikFakultas = adminsFakultas.some((a) => a.userId === kegiatan.dibuatOleh);
+      }
+      if (!milikFakultas) {
         res.status(403).json({ success: false, message: 'Anda tidak berhak menyetujui kegiatan dari fakultas lain.' });
         return;
       }
@@ -1075,7 +1183,23 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
 
         if (userJabatan === 'pimpinan_fakultas') {
           const staffData = await prisma.staff.findUnique({ where: { userId: aktorId } });
-          if (!staffData?.fakultasId || kegiatan.organisasi?.fakultasId !== staffData.fakultasId) {
+          if (!staffData?.fakultasId) {
+            errors.push(`ID ${kegiatanId}: tidak berhak menyetujui kegiatan ini`);
+            continue;
+          }
+          // Kegiatan UKMF: cocokkan via organisasi. Kegiatan internal buatan Admin Fakultas
+          // (tanpa organisasi): cocokkan via pembuat kegiatan yang admin fakultas yang sama.
+          let milikFakultas = false;
+          if (kegiatan.organisasi) {
+            milikFakultas = kegiatan.organisasi.fakultasId === staffData.fakultasId;
+          } else {
+            const adminsFakultas = await prisma.staff.findMany({
+              where: { jabatan: 'admin_fakultas', fakultasId: staffData.fakultasId },
+              select: { userId: true },
+            });
+            milikFakultas = adminsFakultas.some((a) => a.userId === kegiatan.dibuatOleh);
+          }
+          if (!milikFakultas) {
             errors.push(`ID ${kegiatanId}: bukan kegiatan fakultas Anda`);
             continue;
           }
