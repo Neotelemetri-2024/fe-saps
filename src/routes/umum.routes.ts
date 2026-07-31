@@ -8,8 +8,12 @@ import { getDashboardPimpinanUtama, getDetailFakultasPimpinanUtama } from '../co
 import { getDashboardFakultas } from '../controllers/admin/fakultas/dashboard.controller';
 import { getPortofolio } from '../controllers/shared/portofolio.controller';
 import { getFakultas, getProdi, getOrganisasi } from '../controllers/shared/referensi.controller';
+import { getPublicCv } from '../controllers/mahasiswa/cv.controller';
 
 const router = Router();
+
+// Public CV Route (No JWT required)
+router.get('/cv/public/:token', getPublicCv);
 
 router.use(authenticateJWT);
 

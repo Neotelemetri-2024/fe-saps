@@ -14,6 +14,7 @@ import {
 import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } from '../controllers/mahasiswa/klaim_eksternal.controller';
 import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal } from '../controllers/mahasiswa/dashboard.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
+import { getPrivateCv, generatePublicCvToken } from '../controllers/mahasiswa/cv.controller';
 
 const router = Router();
 
@@ -68,5 +69,9 @@ router.put('/kegiatan-eksternal/:id/ajukan', ajukanDraftKegiatanEksternal);
 router.get('/klaim-eksternal/kegiatan-tersedia', getKegiatanTersedia);
 router.post('/klaim-eksternal', upload.single('bukti'), ajukanKlaimEksternal);
 router.get('/klaim-eksternal', getRiwayatKlaimEksternal);
+
+// CV & Portofolio
+router.get('/cv', getPrivateCv);
+router.post('/cv/generate-link', generatePublicCvToken);
 
 export default router;

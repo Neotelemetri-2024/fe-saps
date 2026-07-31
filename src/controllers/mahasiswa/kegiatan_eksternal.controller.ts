@@ -13,7 +13,7 @@ function mapStatus(status: string): string {
   return 'Pending';
 }
 
-async function requireMahasiswaUser(req: Request, res: Response): Promise<BigInt | null> {
+async function requireMahasiswaUser(req: Request, res: Response): Promise<bigint | null> {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -31,7 +31,7 @@ async function requireKurikulumAktif(res: Response): Promise<{ id: number } | nu
   return kur;
 }
 
-// ─── 1. Simpan sebagai Draft ──────────────────────────────────────────────────
+//1. Simpan sebagai Draft
 export const simpanDraftKegiatanEksternal = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userIdBig = await requireMahasiswaUser(req, res);
@@ -45,8 +45,8 @@ export const simpanDraftKegiatanEksternal = async (req: Request, res: Response, 
     const kegiatan = await prisma.kegiatan.create({
       data: {
         nama: namaKegiatan || '(draft)',
-        kategoriId: kategoriId ? parseInt(kategoriId) : undefined,
-        skalaId: skalaId ? parseInt(skalaId) : undefined,
+        kategoriId: kategoriId ? parseInt(kategoriId) : (undefined as any),
+        skalaId: skalaId ? parseInt(skalaId) : (undefined as any),
         asal: 'eksternal',
         tanggalMulai: tanggalPelaksanaan ? new Date(tanggalPelaksanaan) : new Date(),
         tanggalSelesai: tanggalPelaksanaan ? new Date(tanggalPelaksanaan) : new Date(),
@@ -97,7 +97,7 @@ export const editDraftKegiatanEksternal = async (req: Request, res: Response, ne
     const { kategoriId, namaKegiatan, penyelenggara, skalaId, tanggalPelaksanaan, deskripsi, linkWebsite, emailPenyelenggara } = req.body;
 
     const existing = await prisma.kegiatan.findFirst({
-      where: { id: parseInt(id), dibuatOleh: userIdBig, asal: 'eksternal' }
+      where: { id: parseInt(id as string), dibuatOleh: userIdBig, asal: 'eksternal' }
     });
 
     if (!existing) {
@@ -108,7 +108,7 @@ export const editDraftKegiatanEksternal = async (req: Request, res: Response, ne
     }
 
     const updated = await prisma.kegiatan.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       data: {
         nama: namaKegiatan ?? existing.nama,
         kategoriId: kategoriId ? parseInt(kategoriId) : existing.kategoriId,
@@ -149,7 +149,7 @@ export const editDraftKegiatanEksternal = async (req: Request, res: Response, ne
   }
 };
 
-// ─── 3. Hapus Draft ──────────────────────────────────────────────────────────
+//3. Hapus Draft 
 export const hapusDraftKegiatanEksternal = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userIdBig = await requireMahasiswaUser(req, res);
@@ -158,7 +158,7 @@ export const hapusDraftKegiatanEksternal = async (req: Request, res: Response, n
     const { id } = req.params;
 
     const existing = await prisma.kegiatan.findFirst({
-      where: { id: parseInt(id), dibuatOleh: userIdBig, asal: 'eksternal' }
+      where: { id: parseInt(id as string), dibuatOleh: userIdBig, asal: 'eksternal' }
     });
 
     if (!existing) {
@@ -168,7 +168,7 @@ export const hapusDraftKegiatanEksternal = async (req: Request, res: Response, n
       return res.status(400).json({ success: false, message: 'Hanya draft yang dapat dihapus' });
     }
 
-    await prisma.kegiatan.delete({ where: { id: parseInt(id) } });
+    await prisma.kegiatan.delete({ where: { id: parseInt(id as string) } });
 
     res.json({ success: true, message: 'Draft dihapus' });
   } catch (error: any) {
@@ -185,7 +185,7 @@ export const ajukanDraftKegiatanEksternal = async (req: Request, res: Response, 
     const { id } = req.params;
 
     const existing = await prisma.kegiatan.findFirst({
-      where: { id: parseInt(id), dibuatOleh: userIdBig, asal: 'eksternal' }
+      where: { id: parseInt(id as string), dibuatOleh: userIdBig, asal: 'eksternal' }
     });
 
     if (!existing) {
@@ -199,7 +199,7 @@ export const ajukanDraftKegiatanEksternal = async (req: Request, res: Response, 
     }
 
     const updated = await prisma.kegiatan.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id as string) },
       data: { status: 'diajukan' }
     });
 
