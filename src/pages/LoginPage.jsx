@@ -77,7 +77,7 @@ function LoginPage() {
             <span className="block text-6xl font-bold leading-tight">Selamat Datang!</span>
           </h1>
           <p className="mt-8 max-w-[423px] text-base leading-relaxed text-white">
-          SAPS adalah sistem berbasis web yang dirancang untuk mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara efektif, transparan, dan terintegrasi.
+            SAPS adalah sistem berbasis web yang dirancang untuk mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara efektif, transparan, dan terintegrasi.
           </p>
         </div>
       </div>
@@ -93,84 +93,102 @@ function LoginPage() {
           </div>
         </div>
 
-        {/* Logo — desktop top */}
-        <div className="hidden justify-center pt-[90px] lg:flex">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <img src={logoUnand} alt="Logo Universitas Andalas" className="h-[60px] w-[60px] object-contain" />
-            <div>
-              <p className="text-lg font-bold leading-[22px]">
-                <span className="bg-gradient-to-r from-[#0e3b1e] to-[#48a757] bg-clip-text text-transparent">
-                  MyUnand Student Connect
-                </span>
-              </p>
-              <p className="text-[10px] text-[#616161]">Universitas Andalas</p>
+        {/* Form + Logo */}
+        <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 lg:px-[86px] lg:py-0">
+          {/* Logo — desktop top */}
+          <div className="hidden justify-center pb-6 lg:flex">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <img src={logoUnand} alt="Logo Universitas Andalas" className="h-11 w-11 object-contain" />
+              <div>
+                <p className="text-xl font-bold leading-[26px]">
+                  <span className="bg-gradient-to-r from-[#0e3b1e] to-[#48a757] bg-clip-text text-transparent">
+                    MyUnand Student Connect
+                  </span>
+                </p>
+                <p className="text-base text-[#616161]">Universitas Andalas</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Form */}
-        <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 lg:px-[86px] lg:py-0">
-          <h2 className="text-2xl font-bold text-[#292727] sm:text-3xl lg:text-[36px] lg:leading-[54px]">Log in</h2>
-          <p className="mt-2 text-sm text-[#969696] sm:text-base lg:mt-[11px] lg:text-[20px] lg:leading-[30px]">
-            Silahkan login menggunakan informasi akun portal Anda.
-          </p>
+          <div className="mx-auto w-full max-w-lg">
+            <h2 className="text-2xl font-bold leading-tight text-[#292727] sm:text-3xl">
+              Log in
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#969696] sm:text-base">
+              Silahkan login menggunakan informasi akun portal Anda.
+            </p>
 
-          <form className="mt-6 space-y-4 lg:mt-10 lg:space-y-[18px]" onSubmit={handleSubmit}>
-            {/* Username */}
-            <div>
-              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Email</label>
-              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-[#0e3b1e] px-4 lg:h-16 lg:gap-4 lg:px-5">
-                <User className="h-5 w-5 shrink-0 text-[#969696]" />
-                <input
-                  type="text"
-                  placeholder=""
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
-                  className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
-                />
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-black">Email</label>
+                <div className="mt-1 flex h-11 items-center gap-3 rounded-xl border border-[#0e3b1e] px-3 lg:h-12 lg:px-4">
+                  <User className="h-4 w-4 shrink-0 text-[#969696]" />
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
+                    className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-base font-light text-black lg:text-[20px] lg:leading-[30px]">Password</label>
-              <div className="mt-1 flex h-14 items-center gap-3 rounded-xl border border-[#0e3b1e] px-4 lg:h-16 lg:gap-4 lg:px-5">
-                <Lock className="h-5 w-5 shrink-0 text-[#969696]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder=""
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
-                  className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696] lg:text-[16px]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                  className="shrink-0 text-[#969696]"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-black">Password</label>
+                <div className="mt-1 flex h-11 items-center gap-3 rounded-xl border border-[#0e3b1e] px-3 lg:h-12 lg:px-4">
+                  <Lock className="h-4 w-4 shrink-0 text-[#969696]" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
+                    className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                    className="shrink-0 text-[#969696]"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Error message */}
-            {errorMsg && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                <p className="text-sm text-red-600">{errorMsg}</p>
+              {/* Error message */}
+              {errorMsg && (
+                <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                  <p className="text-sm text-red-600">{errorMsg}</p>
+                </div>
+              )}
+
+              {/* Login Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0e3b1e] to-[#2f7a3c] text-sm font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:h-12 lg:text-base"
+              >
+                {loading ? 'Memproses...' : 'Login'}
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="h-px flex-1 bg-[#e0e0e0]" />
+                <span className="text-xs text-[#969696]">atau</span>
+                <div className="h-px flex-1 bg-[#e0e0e0]" />
               </div>
-            )}
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0e3b1e] to-[#2f7a3c] text-base font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:mt-[8px] lg:h-16 lg:text-[20px]"
-            >
-              {loading ? 'Memproses...' : 'Login'}
-            </button>
-          </form>
+              {/* SSO Button */}
+              <button
+                type="button"
+                onClick={() => toast.info('Login SSO Unand belum tersedia')}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#0e3b1e] bg-white text-sm font-medium text-[#0e3b1e] transition-all hover:bg-[#f0f7f2] lg:h-12"
+              >
+                Login dengan SSO Unand
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
