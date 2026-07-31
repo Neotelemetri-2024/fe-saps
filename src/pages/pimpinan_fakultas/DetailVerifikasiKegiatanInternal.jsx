@@ -22,11 +22,12 @@ function normalizeDetail(raw) {
   return {
     id: raw.id,
     kegiatan: raw.nama || '-',
-    namaOrganisasi: raw.organisasi?.nama || (raw.asal === 'universitas' ? 'Universitas' : '-'),
+    penyelenggara: raw.organisasi?.nama || raw.penyelenggaraExt || 'Admin Fakultas',
     jenis: raw.kategori?.nama || '-',
     skala: raw.skala?.nama || '-',
     tanggal: formatTanggal(raw.tanggalMulai, raw.tanggalSelesai) || '-',
     deskripsi: raw.deskripsi || '-',
+    bukti: raw.bukti || raw.buktiUrl || null,
     capaian: capaianList.length ? capaianList : (raw.capaian || []),
     subCapaian: subCapaianList.length ? subCapaianList : (raw.subCapaian || []),
     status: mapUiStatus(raw.status),
@@ -34,7 +35,7 @@ function normalizeDetail(raw) {
   }
 }
 
-function DetailVerifikasiPengajuanInternal() {
+function DetailVerifikasiKegiatanInternal() {
   const navigate = useNavigate()
   const { id } = useParams()
   const location = useLocation()
@@ -53,19 +54,19 @@ function DetailVerifikasiPengajuanInternal() {
     getKegiatanById(id)
       .then((data) => setItem(normalizeDetail(data)))
       .catch((err) => {
-        if (location.state?.item) setItem(normalizeDetail({ ...location.state.item, nama: location.state.item.kegiatan, organisasi: { nama: location.state.item.namaOrganisasi || location.state.item.namaUkm } }))
+        if (location.state?.item) setItem(normalizeDetail({ ...location.state.item, nama: location.state.item.kegiatan }))
         else { setItem(null); toast.error('Gagal memuat detail', { description: err.message }) }
       })
       .finally(() => setLoading(false))
   }, [id, location.state])
 
-  const backToList = () => navigate('/pimpinan_ditmawa/verifikasi-pengajuan-internal')
+  const backToList = () => navigate('/pimpinan_fakultas/verifikasi-kegiatan-internal')
 
   const handleSetujui = async () => {
     setSubmitting(true)
     try {
       await approvalKegiatan(id, { keputusan: 'setuju' })
-      toast.success('Pengajuan internal disetujui!')
+      toast.success('Kegiatan internal disetujui!')
       setShowConfirmSetujui(false)
       backToList()
     } catch (err) { toast.error('Gagal', { description: err.message }) }
@@ -88,13 +89,13 @@ function DetailVerifikasiPengajuanInternal() {
   const canAct = item?.status === 'diteruskan'
 
   if (loading) return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
       <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat detail…</div>
     </DashboardLayout>
   )
 
   if (!item) return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
       <div className="flex flex-col items-center gap-4 py-20">
         <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
         <button type="button" onClick={backToList} className="rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">Kembali</button>
@@ -103,10 +104,10 @@ function DetailVerifikasiPengajuanInternal() {
   )
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
       <ConfirmModal
         isOpen={showConfirmSetujui}
-        message="Pengajuan ini akan disetujui."
+        message="Kegiatan internal ini akan disetujui?"
         confirmText={submitting ? 'Memproses...' : 'SETUJUI'}
         cancelText="BATAL"
         onConfirm={handleSetujui}
@@ -115,7 +116,7 @@ function DetailVerifikasiPengajuanInternal() {
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-[#111]">{actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Pengajuan'}</h3>
+            <h3 className="text-base font-bold text-[#111]">{actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Kegiatan'}</h3>
             <p className="mt-0.5 text-sm text-[#616161]">{actionType === 'revisi' ? 'Tuliskan catatan yang perlu diperbaiki.' : 'Tuliskan alasan penolakan.'}</p>
           </div>
           <textarea className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" rows={4}
@@ -124,7 +125,7 @@ function DetailVerifikasiPengajuanInternal() {
           <div className="flex gap-3 pt-1">
             <button type="button" disabled={submitting} onClick={handleKirimAction}
               className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
-              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Pengajuan'}
+              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Kegiatan'}
             </button>
             <button type="button" disabled={submitting} onClick={() => setShowActionModal(false)}
               className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">Batal</button>
@@ -140,7 +141,7 @@ function DetailVerifikasiPengajuanInternal() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan Internal</h2>
+            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Verifikasi Kegiatan Internal</h2>
             <p className="mt-1 text-sm text-[#616161]">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={item.status} /></div>
@@ -158,13 +159,13 @@ function DetailVerifikasiPengajuanInternal() {
         {!canAct && !item.alasan && (
           <div className="rounded-xl border border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
-            <p className="text-sm text-[#616161]">Pengajuan sudah diverifikasi dengan status <StatusBadge status={item.status} /></p>
+            <p className="text-sm text-[#616161]">Kegiatan sudah diverifikasi dengan status <StatusBadge status={item.status} /></p>
           </div>
         )}
 
         <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
-          <InfoRow label="Penyelenggara" value={item.namaOrganisasi} />
+          <InfoRow label="Penyelenggara" value={item.penyelenggara} />
           <InfoRow label="Jenis Kegiatan" value={item.jenis} />
           <InfoRow label="Skala" value={item.skala} />
           <InfoRow label="Tanggal" value={item.tanggal} />
@@ -207,4 +208,4 @@ function DetailVerifikasiPengajuanInternal() {
   )
 }
 
-export default DetailVerifikasiPengajuanInternal
+export default DetailVerifikasiKegiatanInternal

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { CheckCircle, Bell, Settings, Filter, MoreVertical } from 'lucide-react'
+import { CheckCircle, Bell, Settings, MoreVertical } from 'lucide-react'
 
 function AkunDanPengaturan() {
   const navigate = useNavigate()
@@ -20,9 +20,6 @@ function AkunDanPengaturan() {
           <button className="rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161]">Verifikasi</button>
           <button className="rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161]">Event</button>
           <button className="rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161]">Saran</button>
-          <button className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-sm font-semibold text-white">
-            <Filter className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Notification Cards */}

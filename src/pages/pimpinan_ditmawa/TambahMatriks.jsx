@@ -212,11 +212,11 @@ function TambahMatriks() {
               <div className="overflow-x-auto rounded-lg border border-[#e9ebf8]">
                 <table className="w-full min-w-[600px] text-left text-sm">
                   <thead>
-                    <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                      <th className="px-4 py-3">Capaian / Sub Capaian</th>
+                    <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-4 py-3 text-center">Capaian / Sub Capaian</th>
                       {kolom.map((k) => (
-                        <th key={k.id} className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                        <th key={k.id} className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-2">
                             <input
                               type="text"
                               value={k.label}
@@ -233,14 +233,14 @@ function TambahMatriks() {
                           </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3">Aksi</th>
+                      <th className="px-4 py-3 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
                     {baris.map((b, i) => (
                       <tr
                         key={b.id}
-                        className={`border-b border-[#e9ebf8] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}`}
+                        className={`divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}`}
                       >
                         <td className="px-4 py-3">
                           <input

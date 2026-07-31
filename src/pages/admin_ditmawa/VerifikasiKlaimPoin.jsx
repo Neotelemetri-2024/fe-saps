@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Eye, Filter, Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -74,7 +74,7 @@ function VerifikasiKlaimPoin() {
 
   const load = () => {
     setLoading(true)
-    getKlaimForValidasi({ limit: 50 })
+    getKlaimForValidasi({ status: 'semua', limit: 50 })
       .then((data) => setItems(Array.isArray(data) ? data.map(normalizeItem) : []))
       .catch((err) => {
         setItems([])
@@ -125,7 +125,11 @@ function VerifikasiKlaimPoin() {
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
+  const isSelectableRow = (row) => row.status === 'pending'
+
   const toggleSelect = (id) => {
+    const row = pageItems.find((i) => i.id === id)
+    if (row && !isSelectableRow(row)) return
     setSelected((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -134,11 +138,12 @@ function VerifikasiKlaimPoin() {
     })
   }
 
-  const allPageSelected = pageItems.length > 0 && pageItems.every((i) => selected.has(i.id))
+  const selectablePageItems = pageItems.filter(isSelectableRow)
+  const allPageSelected = selectablePageItems.length > 0 && selectablePageItems.every((i) => selected.has(i.id))
 
   const centangSemua = () => {
     if (allPageSelected) setSelected(new Set())
-    else setSelected(new Set(pageItems.map((i) => i.id)))
+    else setSelected(new Set(selectablePageItems.map((i) => i.id)))
   }
 
   const handleBulkConfirm = async () => {
@@ -167,7 +172,7 @@ function VerifikasiKlaimPoin() {
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan}</span> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-brand-light">{row.kategori}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
     { key: 'peran', label: 'Peran', render: (row) => <span className="text-[#616161]">{row.peran}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
     { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-[#616161]">{row.info}</span> },
@@ -231,12 +236,6 @@ function VerifikasiKlaimPoin() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              <Filter className="h-4 w-4" /> Filter
-            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -313,6 +312,13 @@ function VerifikasiKlaimPoin() {
             </select>
             <button
               type="button"
+              onClick={resetFilter}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
+            >
+              Reset filter
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setPilihanMode((v) => !v)
                 setSelected(new Set())
@@ -320,17 +326,10 @@ function VerifikasiKlaimPoin() {
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
                 pilihanMode
                   ? 'border-brand-dark bg-brand-dark text-white'
-                  : 'border-[#d9dce7] bg-white text-[#616161] hover:bg-[#f5f5f5]'
+                  : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
               }`}
             >
               Pilih Beberapa
-            </button>
-            <button
-              type="button"
-              onClick={resetFilter}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none transition hover:bg-[#f5f6f8]"
-            >
-              Reset filter
             </button>
           </div>
 
@@ -376,6 +375,7 @@ function VerifikasiKlaimPoin() {
             selected={selected}
             onSelect={toggleSelect}
             onSelectAll={centangSemua}
+            isSelectable={isSelectableRow}
             page={currentPage}
             totalPages={totalPages}
             onPageChange={(p) => setPage(p)}

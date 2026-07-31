@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Search, FileText, UploadCloud, Eye, RefreshCw } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { toast } from 'sonner'
@@ -72,12 +72,10 @@ function PersetujuanDosen() {
   const [pilihanMode, setPilihanMode] = useState(false)
   const [selected, setSelected] = useState(new Set()) // set of row.id
 
-  // Modal klaim poin
+  // Modal klaim poin — sekarang setiap kegiatan punya bukti PDF sendiri
   const [showKlaimModal, setShowKlaimModal] = useState(false)
-  const [klaimItems, setKlaimItems] = useState([]) // [{id, partisipasiId, peranId, peranUsulanId, kegiatan, peranList, loadingPeran}]
-  const [klaimBukti, setKlaimBukti] = useState(null) // File PDF
+  const [klaimItems, setKlaimItems] = useState([]) // [{id, partisipasiId, peranId, kegiatan, peran, bukti}]
   const [submittingKlaim, setSubmittingKlaim] = useState(false)
-  const fileInputRef = useRef(null)
 
   const load = () => {
     setLoading(true)
@@ -186,13 +184,13 @@ function PersetujuanDosen() {
       kegiatan: row.kegiatan,
       peran: row.peran || '-',
       peranId: row.peranId || '',
+      bukti: null,
     }))
     setKlaimItems(items)
-    setKlaimBukti(null)
     setShowKlaimModal(true)
   }
 
-  const handleKlaimFileChange = (e) => {
+  const handleKlaimFileChange = (itemId, e) => {
     const file = e.target.files[0]
     if (!file) return
     if (file.type !== 'application/pdf') {
@@ -203,12 +201,14 @@ function PersetujuanDosen() {
       toast.error('Ukuran file maksimal 10 MB')
       return
     }
-    setKlaimBukti(file)
+    setKlaimItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, bukti: file } : it)))
   }
 
+  const semuaBuktiLengkap = klaimItems.length > 0 && klaimItems.every((it) => !!it.bukti)
+
   const handleSubmitKlaim = async () => {
-    if (!klaimBukti) {
-      toast.error('Upload bukti PDF terlebih dahulu')
+    if (!semuaBuktiLengkap) {
+      toast.error('Upload bukti PDF untuk setiap kegiatan terlebih dahulu')
       return
     }
     setSubmittingKlaim(true)
@@ -220,7 +220,7 @@ function PersetujuanDosen() {
           await klaimPoin({
             partisipasiId: item.partisipasiId,
             peranUsulanId: item.peranId,
-            bukti: klaimBukti,
+            bukti: item.bukti,
           })
           berhasil++
         } catch {
@@ -279,64 +279,49 @@ function PersetujuanDosen() {
         </div>
       </Modal>
 
-      {/* Modal klaim poin — upload bukti PDF + pilih peran per kegiatan */}
+      {/* Modal klaim poin — upload bukti PDF per kegiatan */}
       <Modal isOpen={showKlaimModal} onClose={() => !submittingKlaim && setShowKlaimModal(false)} size="md">
         <div className="space-y-4">
           <div>
             <h3 className="text-base font-bold text-[#333]">Ajukan Klaim Poin Capaian</h3>
             <p className="mt-0.5 text-sm text-[#616161]">
-              Upload 1 bukti PDF untuk semua kegiatan yang dipilih, dan tentukan peran di masing-masing kegiatan.
+              Upload bukti PDF untuk masing-masing kegiatan yang dipilih. Kegiatan tanpa bukti tidak dapat diklaim.
             </p>
           </div>
 
-          {/* Daftar kegiatan yang diklaim */}
-          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+          {/* Daftar kegiatan yang diklaim, masing-masing dengan upload bukti sendiri */}
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {klaimItems.map((item) => (
-              <div key={item.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] p-3">
+              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : 'border-[#e9ebf8] bg-[#f9fafb]'}`}>
                 <p className="text-sm font-medium text-[#333]">{item.kegiatan}</p>
                 <p className="text-xs text-[#616161] mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
+
+                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-[#d1d5db] bg-white px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
+                  {item.bukti ? (
+                    <FileText className="h-4 w-4 shrink-0 text-brand-dark" />
+                  ) : (
+                    <UploadCloud className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+                  )}
+                  <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-brand-dark' : 'text-[#888]'}`}>
+                    {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 10 MB)'}
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={(e) => handleKlaimFileChange(item.id, e)}
+                  />
+                </label>
               </div>
             ))}
-          </div>
-
-          {/* Upload bukti PDF */}
-          <div>
-            <label className="block text-sm font-medium text-[#333] mb-1">
-              Bukti Dokumen (PDF)<span className="text-red-500">*</span>
-              <span className="ml-1 text-xs font-normal text-[#888]">maks 10 MB</span>
-            </label>
-            <div
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d1d5db] bg-[#fafafa] px-4 py-6 transition hover:border-brand-dark hover:bg-green-50"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e9ebf8]">
-                {klaimBukti ? (
-                  <FileText className="h-5 w-5 text-brand-dark" />
-                ) : (
-                  <UploadCloud className="h-5 w-5 text-[#9aa0a6]" />
-                )}
-              </div>
-              {klaimBukti ? (
-                <p className="text-sm font-semibold text-brand-dark">{klaimBukti.name}</p>
-              ) : (
-                <p className="text-sm text-[#616161]">Klik untuk upload file PDF</p>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf"
-              onChange={handleKlaimFileChange}
-            />
           </div>
 
           <div className="flex gap-3 pt-1">
             <button
               type="button"
-              disabled={submittingKlaim}
+              disabled={submittingKlaim || !semuaBuktiLengkap}
               onClick={handleSubmitKlaim}
-              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submittingKlaim ? 'Mengirim…' : 'Ajukan Klaim Poin'}
             </button>
@@ -349,6 +334,9 @@ function PersetujuanDosen() {
               Batal
             </button>
           </div>
+          {klaimItems.length > 0 && !semuaBuktiLengkap && (
+            <p className="text-xs text-[#9aa0a6]">Lengkapi bukti dokumen untuk semua kegiatan sebelum dapat diajukan.</p>
+          )}
         </div>
       </Modal>
 

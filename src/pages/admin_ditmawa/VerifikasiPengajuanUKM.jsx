@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Filter, Search } from 'lucide-react'
+import { Clock, Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -129,7 +129,7 @@ function VerifikasiPengajuanUKM() {
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan}</span> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-brand-light">{row.kategori}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
     { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
@@ -200,10 +200,6 @@ function VerifikasiPengajuanUKM() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
-              <Filter className="h-4 w-4" /> Filter
-            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -236,16 +232,18 @@ function VerifikasiPengajuanUKM() {
               <option value="regional">Regional</option>
               <option value="universitas">Universitas</option>
             </select>
+            <button type="button" onClick={resetFilter}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+              Reset filter
+            </button>
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
-                pilihanMode ? 'border-brand-dark bg-brand-dark text-white' : 'border-[#d9dce7] bg-white text-[#616161] hover:bg-[#f5f5f5]'
+                pilihanMode
+                  ? 'border-brand-dark bg-brand-dark text-white'
+                  : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
               }`}>
               Pilih Beberapa
-            </button>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none transition hover:bg-[#f5f6f8]">
-              Reset filter
             </button>
           </div>
 

@@ -4,6 +4,18 @@ function isPlainObject(value) {
   return value != null && typeof value === 'object' && !(value instanceof Date) && !Array.isArray(value) && typeof value.$$typeof === 'undefined'
 }
 
+const NO_COLUMN_KEYS = new Set(['no', '_no', 'nomor'])
+const NO_COLUMN_WIDTH = '64px'
+const CENTERED_KEYS = new Set(['aksi', 'Aksi', 'AKSI'])
+
+function isNoColumn(col) {
+  return NO_COLUMN_KEYS.has(col.key)
+}
+
+function isCenteredCol(col) {
+  return CENTERED_KEYS.has(col.key) || col.center === true
+}
+
 /**
  * DataTable — komponen tabel universal
  *
@@ -62,7 +74,7 @@ function DataTable({
       <div className="-mx-3 overflow-x-auto sm:-mx-0 sm:rounded-xl sm:border sm:border-[#e9ebf8] sm:bg-white">
         <table className="w-full min-w-[600px] text-left text-xs sm:text-sm">
           <thead>
-            <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
+            <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
               {selectable && (
                 <th className="w-10 px-3 py-2.5 text-center sm:px-4 sm:py-3">
                   <input
@@ -77,8 +89,8 @@ function DataTable({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3 text-left"
-                  style={col.width ? { width: col.width } : {}}
+                  className="whitespace-nowrap px-3 py-2.5 text-center sm:px-4 sm:py-3"
+                  style={{ width: col.width || (isNoColumn(col) ? NO_COLUMN_WIDTH : undefined) }}
                 >
                   {col.label}
                 </th>
@@ -109,7 +121,7 @@ function DataTable({
                     key={row.id ?? i}
                     onClick={isClickable ? () => onRowClick(row) : undefined}
                     className={[
-                      'border-b border-[#e9ebf8] last:border-0 transition',
+                      'divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 transition',
                       isSelected ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]',
                       isClickable ? 'cursor-pointer hover:bg-[#f0f2ff]' : 'hover:bg-[#f9fafb]',
                     ].join(' ')}
@@ -132,14 +144,21 @@ function DataTable({
                       </td>
                     )}
                     {columns.map((col) => {
+                      const noCol = isNoColumn(col)
+                      const centered = isCenteredCol(col)
+                      const cellClassName = `px-3 py-2.5 sm:px-4 sm:py-3 ${noCol || centered ? 'text-center' : ''}`
+
                       if (col.render) {
                         return (
                           <td
                             key={col.key}
-                            className="px-3 py-2.5 sm:px-4 sm:py-3"
+                            className={cellClassName}
+                            style={noCol ? { width: NO_COLUMN_WIDTH } : undefined}
                             onClick={col.stopPropagation ? (e) => e.stopPropagation() : undefined}
                           >
-                            {col.render(row, i)}
+                            <div className={centered ? 'flex w-full items-center justify-center' : undefined}>
+                              {col.render(row, i)}
+                            </div>
                           </td>
                         )
                       }
@@ -152,7 +171,7 @@ function DataTable({
                       }
 
                       return (
-                        <td key={col.key} className="px-3 py-2.5 sm:px-4 sm:py-3">
+                        <td key={col.key} className={cellClassName} style={noCol ? { width: NO_COLUMN_WIDTH } : undefined}>
                           {value ?? '-'}
                         </td>
                       )

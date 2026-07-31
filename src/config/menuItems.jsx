@@ -49,7 +49,15 @@ export const pimpinanDitmawaMenu = [
 ]
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { path: '/pimpinan_fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
+  {
+    path: '#',
+    label: 'Verifikasi',
+    icon: <CheckCircle className="h-4 w-4" />,
+    children: [
+      { path: '/pimpinan_fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF' },
+      { path: '/pimpinan_fakultas/verifikasi-kegiatan-internal', label: 'Verifikasi Kegiatan Internal' },
+    ],
+  },
 ]
 export const pimpinanUtamaMenu = [
   { path: '/pimpinan_utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
@@ -69,15 +77,7 @@ export const adminDitmawaMenu = [
       { path: '/admin_ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin Eksternal' },
     ],
   },
-  {
-    path: '#',
-    label: 'Event Global',
-    icon: <Search className="h-4 w-4" />,
-    children: [
-      { path: '/admin_ditmawa/manajemen-event', label: 'Buat Event' },
-      { path: '/admin_ditmawa/verifikasi-kegiatan', label: 'Verifikasi kegiatan' },
-    ],
-  },
+  { path: '/admin_ditmawa/manajemen-event', label: 'Event Global', icon: <Search className="h-4 w-4" /> },
   { path: '/admin_ditmawa/manajemen-akun-ukm', label: 'Manajemen akun UKM', icon: <UserCog className="h-4 w-4" /> },
 ]
 
@@ -85,15 +85,7 @@ export const adminDitmawaMenu = [
 export const adminFakultasMenu = [
   { path: '/admin_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/admin_fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
-  {
-    path: '#',
-    label: 'Event',
-    icon: <Search className="h-4 w-4" />,
-    children: [
-      { path: '/admin_fakultas/manajemen-event', label: 'Buat Event' },
-      { path: '/admin_fakultas/verifikasi-kegiatan', label: 'Verifikasi Kegiatan' },
-    ],
-  },
+  { path: '/admin_fakultas/manajemen-event', label: 'Event Fakultas', icon: <Search className="h-4 w-4" /> },
   { path: '/admin_fakultas/manajemen-akun-ukmf', label: 'Manajemen akun UKMF', icon: <UserCog className="h-4 w-4" /> },
 ]
 export const ukmMenu = [

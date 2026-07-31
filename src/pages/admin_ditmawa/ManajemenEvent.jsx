@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Plus, Edit3, Trash2, Filter, Clock, Send, RefreshCw } from 'lucide-react'
+import { Search, Plus, Edit3, Trash2, Clock, Send, RefreshCw, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import EventForm from '../../components/EventForm'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -89,13 +90,14 @@ function formatTanggal(start, end) {
 
 function normalizeEvent(item) {
   const rawStatus = String(item.status || '').toLowerCase()
+  const pesertaCount = item._count?.partisipasi ?? 0
   return {
     id: item.id,
     nama: item.nama || '-',
     jenis: item.kategori?.nama || item.jenis || '-',
     skala: item.skala?.nama || item.skala || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
-    peserta: item._count?.partisipasi ?? item.kuota ?? item.peserta ?? '-',
+    peserta: pesertaCount || item.kuota || '-',
     poin: item.poin ?? '-',
     status: mapStatus(item.status),
     rawStatus,
@@ -117,12 +119,22 @@ function ManajemenEvent() {
   const [filterTahun, setFilterTahun] = useState('')
   const [hapusTarget, setHapusTarget] = useState(null)
   const [kirimTarget, setKirimTarget] = useState(null)
+  const [mode, setMode] = useState('list') // 'list' | 'create' | 'edit'
+  const [editTarget, setEditTarget] = useState(null)
   const [page, setPage] = useState(1)
 
   const load = () => {
     setLoading(true)
     getKegiatan()
-      .then((res) => setData(Array.isArray(res) ? res.map(normalizeEvent) : []))
+      .then((res) => {
+        const list = Array.isArray(res) ? res : []
+        // Hanya event yang dibuat langsung oleh Admin Ditmawa (asal universitas).
+        // Kegiatan yang diajukan oleh UKM/UKMF/mahasiswa tidak tampil di sini.
+        const eventAdmin = list.filter(
+          (item) => String(item.asal || '').toLowerCase() === 'universitas'
+        )
+        setData(eventAdmin.map(normalizeEvent))
+      })
       .catch((err) => {
         setData([])
         toast.error('Gagal memuat event', { description: err.message })
@@ -175,6 +187,7 @@ function ManajemenEvent() {
   const bisaEdit = (item) => ['draft', 'perlu_revisi'].includes(item.rawStatus)
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(item.rawStatus)
   const bisaKirim = (item) => item.rawStatus === 'draft' || item.rawStatus === 'perlu_revisi'
+  const bisaPeserta = (item) => ['disetujui', 'terpublikasi'].includes(item.rawStatus)
 
   const columns = useMemo(() => [
     { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
@@ -220,7 +233,16 @@ function ManajemenEvent() {
           : null}
         <button
             type="button"
-            onClick={() => navigate('/admin_ditmawa/buat-event', { state: { edit: row } })}
+            onClick={() => navigate(`/admin_ditmawa/manajemen-peserta-event/${row.id}`)}
+            disabled={!bisaPeserta(row)}
+            title="Manajemen Peserta"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Users className="h-4 w-4" />
+          </button>
+        <button
+            type="button"
+            onClick={() => { setEditTarget(row); setMode('edit') }}
             disabled={!bisaEdit(row)}
             title="Edit"
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
@@ -238,7 +260,7 @@ function ManajemenEvent() {
           </button>
       </div>
     )},
-  ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus])
+  ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus, bisaPeserta])
 
   const resetFilter = () => {
     setSearch('')
@@ -247,6 +269,18 @@ function ManajemenEvent() {
     setFilterSkala('')
     setFilterTahun('')
     setPage(1)
+  }
+
+  if (mode === 'create' || mode === 'edit') {
+    return (
+      <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
+        <EventForm
+          editItem={mode === 'edit' ? editTarget : null}
+          onCancel={() => { setMode('list'); setEditTarget(null) }}
+          onSaved={() => { setMode('list'); setEditTarget(null); load() }}
+        />
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -269,19 +303,21 @@ function ManajemenEvent() {
 
       <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Buat Event</h2>
+          <div>
+            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Event Global</h2>
+            <p className="mt-1 text-sm text-[#616161]">Kelola event yang dibuat Admin Ditmawa: buat, kirim, dan verifikasi pendaftaran peserta.</p>
+          </div>
           <button
             type="button"
-            onClick={() => navigate('/admin_ditmawa/buat-event')}
+            onClick={() => { setEditTarget(null); setMode('create') }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" />
-            Tambah Buat Event
+            Tambah Event
           </button>
         </div>
 
         <section>
-          <h3 className="mb-3 text-base font-bold text-brand-dark">Event yang telah dibuat</h3>
 
           <div className="mb-3 flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
@@ -294,12 +330,6 @@ function ManajemenEvent() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              <Filter className="h-4 w-4" /> Filter
-            </button>
           </div>
 
           <div className="mb-3 flex flex-wrap gap-2">
@@ -333,7 +363,7 @@ function ManajemenEvent() {
               <option value="2025">2025</option>
             </select>
             <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] transition hover:bg-[#f5f6f8]">
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
               Reset filter
             </button>
           </div>

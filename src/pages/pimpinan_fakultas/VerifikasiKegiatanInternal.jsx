@@ -1,66 +1,52 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
+import { getKategoriKegiatanValid } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
-import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
 
 const PAGE_SIZE = 10
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
-  if (['diajukan', 'pending'].includes(s)) return 'pending'
-  if (['terverifikasi'].includes(s)) return 'diteruskan'
-  if (['disetujui', 'terpublikasi'].includes(s)) return 'disetujui'
-  if (['ditolak'].includes(s)) return 'ditolak'
-  if (['perlu_revisi', 'revisi'].includes(s)) return 'revisi'
+  if (['terverifikasi', 'diajukan'].includes(s)) return 'pending'
+  if (['perlu_revisi'].includes(s)) return 'revisi'
+  if (['terpublikasi'].includes(s)) return 'disetujui'
   return s || 'pending'
-}
-
-function formatTanggal(start, end) {
-  if (!start) return '-'
-  try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-    if (!end) return a
-    const b = new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-    return `${a} - ${b}`
-  } catch {
-    return String(start)
-  }
 }
 
 function normalizeItem(item) {
   return {
     id: item.id,
-    namaMahasiswa: item.organisasi?.nama || item.pembuat?.nama || item.namaOrganisasi || '-',
-    nim: item.organisasi?.tipe || '',
-    prodi: item.pembuat?.nama || '',
-    kegiatan: item.nama || item.kegiatan || '-',
+    kegiatan: item.nama || item.namaKegiatan || item.kegiatan || '-',
     kategori: item.kategori?.nama || item.kategori || item.jenis || '-',
-    tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
+    skala: item.skala?.nama || item.skala || '-',
+    tanggal: item.tanggalMulai
+      ? new Date(item.tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+      : (item.tanggal || '-'),
     status: mapStatus(item.status),
-    rawStatus: item.status,
+    rawStatus: String(item.status || '').toLowerCase(),
     diajukanPada: item.createdAt
       ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : item.diajukanPada || '-',
-    skala: item.skala?.nama || item.skala || '-',
+      : (item.diajukanPada || '-'),
   }
 }
 
-function VerifikasiPengajuanInternal() {
+function VerifikasiKegiatanInternal() {
   const navigate = useNavigate()
   const user = getCurrentUser()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
+  const [kategoriOptions, setKategoriOptions] = useState([])
   const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
-  const [skala, setSkala] = useState('')
   const [page, setPage] = useState(1)
 
   const [pilihanMode, setPilihanMode] = useState(false)
@@ -69,44 +55,46 @@ function VerifikasiPengajuanInternal() {
 
   const load = () => {
     setLoading(true)
-    getKegiatanVerifikasi({ limit: 50, asal: 'kurikuler_ukm' })
+    getKegiatanApproval({ limit: 50, asal: 'internal' })
       .then((data) => setItems(Array.isArray(data) ? data.map(normalizeItem) : []))
-      .catch((err) => {
-        setItems([])
-        toast.error('Gagal memuat data', { description: err.message })
-      })
+      .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    getKategoriKegiatanValid()
+      .then((list) => setKategoriOptions(Array.isArray(list) ? list : []))
+      .catch(() => setKategoriOptions([]))
+  }, [])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return items.filter((item) => {
       if (status && item.status !== status) return false
       if (kategori && item.kategori !== kategori) return false
-      if (skala && String(item.skala).toLowerCase() !== skala.toLowerCase()) return false
-      if (tahun && !String(item.tanggal).includes(tahun)) return false
+      if (tahun && !item.diajukanPada.includes(tahun)) return false
       if (!q) return true
       return (
-        (item.namaMahasiswa || '').toLowerCase().includes(q) ||
-        (item.nim || '').toLowerCase().includes(q) ||
         (item.kegiatan || '').toLowerCase().includes(q) ||
         (item.kategori || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, tahun, status, skala])
+  }, [items, search, kategori, tahun, status])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+
   const resetFilter = () => {
-    setSearch(''); setKategori(''); setTahun(''); setStatus(''); setSkala(''); setPage(1)
+    setSearch(''); setKategori(''); setTahun(''); setStatus(''); setPage(1)
   }
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
+      const item = items.find((i) => i.id === id)
+      if (item && item.rawStatus !== 'terverifikasi') return prev
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -114,47 +102,20 @@ function VerifikasiPengajuanInternal() {
     })
   }
 
-  const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
-    { key: 'organisasi', label: 'Organisasi', render: (row) => (
-      <div className="flex flex-col gap-0.5">
-        <p className="font-bold uppercase text-[#333]">{row.namaMahasiswa}</p>
-        {row.nim && <p className="text-sm font-medium text-orange-500">{row.nim}</p>}
-        {row.prodi && <p className="text-sm text-sky-500">{row.prodi}</p>}
-        <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
-          <span>{row.diajukanPada}</span>
-        </div>
-      </div>
-    )},
-    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan}</span> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
-    { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <button
-        type="button"
-        onClick={() => navigate(`/admin_ditmawa/verifikasi-pengajuan-internal/${row.id}`, { state: { item: row } })}
-        title="Detail"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
-    )},
-  ], [pageItems, start, navigate])
+  const isSelectable = (item) => item.rawStatus === 'terverifikasi'
 
-  const allPageSelected = pageItems.length > 0 && pageItems.every((i) => selected.has(i.id))
+  const selectablePageItems = pageItems.filter(isSelectable)
+  const allPageSelected = selectablePageItems.length > 0 && selectablePageItems.every((i) => selected.has(i.id))
 
   const centangSemua = () => {
     if (allPageSelected) setSelected(new Set())
-    else setSelected(new Set(pageItems.map((i) => i.id)))
+    else setSelected(new Set(selectablePageItems.map((i) => i.id)))
   }
 
   const handleBulkConfirm = async () => {
     try {
-      await verifikasiBulk(Array.from(selected), 'setuju')
-      toast.success(`${selected.size} pengajuan internal disetujui dan diteruskan ke Pimpinan.`)
+      await approvalBulk(Array.from(selected), 'setuju')
+      toast.success(`${selected.size} kegiatan internal disetujui.`)
       setSelected(new Set())
       setPilihanMode(false)
       setShowBulkConfirm(false)
@@ -166,15 +127,11 @@ function VerifikasiPengajuanInternal() {
   }
 
   return (
-    <DashboardLayout
-      role="admin_ditmawa"
-      userName={user?.nama || 'Admin Ditmawa'}
-      userRole="Admin Ditmawa"
-    >
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
       <ConfirmModal
         isOpen={showBulkConfirm}
-        message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan ini dan meneruskannya ke Pimpinan Ditmawa?`}
-        confirmText="TERUSKAN KE PIMPINAN"
+        message={`Apakah Anda yakin ingin menyetujui ${selected.size} kegiatan internal ini?`}
+        confirmText="SETUJUI"
         cancelText="BATAL"
         onConfirm={handleBulkConfirm}
         onCancel={() => setShowBulkConfirm(false)}
@@ -183,8 +140,11 @@ function VerifikasiPengajuanInternal() {
       <div className="space-y-5">
         <div>
           <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
-            Verifikasi Pengajuan Kegiatan Internal
+            Verifikasi Kegiatan Internal
           </h2>
+          <p className="mt-1 text-sm text-[#616161]">
+            Kegiatan internal yang dibuat Admin Fakultas dan memerlukan persetujuan pimpinan.
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -195,7 +155,7 @@ function VerifikasiPengajuanInternal() {
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Cari penyelenggara atau kegiatan..."
+                placeholder="Cari kegiatan..."
                 className="w-full text-sm outline-none"
               />
             </div>
@@ -205,8 +165,8 @@ function VerifikasiPengajuanInternal() {
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Kategori</option>
-              {[...new Set(items.map((i) => i.kategori).filter(Boolean))].map((k) => (
-                <option key={k} value={k}>{k}</option>
+              {kategoriOptions.map((k) => (
+                <option key={k.id} value={k.nama}>{k.nama}</option>
               ))}
             </select>
             <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
@@ -219,17 +179,8 @@ function VerifikasiPengajuanInternal() {
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Status</option>
               <option value="pending">Pending</option>
-              <option value="diteruskan">Diteruskan</option>
-              <option value="ditolak">Ditolak</option>
-              <option value="revisi">Revisi</option>
-            </select>
-            <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Skala</option>
-              <option value="nasional">Nasional</option>
-              <option value="internasional">Internasional</option>
-              <option value="regional">Regional</option>
-              <option value="universitas">Universitas</option>
+              <option value="disetujui">Disetujui</option>
+              <option value="revisi">Perlu Revisi</option>
             </select>
             <button type="button" onClick={resetFilter}
               className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
@@ -254,7 +205,8 @@ function VerifikasiPengajuanInternal() {
                   className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
                   Batal Pilih
                 </button>
-                <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
+                <button type="button"
+                  onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
                   className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
                   Selanjutnya
                 </button>
@@ -263,24 +215,49 @@ function VerifikasiPengajuanInternal() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <DataTable
-            columns={columns}
-            data={pageItems}
-            loading={loading}
-            emptyText="Belum ada pengajuan internal."
-            selectable={pilihanMode}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={centangSemua}
-            page={currentPage}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </div>
+        <DataTable
+          loading={loading}
+          data={pageItems}
+          emptyText="Belum ada kegiatan internal yang perlu diverifikasi."
+          selectable={pilihanMode}
+          selected={selected}
+          onSelect={toggleSelect}
+          onSelectAll={centangSemua}
+          isSelectable={isSelectable}
+          page={currentPage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          columns={[
+            { key: 'no', label: 'No', render: (_item, index) => start + index + 1 },
+            {
+              key: 'kegiatan', label: 'Kegiatan',
+              render: (item) => (
+                <div className="flex flex-col gap-0.5">
+                  <p className="font-bold text-[#333]">{item.kegiatan}</p>
+                  <p className="text-xs text-[#616161]">Diajukan: {item.diajukanPada}</p>
+                </div>
+              ),
+            },
+            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori}</span> },
+            { key: 'skala', label: 'Skala' },
+            { key: 'tanggal', label: 'Tanggal' },
+            { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
+            {
+              key: 'aksi', label: 'Aksi', stopPropagation: true,
+              render: (item) => pilihanMode ? null : (
+                <button type="button"
+                  onClick={() => navigate(`/pimpinan_fakultas/verifikasi-kegiatan-internal/${item.id}`, { state: { item } })}
+                  title="Detail & Verifikasi"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+                  <Eye className="h-4 w-4" />
+                </button>
+              ),
+            },
+          ]}
+        />
       </div>
     </DashboardLayout>
   )
 }
 
-export default VerifikasiPengajuanInternal
+export default VerifikasiKegiatanInternal

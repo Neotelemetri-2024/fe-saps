@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, Eye } from "lucide-react";
+import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
@@ -49,7 +49,6 @@ function normalizeItem(item) {
   return {
     id: item.id,
     kegiatan: item.nama || "-",
-    subKegiatan: item.pembuat?.nama || "",
     namaUKMF: item.organisasi?.nama || "-",
     jenis: item.kategori?.nama || "-",
     skala: item.skala?.nama || "-",
@@ -98,12 +97,7 @@ function VerifikasiPengajuanUKMF() {
     {
       key: 'kegiatan',
       label: 'KEGIATAN',
-      render: (row) => (
-        <div>
-          <p className="font-medium text-[#222]">{row.kegiatan}</p>
-          {row.subKegiatan && <p className="text-xs text-[#9aa0a6]">{row.subKegiatan}</p>}
-        </div>
-      ),
+      render: (row) => <p className="font-medium text-[#222]">{row.kegiatan}</p>,
     },
     { key: 'namaUKMF', label: 'NAMA UKMF' },
     { key: 'jenis', label: 'JENIS' },
@@ -162,10 +156,6 @@ function VerifikasiPengajuanUKMF() {
             />
           </div>
 
-          <button className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
-            <Filter className="h-4 w-4" /> Filter
-          </button>
-
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -203,7 +193,7 @@ function VerifikasiPengajuanUKMF() {
 
           <button
             onClick={resetFilter}
-            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#616161] transition hover:bg-[#f5f5f5]"
+            className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
           >
             Reset Filter
           </button>

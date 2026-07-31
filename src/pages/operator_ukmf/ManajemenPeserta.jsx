@@ -254,14 +254,14 @@ function ManajemenPeserta() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-4 py-3">No</th>
-                  <th className="px-4 py-3">NIM</th>
-                  <th className="px-4 py-3">Nama Mahasiswa</th>
-                  <th className="px-4 py-3">Fakultas</th>
-                  <th className="px-4 py-3">Program Studi</th>
+                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="w-16 px-4 py-3 text-center">No</th>
+                  <th className="px-4 py-3 text-center">NIM</th>
+                  <th className="px-4 py-3 text-center">Nama Mahasiswa</th>
+                  <th className="px-4 py-3 text-center">Fakultas</th>
+                  <th className="px-4 py-3 text-center">Program Studi</th>
                   <th className="px-4 py-3 text-center">Kehadiran</th>
-                  <th className="px-4 py-3">Peran</th>
+                  <th className="px-4 py-3 text-center">Peran</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,8 +270,8 @@ function ManajemenPeserta() {
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
                 ) : filtered.map((p) => (
-                  <tr key={p.partisipasiId || p.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="px-4 py-3 text-[#616161]">{p.no}</td>
+                  <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                    <td className="w-16 px-4 py-3 text-center text-[#616161]">{p.no}</td>
                     <td className="px-4 py-3 font-medium text-[#333]">{p.nim || '-'}</td>
                     <td className="px-4 py-3 text-[#616161]">{p.nama}</td>
                     <td className="px-4 py-3 text-[#616161]">{p.fakultas}</td>

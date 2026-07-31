@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Filter, CheckCircle } from 'lucide-react'
+import { Search, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -201,10 +201,6 @@ function RiwayatPoin() {
                 className="flex-1 text-sm outline-none"
               />
             </div>
-            <button type="button" className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
-              <Filter className="h-4 w-4" />
-              Filter
-            </button>
 
             <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
               <option value="">Kategori</option>
@@ -224,7 +220,7 @@ function RiwayatPoin() {
               <option value="">Penyelenggara</option>
               {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-            <button type="button" onClick={resetFilter} className="text-sm font-medium text-[#616161] hover:underline">Reset Filter</button>
+            <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
           </div>
 
           <div className="mt-6">

@@ -130,3 +130,29 @@ h2 {
   transform-origin: center center;
   animation: spin-slow 32s linear infinite;
 }
+
+/* ── Generate CV — cetak/download sebagai PDF (ATS-friendly) ── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #cv-print-area,
+  #cv-print-area * {
+    visibility: visible;
+  }
+  #cv-print-area {
+    position: absolute;
+    inset: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 16mm;
+  }
+}

@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -31,7 +29,6 @@ function formatTanggal(start, end) {
 }
 
 function Dashboard() {
-  const navigate = useNavigate()
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
   const [namaFakultas, setNamaFakultas] = useState('')
@@ -89,32 +86,7 @@ function Dashboard() {
         </span>
       ),
     },
-    {
-      key: 'aksi',
-      label: 'AKSI',
-      stopPropagation: true,
-      render: (row) => (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-            title="Detail"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(`/admin_fakultas/verifikasi-pengajuan-ukmf/${row.id}`)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-            title="Verifikasi"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-  ], [navigate])
+  ], [])
 
   return (
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">

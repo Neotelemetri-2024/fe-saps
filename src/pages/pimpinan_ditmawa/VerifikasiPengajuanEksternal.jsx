@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Filter, Search } from 'lucide-react'
+import { Clock, Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -116,6 +116,8 @@ function VerifikasiPengajuanEksternal() {
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
+      const item = items.find((i) => i.id === id)
+      if (item && String(item.status || '').toLowerCase() !== 'terverifikasi') return prev
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -123,11 +125,14 @@ function VerifikasiPengajuanEksternal() {
     })
   }
 
-  const allPageSelected = pageItems.length > 0 && pageItems.every((i) => selected.has(i.id))
+  const isSelectable = (item) => String(item.status || '').toLowerCase() === 'terverifikasi'
+
+  const selectablePageItems = pageItems.filter(isSelectable)
+  const allPageSelected = selectablePageItems.length > 0 && selectablePageItems.every((i) => selected.has(i.id))
 
   const centangSemua = () => {
     if (allPageSelected) setSelected(new Set())
-    else setSelected(new Set(pageItems.map((i) => i.id)))
+    else setSelected(new Set(selectablePageItems.map((i) => i.id)))
   }
 
   const handleBulkConfirm = async () => {
@@ -178,10 +183,6 @@ function VerifikasiPengajuanEksternal() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button type="button"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto">
-              <Filter className="h-4 w-4" /> Filter
-            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -203,7 +204,6 @@ function VerifikasiPengajuanEksternal() {
               <option value="">Status</option>
               <option value="terverifikasi">Menunggu Persetujuan</option>
               <option value="disetujui">Disetujui</option>
-              <option value="ditolak">Ditolak</option>
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
@@ -212,16 +212,18 @@ function VerifikasiPengajuanEksternal() {
                 <option key={s.id} value={s.nama}>{s.nama}</option>
               ))}
             </select>
+            <button type="button" onClick={resetFilter}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+              Reset filter
+            </button>
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
-                pilihanMode ? 'border-brand-dark bg-brand-dark text-white' : 'border-[#d9dce7] bg-white text-[#616161] hover:bg-[#f5f5f5]'
+                pilihanMode
+                  ? 'border-brand-dark bg-brand-dark text-white'
+                  : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
               }`}>
               Pilih Beberapa
-            </button>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none transition hover:bg-[#f5f6f8]">
-              Reset filter
             </button>
           </div>
 
@@ -251,6 +253,7 @@ function VerifikasiPengajuanEksternal() {
           selected={selected}
           onSelect={toggleSelect}
           onSelectAll={centangSemua}
+          isSelectable={isSelectable}
           page={currentPage}
           totalPages={totalPages}
           onPageChange={setPage}
@@ -271,7 +274,7 @@ function VerifikasiPengajuanEksternal() {
               ),
             },
             { key: 'kegiatan', label: 'Kegiatan' },
-            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-brand-light">{item.kategori}</span> },
+            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori}</span> },
             { key: 'tanggal', label: 'Tanggal' },
             { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
             {

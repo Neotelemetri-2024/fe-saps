@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Plus, MoreVertical, Pencil, Trash2, BookOpen, AlignJustify } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, BookOpen, AlignJustify } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -37,40 +37,6 @@ function normalizeKurikulum(k) {
   }
 }
 
-function MenuKurikulum({ onHapus }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
-        className="rounded p-1 hover:bg-[#f0f0f0]"
-      >
-        <MoreVertical className="h-4 w-4 text-[#616161]" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-7 z-20 min-w-[130px] rounded-lg border border-[#e9ebf8] bg-white py-1 shadow-lg">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onHapus() }}
-            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-          >
-            Hapus
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function ToggleSwitch({ checked, onChange }) {
   return (
     <button
@@ -98,6 +64,8 @@ function ManajemenKurikulum() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [showNonaktifConfirm, setShowNonaktifConfirm] = useState(false)
+  const [nonaktifTarget, setNonaktifTarget] = useState(null)
 
   const [showTambahKurikulum, setShowTambahKurikulum] = useState(false)
   const [kurForm, setKurForm] = useState({ tahun: '', nama: '' })
@@ -146,20 +114,37 @@ function ManajemenKurikulum() {
     if (activeKurId) loadDetail(activeKurId)
   }, [activeKurId])
 
-  const handleNonaktif = async (id) => {
+  const handleToggleStatus = (id) => {
     const kur = kurikulum.find((k) => k.id === id)
+    if (kur?.status === 'aktif') {
+      // Menonaktifkan kurikulum wajib konfirmasi terlebih dahulu
+      setNonaktifTarget(kur)
+      setShowNonaktifConfirm(true)
+    } else {
+      confirmToggleStatus(kur)
+    }
+  }
+
+  const confirmToggleStatus = async (kur) => {
     try {
       if (kur?.status === 'aktif') {
-        await nonaktifkanKurikulum(id)
+        await nonaktifkanKurikulum(kur.id)
         toast.success('Kurikulum dinonaktifkan.')
       } else {
-        await aktivasiKurikulum(id)
+        await aktivasiKurikulum(kur.id)
         toast.success('Kurikulum diaktifkan.')
       }
       loadList()
     } catch (err) {
       toast.error('Gagal mengubah status', { description: err.message })
     }
+  }
+
+  const confirmNonaktif = async () => {
+    if (!nonaktifTarget) return
+    setShowNonaktifConfirm(false)
+    await confirmToggleStatus(nonaktifTarget)
+    setNonaktifTarget(null)
   }
 
   const handleHapus = (id, nama) => {
@@ -289,6 +274,16 @@ function ManajemenKurikulum() {
         cancelText="BATAL"
         onConfirm={confirmHapus}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showNonaktifConfirm}
+        title="Nonaktifkan Kurikulum?"
+        message={`Kurikulum "${nonaktifTarget?.nama}" akan dinonaktifkan. Pastikan sudah ada kurikulum lain yang aktif sebelum melanjutkan, karena kurikulum nonaktif tidak lagi dipakai sebagai acuan pemetaan capaian.`}
+        confirmText="NONAKTIFKAN"
+        cancelText="BATAL"
+        onConfirm={confirmNonaktif}
+        onCancel={() => { setShowNonaktifConfirm(false); setNonaktifTarget(null) }}
       />
 
       <ConfirmModal
@@ -532,9 +527,16 @@ function ManajemenKurikulum() {
                   <div className="flex shrink-0 items-center gap-3 pl-4">
                     <ToggleSwitch
                       checked={kur.status === 'aktif'}
-                      onChange={() => handleNonaktif(kur.id)}
+                      onChange={() => handleToggleStatus(kur.id)}
                     />
-                    <MenuKurikulum onHapus={() => handleHapus(kur.id, kur.nama)} />
+                    <button
+                      type="button"
+                      onClick={() => handleHapus(kur.id, kur.nama)}
+                      title="Hapus kurikulum"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               )
@@ -570,12 +572,12 @@ function ManajemenKurikulum() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead>
-                    <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                      <th className="px-5 py-3">Capaian</th>
-                      <th className="px-5 py-3">Poin</th>
-                      <th className="px-5 py-3">Sub Capaian</th>
-                      <th className="px-5 py-3">Presentasi Bobot</th>
-                      <th className="px-5 py-3">Aksi</th>
+                    <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-5 py-3 text-center">Capaian</th>
+                      <th className="px-5 py-3 text-center">Poin</th>
+                      <th className="px-5 py-3 text-center">Sub Capaian</th>
+                      <th className="px-5 py-3 text-center">Presentasi Bobot</th>
+                      <th className="px-5 py-3 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -588,15 +590,16 @@ function ManajemenKurikulum() {
                     ) : (
                       activeKur.capaian.map((cap) =>
                         cap.subCapaian.length === 0 ? (
-                          <tr key={cap.id} className="border-b border-[#e9ebf8]">
+                          <tr key={cap.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8]">
                             <td className="px-5 py-3 align-top">
                               <div className="flex items-center gap-1.5">
                                 <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
                                   {cap.label}
                                 </span>
                                 <button type="button" onClick={() => handleHapusCapaian(cap)}
-                                  className="rounded p-0.5 text-red-400 hover:text-red-600">
-                                  <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                                  title="Hapus capaian"
+                                  className="flex h-6 w-6 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white">
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </button>
                               </div>
                             </td>
@@ -607,7 +610,7 @@ function ManajemenKurikulum() {
                           </tr>
                         ) : (
                           cap.subCapaian.map((sc, idx) => (
-                            <tr key={sc.id} className="border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                            <tr key={sc.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                               {idx === 0 && (
                                 <>
                                   <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top">
@@ -616,7 +619,8 @@ function ManajemenKurikulum() {
                                         {cap.label}
                                       </span>
                                       <button type="button" onClick={() => handleHapusCapaian(cap)}
-                                        className="rounded p-0.5 text-red-400 hover:text-red-600">
+                                        title="Hapus capaian"
+                                        className="flex h-6 w-6 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white">
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
@@ -629,20 +633,22 @@ function ManajemenKurikulum() {
                               <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
                               <td className="px-5 py-3 text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
                               <td className="px-5 py-3">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => setEditSubCapaian({ ...sc })}
-                                    className="rounded p-1 text-brand-dark hover:bg-brand-dark/10"
+                                    title="Edit sub capaian"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white"
                                   >
                                     <Pencil className="h-3.5 w-3.5" />
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleHapusSubCapaian(sc)}
-                                    className="rounded p-1 text-red-500 hover:bg-red-50"
+                                    title="Hapus sub capaian"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
                                   >
-                                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               </td>

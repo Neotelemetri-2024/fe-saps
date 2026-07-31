@@ -58,11 +58,12 @@ function toKeputusan(status) {
   return 'tolak'
 }
 
-export async function verifikasiBulk(ids, status, catatan) {
+export async function verifikasiBulk(ids, status, catatan, alokasiBulk) {
   const res = await put('/api/kegiatan/verifikasi-bulk', {
     kegiatanIds: (ids || []).map(Number),
     keputusan: toKeputusan(status),
     alasan: catatan,
+    ...(alokasiBulk && alokasiBulk.length > 0 ? { alokasiBulk } : {}),
   })
   return res?.data || res
 }

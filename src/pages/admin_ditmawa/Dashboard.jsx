@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
-import { Download, Edit3, Trash2 } from 'lucide-react'
+import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
-import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardAdminDitmawa } from '../../services/dashboardService'
-import { deleteKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
 function formatTanggal(start, end) {
   if (!start) return '-'
@@ -31,8 +29,6 @@ function AdminDitmawaDashboard() {
   ])
   const [kegiatanTerbaru, setKegiatanTerbaru] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
-  const [selectedItem, setSelectedItem] = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -74,35 +70,6 @@ function AdminDitmawaDashboard() {
     load()
   }, [])
 
-  const handleEdit = async (item) => {
-    try {
-      await updateKegiatan(item.id, { status: 'aktif' })
-      toast.success('Data diperbarui!', { description: `Kegiatan "${item.nama}" berhasil diperbarui.` })
-      load()
-    } catch (err) {
-      toast.error('Gagal', { description: err.message })
-    }
-  }
-
-  const handleDeleteClick = (item) => {
-    setSelectedItem(item)
-    setShowConfirmDelete(true)
-  }
-
-  const handleDeleteConfirm = async () => {
-    if (selectedItem) {
-      try {
-        await deleteKegiatan(selectedItem.id)
-        toast.success('Dihapus!', { description: 'Kegiatan berhasil dihapus.' })
-        load()
-      } catch (err) {
-        toast.error('Gagal', { description: err.message })
-      }
-    }
-    setShowConfirmDelete(false)
-    setSelectedItem(null)
-  }
-
   const kegiatanColumns = useMemo(() => [
     { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{row.no}</span> },
     { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
@@ -117,27 +84,7 @@ function AdminDitmawaDashboard() {
     { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
     { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => handleEdit(row)}
-          className="rounded p-1 text-brand-dark transition hover:bg-green-50"
-          aria-label="Edit kegiatan"
-        >
-          <Edit3 className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleDeleteClick(row)}
-          className="rounded p-1 text-red-600 transition hover:bg-red-50"
-          aria-label="Hapus kegiatan"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-    )},
-  ], [kegiatanTerbaru])
+  ], [])
 
   return (
     <DashboardLayout
@@ -145,21 +92,9 @@ function AdminDitmawaDashboard() {
       userName={user?.nama || 'Admin Ditmawa'}
       userRole="Admin Ditmawa"
     >
-      <ConfirmModal
-        isOpen={showConfirmDelete}
-        message={selectedItem ? `Yakin ingin menghapus "${selectedItem.nama}"?` : ''}
-        confirmText="Ya, hapus"
-        cancelText="Batal"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setShowConfirmDelete(false)
-          setSelectedItem(null)
-        }}
-      />
-
       <div className="space-y-6">
         <div>
-          <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
             Dashboard Admin Ditmawa
           </h2>
           <p className="mt-1 text-sm text-[#616161]">

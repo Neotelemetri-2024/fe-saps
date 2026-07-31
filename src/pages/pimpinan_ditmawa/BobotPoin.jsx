@@ -330,13 +330,13 @@ function SectionTable({ section, onUpdate }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-brand-dark to-brand-light text-white">
-                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-white">
+                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">
                     {draft.rowHeader}
                   </th>
                   {draft.columns.map((col, ci) => (
-                    <th key={colId(col) ?? `col-${ci}`} className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
-                      <div className="flex items-start gap-2">
+                    <th key={colId(col) ?? `col-${ci}`} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">
+                      <div className="flex items-start justify-center gap-2">
                         <span
                           className={`block flex-1 ${editing ? 'cursor-pointer hover:opacity-80' : ''}`}
                           title={editing ? 'Klik untuk mengedit' : ''}
@@ -372,7 +372,7 @@ function SectionTable({ section, onUpdate }) {
               </thead>
               <tbody className="divide-y divide-[#f0f0f0]">
                 {draft.rows.map((row, ri) => (
-                  <tr key={ri} className="hover:bg-[#f9fafb]">
+                  <tr key={ri} className="divide-x divide-[#f0f0f0] hover:bg-[#f9fafb]">
                     <td className="px-5 py-4">
                       <div className="flex items-start gap-2">
                         <div className="flex-1">
@@ -717,12 +717,6 @@ function BobotPoin() {
             className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
             <Plus className="h-4 w-4" /> Matriks
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Edit Poin
           </button>
           <button
             type="button"

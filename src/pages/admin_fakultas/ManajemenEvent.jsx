@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, Pencil, Trash2, Send, RefreshCw } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Send, RefreshCw, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import EventForm from '../../components/EventForm'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
 
@@ -16,6 +17,13 @@ const statusStyle = {
   Revisi: 'bg-orange-100 text-orange-600 border border-orange-300',
   Aktif: 'bg-green-100 text-green-700 border border-green-300',
 }
+
+const STATUS_PENDAFTARAN = {
+  belum: { label: 'belum terdaftar', bg: 'bg-[#f5f5f5]', text: 'text-[#616161]' },
+  sudah: { label: 'sudah terdaftar', bg: 'bg-green-100', text: 'text-green-700' },
+}
+
+const PAGE_SIZE = 10
 
 function mapStatusLabel(status) {
   const s = String(status || '').toLowerCase()
@@ -41,6 +49,7 @@ function formatTanggal(start, end) {
 
 function normalizeEvent(item) {
   const rawStatus = String(item.status || '').toLowerCase()
+  const pesertaCount = item._count?.partisipasi ?? 0
   return {
     id: item.id,
     kegiatan: item.nama || '-',
@@ -48,10 +57,11 @@ function normalizeEvent(item) {
     kategori: item.kategori?.nama || '-',
     skala: item.skala?.nama || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
-    peserta: item._count?.partisipasi ?? item.kuota ?? '-',
+    peserta: pesertaCount || item.kuota || '-',
     poin: item.poin ?? null,
     status: mapStatusLabel(item.status),
     rawStatus,
+    statusPendaftaran: pesertaCount > 0 ? 'sudah' : 'belum',
   }
 }
 
@@ -64,13 +74,27 @@ function ManajemenEvent() {
   const [filterKategori, setFilterKategori] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSkala, setFilterSkala] = useState('')
+  const [filterPendaftaran, setFilterPendaftaran] = useState('')
   const [deleteId, setDeleteId] = useState(null)
   const [kirimTarget, setKirimTarget] = useState(null)
+  const [mode, setMode] = useState('list') // 'list' | 'create' | 'edit'
+  const [editTarget, setEditTarget] = useState(null)
+  const [page, setPage] = useState(1)
 
   const load = () => {
     setLoading(true)
     getKegiatan()
-      .then((res) => setData(Array.isArray(res) ? res.map(normalizeEvent) : []))
+      .then((res) => {
+        const list = Array.isArray(res) ? res : []
+        // Hanya event yang dibuat langsung oleh Admin Fakultas
+        // (asal kurikuler_ukmf tanpa organisasi). Kegiatan yang diajukan
+        // oleh operator UKMF tidak tampil di sini.
+        const eventAdmin = list.filter((item) => {
+          const asal = String(item.asal || '').toLowerCase()
+          return asal === 'kurikuler_ukmf' && !item.organisasiId
+        })
+        setData(eventAdmin.map(normalizeEvent))
+      })
       .catch((err) => {
         setData([])
         toast.error('Gagal memuat event', { description: err.message })
@@ -80,20 +104,30 @@ function ManajemenEvent() {
 
   useEffect(() => { load() }, [])
 
-  const filtered = data.filter((e) => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (q && !e.kegiatan.toLowerCase().includes(q)) return false
-    if (filterKategori && e.kategori !== filterKategori) return false
-    if (filterStatus && e.status !== filterStatus) return false
-    if (filterSkala && e.skala !== filterSkala) return false
-    return true
-  })
+    return data.filter((e) => {
+      if (q && !e.kegiatan.toLowerCase().includes(q)) return false
+      if (filterKategori && e.kategori !== filterKategori) return false
+      if (filterStatus && e.status !== filterStatus) return false
+      if (filterSkala && e.skala !== filterSkala) return false
+      if (filterPendaftaran && e.statusPendaftaran !== filterPendaftaran) return false
+      return true
+    })
+  }, [data, search, filterKategori, filterStatus, filterSkala, filterPendaftaran])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
   const resetFilter = () => {
     setSearch('')
     setFilterKategori('')
     setFilterStatus('')
     setFilterSkala('')
+    setFilterPendaftaran('')
+    setPage(1)
   }
 
   const handleDelete = async () => {
@@ -122,6 +156,7 @@ function ManajemenEvent() {
   const bisaEdit = (e) => ['draft', 'perlu_revisi'].includes(e.rawStatus)
   const bisaHapus = (e) => ['draft', 'perlu_revisi', 'ditolak'].includes(e.rawStatus)
   const bisaKirim = (e) => e.rawStatus === 'draft' || e.rawStatus === 'perlu_revisi'
+  const bisaPeserta = (e) => ['disetujui', 'terpublikasi'].includes(e.rawStatus)
 
   const columns = useMemo(() => [
     {
@@ -134,14 +169,25 @@ function ManajemenEvent() {
         </div>
       ),
     },
-    { key: 'kategori', label: 'KATEGORI' },
-    { key: 'skala', label: 'SKALA' },
-    { key: 'tanggal', label: 'TANGGAL' },
-    { key: 'peserta', label: 'PESERTA' },
+    { key: 'kategori', label: 'KATEGORI', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
+    { key: 'skala', label: 'SKALA', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
+    { key: 'tanggal', label: 'TANGGAL', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'peserta', label: 'PESERTA', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
     {
       key: 'poin',
       label: 'POIN',
-      render: (row) => <span>{row.poin ?? '–'}</span>,
+      render: (row) => <span className="text-[#616161]">{row.poin ?? '–'}</span>,
+    },
+    {
+      key: 'pendaftaran', label: 'PENDAFTARAN',
+      render: (row) => {
+        const pendaftaran = STATUS_PENDAFTARAN[row.statusPendaftaran] || STATUS_PENDAFTARAN.belum
+        return (
+          <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${pendaftaran.bg} ${pendaftaran.text}`}>
+            {pendaftaran.label}
+          </span>
+        )
+      },
     },
     {
       key: 'status',
@@ -175,7 +221,16 @@ function ManajemenEvent() {
           ) : null}
           <button
               type="button"
-              onClick={() => navigate(`/admin_fakultas/buat-event?edit=${row.id}`)}
+              onClick={() => navigate(`/admin_fakultas/manajemen-event/${row.id}/peserta`)}
+              disabled={!bisaPeserta(row)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Manajemen Peserta"
+            >
+              <Users className="h-4 w-4" />
+            </button>
+          <button
+              type="button"
+              onClick={() => { setEditTarget(row); setMode('edit') }}
               disabled={!bisaEdit(row)}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
               title="Edit"
@@ -194,7 +249,20 @@ function ManajemenEvent() {
         </div>
       ),
     },
-  ], [navigate])
+  ], [navigate, bisaKirim, bisaEdit, bisaHapus, bisaPeserta])
+
+  if (mode === 'create' || mode === 'edit') {
+    return (
+      <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
+        <EventForm
+          editItem={mode === 'edit' ? editTarget : null}
+          asal="kurikuler_ukmf"
+          onCancel={() => { setMode('list'); setEditTarget(null) }}
+          onSaved={() => { setMode('list'); setEditTarget(null); load() }}
+        />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
@@ -217,36 +285,32 @@ function ManajemenEvent() {
 
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
-            Manejemen Event Fakultas
-          </h2>
+          <div>
+            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">Event Fakultas</h2>
+            <p className="mt-1 text-sm text-[#616161]">Kelola event yang dibuat Admin Fakultas: buat, kirim, dan verifikasi pendaftaran peserta.</p>
+          </div>
           <button
             type="button"
-            onClick={() => navigate('/admin_fakultas/buat-event')}
+            onClick={() => { setEditTarget(null); setMode('create') }}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Buat event
           </button>
         </div>
 
-        <p className="text-sm text-[#616161]">Event yang telah di buat</p>
-
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               placeholder="Cari mahasiswa atau kegiatan..."
               className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
             />
           </div>
-          <button className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-            <Filter className="h-4 w-4" /> Filter
-          </button>
           <select
             value={filterKategori}
-            onChange={(e) => setFilterKategori(e.target.value)}
+            onChange={(e) => { setFilterKategori(e.target.value); setPage(1) }}
             className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none"
           >
             <option value="">Kategori</option>
@@ -256,7 +320,7 @@ function ManajemenEvent() {
           </select>
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
             className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none"
           >
             <option value="">Status</option>
@@ -268,7 +332,7 @@ function ManajemenEvent() {
           </select>
           <select
             value={filterSkala}
-            onChange={(e) => setFilterSkala(e.target.value)}
+            onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
             className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none"
           >
             <option value="">Skala</option>
@@ -276,20 +340,35 @@ function ManajemenEvent() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+          <select
+            value={filterPendaftaran}
+            onChange={(e) => { setFilterPendaftaran(e.target.value); setPage(1) }}
+            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none"
+          >
+            <option value="">Pendaftaran</option>
+            <option value="belum">Belum Terdaftar</option>
+            <option value="sudah">Sudah Terdaftar</option>
+          </select>
           <button
+            type="button"
             onClick={resetFilter}
-            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#616161] hover:bg-[#f5f5f5]"
+            className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark hover:bg-[#f5f5f5]"
           >
             Reset filter
           </button>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={filtered}
-          loading={loading}
-          emptyText="Tidak ada event ditemukan."
-        />
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <DataTable
+            columns={columns}
+            data={pageItems}
+            loading={loading}
+            emptyText="Tidak ada event ditemukan."
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
       </div>
     </DashboardLayout>
   )

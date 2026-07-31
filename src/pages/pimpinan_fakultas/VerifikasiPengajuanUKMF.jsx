@@ -5,7 +5,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { getKegiatanApproval } from '../../services/kegiatanService'
 
-const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Ditolak', 'Revisi']
+const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Revisi']
 
 function VerifikasiPengajuanUKMF() {
   const navigate = useNavigate()
@@ -76,7 +76,7 @@ function VerifikasiPengajuanUKMF() {
     { key: 'no', label: 'No' },
     { key: 'kegiatan', label: 'Kegiatan', render: (item) => <span className="font-semibold text-brand-dark">{item.kegiatan}</span> },
     { key: 'namaUkmf', label: 'Nama UKMF' },
-    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-brand-light">{item.jenis}</span> },
+    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-[#616161]">{item.jenis}</span> },
     { key: 'skala', label: 'Skala' },
     { key: 'tanggal', label: 'Tanggal', render: (item) => <span className="whitespace-nowrap">{item.tanggal}</span> },
     {
@@ -157,7 +157,7 @@ function VerifikasiPengajuanUKMF() {
             <button
               type="button"
               onClick={() => { setFilterSkala(''); setFilterJenis(''); setSearch('') }}
-              className="text-sm text-brand-dark underline hover:opacity-80"
+              className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
             >
               Reset filter
             </button>

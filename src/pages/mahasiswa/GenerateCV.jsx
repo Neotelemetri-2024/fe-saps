@@ -5,16 +5,6 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
 
-function initialsFromName(name = '') {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'AR'
-}
-
 function yearFromDate(val) {
   if (!val) return ''
   try {
@@ -58,14 +48,13 @@ function GenerateCV() {
         const mhs = data?.mahasiswa || {}
         const nama = mhs.nama || user?.nama || 'Mahasiswa'
         setUserData({
-          name: nama.toUpperCase(),
-          initials: initialsFromName(nama),
+          name: nama,
           nim: mhs.nim || '-',
           prodi: mhs.prodi || '-',
           universitas: 'Universitas Andalas',
           email: mhs.email || user?.email || '-',
           phone: mhs.phone || mhs.nomorTelepon || '-',
-          address: mhs.fakultas ? `${mhs.fakultas}, Padang` : 'Padang, Sumatera Barat',
+          address: mhs.fakultas ? `${mhs.fakultas}, Padang, Sumatera Barat` : 'Padang, Sumatera Barat',
         })
 
         setPendidikanData([
@@ -73,7 +62,7 @@ function GenerateCV() {
             jenjang: mhs.prodi ? `S1 ${mhs.prodi}` : 'S1',
             institusi: `Universitas Andalas, Padang`,
             tahunMulai: mhs.angkatan ? String(mhs.angkatan) : '',
-            tahunSelesai: 'sekarang',
+            tahunSelesai: 'Sekarang',
             ipk: mhs.ipk || null,
           },
         ])
@@ -111,8 +100,7 @@ function GenerateCV() {
       .catch((err) => {
         toast.error('Gagal memuat portofolio', { description: err.message })
         setUserData({
-          name: (user?.nama || 'Mahasiswa').toUpperCase(),
-          initials: initialsFromName(user?.nama),
+          name: user?.nama || 'Mahasiswa',
           nim: '-',
           prodi: '-',
           universitas: 'Universitas Andalas',
@@ -125,14 +113,33 @@ function GenerateCV() {
   }, [user?.id, user?.nama, user?.email])
 
   const displayUser = userData || {
-    name: (user?.nama || 'Mahasiswa').toUpperCase(),
-    initials: initialsFromName(user?.nama),
+    name: user?.nama || 'Mahasiswa',
     nim: '-',
     prodi: '-',
     universitas: 'Universitas Andalas',
     email: user?.email || '-',
     phone: '-',
     address: 'Padang, Sumatera Barat',
+  }
+
+  const handleDownloadPdf = () => {
+    window.print()
+  }
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `CV — ${displayUser.name}`,
+          text: `CV ${displayUser.name} — ${displayUser.prodi}`,
+        })
+      } else {
+        await navigator.clipboard.writeText(window.location.href)
+        toast.success('Tautan halaman disalin ke clipboard')
+      }
+    } catch {
+      // dibatalkan pengguna, abaikan
+    }
   }
 
   return (
@@ -162,79 +169,85 @@ function GenerateCV() {
         {generated && (
           <div className="space-y-4">
             {/* Tombol Download & Bagikan */}
-            <div className="flex flex-wrap justify-end gap-3">
+            <div className="flex flex-wrap justify-end gap-3 print:hidden">
               <button
                 type="button"
+                onClick={handleDownloadPdf}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
               >
                 <Download className="h-4 w-4" /> Download PDF
               </button>
               <button
                 type="button"
+                onClick={handleShare}
                 className="inline-flex items-center gap-2 rounded-lg border border-[#d1d5db] bg-white px-4 py-2 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
               >
                 <Share2 className="h-4 w-4" /> Bagikan
               </button>
             </div>
 
-            {/* Dokumen CV */}
-            <div className="mx-auto w-full max-w-2xl rounded-xl bg-white p-5 shadow-lg ring-1 ring-[#e9ebf8] sm:p-10">
+            {/* Dokumen CV — layout ATS-friendly: satu kolom, hierarki jelas, tanpa elemen dekoratif */}
+            <div
+              id="cv-print-area"
+              className="mx-auto w-full max-w-[210mm] bg-white p-8 shadow-lg ring-1 ring-[#e5e7eb] sm:p-12"
+              style={{ fontFamily: "'Times New Roman', Times, serif" }}
+            >
               {/* Header CV */}
-              <div className="mb-7 flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:gap-5">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-[#333] text-xl font-extrabold text-[#333]">
-                  {displayUser.initials}
-                </div>
-                <div>
-                  <h2 className="text-lg font-extrabold tracking-wide text-[#111]">{displayUser.name}</h2>
-                  <p className="text-sm text-[#444]">
-                    {displayUser.nim} | {displayUser.prodi} — {displayUser.universitas}
-                  </p>
-                  <div className="mt-1 space-y-0.5 text-xs text-[#555]">
-                    <p>✉ {displayUser.email} &nbsp; ✆ {displayUser.phone}</p>
-                    <p>⊙ {displayUser.address}</p>
-                  </div>
-                </div>
+              <div className="mb-6 border-b-2 border-[#1a1a1a] pb-4 text-center">
+                <h1 className="text-[26px] font-bold uppercase tracking-wide text-[#1a1a1a]">
+                  {displayUser.name}
+                </h1>
+                <p className="mt-1 text-[14px] text-[#333]">
+                  {displayUser.prodi} — {displayUser.universitas}
+                </p>
+                <p className="mt-2 text-[12.5px] text-[#333]">
+                  {displayUser.nim} &nbsp;|&nbsp; {displayUser.email} &nbsp;|&nbsp; {displayUser.phone} &nbsp;|&nbsp; {displayUser.address}
+                </p>
               </div>
 
-              <hr className="mb-5 border-[#333]" />
-
               {/* Pendidikan */}
-              <section className="mb-6">
-                <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Pendidikan</h3>
+              <section className="mb-5">
+                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+                  Pendidikan
+                </h2>
                 {pendidikanData.length === 0 ? (
-                  <p className="text-xs text-[#888]">Belum ada data pendidikan.</p>
+                  <p className="text-[12.5px] text-[#666]">Belum ada data pendidikan.</p>
                 ) : (
-                  pendidikanData.map((item, i) => (
-                    <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-[#111]">{item.jenjang}</p>
-                        <p className="text-xs text-[#555]">{item.institusi}</p>
+                  <div className="space-y-2">
+                    {pendidikanData.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
+                        <div>
+                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.jenjang}</p>
+                          <p className="text-[12.5px] text-[#333]">{item.institusi}</p>
+                        </div>
+                        <div className="shrink-0 text-left text-[12.5px] text-[#333] sm:ml-4 sm:text-right">
+                          <p>{item.tahunMulai} – {item.tahunSelesai}</p>
+                          {item.ipk && <p>IPK: {item.ipk}</p>}
+                        </div>
                       </div>
-                      <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
-                        <p>{item.tahunMulai} — {item.tahunSelesai}</p>
-                        {item.ipk && <p>IPK: {item.ipk}</p>}
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </section>
 
               {/* Pengalaman Organisasi */}
-              <section className="mb-6">
-                <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Pengalaman Organisasi</h3>
+              <section className="mb-5">
+                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+                  Pengalaman Organisasi
+                </h2>
                 {organisasiData.length === 0 ? (
-                  <p className="text-xs text-[#888]">Belum ada pengalaman organisasi.</p>
+                  <p className="text-[12.5px] text-[#666]">Belum ada pengalaman organisasi.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {organisasiData.map((item, i) => (
-                      <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
                         <div>
-                          <p className="text-sm font-bold text-[#111]">{item.jabatan}</p>
-                          <p className="text-xs text-[#555]">{item.organisasi}</p>
+                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.jabatan}</p>
+                          <p className="text-[12.5px] text-[#333]">{item.organisasi}</p>
                         </div>
-                        <div className="text-left text-xs text-[#555] shrink-0 sm:text-right sm:ml-4">
+                        <div className="shrink-0 text-left text-[12.5px] text-[#333] sm:ml-4 sm:text-right">
                           {item.tahunMulai && item.tahunSelesai
-                            ? `${item.tahunMulai} — ${item.tahunSelesai}`
+                            ? `${item.tahunMulai} – ${item.tahunSelesai}`
                             : item.tahunSelesai}
                         </div>
                       </div>
@@ -244,16 +257,20 @@ function GenerateCV() {
               </section>
 
               {/* Sertifikasi & Pelatihan */}
-              <section className="mb-6">
-                <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Sertifikasi &amp; Pelatihan</h3>
+              <section className="mb-5">
+                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+                  Sertifikasi &amp; Pelatihan
+                </h2>
                 {sertifikasiData.length === 0 ? (
-                  <p className="text-xs text-[#888]">Belum ada sertifikasi/pelatihan.</p>
+                  <p className="text-[12.5px] text-[#666]">Belum ada sertifikasi/pelatihan.</p>
                 ) : (
-                  <ul className="space-y-1">
+                  <ul className="space-y-1 pl-5">
                     {sertifikasiData.map((item, i) => (
-                      <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between text-sm">
-                        <span className="text-[#333]">• {item.nama}</span>
-                        <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
+                      <li key={i} className="list-disc text-[12.5px] text-[#1a1a1a] marker:text-[#1a1a1a]">
+                        <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
+                          <span>{item.nama}</span>
+                          <span className="shrink-0 text-[#333] sm:ml-4">{item.tahun}</span>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -261,21 +278,21 @@ function GenerateCV() {
               </section>
 
               {/* Prestasi & Penghargaan */}
-              <section className="mb-6">
-                <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-[#333]">Prestasi &amp; Penghargaan</h3>
+              <section className="mb-5">
+                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+                  Prestasi &amp; Penghargaan
+                </h2>
                 {prestasiData.length === 0 ? (
-                  <p className="text-xs text-[#888]">Belum ada prestasi.</p>
+                  <p className="text-[12.5px] text-[#666]">Belum ada prestasi.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {prestasiData.map((item, i) => (
-                      <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
                         <div>
-                          <p className="flex items-center gap-1.5 text-sm font-bold text-[#111]">
-                            <span className="text-brand-dark">⊙</span> {item.nama}
-                          </p>
-                          <p className="ml-5 text-xs text-[#555]">{item.pemberi}</p>
+                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.nama}</p>
+                          <p className="text-[12.5px] text-[#333]">{item.pemberi}</p>
                         </div>
-                        <span className="shrink-0 text-xs text-[#555] sm:ml-4">{item.tahun}</span>
+                        <span className="shrink-0 text-[12.5px] text-[#333] sm:ml-4">{item.tahun}</span>
                       </div>
                     ))}
                   </div>
@@ -283,9 +300,9 @@ function GenerateCV() {
               </section>
 
               {/* Footer CV */}
-              <hr className="mb-4 border-[#e0e0e0]" />
-              <p className="text-center text-[10px] text-[#9aa0a6]">
-                Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas •{' '}
+              <hr className="mb-3 border-[#ccc]" />
+              <p className="text-center text-[10.5px] text-[#888]">
+                Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas —{' '}
                 {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>

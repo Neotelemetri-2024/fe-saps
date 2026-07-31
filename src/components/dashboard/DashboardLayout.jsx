@@ -5,7 +5,6 @@ import { getCurrentUser, logout } from '../../services/authService'
 import { getUnreadCount } from '../../services/notifikasiService'
 import Sidebar, { MobileSidebar } from './Sidebar'
 import * as menuConfig from '../../config/menuItems'
-import IconBadge from './IconBadge'
 
 const roleMenuMap = {
   mahasiswa: menuConfig.mahasiswaMenu,
@@ -138,36 +137,39 @@ function DashboardLayout({ role, userName, userRole, children }) {
               </button>
             )}
 
-            <div className={`flex items-center gap-2 ${isDesktop ? 'ml-auto' : ''}`}>
+            <div className={`flex items-center gap-3 sm:gap-4 ${isDesktop ? 'ml-auto' : ''}`}>
               {/* Bell notifikasi */}
               {notifikasiPath && (
                 <button
                   type="button"
                   onClick={() => navigate(notifikasiPath)}
-                  className="relative"
+                  className="relative rounded-lg p-2 text-[#616161] outline-none transition hover:bg-[#f0f4f0] focus:outline-none focus-visible:outline-none"
                   title="Notifikasi"
                 >
-                  <IconBadge icon={<Bell className="h-5 w-5" />} tone="neutral" size="md" />
+                  <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </button>
               )}
 
+              {/* Divider */}
+              <div className="h-8 w-px bg-[#e9ebf8]" />
+
               {/* Profile button + dropdown */}
               <div ref={profileRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setProfileOpen((v) => !v)}
-                  className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-[#f0f4f0]"
+                  className="flex items-center gap-3 rounded-xl px-2 py-1.5 outline-none transition hover:bg-[#f0f4f0] focus:outline-none focus-visible:outline-none"
                 >
                   <div className="text-right">
                     <p className="text-xs font-medium text-black sm:text-sm">{resolvedName}</p>
                     <p className="text-[10px] text-[#616161] sm:text-xs">{resolvedUserRole}</p>
                   </div>
-                  <IconBadge icon={<UserCircle className="h-6 w-6 sm:h-8 sm:w-8" />} tone="neutral" size="lg" rounded="rounded-full" />
+                  <UserCircle className="h-8 w-8 text-[#616161] sm:h-9 sm:w-9" />
                 </button>
 
                 {/* Dropdown */}

@@ -342,6 +342,13 @@ export async function setujuiTolak(id, status, alasan) {
   return res?.data || res
 }
 
+/** PUT /api/dosen/persetujuan-bulk — Dosen PA menyetujui beberapa izin (status diajukan) sekaligus */
+export async function setujuiTolakBulk(ids) {
+  const res = await put('/api/dosen/persetujuan-bulk', { ids: (ids || []).map(String) })
+  emitUpdate('persetujuan')
+  return res?.data || res
+}
+
 export async function getPendingPersetujuanCount() {
   const list = await getPersetujuanDosen({ status: 'pending' })
   return list.length

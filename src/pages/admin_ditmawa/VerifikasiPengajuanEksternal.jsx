@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Filter, Search } from 'lucide-react'
+import { Clock, Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
-import ConfirmModal from '../../components/ui/ConfirmModal'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
-import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
+import { getKegiatanVerifikasi } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
 
 function normalizeKegiatan(k) {
@@ -62,7 +61,15 @@ function VerifikasiPengajuanEksternal() {
   // Pilih Beberapa state
   const [pilihanMode, setPilihanMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false)
+
+  const handleLanjutKePemetaan = () => {
+    const ids = [...selected].filter((id) => items.find((i) => i.id === id)?.status === 'diajukan')
+    if (ids.length === 0) {
+      toast.error('Pilih minimal satu pengajuan berstatus Diajukan.')
+      return
+    }
+    navigate('/admin_ditmawa/pemetaan-capaian-massal', { state: { kegiatanIds: ids } })
+  }
 
   const load = () => {
     setLoading(true)
@@ -138,6 +145,11 @@ function VerifikasiPengajuanEksternal() {
   }
 
   const toggleSelect = (id) => {
+    const item = items.find((i) => i.id === id)
+    if (item && item.status !== 'diajukan') {
+      toast.error('Hanya pengajuan berstatus Diajukan yang dapat dipilih.')
+      return
+    }
     setSelected((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -147,32 +159,12 @@ function VerifikasiPengajuanEksternal() {
   }
 
   const centangSemua = () => {
-    if (selected.size === pageItems.length) {
+    const selectableItems = pageItems.filter((i) => i.status === 'diajukan')
+    const allSelected = selectableItems.length > 0 && selectableItems.every((i) => selected.has(i.id))
+    if (allSelected) {
       setSelected(new Set())
     } else {
-      setSelected(new Set(pageItems.map((i) => i.id)))
-    }
-  }
-
-  const handleBulkSetuju = () => {
-    if (selected.size === 0) {
-      toast.error('Pilih minimal satu pengajuan.')
-      return
-    }
-    setShowBulkConfirm(true)
-  }
-
-  const handleBulkConfirm = async () => {
-    try {
-      await verifikasiBulk([...selected], 'setuju')
-      toast.success(`${selected.size} pengajuan diteruskan ke Pimpinan Ditmawa.`)
-      setSelected(new Set())
-      setPilihanMode(false)
-      setShowBulkConfirm(false)
-      load()
-    } catch (err) {
-      toast.error('Gagal meneruskan', { description: err.message })
-      setShowBulkConfirm(false)
+      setSelected(new Set(selectableItems.map((i) => i.id)))
     }
   }
 
@@ -190,7 +182,7 @@ function VerifikasiPengajuanEksternal() {
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan || '-'}</span> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-brand-light">{row.kategori || '-'}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori || '-'}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal || '-'}</span> },
     { key: 'status', label: 'Status', render: (row) =>
       row.isUlang && row.status === 'diajukan' ? (
@@ -215,16 +207,6 @@ function VerifikasiPengajuanEksternal() {
 
   return (
     <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
-      <ConfirmModal
-        isOpen={showBulkConfirm}
-       
-        message={`Apakah Anda yakin ingin menyetujui pengajuan ini dan meneruskannya ke Pimpinan Ditmawa?`}
-        confirmText="TERUSKAN KE PIMPINAN"
-        cancelText="BATAL"
-        onConfirm={handleBulkConfirm}
-        onCancel={() => setShowBulkConfirm(false)}
-      />
-
       <div className="space-y-5">
         <div>
           <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
@@ -244,12 +226,6 @@ function VerifikasiPengajuanEksternal() {
                 className="w-full text-sm outline-none"
               />
             </div>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              <Filter className="h-4 w-4" /> Filter
-            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -295,25 +271,25 @@ function VerifikasiPengajuanEksternal() {
               ))}
             </select>
 
+            <button
+              type="button"
+              onClick={resetFilter}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
+            >
+              Reset filter
+            </button>
+
             {/* Pilih Beberapa toggle */}
             <button
               type="button"
               onClick={togglePilihanMode}
-              className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
+              className={`rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition ${
                 pilihanMode
-                  ? 'border-brand-dark bg-brand-dark text-white'
-                  : 'border-[#d9dce7] bg-white text-[#616161] hover:bg-[#f5f5f5]'
+                  ? 'bg-brand-dark'
+                  : 'bg-gradient-to-r from-brand-dark to-brand-light hover:opacity-90'
               }`}
             >
               Pilih Beberapa
-            </button>
-
-            <button
-              type="button"
-              onClick={resetFilter}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none transition hover:bg-[#f5f6f8]"
-            >
-              Reset filter
             </button>
           </div>
 
@@ -333,7 +309,7 @@ function VerifikasiPengajuanEksternal() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleBulkSetuju}
+                  onClick={handleLanjutKePemetaan}
                   className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90"
                 >
                   Selanjutnya
@@ -353,6 +329,7 @@ function VerifikasiPengajuanEksternal() {
             selected={selected}
             onSelect={toggleSelect}
             onSelectAll={centangSemua}
+            isSelectable={(row) => row.status === 'diajukan'}
             page={currentPage}
             totalPages={totalPages}
             onPageChange={(p) => setPage(p)}
