@@ -117,7 +117,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
   return (
     <DashboardLayout role={role} userName={form.namaLengkap || 'Pengguna'} userRole={roleLabel}>
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
+        <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
 
         {/* Header Profil */}
         <div className="mx-auto max-w-md rounded-xl border border-[#e9ebf8] bg-white px-6 py-6 shadow-sm">
@@ -125,7 +125,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f0f4f0]">
               <UserCircle className="h-12 w-12 text-brand-dark" />
             </span>
-            <h3 className="mt-3 text-lg font-bold text-brand-dark">{form.namaLengkap || '—'}</h3>
+            <h3 className="mt-3 text-lg font-bold text-[#222]">{form.namaLengkap || '—'}</h3>
             <p className="mt-0.5 text-sm text-[#616161]">NIP: {form.nip || '—'}</p>
             <p className="text-sm text-[#616161]">{form.jabatan}</p>
           </div>
@@ -137,7 +137,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
               <User className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-brand-dark">Informasi Akun</h3>
+              <h3 className="text-lg font-bold text-[#222]">Informasi Akun</h3>
             </div>
             <div className="space-y-4">
               <div>
@@ -208,7 +208,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
               <Lock className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-brand-dark">Ganti Password</h3>
+              <h3 className="text-lg font-bold text-[#222]">Ganti Password</h3>
             </div>
             <div className="space-y-4">
               <div>

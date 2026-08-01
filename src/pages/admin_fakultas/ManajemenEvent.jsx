@@ -525,7 +525,7 @@ function ManajemenEvent() {
         {/* Header halaman */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
               Event Fakultas
             </h2>
 

@@ -146,7 +146,7 @@ function VerifikasiPengajuanUKMF() {
       <div className="space-y-6">
         {/* Header Halaman */}
         <div>
-          <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
+          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
             Verifikasi Pengajuan UKMF
           </h2>
           <p className="mt-1 text-sm text-[#616161]">

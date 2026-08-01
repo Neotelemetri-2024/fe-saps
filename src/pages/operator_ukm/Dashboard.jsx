@@ -193,7 +193,7 @@ function UKMDashboard() {
       <div className="space-y-4 sm:space-y-6">
         {/* Header halaman */}
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
             Dashboard UKM{' '}
             {user?.namaOrganisasi || ''}
           </h2>

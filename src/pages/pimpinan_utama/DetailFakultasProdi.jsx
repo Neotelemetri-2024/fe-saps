@@ -216,7 +216,7 @@ function DetailFakultasProdi() {
         userRole="Pimpinan Utama (Rektor)"
       >
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-10 text-center shadow-sm">
-          <h2 className="text-xl font-bold text-brand-dark">Fakultas tidak ditemukan</h2>
+          <h2 className="text-xl font-bold text-[#222]">Fakultas tidak ditemukan</h2>
           <p className="mt-2 text-sm text-[#616161]">
             ID fakultas tidak valid. Pilih fakultas lain dari halaman ringkasan.
           </p>
@@ -261,7 +261,7 @@ function DetailFakultasProdi() {
 
         <div className="flex items-center justify-between rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <div>
-            <h3 className="text-sm font-bold text-brand-dark">Kurikulum Aktif</h3>
+            <h3 className="text-sm font-bold text-[#222]">Kurikulum Aktif</h3>
             <p className="mt-1 text-sm font-semibold text-[#333]">{kurikulumLabel}</p>
             <p className="mt-0.5 text-xs text-[#616161]">
               {Number(statistik?.totalMahasiswa ?? totalMahasiswa).toLocaleString('id-ID')} Mahasiswa Terdaftar
@@ -290,7 +290,7 @@ function DetailFakultasProdi() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-3">
-            <h3 className="mb-6 text-center text-lg font-bold text-brand-dark">Rata-rata capaian per prodi</h3>
+            <h3 className="mb-6 text-center text-lg font-bold text-[#222]">Rata-rata capaian per prodi</h3>
             {loading || filteredProdi.length === 0 ? (
               <p className="py-10 text-center text-sm text-[#9aa0a6]">Belum ada data grafik.</p>
             ) : (
@@ -299,7 +299,7 @@ function DetailFakultasProdi() {
           </div>
 
           <div className="flex flex-col items-center rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-2">
-            <h3 className="mb-4 text-center text-lg font-bold text-brand-dark">Total mahasiswa</h3>
+            <h3 className="mb-4 text-center text-lg font-bold text-[#222]">Total mahasiswa</h3>
             <SvgDoughnut
               centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
               centerLabel="Mahasiswa"
@@ -325,7 +325,7 @@ function DetailFakultasProdi() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-center text-lg font-bold text-brand-dark">Poin berdasarkan skala kegiatan</h3>
+          <h3 className="mb-6 text-center text-lg font-bold text-[#222]">Poin berdasarkan skala kegiatan</h3>
           <div className="flex flex-col items-center justify-around gap-8 sm:flex-row">
             <SvgDoughnut
               centerValue={Number(totalPoin).toLocaleString('id-ID')}

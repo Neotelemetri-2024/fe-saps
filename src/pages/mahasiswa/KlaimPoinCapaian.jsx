@@ -69,7 +69,7 @@ function KlaimPoinCapaian() {
       userRole="Mahasiswa"
     >
       <div className="space-y-6">
-        <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Klaim Poin Capaian</h2>
+        <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Klaim Poin Capaian</h2>
 
         <TableCard title="Klaim Poin Anda">
           <div className="flex flex-wrap items-center gap-3">

@@ -258,7 +258,7 @@ function BuatKegiatan() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
             {isEdit ? 'Edit Kegiatan' : 'Buat Kegiatan'}
           </h2>
           <p className="mt-1 text-sm text-[#616161]">
@@ -271,7 +271,7 @@ function BuatKegiatan() {
         <form onSubmit={handleSimpanDraft} className="space-y-5">
           {/* ── 1. Informasi Kegiatan ── */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-brand-dark">1. Informasi Kegiatan</h3>
+            <h3 className="text-base font-bold text-[#222]">1. Informasi Kegiatan</h3>
             <p className="mt-0.5 mb-4 text-sm text-[#616161]">Lengkapi informasi kegiatan terlebih dahulu</p>
             <div className="space-y-4">
 
@@ -407,7 +407,7 @@ function BuatKegiatan() {
 
           {/* ── 2. Pemetaan Capaian Kurikulum ── */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-brand-dark">2. Pemetaan Capaian Kurikulum</h3>
+            <h3 className="text-base font-bold text-[#222]">2. Pemetaan Capaian Kurikulum</h3>
             <p className="mt-0.5 mb-4 text-sm text-[#616161]">Tentukan capaian kurikulum yang dicapai melalui kegiatan ini</p>
 
             {loadingKur ? (

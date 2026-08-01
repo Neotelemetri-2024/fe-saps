@@ -89,7 +89,7 @@ function PimpinanDitmawaDashboard() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-brand-dark">
+          <h3 className="text-lg font-bold text-[#222]">
             Grafik poin per UKM berdasarkan pengajuan Kegiatan
           </h3>
           {grafikData.length === 0 ? (

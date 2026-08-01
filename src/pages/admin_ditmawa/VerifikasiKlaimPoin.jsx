@@ -218,7 +218,7 @@ function VerifikasiKlaimPoin() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
             Verifikasi Klaim Poin Kegiatan Eksternal
           </h2>
         </div>

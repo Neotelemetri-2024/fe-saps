@@ -468,7 +468,7 @@ function ManajemenKurikulum() {
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Manajemen Kurikulum</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Kurikulum</h2>
           <p className="mt-1 text-sm text-[#616161]">Kelola kurikulum dan pemetaan Capaian dan Sub Capaian sesuai BRD.</p>
         </div>
 

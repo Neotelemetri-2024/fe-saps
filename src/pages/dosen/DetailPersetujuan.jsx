@@ -71,7 +71,7 @@ function DetailPersetujuanDosen() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Permintaan Persetujuan</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Permintaan Persetujuan</h2>
             <p className="mt-1 text-sm text-[#616161]">Tinjau detail kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -109,7 +109,7 @@ function DetailPersetujuanDosen() {
 
         {isActionable && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-brand-dark">Keputusan</h3>
+            <h3 className="text-sm font-bold text-[#222]">Keputusan</h3>
             {!actionType ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button type="button" onClick={handleSetuju} disabled={loading}

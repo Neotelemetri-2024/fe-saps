@@ -168,7 +168,7 @@ function DetailVerifikasiPengajuanInternal() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan Internal</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Pengajuan Internal</h2>
             <p className="mt-1 text-sm text-[#616161]">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={item.status} /></div>
@@ -234,7 +234,7 @@ function DetailVerifikasiPengajuanInternal() {
         {canAct && showCapaianForm && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm space-y-5">
             <div>
-              <h3 className="text-base font-bold text-brand-dark">Pemetaan Capaian Kurikulum</h3>
+              <h3 className="text-base font-bold text-[#222]">Pemetaan Capaian Kurikulum</h3>
               <p className="mt-0.5 text-sm text-[#616161]">Tentukan capaian sebelum meneruskan ke Pimpinan.</p>
             </div>
             {loadingKur ? <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p> : !kurikulum ? <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan.</p> : (

@@ -54,7 +54,7 @@ function AkunPengaturan() {
   return (
     <DashboardLayout role="admin_ditmawa" userName="Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP" userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
+        <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
 
         {/* Header Profil */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -62,7 +62,7 @@ function AkunPengaturan() {
             <div className="flex items-center gap-6">
               <img src={logoUnand} alt="Logo Unand" className="h-20 w-auto object-contain" />
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-brand-dark">{form.namaLengkap}</h3>
+                <h3 className="text-lg font-bold text-[#222]">{form.namaLengkap}</h3>
                 <p className="text-sm text-[#616161]">NIP: {form.nip}</p>
                 <p className="text-sm text-[#616161]">{form.jabatan}</p>
               </div>
@@ -86,7 +86,7 @@ function AkunPengaturan() {
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
               <User className="h-5 w-5" />
             </span>
-            <h3 className="text-lg font-bold text-brand-dark">Informasi Akun</h3>
+            <h3 className="text-lg font-bold text-[#222]">Informasi Akun</h3>
           </div>
           <div className="space-y-4">
             <div>
@@ -156,7 +156,7 @@ function AkunPengaturan() {
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
               <Lock className="h-5 w-5" />
             </span>
-            <h3 className="text-lg font-bold text-brand-dark">Ganti Password</h3>
+            <h3 className="text-lg font-bold text-[#222]">Ganti Password</h3>
           </div>
           <div className="space-y-4">
             <div>

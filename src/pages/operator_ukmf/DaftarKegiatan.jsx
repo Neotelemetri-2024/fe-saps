@@ -103,7 +103,7 @@ function DaftarKegiatan() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Daftar Kegiatan</h2>
+            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Daftar Kegiatan</h2>
             <p className="mt-1 text-sm text-[#616161]">
               Simpan draft dulu, lalu kirim ke Admin Fakultas setelah siap.
             </p>

@@ -101,7 +101,7 @@ function MahasiswaBimbingan() {
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Mahasiswa Bimbingan</h2>
+        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Mahasiswa Bimbingan</h2>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 shadow-sm">

@@ -37,7 +37,7 @@ function Dashboard() {
     >
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Dashboard</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Dashboard</h2>
           <p className="mt-1 text-sm text-[#616161]">
             Hallo, selamat datang {user?.nama || 'Pimpinan Ditmawa'} !
           </p>

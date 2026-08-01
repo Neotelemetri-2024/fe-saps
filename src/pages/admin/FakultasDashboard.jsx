@@ -79,7 +79,7 @@ function AdminFakultasDashboard() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-lg font-bold text-brand-dark">Rata-rata Capaian per Prodi</h3>
+            <h3 className="mb-4 text-lg font-bold text-[#222]">Rata-rata Capaian per Prodi</h3>
             <div className="space-y-3">
               {[
                 { prodi: 'Teknik Mesin', pct: 78 }, { prodi: 'Teknik Industri', pct: 72 }, { prodi: 'Informatika', pct: 85 },

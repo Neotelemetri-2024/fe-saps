@@ -109,7 +109,7 @@ function VerifikasiPengajuanUKMF() {
     <DashboardLayout role="pimpinan_fakultas" userName="Dr. Eng. Ir. Dendi Adi Saputra M, S.T, M.T" userRole="Pimpinan">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Verifikasi Pengajuan UKMF</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Verifikasi Pengajuan UKMF</h2>
           <p className="mt-1 text-sm text-[#616161]">Verifikasi dan kelola pengajuan kegiatan dari UKMF.</p>
         </div>
 

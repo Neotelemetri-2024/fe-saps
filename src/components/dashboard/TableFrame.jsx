@@ -26,7 +26,7 @@ export function TableCard({
     <div className={`rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6 ${className}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-bold text-brand-dark sm:text-lg">{title}</h3>
+          <h3 className="text-sm font-bold text-[#222] sm:text-lg">{title}</h3>
           {description && (
             <p className="mt-0.5 text-xs text-[#616161] sm:text-sm">{description}</p>
           )}

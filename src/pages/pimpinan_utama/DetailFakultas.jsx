@@ -83,7 +83,7 @@ function DetailFakultas() {
       userRole="Pimpinan Utama (Rektor)"
     >
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Detail Fakultas</h2>
+        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Detail Fakultas</h2>
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-5 text-sm text-[#444]">

@@ -102,7 +102,7 @@ function Dashboard() {
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
+          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
             Dasboard Fakultas <span className="text-[#222]">{namaFakultas || ''}</span>
           </h2>
           <p className="mt-1 text-sm text-[#616161]">Verifikasi dan ajukan lanjutan kegiatan dari UKMF ke Pimpinan Fakultas</p>

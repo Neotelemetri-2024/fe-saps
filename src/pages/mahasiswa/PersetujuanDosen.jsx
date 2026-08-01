@@ -404,7 +404,7 @@ function PersetujuanDosen() {
 
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Persetujuan Dosen PA</h2>
+          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Persetujuan Dosen PA</h2>
           <p className="mt-1 text-sm text-[#616161]">
             Daftar permintaan izin kegiatan yang sudah dikirim ke Dosen Pembimbing Akademik.
           </p>

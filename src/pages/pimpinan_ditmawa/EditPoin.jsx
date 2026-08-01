@@ -36,7 +36,7 @@ function EditPoin() {
   return (
     <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Edit Poin</h2>
+        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Edit Poin</h2>
 
         <button
           type="button"

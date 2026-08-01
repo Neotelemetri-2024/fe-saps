@@ -216,7 +216,7 @@ function PemetaanCapaianMassal() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Pemetaan Capaian Massal</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Pemetaan Capaian Massal</h2>
             <p className="mt-1 text-sm text-[#616161]">
               Isi pemetaan capaian kurikulum untuk {kegiatans.length} kegiatan sebelum diteruskan ke Pimpinan.
             </p>
@@ -240,7 +240,7 @@ function PemetaanCapaianMassal() {
             {/* Daftar kegiatan */}
             <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden self-start">
               <div className="border-b border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-                <h3 className="text-sm font-bold text-brand-dark">Daftar Kegiatan</h3>
+                <h3 className="text-sm font-bold text-[#222]">Daftar Kegiatan</h3>
               </div>
               <div className="divide-y divide-[#e9ebf8]">
                 {kegiatans.map((k, idx) => {
@@ -290,7 +290,7 @@ function PemetaanCapaianMassal() {
             {/* Form pemetaan */}
             <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6 space-y-5">
               <div>
-                <h3 className="text-base font-bold text-brand-dark">Pemetaan Capaian — Kegiatan {activeIndex + 1} dari {kegiatans.length}</h3>
+                <h3 className="text-base font-bold text-[#222]">Pemetaan Capaian — Kegiatan {activeIndex + 1} dari {kegiatans.length}</h3>
                 <p className="mt-0.5 text-sm text-[#616161]">{active?.nama}</p>
               </div>
 

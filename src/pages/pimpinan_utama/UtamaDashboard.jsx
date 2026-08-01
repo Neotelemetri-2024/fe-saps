@@ -134,7 +134,7 @@ function PimpinanUtamaDashboard() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-center text-lg font-bold text-brand-dark">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
+          <h3 className="mb-4 text-center text-lg font-bold text-[#222]">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
           {loading ? (
             <p className="py-16 text-center text-sm text-[#9aa0a6]">Memuat grafik…</p>
           ) : chartData.length === 0 ? (
@@ -149,7 +149,7 @@ function PimpinanUtamaDashboard() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Ranking Fakultas</h3>
+          <h3 className="mb-4 text-lg font-bold text-[#222]">Ranking Fakultas</h3>
           <p className="text-sm text-[#616161] mb-4">Daftar peringkat seluruh fakultas berdasarkan total poin semua matriks</p>
           {loading ? (
             <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat ranking…</p>

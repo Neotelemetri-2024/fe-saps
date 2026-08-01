@@ -40,7 +40,7 @@ function DetailIzinPAMahasiswa() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Izin Dosen PA</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Izin Dosen PA</h2>
             <p className="mt-1 text-sm text-[#616161]">Informasi kegiatan yang dimintakan persetujuan ke Dosen PA.</p>
           </div>
           <div className="shrink-0">

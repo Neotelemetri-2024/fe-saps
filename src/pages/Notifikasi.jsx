@@ -187,7 +187,7 @@ function Notifikasi() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl lg:text-3xl">Notifikasi</h2>
+            <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Notifikasi</h2>
             <p className="mt-1.5 text-sm font-medium text-[#203820]">
               {loading
                 ? 'Memuat…'

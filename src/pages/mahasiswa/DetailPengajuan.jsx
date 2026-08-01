@@ -39,7 +39,7 @@ function DetailPengajuanMahasiswa() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan Kegiatan</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Pengajuan Kegiatan</h2>
             <p className="mt-1 text-sm text-[#616161]">Informasi lengkap kegiatan yang telah diajukan.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={row.status} /></div>

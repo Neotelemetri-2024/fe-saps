@@ -207,7 +207,7 @@ function DosenPADashboard() {
 
             {/* Permintaan Persetujuan */}
             <div className="flex-1 rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-brand-dark">Permintaan Persetujuan</h3>
+              <h3 className="text-sm font-bold text-[#222]">Permintaan Persetujuan</h3>
               <div className="mt-3 divide-y divide-[#f0f2f8]">
                 {loading ? (
                   <p className="py-3 text-xs text-[#888]">Memuat…</p>

@@ -243,7 +243,7 @@ function LandingPage() {
       {/* Alur Sistem */}
       <section className="bg-[#f9fafb] px-4 py-12 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-[1440px]">
-          <h2 className="text-center text-2xl font-bold text-brand-dark sm:text-3xl">
+          <h2 className="text-center text-2xl font-bold text-[#222] sm:text-3xl">
             Alur Sistem MyUnand Student Connect
           </h2>
           <p className="mt-2 text-center text-xs text-[#616161] sm:text-sm">
@@ -257,7 +257,7 @@ function LandingPage() {
                   <div className="mx-auto flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white shadow-lg ring-4 ring-brand-dark/10 sm:h-[70px] sm:w-[70px]">
                     {step.icon}
                   </div>
-                  <h3 className="mt-3 text-base font-bold text-brand-dark sm:mt-4 sm:text-lg">{step.title}</h3>
+                  <h3 className="mt-3 text-base font-bold text-[#222] sm:mt-4 sm:text-lg">{step.title}</h3>
                   <p className="mt-2 text-xs leading-relaxed text-[#616161] sm:text-sm">{step.desc}</p>
                 </div>
               ))}
@@ -269,7 +269,7 @@ function LandingPage() {
       {/* Pengguna Sistem */}
       <section className="px-4 py-12 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-[1440px]">
-          <h2 className="text-center text-2xl font-bold text-brand-dark sm:text-3xl">
+          <h2 className="text-center text-2xl font-bold text-[#222] sm:text-3xl">
             Pengguna Sistem
           </h2>
           <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
@@ -281,7 +281,7 @@ function LandingPage() {
                 <div className="mx-auto mb-3 flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#f0f4f0] text-brand-dark sm:mb-4 sm:h-[60px] sm:w-[60px]">
                   {role.icon}
                 </div>
-                <h3 className="text-base font-bold text-brand-dark sm:text-lg">{role.title}</h3>
+                <h3 className="text-base font-bold text-[#222] sm:text-lg">{role.title}</h3>
                 <p className="mt-2 text-xs leading-relaxed text-[#616161] sm:text-sm">{role.desc}</p>
               </div>
             ))}
@@ -292,7 +292,7 @@ function LandingPage() {
       {/* Aturan Bisnis */}
       <section className="bg-[#f9fafb] px-4 py-12 sm:px-8 sm:py-16">
         <div className="mx-auto max-w-[1440px] text-center">
-          <h2 className="text-2xl font-bold text-brand-dark sm:text-3xl">
+          <h2 className="text-2xl font-bold text-[#222] sm:text-3xl">
             Aturan Bisnis Utama (Business Rules)
           </h2>
           <div className="mx-auto mt-6 grid max-w-4xl gap-3 sm:mt-8 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">

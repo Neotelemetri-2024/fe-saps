@@ -606,7 +606,7 @@ function ManajemenAkunUKMF() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">
+            <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
               Manajemen Akun UKMF
             </h2>
 

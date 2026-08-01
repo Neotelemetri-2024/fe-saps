@@ -202,7 +202,7 @@ function ManajemenPesertaEvent() {
         </button>
 
         <div>
-          <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">{event.nama}</h2>
+          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">{event.nama}</h2>
           <p className="mt-1 text-sm text-[#616161]">
             {[event.jenis, event.tanggal, event.lokasi].filter(Boolean).join(' · ')}
           </p>

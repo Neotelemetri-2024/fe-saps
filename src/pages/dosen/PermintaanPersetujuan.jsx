@@ -171,7 +171,7 @@ function PermintaanPersetujuan() {
 
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">
+          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
             Permintaan Persetujuan
           </h2>
           <p className="text-sm text-[#616161]">

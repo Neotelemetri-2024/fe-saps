@@ -187,7 +187,7 @@ function ManajemenPeserta() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Manajemen Peserta</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Peserta</h2>
           <p className="mt-1 text-sm text-[#616161]">
             {kegiatan.nama}
             {kegiatan.tanggal && ` · ${kegiatan.tanggal}`}

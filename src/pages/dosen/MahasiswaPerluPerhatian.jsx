@@ -94,7 +94,7 @@ function MahasiswaPerluPerhatian() {
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
+        <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
         <TableCard title="Mahasiswa Perlu Perhatian">
           <TableFrame>
             {loading ? (

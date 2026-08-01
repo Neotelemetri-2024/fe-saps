@@ -223,7 +223,7 @@ function DosenPADetail() {
                 {(m.nama || '?').split(' ').map((n) => n[0]).slice(0, 2).join('')}
               </div>
               <div>
-                <h2 className="text-lg font-extrabold text-brand-dark">{loading ? 'Memuat…' : m.nama}</h2>
+                <h2 className="text-lg font-extrabold text-[#222]">{loading ? 'Memuat…' : m.nama}</h2>
                 <p className="text-sm text-[#555]">{m.nim} • {m.prodi}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-brand-dark px-3 py-0.5 text-xs font-semibold text-white">
@@ -310,7 +310,7 @@ function DosenPADetail() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-5 text-base font-bold text-brand-dark">Timeline Aktivitas</h3>
+          <h3 className="mb-5 text-base font-bold text-[#222]">Timeline Aktivitas</h3>
           {timelineAktivitas.length === 0 ? (
             <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada timeline aktivitas.</p>
           ) : (
@@ -350,7 +350,7 @@ function DosenPADetail() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-brand-dark">Pesan untuk Mahasiswa</h3>
+          <h3 className="mb-4 text-base font-bold text-[#222]">Pesan untuk Mahasiswa</h3>
           <textarea
             value={pesan}
             onChange={(e) => setPesan(e.target.value)}
@@ -368,7 +368,7 @@ function DosenPADetail() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-brand-dark">Riwayat Catatan</h3>
+          <h3 className="mb-4 text-base font-bold text-[#222]">Riwayat Catatan</h3>
           {riwayatCatatan.length === 0 ? (
             <p className="py-4 text-center text-sm text-[#9aa0a6]">Belum ada catatan.</p>
           ) : (

@@ -139,7 +139,7 @@ function TambahMatriks() {
     >
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-brand-dark sm:text-3xl">Tambah Kurikulum / Matriks</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Tambah Kurikulum / Matriks</h2>
         </div>
 
         <button

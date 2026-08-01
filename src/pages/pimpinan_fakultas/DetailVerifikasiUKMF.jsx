@@ -141,7 +141,7 @@ function DetailVerifikasiUKMF() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Detail Pengajuan UKMF</h2>
+            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Pengajuan UKMF</h2>
             <p className="mt-1 text-sm text-[#616161]">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={item.status} /></div>

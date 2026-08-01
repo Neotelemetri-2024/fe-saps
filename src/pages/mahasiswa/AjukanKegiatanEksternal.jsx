@@ -333,7 +333,7 @@ function AjukanKegiatanEksternal() {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-brand-dark sm:text-2xl">Daftar Pengajuan</h2>
+          <h2 className="text-lg font-bold text-[#222] sm:text-2xl">Daftar Pengajuan</h2>
           <button
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"

@@ -108,7 +108,7 @@ function RiwayatKegiatanInternal() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
     
-          <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Riwayat Kegiatan Internal</h2>
+          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Riwayat Kegiatan Internal</h2>
         </div>
         <p className="text-sm text-[#616161]">Rekap seluruh kegiatan internal (UKM, UKMF, dan Universitas) yang pernah Anda ikuti.</p>
 

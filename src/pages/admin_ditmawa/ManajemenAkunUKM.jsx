@@ -287,7 +287,7 @@ function ManajemenAkunUKM() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-bold text-brand-dark">Manajemen Akun UKM</h2>
+          <h2 className="text-2xl font-bold text-[#222]">Manajemen Akun UKM</h2>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

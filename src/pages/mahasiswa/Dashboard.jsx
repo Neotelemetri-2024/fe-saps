@@ -139,7 +139,7 @@ function MahasiswaDashboard() {
 
         {/* Progres Tahunan */}
         <div>
-          <h3 className="text-lg font-bold text-brand-dark">Progres Capaian Tahunan</h3>
+          <h3 className="text-lg font-bold text-[#222]">Progres Capaian Tahunan</h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {tahunanProgress.map((t, i) => {
               const pct = t.target > 0 ? Math.round(((t.poin || 0) / t.target) * 100) : 0

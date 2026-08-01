@@ -189,7 +189,7 @@ function AjukanKegiatanForm() {
 
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">
+            <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
               {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
             </h2>
             <p className="mt-1 text-sm text-[#616161]">
@@ -213,7 +213,7 @@ function AjukanKegiatanForm() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-bold text-brand-dark">Detail Kegiatan</h3>
+          <h3 className="mb-6 text-lg font-bold text-[#222]">Detail Kegiatan</h3>
 
           <div className="space-y-6">
             <div>
