@@ -14,6 +14,7 @@ import {
   submitPoinPeserta,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function formatTanggal(val) {
   if (!val) return ''
@@ -253,85 +254,87 @@ function ManajemenPeserta() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-sm">
-              <thead>
-                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="w-16 px-4 py-3 text-center">No</th>
-                  <th className="px-4 py-3 text-center">NIM</th>
-                  <th className="px-4 py-3 text-center">Nama</th>
-                  <th className="px-4 py-3 text-center">Prodi</th>
-                  <th className="px-4 py-3 text-center">Hadir</th>
-                  <th className="px-4 py-3 text-center">Peran</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
-                ) : filtered.map((p) => (
-                  <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="w-16 px-4 py-3 text-center text-[#616161]">{p.no}</td>
-                    <td className="px-4 py-3 font-medium text-[#333]">{p.nim || '-'}</td>
-                    <td className="px-4 py-3 text-[#616161]">{p.nama}</td>
-                    <td className="px-4 py-3 text-[#616161]">{p.prodi}</td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={!!p.hadir}
-                        onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.checked)}
-                        disabled={!isEditing}
-                        className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-default"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={p.peranVerifId || ''}
-                        onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
-                        disabled={!isEditing}
-                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
-                      >
-                        <option value="">Pilih Peran</option>
-                        {peranOptions.map((opt) => (
-                          <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
-                        ))}
-                      </select>
-                    </td>
+        <TableCard title="Daftar Peserta">
+          <TableFrame>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left text-sm">
+                <thead>
+                  <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="w-16 px-4 py-3 text-center">No</th>
+                    <th className="px-4 py-3 text-center">NIM</th>
+                    <th className="px-4 py-3 text-center">Nama</th>
+                    <th className="px-4 py-3 text-center">Prodi</th>
+                    <th className="px-4 py-3 text-center">Hadir</th>
+                    <th className="px-4 py-3 text-center">Peran</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {!loading && (
-            <div className="flex items-center justify-between border-t border-[#e9ebf8] px-6 py-3">
-              <span className="text-xs text-[#888]">
-                Menampilkan {filtered.length} dari {pesertaData.length} peserta
-              </span>
-              <div className="flex items-center gap-3">
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
-                  >
-                    Edit
-                  </button>
-                )}
-                {isEditing && (
-                  <button
-                    onClick={handleSubmitPoin}
-                    disabled={submitLoading}
-                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                  >
-                    {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
-                  </button>
-                )}
-              </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
+                  ) : filtered.length === 0 ? (
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
+                  ) : filtered.map((p) => (
+                    <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                      <td className="w-16 px-4 py-3 text-center text-[#616161]">{p.no}</td>
+                      <td className="px-4 py-3 font-medium text-[#333]">{p.nim || '-'}</td>
+                      <td className="px-4 py-3 text-[#616161]">{p.nama}</td>
+                      <td className="px-4 py-3 text-[#616161]">{p.prodi}</td>
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={!!p.hadir}
+                          onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.checked)}
+                          disabled={!isEditing}
+                          className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-default"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={p.peranVerifId || ''}
+                          onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
+                          disabled={!isEditing}
+                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                        >
+                          <option value="">Pilih Peran</option>
+                          {peranOptions.map((opt) => (
+                            <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+
+            {!loading && (
+              <div className="flex items-center justify-between border-t border-[#e9ebf8] px-6 py-3">
+                <span className="text-xs text-[#888]">
+                  Menampilkan {filtered.length} dari {pesertaData.length} peserta
+                </span>
+                <div className="flex items-center gap-3">
+                  {!isEditing && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {isEditing && (
+                    <button
+                      onClick={handleSubmitPoin}
+                      disabled={submitLoading}
+                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                    >
+                      {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </TableFrame>
+        </TableCard>
 
         {submitted && (
           <div className="pt-2">

@@ -4,6 +4,7 @@ import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
+import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
 import KegiatanCell from "../../components/dashboard/KegiatanCell";
 import StatusBadge from "../../components/dashboard/StatusBadge";
 import ConfirmModal from "../../components/ui/ConfirmModal";
@@ -219,20 +220,19 @@ function PermintaanPersetujuan() {
           </div>
         )}
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-brand-dark sm:text-lg">
-            Permintaan Persetujuan
-          </h3>
-          <DataTable
-            columns={columns}
-            data={filteredData}
-            selectable={pilihanMode}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={centangSemua}
-            isSelectable={isSelectable}
-          />
-        </div>
+        <TableCard title="Permintaan Persetujuan">
+          <TableFrame>
+            <DataTable
+              columns={columns}
+              data={filteredData}
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onSelectAll={centangSemua}
+              isSelectable={isSelectable}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   );

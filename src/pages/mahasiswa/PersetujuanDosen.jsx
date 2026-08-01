@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, FileText, UploadCloud, Eye, RefreshCw } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -409,12 +410,8 @@ function PersetujuanDosen() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="text-base font-bold text-brand-dark sm:text-lg">
-            Kegiatan yang telah diajukan ke Dosen PA
-          </h3>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+        <TableCard title="Persetujuan Dosen PA">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
               <Search className="h-4 w-4 text-[#616161]" />
               <input
@@ -446,7 +443,7 @@ function PersetujuanDosen() {
             )}
           </div>
 
-          <div className="mt-4">
+          <TableFrame>
             <DataTable
               columns={[
                 { key: 'no', label: 'No' },
@@ -507,7 +504,7 @@ function PersetujuanDosen() {
               onSelect={toggleSelect}
               isSelectable={(row) => row.status === 'disetujui' && !row.sudahDiklaim}
             />
-          </div>
+          </TableFrame>
 
           {/* Tombol klaim poin — di bawah tabel */}
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
@@ -542,7 +539,7 @@ function PersetujuanDosen() {
               </button>
             )}
           </div>
-        </div>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

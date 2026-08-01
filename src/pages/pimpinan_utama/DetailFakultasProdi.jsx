@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardFakultasDetail } from '../../services/dashboardService'
 
@@ -271,10 +272,8 @@ function DetailFakultasProdi() {
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-5 py-4">
-            <h3 className="text-lg font-bold text-brand-dark">Peringkat Prodi</h3>
-          </div>
+        <TableCard title="Peringkat Prodi">
+          <TableFrame>
           <DataTable
             loading={loading}
             data={filteredProdi}
@@ -286,7 +285,8 @@ function DetailFakultasProdi() {
               { key: 'kategori', label: 'Kategori Poin', render: (item) => <KategoriPoinBar item={item} /> },
             ]}
           />
-        </div>
+          </TableFrame>
+        </TableCard>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-3">

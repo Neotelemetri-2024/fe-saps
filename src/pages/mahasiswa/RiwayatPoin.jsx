@@ -3,6 +3,7 @@ import { Search, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ProgressBar from '../../components/dashboard/ProgressBar'
@@ -189,10 +190,8 @@ function RiwayatPoin() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="text-base font-bold text-brand-dark sm:text-lg">Riwayat Poin</h3>
-
-          <div className="mt-4 flex flex-wrap items-center gap-4">
+        <TableCard title="Riwayat Poin">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
               <Search className="h-4 w-4 text-[#616161]" />
               <input
@@ -225,14 +224,14 @@ function RiwayatPoin() {
             <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
           </div>
 
-          <div className="mt-6">
+          <TableFrame>
             {loading ? (
               <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat riwayat…</p>
             ) : (
               <DataTable columns={columns} data={filtered} />
             )}
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

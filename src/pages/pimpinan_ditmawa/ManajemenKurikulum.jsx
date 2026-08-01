@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import Modal from '../../components/ui/Modal'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import {
   getKurikulum,
   getKurikulumById,
@@ -568,7 +569,8 @@ function ManajemenKurikulum() {
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+            <TableCard title="Manajemen Kurikulum">
+              <TableFrame>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead>
@@ -660,7 +662,8 @@ function ManajemenKurikulum() {
                   </tbody>
                 </table>
               </div>
-            </div>
+              </TableFrame>
+            </TableCard>
           </div>
         )}
       </div>

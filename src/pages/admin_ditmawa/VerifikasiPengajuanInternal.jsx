@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
@@ -264,21 +265,23 @@ function VerifikasiPengajuanInternal() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <DataTable
-            columns={columns}
-            data={pageItems}
-            loading={loading}
-            emptyText="Belum ada pengajuan internal."
-            selectable={pilihanMode}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={centangSemua}
-            page={currentPage}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </div>
+        <TableCard title="Daftar Pengajuan Internal" description="Pengajuan kegiatan internal oleh mahasiswa.">
+          <TableFrame>
+            <DataTable
+              columns={columns}
+              data={pageItems}
+              loading={loading}
+              emptyText="Belum ada pengajuan internal."
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onSelectAll={centangSemua}
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

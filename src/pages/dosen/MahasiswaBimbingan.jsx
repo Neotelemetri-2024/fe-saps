@@ -4,6 +4,7 @@ import { Search, Clock, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
@@ -125,7 +126,8 @@ function MahasiswaBimbingan() {
           </select>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Mahasiswa Bimbingan">
+          <TableFrame>
         <DataTable
           columns={[
             {
@@ -182,7 +184,8 @@ function MahasiswaBimbingan() {
           totalPages={totalPages}
           onPageChange={setPage}
         />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

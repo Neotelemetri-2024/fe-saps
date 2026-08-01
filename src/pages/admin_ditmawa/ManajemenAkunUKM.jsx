@@ -4,6 +4,7 @@ import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getAkunUKM,
@@ -311,15 +312,16 @@ function ManajemenAkunUKM() {
         </div>
 
         <div>
-          <h3 className="mb-3 text-lg font-bold text-brand-dark">Akun UKM yang telah dibuat</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <DataTable
-              columns={columns}
-              data={filtered}
-              loading={loading}
-              emptyText="Tidak ada data UKM."
-            />
-          </div>
+          <TableCard title="Akun UKM yang telah dibuat">
+            <TableFrame>
+              <DataTable
+                columns={columns}
+                data={filtered}
+                loading={loading}
+                emptyText="Tidak ada data UKM."
+              />
+            </TableFrame>
+          </TableCard>
         </div>
       </div>
     </DashboardLayout>

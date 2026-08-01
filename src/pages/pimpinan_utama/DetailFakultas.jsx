@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Eye } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanUtama } from '../../services/dashboardService'
 
@@ -98,7 +99,8 @@ function DetailFakultas() {
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Peringkat Fakultas">
+          <TableFrame>
         <DataTable
           loading={loading}
           data={pageItems}
@@ -128,7 +130,8 @@ function DetailFakultas() {
             },
           ]}
         />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { StackedBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
@@ -116,19 +117,16 @@ function Dashboard() {
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-6 py-4">
-            <h3 className="text-base font-bold text-[#222]">Riwayat Terbaru Pengajuan kegiatan dari UKMF</h3>
-          </div>
-          <div className="p-4">
+        <TableCard title="Riwayat Terbaru Pengajuan kegiatan dari UKMF">
+          <TableFrame>
             <DataTable
               columns={columns}
               data={riwayat}
               loading={loading}
               emptyText="Belum ada pengajuan."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">

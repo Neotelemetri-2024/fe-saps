@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanFakultas } from '../../services/dashboardService'
 
@@ -240,11 +241,9 @@ function PimpinanFakultasDashboard() {
         </div>
 
         {/* Peringkat Prodi */}
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-5 py-4">
-            <h3 className="text-base font-bold text-[#222]">Peringkat Prodi</h3>
-            <p className="mt-0.5 text-xs text-[#888]">Kategori Poin</p>
-            <div className="mt-2 flex gap-4 text-xs font-medium text-[#555]">
+        <TableCard title="Peringkat Prodi" description="Kategori Poin"
+          headerRight={
+            <div className="flex gap-4 text-xs font-medium text-[#555]">
               {[['#15803d', 'Organisasi'], ['#3b82f6', 'Seminar'], ['#eab308', 'Prestasi']].map(([c, l]) => (
                 <span key={l} className="flex items-center gap-1.5">
                   <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
@@ -252,7 +251,8 @@ function PimpinanFakultasDashboard() {
                 </span>
               ))}
             </div>
-          </div>
+          }>
+          <TableFrame>
           <DataTable
             loading={loading}
             data={mappedPeringkat}
@@ -282,7 +282,8 @@ function PimpinanFakultasDashboard() {
               },
             ]}
           />
-        </div>
+          </TableFrame>
+        </TableCard>
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-5">

@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanVerifikasi } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
@@ -320,22 +321,24 @@ function VerifikasiPengajuanEksternal() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <DataTable
-            columns={columns}
-            data={pageItems}
-            loading={loading}
-            emptyText="Belum ada pengajuan."
-            selectable={pilihanMode}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={centangSemua}
-            isSelectable={(row) => row.status === 'diajukan'}
-            page={currentPage}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </div>
+        <TableCard title="Daftar Pengajuan Eksternal" description="Pengajuan kegiatan nasional/internasional oleh mahasiswa.">
+          <TableFrame>
+            <DataTable
+              columns={columns}
+              data={pageItems}
+              loading={loading}
+              emptyText="Belum ada pengajuan."
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onSelectAll={centangSemua}
+              isSelectable={(row) => row.status === 'diajukan'}
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

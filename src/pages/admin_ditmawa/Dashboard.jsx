@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import StatusBadge from "../../components/dashboard/StatusBadge";
 import DataTable from "../../components/dashboard/DataTable";
+import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
 import PanduanCard from "../../components/dashboard/PanduanCard";
 import { getCurrentUser } from "../../services/authService";
 import { getDashboardAdminDitmawa } from "../../services/dashboardService";
@@ -203,20 +204,16 @@ function AdminDitmawaDashboard() {
           ))}
         </div>
 
-        <section className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">
-            Kegiatan terbaru
-          </h3>
-
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8]">
+        <TableCard title="Kegiatan terbaru">
+          <TableFrame>
             <DataTable
               columns={kegiatanColumns}
               data={kegiatanTerbaru}
               loading={loading}
               emptyText="Belum ada kegiatan."
             />
-          </div>
-        </section>
+          </TableFrame>
+        </TableCard>
 
         <PanduanCard
           className="max-w-lg"

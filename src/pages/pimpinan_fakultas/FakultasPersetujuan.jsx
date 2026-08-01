@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
@@ -72,10 +73,11 @@ function PimpinanFakultasPersetujuan() {
   return (
     <DashboardLayout role="pimpinan_fakultas" userName="Dr. Andi Wijaya" userRole="Pimpinan Fakultas">
       <div className="space-y-6">
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Persetujuan Kegiatan</h3>
-          <DataTable columns={columns} data={data} />
-        </div>
+        <TableCard title="Persetujuan Kegiatan">
+          <TableFrame>
+            <DataTable columns={columns} data={data} />
+          </TableFrame>
+        </TableCard>
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold text-brand-dark">Alasan Penolakan</h3>
           <textarea className="w-full rounded-lg border border-[#e9ebf8] p-4 text-sm outline-none" rows={3} placeholder="Tuliskan alasan jika menolak pengajuan..." />

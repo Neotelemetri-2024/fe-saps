@@ -5,6 +5,7 @@ import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
@@ -366,22 +367,24 @@ function VerifikasiKlaimPoin() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <DataTable
-            columns={columns}
-            data={pageItems}
-            loading={loading}
-            emptyText="Tidak ada data klaim poin."
-            selectable={pilihanMode}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={centangSemua}
-            isSelectable={isSelectableRow}
-            page={currentPage}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </div>
+        <TableCard title="Daftar Klaim Poin">
+          <TableFrame>
+            <DataTable
+              columns={columns}
+              data={pageItems}
+              loading={loading}
+              emptyText="Tidak ada data klaim poin."
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onSelectAll={centangSemua}
+              isSelectable={isSelectableRow}
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

@@ -8,6 +8,7 @@ import { get } from '../../services/apiClient'
 import { getPersetujuanMahasiswa } from '../../services/pengajuanService'
 import { getPengajuan } from '../../services/pengajuanService'
 import { getKlaim } from '../../services/poinService'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function StatusBadge({ status }) {
   const s = String(status || '').toLowerCase()
@@ -162,9 +163,8 @@ function MahasiswaDashboard() {
         </div>
 
         {/* Tabel Pengajuan Eksternal */}
-        <div>
-          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Pengajuan Kegiatan Eksternal</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Riwayat Pengajuan Kegiatan Eksternal">
+          <TableFrame>
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
@@ -178,13 +178,12 @@ function MahasiswaDashboard() {
               loading={loadingTables}
               emptyText="Belum ada data."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
         {/* Tabel Persetujuan Dosen */}
-        <div>
-          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Persetujuan Dosen PA</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Riwayat Persetujuan Dosen PA">
+          <TableFrame>
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
@@ -199,13 +198,12 @@ function MahasiswaDashboard() {
               loading={loadingTables}
               emptyText="Belum ada data."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
         {/* Tabel Klaim Poin */}
-        <div>
-          <h3 className="mb-3 text-lg font-bold text-brand-dark">Riwayat Klaim Poin</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Riwayat Klaim Poin">
+          <TableFrame>
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
@@ -219,8 +217,8 @@ function MahasiswaDashboard() {
               loading={loadingTables}
               emptyText="Belum ada data."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

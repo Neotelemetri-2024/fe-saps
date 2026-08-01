@@ -9,6 +9,7 @@ import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
@@ -87,9 +88,9 @@ function UKMFDashboard() {
           ))}
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-brand-dark">Riwayat Terbaru Pengajuan Kegiatan</h3>
+        <TableCard
+          title="Riwayat Terbaru Kegiatan"
+          headerRight={
             <button
               type="button"
               onClick={() => navigate('/operator_ukmf/daftar-kegiatan')}
@@ -97,9 +98,9 @@ function UKMFDashboard() {
             >
               Lihat Semua →
             </button>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          }
+        >
+          <TableFrame>
             <DataTable
               loading={loading}
               data={preview}
@@ -116,8 +117,8 @@ function UKMFDashboard() {
                 { key: 'status', label: 'Status', render: (r) => <StatusBadge status={mapStatus(r.status)} /> },
               ]}
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
         <PanduanCard
           className="max-w-sm"

@@ -12,6 +12,7 @@ import {
   submitPoinPeserta,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function mapPesertaRow(p, i) {
   const peranId = p.peran?.id ?? p.peranVerifId ?? p.peranId ?? ''
@@ -272,7 +273,8 @@ function ManajemenPesertaEvent() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Peserta">
+          <TableFrame>
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>
@@ -371,7 +373,7 @@ function ManajemenPesertaEvent() {
               )}
             </div>
           </div>
-        </div>
+        </TableFrame></TableCard>
 
         {submitted && (
           <div className="pt-2">

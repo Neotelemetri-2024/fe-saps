@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -133,65 +134,67 @@ function DaftarKegiatan() {
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-        <DataTable
-          loading={loading}
-          data={data}
-          emptyText="Belum ada kegiatan."
-          columns={[
-            { key: 'no', label: 'No', render: (_item, i) => i + 1 },
-            { key: 'nama', label: 'Nama Kegiatan', render: (item) => (
-              <KegiatanCell nama={item.nama || '-'} tanggal={formatTanggal(item.diajukanPada || item.createdAt)} />
-            ) },
-            { key: 'jenis', label: 'Jenis', render: (item) => labelOf(item.jenis || item.kategori) },
-            { key: 'skala', label: 'Skala', render: (item) => labelOf(item.skala) },
-            { key: 'tanggal', label: 'Tanggal', render: (item) => formatTanggal(item.tanggalMulai || item.tanggal) },
-            { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
-            {
-              key: 'aksi', label: 'Aksi', stopPropagation: true,
-                render: (item) => (
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  <button type="button" title="Detail"
-                    onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}`)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  <button type="button" title="Peserta"
-                      onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`)}
-                      disabled={!bisaPeserta(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                      <Users className="h-4 w-4" />
+        <TableCard title="Daftar Kegiatan UKMF">
+          <TableFrame>
+          <DataTable
+            loading={loading}
+            data={data}
+            emptyText="Belum ada kegiatan."
+            columns={[
+              { key: 'no', label: 'No', render: (_item, i) => i + 1 },
+              { key: 'nama', label: 'Nama Kegiatan', render: (item) => (
+                <KegiatanCell nama={item.nama || '-'} tanggal={formatTanggal(item.diajukanPada || item.createdAt)} />
+              ) },
+              { key: 'jenis', label: 'Jenis', render: (item) => labelOf(item.jenis || item.kategori) },
+              { key: 'skala', label: 'Skala', render: (item) => labelOf(item.skala) },
+              { key: 'tanggal', label: 'Tanggal', render: (item) => formatTanggal(item.tanggalMulai || item.tanggal) },
+              { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
+              {
+                key: 'aksi', label: 'Aksi', stopPropagation: true,
+                  render: (item) => (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <button type="button" title="Detail"
+                      onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}`)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
+                      <Eye className="h-4 w-4" />
                     </button>
-                  <button type="button" title="Edit"
-                      onClick={() => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } })}
-                      disabled={!bisaEdit(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                  <button type="button" title="Kirim"
-                      onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
-                      disabled={!bisaKirim(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                      <Send className="h-4 w-4" />
-                    </button>
-                  <button type="button" title="Ajukan Ulang"
-                      onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
-                      disabled={!bisaAjukanUlang(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                      <RefreshCw className="h-4 w-4" />
-                    </button>
-                  <button type="button" title="Hapus"
-                      onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
-                      disabled={!bisaHapus(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
-              ),
-            },
-          ]}
-        />
-        </div>
+                    <button type="button" title="Peserta"
+                        onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`)}
+                        disabled={!bisaPeserta(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Users className="h-4 w-4" />
+                      </button>
+                    <button type="button" title="Edit"
+                        onClick={() => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } })}
+                        disabled={!bisaEdit(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    <button type="button" title="Kirim"
+                        onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
+                        disabled={!bisaKirim(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Send className="h-4 w-4" />
+                      </button>
+                    <button type="button" title="Ajukan Ulang"
+                        onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
+                        disabled={!bisaAjukanUlang(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                    <button type="button" title="Hapus"
+                        onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
+                        disabled={!bisaHapus(item)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
+          </TableFrame>
+        </TableCard>
 
         <ConfirmModal
           isOpen={!!konfirmasi}

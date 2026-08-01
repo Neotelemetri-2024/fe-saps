@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { toast } from 'sonner'
 import { getCurrentUser } from '../../services/authService'
@@ -123,12 +124,11 @@ function AdminDitmawaDashboard() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-5 py-4">
-            <h3 className="font-bold text-[#333]">Kegiatan Terbaru</h3>
-          </div>
-          <DataTable columns={columns} data={kegiatan} />
-        </div>
+        <TableCard title="Kegiatan Terbaru">
+          <TableFrame>
+            <DataTable columns={columns} data={kegiatan} />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

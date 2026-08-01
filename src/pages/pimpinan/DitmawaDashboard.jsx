@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { HorizontalBarChart } from '../../components/charts'
 import { toast } from 'sonner'
@@ -102,24 +103,23 @@ function PimpinanDitmawaDashboard() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-6 py-4">
-            <h3 className="text-lg font-bold text-brand-dark">Daftar Event Terpublikasi</h3>
-          </div>
-          <DataTable
-            loading={loading}
-            data={events}
-            emptyText="Belum ada event terpublikasi."
-            columns={[
-              { key: 'no', label: 'No', render: (e) => <span className="block text-center">{e.no}</span> },
-              { key: 'nama', label: 'Nama Kegiatan', render: (e) => <KegiatanCell nama={e.nama} tanggal={e.diajukanPada} /> },
-              { key: 'tipe', label: 'Tipe' },
-              { key: 'penyelenggara', label: 'Penyelenggara' },
-              { key: 'peserta', label: 'Peserta', render: (e) => <span className="block text-center">{e.peserta}</span> },
-              { key: 'skala', label: 'Skala' },
-            ]}
-          />
-        </div>
+        <TableCard title="Daftar Event Terpublikasi">
+          <TableFrame>
+            <DataTable
+              loading={loading}
+              data={events}
+              emptyText="Belum ada event terpublikasi."
+              columns={[
+                { key: 'no', label: 'No', render: (e) => <span className="block text-center">{e.no}</span> },
+                { key: 'nama', label: 'Nama Kegiatan', render: (e) => <KegiatanCell nama={e.nama} tanggal={e.diajukanPada} /> },
+                { key: 'tipe', label: 'Tipe' },
+                { key: 'penyelenggara', label: 'Penyelenggara' },
+                { key: 'peserta', label: 'Peserta', render: (e) => <span className="block text-center">{e.peserta}</span> },
+                { key: 'skala', label: 'Skala' },
+              ]}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

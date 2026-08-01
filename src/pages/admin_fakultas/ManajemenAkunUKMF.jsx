@@ -12,6 +12,7 @@ import {
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -624,13 +625,7 @@ function ManajemenAkunUKMF() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          <div>
-            <h3 className="text-sm font-bold text-brand-dark sm:text-lg">
-              Akun UKMF yang Telah Dibuat
-            </h3>
-          </div>
-
+        <TableCard title="Akun UKMF yang Telah Dibuat">
           <div className="mt-4 sm:mt-6">
             <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
@@ -647,15 +642,15 @@ function ManajemenAkunUKMF() {
             </div>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-xl border border-[#e9ebf8]">
+          <TableFrame>
             <DataTable
               columns={columns}
               data={filtered}
               loading={loading}
               emptyText="Tidak ada data UKMF."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

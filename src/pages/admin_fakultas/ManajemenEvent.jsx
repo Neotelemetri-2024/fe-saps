@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import EventForm from '../../components/EventForm'
 import { toast } from 'sonner'
@@ -549,14 +550,7 @@ function ManajemenEvent() {
          * CARD PUTIH
          * Filter dan tabel dibungkus dalam card yang sama.
          */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          {/* Judul card */}
-          <div>
-            <h3 className="text-sm font-bold text-brand-dark sm:text-lg">
-              Daftar Event Fakultas
-            </h3>
-          </div>
-
+        <TableCard title="Daftar Event Fakultas">
           {/* Filter */}
           <div className="mt-4 flex flex-col gap-3 sm:mt-6 lg:flex-row lg:flex-wrap lg:items-center">
             {/* Pencarian */}
@@ -655,7 +649,7 @@ function ManajemenEvent() {
           </div>
 
           {/* Tabel */}
-          <div className="mt-6 overflow-hidden rounded-xl border border-[#e9ebf8]">
+          <TableFrame>
             <DataTable
               columns={columns}
               data={pageItems}
@@ -667,8 +661,8 @@ function ManajemenEvent() {
                 setPage(newPage)
               }}
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

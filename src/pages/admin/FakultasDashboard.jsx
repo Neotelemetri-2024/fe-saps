@@ -6,6 +6,7 @@ import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { updateKegiatan, getKegiatan } from '../../services/kegiatanService'
 
 function AdminFakultasDashboard() {
@@ -110,10 +111,11 @@ function AdminFakultasDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-brand-dark">Pengajuan UKM</h3>
+        <TableCard title="Pengajuan UKM">
+          <TableFrame>
           <DataTable columns={columns} data={data} />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

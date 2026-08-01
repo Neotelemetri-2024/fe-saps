@@ -4,6 +4,7 @@ import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval } from '../../services/kegiatanService'
 
 const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Revisi']
@@ -168,14 +169,16 @@ function VerifikasiPengajuanUKMF() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Pengajuan UKMF">
+          <TableFrame>
           <DataTable
             loading={loading}
             data={filtered}
             emptyText="Tidak ada data ditemukan."
             columns={columns}
           />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

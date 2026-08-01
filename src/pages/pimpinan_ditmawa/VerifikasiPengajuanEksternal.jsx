@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
@@ -246,7 +247,8 @@ function VerifikasiPengajuanEksternal() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Pengajuan Eksternal">
+          <TableFrame>
         <DataTable
           loading={loading}
           data={pageItems}
@@ -292,7 +294,8 @@ function VerifikasiPengajuanEksternal() {
             },
           ]}
         />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

@@ -4,6 +4,7 @@ import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
+import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
 import KegiatanCell from "../../components/dashboard/KegiatanCell";
 import { getCurrentUser } from "../../services/authService";
 import { getKegiatanVerifikasi } from "../../services/kegiatanService";
@@ -154,13 +155,9 @@ function VerifikasiPengajuanUKMF() {
         </div>
   
         {/* Card */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-brand-dark">
-            Daftar Pengajuan UKMF
-          </h3>
-  
+        <TableCard title="Daftar Pengajuan UKMF">
           {/* Filter */}
-          <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
   <div className="relative flex w-full sm:flex-1">
     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
     <input
@@ -223,15 +220,15 @@ function VerifikasiPengajuanUKMF() {
 </div>
   
           {/* Tabel */}
-          <div className="mt-6">
+          <TableFrame>
             <DataTable
               columns={columns}
               data={filtered}
               loading={loading}
               emptyText="Tidak ada pengajuan ditemukan."
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   );

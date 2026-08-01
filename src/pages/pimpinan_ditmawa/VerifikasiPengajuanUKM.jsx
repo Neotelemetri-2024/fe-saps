@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getKategoriKegiatanValid } from '../../services/matriksService'
 
@@ -216,7 +217,8 @@ function VerifikasiPengajuanUKM() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Pengajuan UKM">
+          <TableFrame>
         <DataTable
           loading={loading}
           data={pageItems}
@@ -261,7 +263,8 @@ function VerifikasiPengajuanUKM() {
             },
           ]}
         />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

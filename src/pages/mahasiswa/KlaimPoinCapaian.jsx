@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaim } from '../../services/poinService'
@@ -70,18 +71,17 @@ function KlaimPoinCapaian() {
       <div className="space-y-6">
         <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl">Klaim Poin Capaian</h2>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          <h3 className="text-base font-bold text-brand-dark">Klaim Poin Anda</h3>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+        <TableCard title="Klaim Poin Anda">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input type="text" placeholder="Cari kegiatan..." className="flex-1 text-sm outline-none" />
             </div>
           </div>
-          <div className="mt-6">
+          <TableFrame>
             <DataTable columns={columns} data={data} />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

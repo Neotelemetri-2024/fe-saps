@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -94,18 +95,20 @@ function MahasiswaPerluPerhatian() {
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-brand-dark sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          {loading ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat data…</p>
-          ) : (
-            <>
-              <DataTable columns={columns} data={data} />
-              <p className="mt-4 text-sm text-[#616161]">
-                menampilkan {data.length === 0 ? 0 : 1} - {data.length} dari {data.length} Mahasiswa
-              </p>
-            </>
-          )}
-        </div>
+        <TableCard title="Mahasiswa Perlu Perhatian">
+          <TableFrame>
+            {loading ? (
+              <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat data…</p>
+            ) : (
+              <>
+                <DataTable columns={columns} data={data} />
+                <p className="mt-4 text-sm text-[#616161]">
+                  menampilkan {data.length === 0 ? 0 : 1} - {data.length} dari {data.length} Mahasiswa
+                </p>
+              </>
+            )}
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

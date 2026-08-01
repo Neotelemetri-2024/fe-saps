@@ -8,6 +8,7 @@ import {
   syncMatriks,
   getHistoriMatriks,
 } from '../../services/kurikulumService'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, onClose }) {
   const [val, setVal] = useState(defaultValue)
@@ -326,7 +327,8 @@ function SectionTable({ section, onUpdate }) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Bobot Poin">
+        <TableFrame>
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>
@@ -400,7 +402,7 @@ function SectionTable({ section, onUpdate }) {
               </tbody>
             </table>
           </div>
-        </div>
+        </TableFrame></TableCard>
 
         {editing && (
           <div className="flex justify-end gap-2 pt-1">

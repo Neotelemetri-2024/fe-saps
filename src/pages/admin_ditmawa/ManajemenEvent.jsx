@@ -5,6 +5,7 @@ import { Search, Plus, Edit3, Trash2, Send, RefreshCw, Users } from 'lucide-reac
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import EventForm from '../../components/EventForm'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
@@ -377,17 +378,19 @@ function ManajemenEvent() {
             </button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-            <DataTable
-              columns={columns}
-              data={pageItems}
-              loading={loading}
-              emptyText="Belum ada event."
-              page={currentPage}
-              totalPages={totalPages}
-              onPageChange={(p) => setPage(p)}
-            />
-          </div>
+          <TableCard title="Daftar Event Global">
+            <TableFrame>
+              <DataTable
+                columns={columns}
+                data={pageItems}
+                loading={loading}
+                emptyText="Belum ada event."
+                page={currentPage}
+                totalPages={totalPages}
+                onPageChange={(p) => setPage(p)}
+              />
+            </TableFrame>
+          </TableCard>
         </section>
       </div>
     </DashboardLayout>

@@ -13,6 +13,7 @@ import {
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
@@ -439,22 +440,16 @@ function DaftarKegiatan() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          <div>
-            <h3 className="text-base font-bold text-brand-dark sm:text-lg">
-              Kegiatan Saya
-            </h3>
-          </div>
-
-          <div className="mt-5 overflow-hidden rounded-xl border border-[#e9ebf8]">
+        <TableCard title="Kegiatan Saya">
+          <TableFrame>
             <DataTable
               loading={loading}
               data={data}
               emptyText="Belum ada kegiatan."
               columns={columns}
             />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
         <ConfirmModal
           isOpen={Boolean(konfirmasi)}

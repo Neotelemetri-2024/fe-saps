@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PlusCircle, Search, Filter, UserCheck, Pencil, Trash2, RefreshCw, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -343,11 +344,9 @@ function AjukanKegiatanEksternal() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6">
-          <h3 className="text-sm font-bold text-brand-dark sm:text-lg">Kegiatan yang telah diajukan</h3>
-
+        <TableCard title="Ajukan Kegiatan Eksternal">
           {/* Filter bar */}
-          <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex w-full items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
               <Search className="h-3.5 w-3.5 shrink-0 text-[#616161] sm:h-4 sm:w-4" />
               <input
@@ -393,7 +392,7 @@ function AjukanKegiatanEksternal() {
           </div>
 
           {/* Tabel */}
-          <div className="mt-6">
+          <TableFrame>
             <DataTable
               columns={[
                 { key: 'no', label: 'No' },
@@ -466,7 +465,7 @@ function AjukanKegiatanEksternal() {
               isSelectable={(row) => row.statusRaw === 'disetujui' && !row.sudahAjukanPA && !row.sudahKlaim}
               onRowClick={pilihanMode ? (row) => toggleRow(row.id, row.statusRaw, row) : undefined}
             />
-          </div>
+          </TableFrame>
 
           {/* Tombol bawah tabel */}
           {!loading && (
@@ -505,7 +504,7 @@ function AjukanKegiatanEksternal() {
               )}
             </div>
           )}
-        </div>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

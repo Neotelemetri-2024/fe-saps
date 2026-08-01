@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getKategoriKegiatanValid } from '../../services/matriksService'
@@ -216,7 +217,8 @@ function VerifikasiKegiatanInternal() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Kegiatan Internal">
+          <TableFrame>
         <DataTable
           loading={loading}
           data={pageItems}
@@ -252,7 +254,8 @@ function VerifikasiKegiatanInternal() {
             },
           ]}
         />
-        </div>
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

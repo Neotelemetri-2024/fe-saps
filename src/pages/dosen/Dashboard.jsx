@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Clock, ChevronRight, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -253,9 +254,8 @@ function DosenPADashboard() {
         </div>
 
         {/* Progres Capaian Tahunan */}
-        <div>
-          <h3 className="mb-3 text-base font-bold text-[#222]">Progres Capaian Tahunan</h3>
-          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Progres Capaian Tahunan">
+          <TableFrame>
           <DataTable
             columns={[
               { key: '_no', label: 'No' },
@@ -296,8 +296,8 @@ function DosenPADashboard() {
             loading={loading}
             emptyText="Belum ada data mahasiswa bimbingan."
           />
-          </div>
-        </div>
+          </TableFrame>
+        </TableCard>
 
       </div>
     </DashboardLayout>

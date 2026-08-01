@@ -14,6 +14,7 @@ import {
   submitPoinPeserta,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
 function formatTanggal(val) {
   if (!val) return ''
@@ -250,7 +251,8 @@ function ManajemenPeserta() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <TableCard title="Daftar Peserta">
+          <TableFrame>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
@@ -330,7 +332,8 @@ function ManajemenPeserta() {
               </div>
             </div>
           )}
-        </div>
+          </TableFrame>
+        </TableCard>
 
         {submitted && (
           <div className="pt-2">
