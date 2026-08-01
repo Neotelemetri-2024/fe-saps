@@ -5,6 +5,7 @@ import { Clock, Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanVerifikasi } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
@@ -181,7 +182,7 @@ function VerifikasiPengajuanEksternal() {
         </div>
       </div>
     )},
-    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan || '-'}</span> },
+    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || '-'} tanggal={row.diajukanPada} /> },
     { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori || '-'}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal || '-'}</span> },
     { key: 'status', label: 'Status', render: (row) =>

@@ -17,7 +17,7 @@ function normalizeDetail(raw) {
   ;(raw.kegiatanCapaian || []).forEach((kc) => {
     const capNama = kc.subCapaian?.capaian?.nama
     if (capNama && !capaianList.includes(capNama)) capaianList.push(capNama)
-    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, persen: `${kc.alokasiPersen ?? 0}%` })
+    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, capaian: capNama || '', persen: `${kc.alokasiPersen ?? 0}%` })
   })
   return {
     id: raw.id,
@@ -207,24 +207,24 @@ function DetailVerifikasiPengajuanInternal() {
 
         {item.subCapaian?.length > 0 && (
           <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} value={sc.persen} />)}
+            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen} />)}
           </SectionCard>
         )}
 
         {canAct && !showCapaianForm && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#333]">Keputusan Verifikasi</h3>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setShowCapaianForm(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
                 <CheckCircle2 className="h-4 w-4" /> Setuju
               </button>
               <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
                 <RotateCcw className="h-4 w-4" /> Minta Revisi
               </button>
               <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
                 <XCircle className="h-4 w-4" /> Tolak
               </button>
             </div>
@@ -277,7 +277,10 @@ function DetailVerifikasiPengajuanInternal() {
                         return (
                           <label key={sc.id} className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? 'border-brand-dark bg-brand-dark/5 font-medium text-brand-dark' : 'border-[#e9ebf8] text-[#444] hover:border-brand-dark/40'}`}>
                             <input type="checkbox" className="accent-brand-dark shrink-0" checked={checked} onChange={() => toggleSub(sc.id)} />
-                            {sc.nama}
+                            <span className="min-w-0">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                           </label>
                         )
                       })}
@@ -293,7 +296,10 @@ function DetailVerifikasiPengajuanInternal() {
                         if (!sc) return null
                         return (
                           <div key={alok.subCapaianId} className="flex items-center gap-3">
-                            <span className="flex-1 text-sm text-[#444]">{sc.nama}</span>
+                            <span className="flex-1 text-sm text-[#444]">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                             <input type="number" min={1} max={100} value={alok.alokasiPersen} onChange={(e) => setAlokasiPersen(alok.subCapaianId, e.target.value)}
                               className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark" />
                             <span className="text-sm text-[#9aa0a6]">%</span>
@@ -306,9 +312,9 @@ function DetailVerifikasiPengajuanInternal() {
                 )}
               </div>
             )}
-            <div className="flex flex-wrap gap-3 pt-2 border-t border-[#e9ebf8]">
+            <div className="flex flex-col gap-3 pt-2 border-t border-[#e9ebf8] sm:flex-row sm:justify-end">
               <button type="button" disabled={submitting || loadingKur} onClick={handleSubmitSetuju}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
                 <CheckCircle2 className="h-4 w-4" />{submitting ? 'Memproses...' : 'Teruskan ke Pimpinan'}
               </button>
               <button type="button" onClick={() => { setShowCapaianForm(false); setSelectedCapaianIds([]); setAlokasi([]) }}

@@ -21,7 +21,7 @@ function normalizeKegiatanDetail(k) {
   ;(k.kegiatanCapaian || []).forEach((kc) => {
     const nama = kc.subCapaian?.capaian?.nama
     if (nama && !capaianList.find((c) => c.label === nama)) capaianList.push({ label: nama })
-    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, persen: kc.alokasiPersen ?? null })
+    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, capaian: nama || '', persen: kc.alokasiPersen ?? null })
   })
   return {
     id: k.id,
@@ -198,24 +198,24 @@ function DetailVerifikasiPengajuanEksternal() {
 
         {item.subCapaian?.length > 0 && (
           <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} value={sc.persen != null ? `${sc.persen}%` : '-'} />)}
+            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen != null ? `${sc.persen}%` : '-'} />)}
           </SectionCard>
         )}
 
         {canAct && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#333]">Keputusan Verifikasi</h3>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setShowConfirmSetujui(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
                 <CheckCircle2 className="h-4 w-4" /> Setujui
               </button>
               <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
                 <RotateCcw className="h-4 w-4" /> Minta Revisi
               </button>
               <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
                 <XCircle className="h-4 w-4" /> Tolak
               </button>
             </div>

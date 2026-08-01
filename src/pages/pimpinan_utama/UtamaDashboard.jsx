@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Download } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { StackedBarChart } from '../../components/charts'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
@@ -176,15 +177,11 @@ function PimpinanUtamaDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-6 shadow-sm max-w-lg">
-          <h3 className="text-lg font-bold text-white">Download Panduan</h3>
-          <p className="mt-2 text-sm text-white/80 max-w-xl">
-            Dapatkan panduan lengkap penggunaan dashboard SAPS untuk Pimpinan Utama.
-          </p>
-          <button type="button" className="mt-4 flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-dark shadow transition hover:bg-gray-100">
-            <Download className="h-4 w-4" /> Download PDF
-          </button>
-        </div>
+        <PanduanCard
+          className="max-w-lg"
+          title="Manual Book User Pimpinan Utama"
+          description="Dapatkan panduan lengkap penggunaan dashboard SAPS untuk Pimpinan Utama."
+        />
       </div>
     </DashboardLayout>
   )

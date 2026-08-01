@@ -111,17 +111,17 @@ function DetailPersetujuanDosen() {
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-brand-dark">Keputusan</h3>
             {!actionType ? (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button type="button" onClick={handleSetuju} disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
                   <CheckCircle2 className="h-4 w-4" />{loading ? 'Memproses...' : 'Setujui'}
                 </button>
                 <button type="button" onClick={() => { setActionType('revisi'); setAlasan('') }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
                   <RotateCcw className="h-4 w-4" /> Revisi
                 </button>
                 <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
                   <XCircle className="h-4 w-4" /> Tolak
                 </button>
               </div>
@@ -135,9 +135,9 @@ function DetailPersetujuanDosen() {
                   maxLength={500}
                   className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
                 <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <button type="button" onClick={handleKirimAlasan} disabled={loading}
-                    className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
                     {loading ? 'Mengirim...' : 'Kirim'}
                   </button>
                   <button type="button" onClick={() => { setActionType(null); setAlasan('') }}

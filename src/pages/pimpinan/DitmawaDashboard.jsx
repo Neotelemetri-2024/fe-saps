@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { HorizontalBarChart } from '../../components/charts'
 import { toast } from 'sonner'
 import { get } from '../../services/apiClient'
@@ -40,6 +41,9 @@ function PimpinanDitmawaDashboard() {
       setEvents(kegList.map((k, i) => ({
         no: i + 1,
         nama: k.nama || '-',
+        diajukanPada: k.createdAt
+          ? new Date(k.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '',
         tipe: k.kategori?.nama || '-',
         penyelenggara: k.organisasi?.nama || k.pembuat?.nama || '-',
         kategori: k.kategori?.nama || '-',
@@ -108,7 +112,7 @@ function PimpinanDitmawaDashboard() {
             emptyText="Belum ada event terpublikasi."
             columns={[
               { key: 'no', label: 'No', render: (e) => <span className="block text-center">{e.no}</span> },
-              { key: 'nama', label: 'Nama Kegiatan', render: (e) => <span className="font-medium text-[#333]">{e.nama}</span> },
+              { key: 'nama', label: 'Nama Kegiatan', render: (e) => <KegiatanCell nama={e.nama} tanggal={e.diajukanPada} /> },
               { key: 'tipe', label: 'Tipe' },
               { key: 'penyelenggara', label: 'Penyelenggara' },
               { key: 'peserta', label: 'Peserta', render: (e) => <span className="block text-center">{e.peserta}</span> },

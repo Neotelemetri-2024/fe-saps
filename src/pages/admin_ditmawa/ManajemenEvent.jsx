@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Plus, Edit3, Trash2, Clock, Send, RefreshCw, Users } from 'lucide-react'
+import { Search, Plus, Edit3, Trash2, Send, RefreshCw, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -110,6 +110,7 @@ function normalizeEvent(item) {
 function ManajemenEvent() {
   const navigate = useNavigate()
   const user = getCurrentUser()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -119,9 +120,18 @@ function ManajemenEvent() {
   const [filterTahun, setFilterTahun] = useState('')
   const [hapusTarget, setHapusTarget] = useState(null)
   const [kirimTarget, setKirimTarget] = useState(null)
-  const [mode, setMode] = useState('list') // 'list' | 'create' | 'edit'
-  const [editTarget, setEditTarget] = useState(null)
   const [page, setPage] = useState(1)
+
+  // Mode & target edit disimpan di URL (?mode=create|edit&id=..) agar tetap
+  // bertahan saat halaman di-refresh, bukan hilang kembali ke daftar.
+  const modeParam = searchParams.get('mode')
+  const editIdParam = searchParams.get('id')
+  const mode = modeParam === 'create' || modeParam === 'edit' ? modeParam : 'list' // 'list' | 'create' | 'edit'
+  const editTarget = mode === 'edit' && editIdParam ? { id: Number(editIdParam) } : null
+
+  const goToCreate = () => setSearchParams({ mode: 'create' })
+  const goToEdit = (row) => setSearchParams({ mode: 'edit', id: String(row.id) })
+  const goToList = () => setSearchParams({})
 
   const load = () => {
     setLoading(true)
@@ -193,11 +203,10 @@ function ManajemenEvent() {
     { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
       <div>
-        <p className="font-medium text-[#333]">{row.nama}</p>
-        <div className="mt-1 flex items-center gap-1 text-xs text-[#9aa0a6]">
-          <Clock className="h-3 w-3 shrink-0 text-[#616161]" />
-          <span>{row.dibuatPada}</span>
-        </div>
+        <p className="text-[#333]">{row.nama}</p>
+        {row.dibuatPada && row.dibuatPada !== '-' && (
+          <p className="text-xs text-[#616161]">Diajukan: {row.dibuatPada}</p>
+        )}
       </div>
     )},
     { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
@@ -242,7 +251,7 @@ function ManajemenEvent() {
           </button>
         <button
             type="button"
-            onClick={() => { setEditTarget(row); setMode('edit') }}
+            onClick={() => goToEdit(row)}
             disabled={!bisaEdit(row)}
             title="Edit"
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
@@ -276,8 +285,8 @@ function ManajemenEvent() {
       <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
         <EventForm
           editItem={mode === 'edit' ? editTarget : null}
-          onCancel={() => { setMode('list'); setEditTarget(null) }}
-          onSaved={() => { setMode('list'); setEditTarget(null); load() }}
+          onCancel={goToList}
+          onSaved={() => { goToList(); load() }}
         />
       </DashboardLayout>
     )
@@ -309,7 +318,7 @@ function ManajemenEvent() {
           </div>
           <button
             type="button"
-            onClick={() => { setEditTarget(null); setMode('create') }}
+            onClick={goToCreate}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" />

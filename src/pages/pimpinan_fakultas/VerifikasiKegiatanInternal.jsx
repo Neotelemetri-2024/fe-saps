@@ -5,6 +5,7 @@ import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getKategoriKegiatanValid } from '../../services/matriksService'
@@ -215,6 +216,7 @@ function VerifikasiKegiatanInternal() {
           )}
         </div>
 
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
         <DataTable
           loading={loading}
           data={pageItems}
@@ -231,12 +233,7 @@ function VerifikasiKegiatanInternal() {
             { key: 'no', label: 'No', render: (_item, index) => start + index + 1 },
             {
               key: 'kegiatan', label: 'Kegiatan',
-              render: (item) => (
-                <div className="flex flex-col gap-0.5">
-                  <p className="font-bold text-[#333]">{item.kegiatan}</p>
-                  <p className="text-xs text-[#616161]">Diajukan: {item.diajukanPada}</p>
-                </div>
-              ),
+              render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} />,
             },
             { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori}</span> },
             { key: 'skala', label: 'Skala' },
@@ -255,6 +252,7 @@ function VerifikasiKegiatanInternal() {
             },
           ]}
         />
+        </div>
       </div>
     </DashboardLayout>
   )

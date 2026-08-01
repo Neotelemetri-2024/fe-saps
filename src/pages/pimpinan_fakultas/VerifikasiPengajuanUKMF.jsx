@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getKegiatanApproval } from '../../services/kegiatanService'
 
 const STATUS_TABS = ['Semua', 'Pending', 'Disetujui', 'Revisi']
@@ -29,6 +30,9 @@ function VerifikasiPengajuanUKMF() {
         id: item.id,
         no: i + 1,
         kegiatan: item.nama || item.kegiatan,
+        diajukanPada: item.createdAt
+          ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '',
         namaUkmf: item.organisasi?.nama || item.namaUkmf || 'UKMF',
         jenis: typeof item.kategori === 'object' ? item.kategori?.nama : (item.jenis || item.kategori || ''),
         skala: typeof item.skala === 'object' ? item.skala?.nama : (item.skala || ''),
@@ -74,7 +78,7 @@ function VerifikasiPengajuanUKMF() {
 
   const columns = [
     { key: 'no', label: 'No' },
-    { key: 'kegiatan', label: 'Kegiatan', render: (item) => <span className="font-semibold text-brand-dark">{item.kegiatan}</span> },
+    { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },
     { key: 'namaUkmf', label: 'Nama UKMF' },
     { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-[#616161]">{item.jenis}</span> },
     { key: 'skala', label: 'Skala' },
@@ -164,12 +168,14 @@ function VerifikasiPengajuanUKMF() {
           )}
         </div>
 
-        <DataTable
-          loading={loading}
-          data={filtered}
-          emptyText="Tidak ada data ditemukan."
-          columns={columns}
-        />
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <DataTable
+            loading={loading}
+            data={filtered}
+            emptyText="Tidak ada data ditemukan."
+            columns={columns}
+          />
+        </div>
       </div>
     </DashboardLayout>
   )

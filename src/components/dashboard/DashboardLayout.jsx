@@ -51,8 +51,11 @@ const SIDEBAR_COLLAPSED = 68
 function DashboardLayout({ role, userName, userRole, children }) {
   const user = getCurrentUser()
   const resolvedRole = role || user?.role
-  const resolvedName = userName || user?.nama || 'User'
-  const resolvedUserRole = userRole || user?.userRole || ''
+  const rawName = userName || user?.nama || 'User'
+  // Hilangkan embel-embel "(Operator UKM/UKMF Xxx)" dari nama, mis. "Andi Pratama (Operator UKM Debat)" -> "Andi Pratama"
+  const resolvedName = rawName.replace(/\s*\([^)]*\)\s*$/, '').trim() || rawName
+  const isOperatorOrg = resolvedRole === 'operator_ukm' || resolvedRole === 'operator_ukmf'
+  const resolvedUserRole = (isOperatorOrg && user?.namaOrganisasi) || userRole || user?.userRole || ''
   const menuItems = roleMenuMap[resolvedRole] || []
   const pengaturanPath = pengaturanPathMap[resolvedRole] || null
   const notifikasiPath = notifikasiPathMap[resolvedRole] || null
@@ -217,7 +220,7 @@ function DashboardLayout({ role, userName, userRole, children }) {
         {/* Footer */}
         <footer className="shrink-0 border-t border-[#e9ebf8] bg-white px-2 py-3">
           <p className="px-3 py-2.5 text-center text-sm text-[#616161]">
-            © {new Date().getFullYear()} Developed by Neo Telemetri
+            © {new Date().getFullYear()} Developed by Neo Telemetri - Universitas Andalas
           </p>
         </footer>
       </div>

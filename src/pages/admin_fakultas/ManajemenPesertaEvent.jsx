@@ -272,7 +272,7 @@ function ManajemenPesertaEvent() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>

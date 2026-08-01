@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getPengajuanPimpinanDitmawa, subscribeDataUpdate } from '../../services/pengajuanService'
 
 function VerifikasiPengajuanEksternalPimpinan() {
@@ -37,6 +38,7 @@ function VerifikasiPengajuanEksternalPimpinan() {
           </p>
         </div>
 
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
         <DataTable
           loading={loading}
           data={items}
@@ -57,12 +59,13 @@ function VerifikasiPengajuanEksternalPimpinan() {
                 </div>
               ),
             },
-            { key: 'kegiatan', label: 'Kegiatan', render: (item) => item.kegiatan || '-' },
+            { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan || '-'} tanggal={item.diajukanPada || '-'} /> },
             { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori || '-'}</span> },
             { key: 'tanggal', label: 'Tanggal', render: (item) => item.tanggal || '-' },
             { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
           ]}
         />
+        </div>
       </div>
     </DashboardLayout>
   )

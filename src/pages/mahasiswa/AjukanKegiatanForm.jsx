@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { Save, Trash2, Send, ArrowLeft } from 'lucide-react'
+import { Save, Send, ArrowLeft } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   ajukanKegiatan,
   simpanDraftKegiatanEksternal,
   editDraftKegiatanEksternal,
-  hapusDraftKegiatanEksternal,
   ajukanDraftKegiatanEksternal,
 } from '../../services/pengajuanService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
@@ -46,7 +45,6 @@ function AjukanKegiatanForm() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [draftId, setDraftId] = useState(draftItem?.id || null)
-  const [showHapusDraftConfirm, setShowHapusDraftConfirm] = useState(false)
   const [showKirimConfirm, setShowKirimConfirm] = useState(false)
   const [kategoriList, setKategoriList] = useState([])
   const [skalaList, setSkalaList] = useState([])
@@ -128,26 +126,6 @@ function AjukanKegiatanForm() {
     }
   }
 
-  /** Hapus draft dari BE */
-  const handleHapusDraft = async () => {
-    setShowHapusDraftConfirm(false)
-    if (!draftId) {
-      setFormData(EMPTY_FORM)
-      navigate('/mahasiswa/kegiatan-eksternal')
-      return
-    }
-    setLoading(true)
-    try {
-      await hapusDraftKegiatanEksternal(draftId)
-      toast.info('Draft dihapus.')
-      navigate('/mahasiswa/kegiatan-eksternal')
-    } catch (err) {
-      toast.error('Gagal menghapus draft', { description: err.message })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   /** Kirim pengajuan */
   const handleSubmit = async () => {
     setShowKirimConfirm(false)
@@ -188,14 +166,6 @@ function AjukanKegiatanForm() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-      <ConfirmModal
-        isOpen={showHapusDraftConfirm}
-        message="Yakin ingin menghapus draft ini? Data tidak dapat dikembalikan."
-        confirmText="Ya, hapus"
-        cancelText="Batal"
-        onConfirm={handleHapusDraft}
-        onCancel={() => setShowHapusDraftConfirm(false)}
-      />
       <ConfirmModal
         isOpen={showKirimConfirm}
         message="Kirim pengajuan kegiatan ini ke Admin Ditmawa untuk ditinjau?"
@@ -333,7 +303,7 @@ function AjukanKegiatanForm() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-black">Link Website penyelenggara</label>
+                <label className="block text-sm font-medium text-black">Link Website Penyelenggara</label>
                 <input
                   type="url"
                   name="linkWebsite"
@@ -344,7 +314,7 @@ function AjukanKegiatanForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">Email penyelenggara</label>
+                <label className="block text-sm font-medium text-black">Email Penyelenggara</label>
                 <input
                   type="email"
                   name="emailPenyelenggara"
@@ -357,30 +327,17 @@ function AjukanKegiatanForm() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap gap-3 border-t border-[#f0f0f0] pt-4">
+            <div className="flex flex-col gap-3 border-t border-[#f0f0f0] pt-4 sm:flex-row sm:justify-end">
               {/* Simpan draft — hanya tampil jika bukan mode revisi */}
               {!isRevisi && (
                 <button
                   type="button"
                   disabled={loading || !isDirty}
                   onClick={handleSimpanDraft}
-                  className="flex items-center gap-2 rounded-xl border border-brand-dark px-5 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Save className="h-4 w-4" />
                   {draftId ? 'Perbarui Draft' : 'Simpan Draft'}
-                </button>
-              )}
-
-              {/* Hapus draft — hanya tampil jika bukan mode revisi */}
-              {!isRevisi && (draftId || isEditDraft) && (
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => setShowHapusDraftConfirm(true)}
-                  className="flex items-center gap-2 rounded-xl border border-red-400 px-5 py-2.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-500 hover:text-white disabled:opacity-60"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Hapus Draft
                 </button>
               )}
 
@@ -389,7 +346,7 @@ function AjukanKegiatanForm() {
                 type="button"
                 disabled={loading || !isDirty}
                 onClick={() => setShowKirimConfirm(true)}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Send className="h-4 w-4" />
                 {loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
@@ -398,7 +355,7 @@ function AjukanKegiatanForm() {
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="rounded-xl border border-[#d9dce7] px-5 py-2.5 text-sm font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
+                className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
               >
                 Batal
               </button>

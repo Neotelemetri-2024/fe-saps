@@ -6,14 +6,16 @@ function isPlainObject(value) {
 
 const NO_COLUMN_KEYS = new Set(['no', '_no', 'nomor'])
 const NO_COLUMN_WIDTH = '64px'
-const CENTERED_KEYS = new Set(['aksi', 'Aksi', 'AKSI'])
+const CENTERED_KEYS = new Set(['aksi', 'Aksi', 'AKSI', 'status', 'Status', 'STATUS', 'statusRaw'])
 
 function isNoColumn(col) {
   return NO_COLUMN_KEYS.has(col.key)
 }
 
 function isCenteredCol(col) {
-  return CENTERED_KEYS.has(col.key) || col.center === true
+  if (CENTERED_KEYS.has(col.key) || col.center === true) return true
+  const label = String(col.label || '').trim().toLowerCase()
+  return label === 'status' || label === 'aksi'
 }
 
 /**
@@ -71,7 +73,7 @@ function DataTable({
 
   return (
     <div className="space-y-3">
-      <div className="-mx-3 overflow-x-auto sm:-mx-0 sm:rounded-xl sm:border sm:border-[#e9ebf8] sm:bg-white">
+      <div className="-mx-3 overflow-x-auto sm:-mx-0">
         <table className="w-full min-w-[600px] text-left text-xs sm:text-sm">
           <thead>
             <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
@@ -165,7 +167,7 @@ function DataTable({
 
                       let value = row[col.key]
                       if (value instanceof Date) {
-                        value = value.toLocaleDateString('id-ID')
+                        value = value.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
                       } else if (isPlainObject(value)) {
                         value = '-'
                       }

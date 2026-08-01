@@ -4,6 +4,7 @@ import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
+import KegiatanCell from "../../components/dashboard/KegiatanCell";
 import StatusBadge from "../../components/dashboard/StatusBadge";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import {
@@ -118,7 +119,7 @@ function PermintaanPersetujuan() {
   const columns = [
     { key: "no", label: "NO" },
     { key: "mahasiswa", label: "MAHASISWA" },
-    { key: "kegiatan", label: "KEGIATAN" },
+    { key: "kegiatan", label: "KEGIATAN", render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: "peran", label: "PERAN" },
     { key: "jenis", label: "JENIS", render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
     { key: "penyelenggara", label: "PENYELENGGARA" },

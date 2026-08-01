@@ -74,7 +74,6 @@ import UKMFDaftarKegiatan from './pages/operator_ukmf/DaftarKegiatan'
 import UKMFBuatKegiatan from './pages/operator_ukmf/BuatKegiatan'
 import UKMFManajemenPeserta from './pages/operator_ukmf/ManajemenPeserta'
 import UKMFDetailKegiatan from './pages/operator_ukmf/DetailKegiatan'
-import UKMFAkunDanPengaturan from './pages/operator_ukmf/AkunDanPengaturan'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -201,7 +200,7 @@ function App() {
           <Route path="daftar-kegiatan/:id" element={<UKMFDetailKegiatan />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMFManajemenPeserta />} />
           <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
-          <Route path="pengaturan" element={<UKMFAkunDanPengaturan />} />
+          <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
         </Route>
 

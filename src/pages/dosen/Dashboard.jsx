@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Download, Clock, ChevronRight, Eye } from 'lucide-react'
+import { Clock, ChevronRight, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { VerticalBarChart } from '../../components/charts'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardDosen } from '../../services/dashboardService'
 
@@ -198,15 +199,10 @@ function DosenPADashboard() {
           {/* Left column */}
           <div className="flex flex-col gap-4">
             {/* Download Panduan */}
-            <div className="rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-white">Download Panduan</h3>
-              <div className="mt-3 flex items-start gap-3 text-white/90">
-                <Download className="mt-0.5 h-4 w-4 shrink-0" />
-                <p className="text-xs leading-snug">
-                  Admin Fakultas – Panduan Penggunaan Website MyUnand Student Connect.pdf
-                </p>
-              </div>
-            </div>
+            <PanduanCard
+              title="Manual Book User Dosen PA"
+              description="Panduan Penggunaan Website SAPS untuk Dosen PA"
+            />
 
             {/* Permintaan Persetujuan */}
             <div className="flex-1 rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
@@ -259,6 +255,7 @@ function DosenPADashboard() {
         {/* Progres Capaian Tahunan */}
         <div>
           <h3 className="mb-3 text-base font-bold text-[#222]">Progres Capaian Tahunan</h3>
+          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
           <DataTable
             columns={[
               { key: '_no', label: 'No' },
@@ -299,6 +296,7 @@ function DosenPADashboard() {
             loading={loading}
             emptyText="Belum ada data mahasiswa bimbingan."
           />
+          </div>
         </div>
 
       </div>

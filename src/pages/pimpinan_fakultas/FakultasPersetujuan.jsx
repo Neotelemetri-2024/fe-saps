@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
 function PimpinanFakultasPersetujuan() {
@@ -12,7 +13,11 @@ function PimpinanFakultasPersetujuan() {
   useEffect(() => {
     getKegiatan().then((res) => setData(res.slice(0, 4).map((item, i) => ({
       id: item.id,
+      no: i + 1,
       kegiatan: item.nama,
+      diajukanPada: item.createdAt
+        ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '',
       pengaju: 'Mahasiswa',
       nim: '-',
       tgl: item.tgl || item.tanggal || '',
@@ -21,7 +26,8 @@ function PimpinanFakultasPersetujuan() {
   }, [])
 
   const columns = [
-    { key: 'kegiatan', label: 'Kegiatan' },
+    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{row.no}</span> },
+    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'pengaju', label: 'Pengaju' },
     { key: 'nim', label: 'NIM' },
     { key: 'tgl', label: 'Tanggal' },
@@ -39,7 +45,7 @@ function PimpinanFakultasPersetujuan() {
                 await updateKegiatan(row.id, { status: 'disetujui' })
                 toast.success('Disetujui!', { description: `Pengajuan "${row.kegiatan}" telah disetujui.` })
                 const res = await getKegiatan()
-                setData(res.slice(0, 4).map((item) => ({ id: item.id, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
+                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, no: i + 1, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >
@@ -53,7 +59,7 @@ function PimpinanFakultasPersetujuan() {
                 await updateKegiatan(row.id, { status: 'ditolak' })
                 toast.error('Ditolak!', { description: `Pengajuan "${row.kegiatan}" telah ditolak.` })
                 const res = await getKegiatan()
-                setData(res.slice(0, 4).map((item) => ({ id: item.id, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
+                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, no: i + 1, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >

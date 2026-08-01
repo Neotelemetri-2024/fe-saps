@@ -125,6 +125,7 @@ function MahasiswaBimbingan() {
           </select>
         </div>
 
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
         <DataTable
           columns={[
             {
@@ -181,6 +182,7 @@ function MahasiswaBimbingan() {
           totalPages={totalPages}
           onPageChange={setPage}
         />
+        </div>
       </div>
     </DashboardLayout>
   )

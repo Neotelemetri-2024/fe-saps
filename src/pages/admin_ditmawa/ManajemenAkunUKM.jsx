@@ -237,7 +237,7 @@ function ManajemenAkunUKM() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{filtered.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (_, i) => <span className="text-[#616161]">{i + 1}</span> },
     { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-[#333]">{row.nama}</span> },
     { key: 'username', label: 'Username', render: (row) => <span className="text-[#616161]">{row.username}</span> },
     { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
@@ -290,28 +290,24 @@ function ManajemenAkunUKM() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => setShowTambah(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-          >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
-              <Plus className="h-4 w-4" />
-            </span>
-            Akun UKM
-          </button>
-          <div className="flex flex-1 items-center gap-2 rounded-lg border border-brand-dark px-4 py-2 sm:max-w-md">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0f4f0] text-[#616161]">
-              <Search className="h-4 w-4" />
-            </span>
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari UKM..."
-              className="w-full text-sm outline-none"
+              className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setShowTambah(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
+          >
+            <Plus className="h-4 w-4" />
+            Akun UKM
+          </button>
         </div>
 
         <div>

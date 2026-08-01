@@ -28,7 +28,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
             <img src={logoUnand} alt="Logo" className="h-10 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="truncate text-sm font-bold leading-tight text-brand-dark">
-                MyUnand Student Connect
+                SAPS UNAND
               </p>
               <p className="text-[10px] text-[#616161]">Universitas Andalas</p>
             </div>
@@ -179,7 +179,7 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
           <div className="flex items-center gap-3">
             <img src={logoUnand} alt="Logo" className="h-9 w-auto object-contain" />
             <div>
-              <p className="text-sm font-bold leading-tight text-brand-dark">MyUnand Student Connect</p>
+              <p className="text-sm font-bold leading-tight text-brand-dark">SAPS</p>
               <p className="text-[10px] text-[#616161]">Universitas Andalas</p>
             </div>
           </div>

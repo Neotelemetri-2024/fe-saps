@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { ArrowLeft, X, ChevronDown } from 'lucide-react'
+import { ArrowLeft, X, ChevronDown, Save, Send } from 'lucide-react'
 import DatePickerInput from './ui/DatePickerInput'
-import { createKegiatan, updateKegiatan, getKegiatanById } from '../services/kegiatanService'
+import ConfirmModal from './ui/ConfirmModal'
+import { createKegiatan, updateKegiatan, getKegiatanById, ajukanKegiatan } from '../services/kegiatanService'
 import { getKurikulumAktif } from '../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../services/matriksService'
 
@@ -23,6 +24,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
   const isEdit = !!editItem
   const [loading, setLoading] = useState(false)
   const [loadingEdit, setLoadingEdit] = useState(false)
+  const [showAjukanConfirm, setShowAjukanConfirm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [capaianOpen, setCapaianOpen] = useState(false)
   const capaianRef = useRef(null)
@@ -147,35 +149,40 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
 
   const totalBobot = form.alokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const validateForm = () => {
     if (!form.nama || !form.kategoriId || !form.skalaId || !form.deskripsi || !form.tanggalMulai || !form.lokasi || !form.kuota) {
       toast.error('Lengkapi semua field yang wajib diisi.')
-      return
+      return false
     }
     if (form.alokasi.length === 0) {
       toast.error('Pilih minimal satu sub-capaian')
-      return
+      return false
     }
     if (Math.abs(totalBobot - 100) > 0.01) {
       toast.error(`Total bobot harus tepat 100%. Saat ini: ${totalBobot}%`)
-      return
+      return false
     }
+    return true
+  }
 
+  const buildPayload = () => ({
+    nama: form.nama,
+    kategoriId: Number(form.kategoriId),
+    skalaId: Number(form.skalaId),
+    asal,
+    deskripsi: form.deskripsi || undefined,
+    lokasi: form.lokasi || undefined,
+    kuota: Number(form.kuota) || undefined,
+    tanggalMulai: toISODate(form.tanggalMulai),
+    tanggalSelesai: toISODate(form.tanggalSelesai),
+    alokasi: form.alokasi,
+  })
+
+  const handleSimpanDraft = async () => {
+    if (!validateForm()) return
     setLoading(true)
     try {
-      const payload = {
-        nama: form.nama,
-        kategoriId: Number(form.kategoriId),
-        skalaId: Number(form.skalaId),
-        asal,
-        deskripsi: form.deskripsi || undefined,
-        lokasi: form.lokasi || undefined,
-        kuota: Number(form.kuota) || undefined,
-        tanggalMulai: toISODate(form.tanggalMulai),
-        tanggalSelesai: toISODate(form.tanggalSelesai),
-        alokasi: form.alokasi,
-      }
+      const payload = buildPayload()
       if (isEdit) {
         await updateKegiatan(editItem.id, payload)
         toast.success('Draft event berhasil diperbarui!')
@@ -193,8 +200,38 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
     }
   }
 
+  const handleAjukanSekarang = async () => {
+    setShowAjukanConfirm(false)
+    if (!validateForm()) return
+    setLoading(true)
+    try {
+      const payload = buildPayload()
+      const id = isEdit ? editItem.id : (await createKegiatan(payload))?.id
+      if (isEdit) {
+        await updateKegiatan(editItem.id, payload)
+      }
+      await ajukanKegiatan(id)
+      toast.success('Event berhasil diajukan!', {
+        description: 'Event telah dikirim dan menunggu persetujuan. Setelah dikirim tidak dapat diedit.',
+      })
+      onSaved?.()
+    } catch (err) {
+      toast.error('Gagal mengajukan event', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
+      <ConfirmModal
+        isOpen={showAjukanConfirm}
+        message="Setelah diajukan, event tidak dapat diedit. Lanjutkan?"
+        confirmText="Ya, Ajukan"
+        cancelText="Batal"
+        onConfirm={handleAjukanSekarang}
+        onCancel={() => setShowAjukanConfirm(false)}
+      />
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -217,7 +254,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
           <p className="text-sm text-[#616161]">Lengkapi informasi kegiatan terlebih dahulu</p>
 
@@ -251,7 +288,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                 type="text"
                 value={form.nama}
                 onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
-                placeholder="Masukkan nama kegiatan..."
+                placeholder="Masukkan nama kegiatan"
                 className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
                 required
               />
@@ -282,7 +319,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
               <textarea
                 value={form.deskripsi}
                 onChange={(e) => setForm((p) => ({ ...p, deskripsi: e.target.value }))}
-                placeholder="Tujuan, agenda, dan manfaat kegiatan..."
+                placeholder="Tujuan, agenda, dan manfaat kegiatan"
                 rows={4}
                 maxLength={500}
                 className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
@@ -426,11 +463,14 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                         >
                           <input
                             type="checkbox"
-                            className="accent-brand-dark"
+                            className="accent-brand-dark shrink-0"
                             checked={checked}
                             onChange={() => toggleSub(sc.id)}
                           />
-                          {sc.nama}
+                          <span className="min-w-0">
+                            <span className="block truncate">{sc.nama}</span>
+                            <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                          </span>
                         </label>
                       )
                     })}
@@ -449,7 +489,10 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                       if (!sc) return null
                       return (
                         <div key={alok.subCapaianId} className="flex items-center gap-3">
-                          <span className="w-40 shrink-0 text-sm text-[#444]">{sc.nama}</span>
+                          <span className="w-40 shrink-0 text-sm text-[#444]">
+                            <span className="block truncate">{sc.nama}</span>
+                            <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                          </span>
                           <input
                             type="number"
                             min={0}
@@ -473,18 +516,29 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
           )}
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
           <button
-            type="submit"
+            type="button"
             disabled={loading || loadingEdit}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            onClick={handleSimpanDraft}
+            className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <Save className="h-4 w-4" />
             {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
           </button>
           <button
             type="button"
+            disabled={loading || loadingEdit}
+            onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
+            className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Send className="h-4 w-4" />
+            {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
+          </button>
+          <button
+            type="button"
             onClick={onCancel}
-            className="rounded-lg border border-brand-dark px-8 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50"
+            className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]"
           >
             Batal
           </button>

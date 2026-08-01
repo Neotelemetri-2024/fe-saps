@@ -167,7 +167,7 @@ function AkunPengaturan() {
                   name="passwordLama"
                   value={pwdForm.passwordLama}
                   onChange={handlePwdChange}
-                  placeholder="••••••••"
+    
                   className="w-full rounded-lg border border-[#e9ebf8] p-3 pr-10 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
                 />
                 <button type="button" onClick={() => setShowOld(!showOld)}
@@ -184,7 +184,6 @@ function AkunPengaturan() {
                   name="passwordBaru"
                   value={pwdForm.passwordBaru}
                   onChange={handlePwdChange}
-                  placeholder="••••••••"
                   className="w-full rounded-lg border border-[#e9ebf8] p-3 pr-10 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
                 />
                 <button type="button" onClick={() => setShowNew(!showNew)}

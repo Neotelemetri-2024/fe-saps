@@ -247,6 +247,9 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: 4,
+    },
     plugins: { legend: { display: false } },
     scales: {
       r: {
@@ -261,12 +264,13 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
         pointLabels: {
           color: pointLabelColor,
           font: { size: 9 },
+          centerPointLabels: true,
         },
       },
     },
   }
   return (
-    <div style={{ height }}>
+    <div style={{ height, position: 'relative', width: '100%', minWidth: 0 }}>
       <Radar data={data} options={options} />
     </div>
   )

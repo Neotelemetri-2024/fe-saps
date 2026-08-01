@@ -15,7 +15,7 @@ function normalizeDetail(raw) {
   ;(raw.kegiatanCapaian || []).forEach((kc) => {
     const capNama = kc.subCapaian?.capaian?.nama
     if (capNama && !capaianList.includes(capNama)) capaianList.push(capNama)
-    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, persen: `${kc.alokasiPersen ?? 0}%` })
+    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, capaian: capNama || '', persen: `${kc.alokasiPersen ?? 0}%` })
   })
   return {
     id: raw.id,
@@ -104,7 +104,7 @@ function DetailKegiatan({ role, userRole }) {
 
         {item.subCapaian?.length > 0 && (
           <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} value={sc.persen} />)}
+            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen} />)}
           </SectionCard>
         )}
       </div>

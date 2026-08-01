@@ -1,0 +1,59 @@
+import { FileText, Download, Eye } from 'lucide-react'
+import { toast } from 'sonner'
+
+function PanduanCard({ title, description, fileLabel = 'PDF', fileUrl, className = '' }) {
+  const handleDownload = () => {
+    if (fileUrl) {
+      const link = document.createElement('a')
+      link.href = fileUrl
+      link.download = ''
+      link.click()
+    } else {
+      toast.info('Panduan belum tersedia', { description: 'File panduan akan segera diunggah.' })
+    }
+  }
+
+  const handleView = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+    } else {
+      toast.info('Panduan belum tersedia', { description: 'File panduan akan segera diunggah.' })
+    }
+  }
+
+  return (
+    <div className={`rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm ${className}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#eaf5ec] text-brand-dark">
+          <FileText className="h-5 w-5" />
+        </div>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          {fileLabel}
+        </span>
+      </div>
+
+      <h3 className="mt-4 text-base font-bold text-[#1f2937]">{title}</h3>
+      {description && <p className="mt-1 text-sm text-[#616161]">{description}</p>}
+
+      <div className="mt-4 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+        >
+          <Download className="h-4 w-4" /> Download
+        </button>
+        <button
+          type="button"
+          onClick={handleView}
+          title="Lihat Panduan"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
+        >
+          <Eye className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default PanduanCard

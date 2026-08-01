@@ -47,6 +47,7 @@ function normalizeKegiatanDetail(k) {
     })(),
     subCapaian: (k.kegiatanCapaian || []).map((kc) => ({
       label: kc.subCapaian?.nama || '-',
+      capaian: kc.subCapaian?.capaian?.nama || '',
       persen: kc.alokasiPersen ?? null,
     })),
   }
@@ -352,6 +353,7 @@ function DetailVerifikasiPengajuanEksternal() {
                 <InfoRow
                   key={i}
                   label={sc.label}
+                  sublabel={sc.capaian}
                   value={sc.persen != null ? `${sc.persen}%` : '-'}
                 />
               ))}
@@ -363,11 +365,11 @@ function DetailVerifikasiPengajuanEksternal() {
         {canAct && !showCapaianForm && (
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#333]">Keputusan Verifikasi</h3>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setShowCapaianForm(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Teruskan ke Pimpinan
@@ -375,7 +377,7 @@ function DetailVerifikasiPengajuanEksternal() {
               <button
                 type="button"
                 onClick={() => openAction('revisi')}
-                className="inline-flex items-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white"
               >
                 <RotateCcw className="h-4 w-4" />
                 Minta Revisi
@@ -383,7 +385,7 @@ function DetailVerifikasiPengajuanEksternal() {
               <button
                 type="button"
                 onClick={() => openAction('tolak')}
-                className="inline-flex items-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
               >
                 <XCircle className="h-4 w-4" />
                 Tolak
@@ -490,7 +492,10 @@ function DetailVerifikasiPengajuanEksternal() {
                               checked={checked}
                               onChange={() => toggleSub(sc.id)}
                             />
-                            {sc.nama}
+                            <span className="min-w-0">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                           </label>
                         )
                       })}
@@ -510,7 +515,10 @@ function DetailVerifikasiPengajuanEksternal() {
                         if (!sc) return null
                         return (
                           <div key={alok.subCapaianId} className="flex items-center gap-3">
-                            <span className="flex-1 text-sm text-[#444]">{sc.nama}</span>
+                            <span className="flex-1 text-sm text-[#444]">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                             <input
                               type="number"
                               min={1}
@@ -533,12 +541,12 @@ function DetailVerifikasiPengajuanEksternal() {
             )}
 
             {/* Tombol submit */}
-            <div className="flex flex-wrap gap-3 pt-2 border-t border-[#e9ebf8]">
+            <div className="flex flex-col gap-3 pt-2 border-t border-[#e9ebf8] sm:flex-row sm:justify-end">
               <button
                 type="button"
                 disabled={submitting || loadingKur}
                 onClick={handleSubmitSetuju}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {submitting ? 'Memproses...' : 'Teruskan ke Pimpinan'}

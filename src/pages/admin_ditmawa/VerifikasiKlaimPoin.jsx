@@ -5,6 +5,7 @@ import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimForValidasi, validasiBulk } from '../../services/poinService'
@@ -171,7 +172,7 @@ function VerifikasiKlaimPoin() {
         <p className="text-[11px] text-sky-500">{row.prodi}</p>
       </div>
     )},
-    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <span className="text-[#616161]">{row.kegiatan}</span> },
+    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada ? formatTanggal(row.dibuatPada) : ''} /> },
     { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
     { key: 'peran', label: 'Peran', render: (row) => <span className="text-[#616161]">{row.peran}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },

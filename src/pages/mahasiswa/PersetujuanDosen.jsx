@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, FileText, UploadCloud, Eye, RefreshCw } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -41,6 +42,7 @@ function normalizeIzinPA(item, i = 0) {
     sudahDiklaim: item.sudahDiklaim || false,
     // field display
     kegiatan: kegiatan.nama || item.namaKegiatan || item.kegiatan || '-',
+    diajukanPada: formatTanggal(item.tanggalDiajukan || item.createdAt || item.dibuatPada),
     jenis: kegiatan.kategori || item.jenis || '-',
     peran: item.peran || '-',
     penyelenggara: kegiatan.penyelenggara || item.penyelenggara || '-',
@@ -448,7 +450,7 @@ function PersetujuanDosen() {
             <DataTable
               columns={[
                 { key: 'no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },

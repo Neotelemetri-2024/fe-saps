@@ -30,11 +30,26 @@ function TahunBadge({ status }) {
   return <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${map[status] || 'bg-gray-100 text-gray-400'}`}>{status}</span>
 }
 
-function KegiatanCell({ nama }) {
-  return <p className="font-semibold text-[#333]">{nama || '-'}</p>
+function formatTanggal(value) {
+  if (!value) return null
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return null
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return null
+  }
 }
 
-
+function KegiatanCell({ nama, diajukanPada }) {
+  const tanggal = formatTanggal(diajukanPada)
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p className="text-[#333]">{nama || '-'}</p>
+      {tanggal && <p className="text-xs text-[#616161]">Diajukan: {tanggal}</p>}
+    </div>
+  )
+}
 const FALLBACK_RADAR = [
   { label: 'Fondasi', value: 0 },
   { label: 'Penguatan', value: 0 },
@@ -91,7 +106,7 @@ function MahasiswaDashboard() {
       <div className="space-y-4 sm:space-y-6">
         {/* Welcome + Radar */}
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm sm:p-6">
+          <div className="min-w-0 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-xl font-extrabold text-black sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />{user?.nama || 'Mahasiswa'}!
             </h2>
@@ -113,9 +128,11 @@ function MahasiswaDashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-4 text-center shadow-sm sm:p-6">
+          <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-4 text-center shadow-sm sm:p-6">
             <h3 className="text-sm font-bold text-white">Radar Karakter Andalasian</h3>
-            <RadarChartCJ labels={radarLabels} values={radarValues} darkBg height={220} />
+            <div className="mx-auto mt-2 max-w-[260px]">
+              <RadarChartCJ labels={radarLabels} values={radarValues} darkBg height={200} />
+            </div>
           </div>
         </div>
 
@@ -151,10 +168,10 @@ function MahasiswaDashboard() {
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} /> },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} diajukanPada={row.tanggalPengajuan || row.dibuatPada || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
@@ -171,11 +188,11 @@ function MahasiswaDashboard() {
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} /> },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} diajukanPada={row.tanggalDiajukan || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
@@ -192,7 +209,7 @@ function MahasiswaDashboard() {
             <DataTable
               columns={[
                 { key: '_no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.namaKegiatan || row.kegiatan} /> },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.namaKegiatan || row.kegiatan} diajukanPada={row.tanggalKlaim || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis', render: (row) => row.jenisKegiatan || row.jenis || '-' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'poin', label: 'Poin', render: (row) => <span className="font-bold text-brand-dark">{row.poin ?? '-'}</span> },

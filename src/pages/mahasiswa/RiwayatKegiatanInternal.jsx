@@ -3,6 +3,7 @@ import { Search, History } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getCurrentUser } from '../../services/authService'
 import { getRiwayatKegiatanInternal } from '../../services/kegiatanService'
 
@@ -35,7 +36,7 @@ function KehadiranBadge({ status }) {
 
 const columns = [
   { key: 'no', label: 'NO' },
-  { key: 'namaKegiatan', label: 'KEGIATAN' },
+  { key: 'namaKegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.namaKegiatan} tanggal={row.diajukanPada} /> },
   { key: 'jenisKegiatan', label: 'JENIS' },
   { key: 'skala', label: 'SKALA' },
   { key: 'penyelenggara', label: 'PENYELENGGARA' },
@@ -87,7 +88,11 @@ function RiwayatKegiatanInternal() {
         if (filterPenyelenggara && r.penyelenggara !== filterPenyelenggara) return false
         return true
       })
-      .map((r, i) => ({ ...r, no: i + 1 }))
+      .map((r, i) => ({
+        ...r,
+        no: i + 1,
+        diajukanPada: formatTanggal(r.tanggalDiajukan || r.createdAt || r.dibuatPada),
+      }))
   }, [riwayat, search, filterJenis, filterKehadiran, filterPenyelenggara])
 
   const resetFilter = () => {

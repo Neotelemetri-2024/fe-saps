@@ -88,7 +88,7 @@ function LoginPage() {
         <div className="flex items-center justify-center gap-3 login-bg-gradient px-6 py-6 lg:hidden">
           <img src={logoUnand} alt="Logo" className="h-12 w-12 rounded-full object-cover" />
           <div>
-            <p className="text-base font-bold leading-tight text-white">MyUnand Student Connect</p>
+            <p className="text-base font-bold leading-tight text-white">SAPS</p>
             <p className="text-[10px] text-white/70">Universitas Andalas</p>
           </div>
         </div>
@@ -102,7 +102,7 @@ function LoginPage() {
               <div>
                 <p className="text-xl font-bold leading-[26px]">
                   <span className="bg-gradient-to-r from-[#0e3b1e] to-[#48a757] bg-clip-text text-transparent">
-                    MyUnand Student Connect
+                    SAPS
                   </span>
                 </p>
                 <p className="text-base text-[#616161]">Universitas Andalas</p>

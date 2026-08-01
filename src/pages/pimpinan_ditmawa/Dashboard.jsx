@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { VerticalBarChart } from '../../components/charts'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
 
@@ -73,15 +73,11 @@ function Dashboard() {
           />
         </div>
 
-        <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 text-white shadow-sm">
-          <h3 className="text-sm font-bold">Download Panduan</h3>
-          <div className="mt-3 flex items-start gap-3 text-xs text-white/90">
-            <Download className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="font-medium leading-snug">
-              Pimpinan Ditmawa - Panduan Penggunaan Website MyUnand Student Connect 2026.pdf
-            </p>
-          </div>
-        </div>
+        <PanduanCard
+          className="max-w-sm"
+          title="Manual Book User Pimpinan Ditmawa"
+          description="Panduan Penggunaan Website SAPS 2026 untuk Pimpinan Ditmawa"
+        />
       </div>
     </DashboardLayout>
   )

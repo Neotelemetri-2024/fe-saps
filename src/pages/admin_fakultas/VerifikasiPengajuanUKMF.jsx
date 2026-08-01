@@ -4,6 +4,7 @@ import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
+import KegiatanCell from "../../components/dashboard/KegiatanCell";
 import { getCurrentUser } from "../../services/authService";
 import { getKegiatanVerifikasi } from "../../services/kegiatanService";
 
@@ -49,6 +50,7 @@ function normalizeItem(item) {
   return {
     id: item.id,
     kegiatan: item.nama || "-",
+    diajukanPada: formatTanggal(item.createdAt),
     namaUKMF: item.organisasi?.nama || "-",
     jenis: item.kategori?.nama || "-",
     skala: item.skala?.nama || "-",
@@ -95,9 +97,14 @@ function VerifikasiPengajuanUKMF() {
 
   const columns = useMemo(() => [
     {
+      key: 'no',
+      label: 'NO',
+      render: (_, i) => <span className="text-[#616161]">{i + 1}</span>,
+    },
+    {
       key: 'kegiatan',
       label: 'KEGIATAN',
-      render: (row) => <p className="font-medium text-[#222]">{row.kegiatan}</p>,
+      render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} />,
     },
     { key: 'namaUKMF', label: 'NAMA UKMF' },
     { key: 'jenis', label: 'JENIS' },
@@ -136,6 +143,7 @@ function VerifikasiPengajuanUKMF() {
       userRole="Admin Fakultas"
     >
       <div className="space-y-6">
+        {/* Header Halaman */}
         <div>
           <h2 className="text-xl font-extrabold text-brand-dark sm:text-2xl lg:text-3xl">
             Verifikasi Pengajuan UKMF
@@ -144,67 +152,86 @@ function VerifikasiPengajuanUKMF() {
             Verifikasi pengajuan kegiatan dari UKMF ke Pimpinan Fakultas.
           </p>
         </div>
+  
+        {/* Card */}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-brand-dark">
+            Daftar Pengajuan UKMF
+          </h3>
+  
+          {/* Filter */}
+          <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
+  <div className="relative flex w-full sm:flex-1">
+    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Cari kegiatan atau UKMF..."
+      className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+    />
+  </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari kegiatan atau UKMF..."
-              className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+  <div className="flex flex-wrap items-center gap-2">
+    <select
+      value={filterStatus}
+      onChange={(e) => setFilterStatus(e.target.value)}
+      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+    >
+      <option value="">Semua Status</option>
+      <option value="Pending">Pending</option>
+      <option value="Diteruskan">Diteruskan</option>
+      <option value="Disetujui">Disetujui</option>
+      <option value="Ditolak">Ditolak</option>
+      <option value="Revisi">Revisi</option>
+    </select>
+
+    <select
+      value={filterJenis}
+      onChange={(e) => setFilterJenis(e.target.value)}
+      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+    >
+      <option value="">Semua Jenis</option>
+      {[...new Set(items.map((p) => p.jenis))].map((j) => (
+        <option key={j} value={j}>
+          {j}
+        </option>
+      ))}
+    </select>
+
+    <select
+      value={filterSkala}
+      onChange={(e) => setFilterSkala(e.target.value)}
+      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+    >
+      <option value="">Semua Skala</option>
+      {[...new Set(items.map((p) => p.skala))].map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
+    </select>
+
+    {(search || filterStatus || filterJenis || filterSkala) && (
+      <button
+        onClick={resetFilter}
+        className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+      >
+        Reset Filter
+      </button>
+    )}
+  </div>
+</div>
+  
+          {/* Tabel */}
+          <div className="mt-6">
+            <DataTable
+              columns={columns}
+              data={filtered}
+              loading={loading}
+              emptyText="Tidak ada pengajuan ditemukan."
             />
           </div>
-
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark"
-          >
-            <option value="">Semua Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Diteruskan">Diteruskan</option>
-            <option value="Disetujui">Disetujui</option>
-            <option value="Ditolak">Ditolak</option>
-            <option value="Revisi">Revisi</option>
-          </select>
-
-          <select
-            value={filterJenis}
-            onChange={(e) => setFilterJenis(e.target.value)}
-            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark"
-          >
-            <option value="">Semua Jenis</option>
-            {[...new Set(items.map((p) => p.jenis))].map((j) => (
-              <option key={j} value={j}>{j}</option>
-            ))}
-          </select>
-
-          <select
-            value={filterSkala}
-            onChange={(e) => setFilterSkala(e.target.value)}
-            className="rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-sm text-[#444] outline-none focus:border-brand-dark"
-          >
-            <option value="">Semua Skala</option>
-            {[...new Set(items.map((p) => p.skala))].map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          <button
-            onClick={resetFilter}
-            className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-          >
-            Reset Filter
-          </button>
         </div>
-
-        <DataTable
-          columns={columns}
-          data={filtered}
-          loading={loading}
-          emptyText="Tidak ada pengajuan ditemukan."
-        />
       </div>
     </DashboardLayout>
   );

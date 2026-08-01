@@ -20,7 +20,8 @@ function MahasiswaPerluPerhatian() {
       .then((res) => {
         const list = res?.data || res || []
         setData(
-          (Array.isArray(list) ? list : []).map((item) => ({
+          (Array.isArray(list) ? list : []).map((item, i) => ({
+            no: i + 1,
             mahasiswaId: item.mahasiswaId ?? item.id,
             mahasiswa: item.nama || item.mahasiswa || '-',
             nim: item.nim || '-',
@@ -40,6 +41,7 @@ function MahasiswaPerluPerhatian() {
   }, [])
 
   const columns = useMemo(() => [
+    { key: 'no', label: 'NO', render: (row) => <span className="text-[#616161]">{row.no}</span> },
     { key: 'mahasiswa', label: 'MAHASISWA' },
     { key: 'nim', label: 'NIM' },
     { key: 'ipk', label: 'IPK' },

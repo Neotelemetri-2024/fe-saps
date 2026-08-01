@@ -98,6 +98,7 @@ function DetailFakultas() {
           </span>
         </div>
 
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
         <DataTable
           loading={loading}
           data={pageItems}
@@ -127,6 +128,7 @@ function DetailFakultas() {
             },
           ]}
         />
+        </div>
       </div>
     </DashboardLayout>
   )

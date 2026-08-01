@@ -209,7 +209,7 @@ function TambahMatriks() {
             {loadingCapaian ? (
               <p className="text-sm text-[#9aa0a6]">Memuat capaian dari kurikulum aktif…</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-[#e9ebf8]">
+              <div className="overflow-x-auto rounded-lg border border-[#e9ebf8] bg-white shadow-sm">
                 <table className="w-full min-w-[600px] text-left text-sm">
                   <thead>
                     <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">

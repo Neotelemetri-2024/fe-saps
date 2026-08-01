@@ -3,8 +3,10 @@ import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { StackedBarChart } from '../../components/charts'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 
 const statusStyle = {
   Pending: 'bg-yellow-100 text-yellow-600 border border-yellow-300',
@@ -42,9 +44,11 @@ function Dashboard() {
         const d = res?.data || res || {}
         setNamaFakultas(d.namaFakultas || '')
         setStats(d.statistik || { pending: 0, disetujui: 0, menungguPimpinan: 0, ditolak: 0 })
-        const list = (d.riwayatTerbaru || []).map((r) => ({
+        const list = (d.riwayatTerbaru || []).map((r, i) => ({
           id: r.id,
+          no: i + 1,
           kegiatan: r.namaKegiatan || r.kegiatan || '-',
+          diajukanPada: formatTanggal(r.diajukanPada),
           namaUKMF: r.ukm || r.namaUKMF || '-',
           jenis: r.kategori || r.jenis || '-',
           skala: r.skala || '-',
@@ -69,9 +73,14 @@ function Dashboard() {
 
   const columns = useMemo(() => [
     {
+      key: 'no',
+      label: 'NO',
+      render: (row) => <span className="text-[#616161]">{row.no}</span>,
+    },
+    {
       key: 'kegiatan',
       label: 'KEGIATAN',
-      render: (row) => <p className="font-medium text-[#222]">{row.kegiatan}</p>,
+      render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} />,
     },
     { key: 'namaUKMF', label: 'NAMA UKMF' },
     { key: 'jenis', label: 'JENIS' },
@@ -107,8 +116,8 @@ function Dashboard() {
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
-          <div className="border-b border-[#e5e7eb] px-6 py-4">
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+          <div className="border-b border-[#e9ebf8] px-6 py-4">
             <h3 className="text-base font-bold text-[#222]">Riwayat Terbaru Pengajuan kegiatan dari UKMF</h3>
           </div>
           <div className="p-4">
@@ -122,7 +131,7 @@ function Dashboard() {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
+          <div className="lg:col-span-2 rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-[#222]">Rata rata Capaian per prodi</h3>
             {chartData.length === 0 ? (
               <p className="text-sm text-[#9aa0a6]">Belum ada data grafik.</p>
@@ -130,9 +139,9 @@ function Dashboard() {
               <StackedBarChart
                 labels={chartData.map((d) => String(d.prodi || '').replace('\n', ' '))}
                 datasets={[
-                  { label: 'organisasi', data: chartData.map((d) => d.organisasi), color: '#3b82f6' },
-                  { label: 'seminar', data: chartData.map((d) => d.seminar), color: '#16a34a' },
-                  { label: 'prestasi', data: chartData.map((d) => d.prestasi), color: '#eab308' },
+                  { label: 'Organisasi', data: chartData.map((d) => d.organisasi), color: '#3b82f6' },
+                  { label: 'Seminar', data: chartData.map((d) => d.seminar), color: '#16a34a' },
+                  { label: 'Prestasi', data: chartData.map((d) => d.prestasi), color: '#eab308' },
                 ]}
                 height={280}
               />
@@ -140,15 +149,11 @@ function Dashboard() {
           </div>
 
           <div className="flex items-start">
-            <div className="w-full rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-white">Download Panduan</h3>
-              <div className="mt-3 flex items-start gap-3 text-white/90">
-                <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <p className="text-xs leading-snug">Admin Fakultas – Panduan Penggunaan Website MyUnand Student Connect.pdf</p>
-              </div>
-            </div>
+            <PanduanCard
+              className="w-full"
+              title="Manual Book User Admin Fakultas"
+              description="Panduan Penggunaan Website SAPS untuk Admin Fakultas"
+            />
           </div>
         </div>
       </div>

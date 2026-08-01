@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -33,7 +34,7 @@ function buildProgressLabel(item) {
 
 const columns = [
   { key: 'no', label: 'NO' },
-  { key: 'kegiatan', label: 'KEGIATAN' },
+  { key: 'kegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
   { key: 'jenis', label: 'JENIS' },
   { key: 'peran', label: 'PERAN' },
   { key: 'penyelenggara', label: 'PENYELENGGARA' },
@@ -99,6 +100,7 @@ function RiwayatPoin() {
           list.map((item, i) => ({
             no: item.no ?? i + 1,
             kegiatan: item.namaKegiatan || item.kegiatan || '-',
+            diajukanPada: formatTanggal(item.tanggalKlaim || item.tanggalDiajukan || item.dibuatPada || item.createdAt),
             jenis: item.jenisKegiatan || item.jenis || '-',
             peran: item.peran || '-',
             penyelenggara: item.penyelenggara || '-',

@@ -5,6 +5,7 @@ import { Bell, Eye, Pencil, Plus, RefreshCw, Send, Trash2, Users } from 'lucide-
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -132,12 +133,16 @@ function DaftarKegiatan() {
           ))}
         </div>
 
+        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
         <DataTable
           loading={loading}
           data={data}
           emptyText="Belum ada kegiatan."
           columns={[
-            { key: 'nama', label: 'Nama Kegiatan', render: (item) => item.nama || '-' },
+            { key: 'no', label: 'No', render: (_item, i) => i + 1 },
+            { key: 'nama', label: 'Nama Kegiatan', render: (item) => (
+              <KegiatanCell nama={item.nama || '-'} tanggal={formatTanggal(item.diajukanPada || item.createdAt)} />
+            ) },
             { key: 'jenis', label: 'Jenis', render: (item) => labelOf(item.jenis || item.kategori) },
             { key: 'skala', label: 'Skala', render: (item) => labelOf(item.skala) },
             { key: 'tanggal', label: 'Tanggal', render: (item) => formatTanggal(item.tanggalMulai || item.tanggal) },
@@ -186,6 +191,7 @@ function DaftarKegiatan() {
             },
           ]}
         />
+        </div>
 
         <ConfirmModal
           isOpen={!!konfirmasi}

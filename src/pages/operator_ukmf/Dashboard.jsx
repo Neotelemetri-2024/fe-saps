@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Clock, Download } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
@@ -97,42 +99,31 @@ function UKMFDashboard() {
             </button>
           </div>
 
-          <DataTable
-            loading={loading}
-            data={preview}
-            emptyText="Belum ada kegiatan."
-            columns={[
-              { key: 'no', label: 'No', render: (_r, i) => i + 1 },
-              {
-                key: 'kegiatan', label: 'Kegiatan',
-                render: (r) => (
-                  <div>
-                    <p className="font-medium text-[#333]">{r.nama || '-'}</p>
-                    {r.createdAt && (
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9a9a9a]">
-                        <Clock className="h-3 w-3 text-[#616161]" />{formatTanggal(r.createdAt)}
-                      </p>
-                    )}
-                  </div>
-                ),
-              },
-              { key: 'jenis', label: 'Jenis', render: (r) => r.kategori?.nama || r.jenis || '-' },
-              { key: 'skala', label: 'Skala', render: (r) => r.skala?.nama || r.skala || '-' },
-              { key: 'tanggal', label: 'Tanggal', render: (r) => formatTanggal(r.tanggalMulai || r.tanggal) },
-              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={mapStatus(r.status)} /> },
-            ]}
-          />
-        </div>
-
-        <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-white">Download Panduan</h3>
-          <div className="mt-3 flex items-start gap-3 text-white/90">
-            <Download className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="text-xs leading-snug">
-              UKMF – Panduan Penggunaan Website MyUnand Student Connect 2026.pdf
-            </p>
+          <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+            <DataTable
+              loading={loading}
+              data={preview}
+              emptyText="Belum ada kegiatan."
+              columns={[
+                { key: 'no', label: 'No', render: (_r, i) => i + 1 },
+                {
+                  key: 'kegiatan', label: 'Kegiatan',
+                  render: (r) => <KegiatanCell nama={r.nama || '-'} tanggal={formatTanggal(r.createdAt)} />,
+                },
+                { key: 'jenis', label: 'Jenis', render: (r) => r.kategori?.nama || r.jenis || '-' },
+                { key: 'skala', label: 'Skala', render: (r) => r.skala?.nama || r.skala || '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (r) => formatTanggal(r.tanggalMulai || r.tanggal) },
+                { key: 'status', label: 'Status', render: (r) => <StatusBadge status={mapStatus(r.status)} /> },
+              ]}
+            />
           </div>
         </div>
+
+        <PanduanCard
+          className="max-w-sm"
+          title="Manual Book User UKMF"
+          description="Panduan Penggunaan Website SAPS 2026 untuk UKMF"
+        />
       </div>
     </DashboardLayout>
   )

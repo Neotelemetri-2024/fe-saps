@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getPengajuan, mintaPersetujuanDosenEksternal, hapusDraftKegiatanEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
@@ -40,6 +41,7 @@ function mapPengajuanRows(items) {
       ...item,
       no: i + 1,
       kegiatan: item.namaKegiatan || item.kegiatan || '-',
+      diajukanPada: formatTanggal(item.tanggalPengajuan || item.tanggalDiajukan || item.dibuatPada || item.createdAt),
       jenis: item.jenisKegiatan || item.jenis || '-',
       peran: item.peran || '-',
       penyelenggara: item.penyelenggara || '-',
@@ -395,7 +397,7 @@ function AjukanKegiatanEksternal() {
             <DataTable
               columns={[
                 { key: 'no', label: 'No' },
-                { key: 'kegiatan', label: 'Kegiatan' },
+                { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
                 { key: 'tanggal', label: 'Tanggal' },

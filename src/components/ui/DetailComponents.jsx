@@ -1,7 +1,10 @@
-export function InfoRow({ label, value, href, multiline = false }) {
+export function InfoRow({ label, sublabel, value, href, multiline = false }) {
   return (
     <div className={`flex flex-col gap-0.5 sm:flex-row sm:gap-4 ${multiline ? 'sm:items-start' : 'sm:items-baseline'}`}>
-      <p className="w-full shrink-0 text-xs font-semibold uppercase tracking-wide text-[#9aa0a6] sm:w-44">{label}</p>
+      <p className="w-full shrink-0 text-xs font-semibold uppercase tracking-wide text-[#9aa0a6] sm:w-44">
+        {label}
+        {sublabel && <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-[#b3b8c2]">{sublabel}</span>}
+      </p>
       {href && value && value !== '-' ? (
         <a href={href} target="_blank" rel="noopener noreferrer"
           className="break-all text-sm text-brand-dark underline hover:opacity-75">{value}</a>

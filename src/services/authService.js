@@ -1,4 +1,4 @@
-import { post, get } from './apiClient'
+import { post, get, put } from './apiClient'
 
 const USER_STORAGE_KEY = 'saps_current_user'
 
@@ -103,4 +103,16 @@ export function getCurrentUser() {
 export function isAuthenticated() {
   const u = getCurrentUser()
   return u !== null && !!u.role
+}
+
+/** PUT /api/auth/profil — perbarui profil (nama, email, nomorTelepon, alamat) */
+export async function updateProfil(payload) {
+  const res = await put('/api/auth/profil', payload)
+  return res?.data || res
+}
+
+/** PUT /api/auth/ganti-password — ganti password sendiri */
+export async function gantiPassword(payload) {
+  const res = await put('/api/auth/ganti-password', payload)
+  return res?.data || res
 }

@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardAdminDitmawa } from '../../services/dashboardService'
 import { deleteKegiatan } from '../../services/kegiatanService'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
 
 function formatTanggal(start, end) {
   if (!start) return '-'
@@ -40,7 +41,9 @@ function AdminDitmawaDashboard() {
         setKegiatan(
           (data?.kegiatanTerbaru || []).map((k, i) => ({
             id: k.id,
+            no: i + 1,
             kegiatan: k.namaKegiatan || k.nama || '-',
+            diajukanPada: formatTanggal(k.diajukanPada),
             pengaju: k.kategori || '-',
             skala: k.skala || '-',
             tgl: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
@@ -55,7 +58,8 @@ function AdminDitmawaDashboard() {
   useEffect(() => { load() }, [])
 
   const columns = [
-    { key: 'kegiatan', label: 'KEGIATAN' },
+    { key: 'no', label: 'NO', render: (row) => <span className="text-[#616161]">{row.no}</span> },
+    { key: 'kegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'pengaju', label: 'KATEGORI' },
     { key: 'skala', label: 'SKALA' },
     { key: 'tgl', label: 'TANGGAL' },

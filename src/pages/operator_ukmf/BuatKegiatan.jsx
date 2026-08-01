@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, MapPin, Users, X, ChevronDown } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, X, ChevronDown, Save, Send } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DatePickerInput from '../../components/ui/DatePickerInput'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
-import { createKegiatan } from '../../services/kegiatanService'
+import { createKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
 
@@ -27,6 +28,7 @@ function BuatKegiatan() {
   const user = getCurrentUser()
 
   const [loading, setLoading] = useState(false)
+  const [showAjukanConfirm, setShowAjukanConfirm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [capaianOpen, setCapaianOpen] = useState(false)
   const capaianRef = useRef(null)
@@ -113,32 +115,37 @@ function BuatKegiatan() {
 
   const totalBobot = form.alokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.kategoriId) { toast.error('Pilih jenis kegiatan'); return }
-    if (!form.skalaId) { toast.error('Pilih skala kegiatan'); return }
-    if (form.alokasi.length === 0) { toast.error('Pilih minimal satu sub-capaian'); return }
+  const validateForm = () => {
+    if (!form.kategoriId) { toast.error('Pilih jenis kegiatan'); return false }
+    if (!form.skalaId) { toast.error('Pilih skala kegiatan'); return false }
+    if (form.alokasi.length === 0) { toast.error('Pilih minimal satu sub-capaian'); return false }
     if (Math.abs(totalBobot - 100) > 0.01) {
       toast.error(`Total bobot harus tepat 100%. Saat ini: ${totalBobot}%`)
-      return
+      return false
     }
+    return true
+  }
 
-    const payload = {
-      nama: form.nama,
-      kategoriId: Number(form.kategoriId),
-      skalaId: Number(form.skalaId),
-      asal: 'kurikuler_ukmf',
-      deskripsi: form.deskripsi || undefined,
-      lokasi: form.lokasi || undefined,
-      kuota: Number(form.kuota) || undefined,
-      tanggalMulai: toISODate(form.tanggalMulai),
-      tanggalSelesai: toISODate(form.tanggalSelesai),
-      alokasi: form.alokasi,
-    }
+  const buildPayload = () => ({
+    nama: form.nama,
+    kategoriId: Number(form.kategoriId),
+    skalaId: Number(form.skalaId),
+    asal: 'kurikuler_ukmf',
+    deskripsi: form.deskripsi || undefined,
+    lokasi: form.lokasi || undefined,
+    kuota: Number(form.kuota) || undefined,
+    tanggalMulai: toISODate(form.tanggalMulai),
+    tanggalSelesai: toISODate(form.tanggalSelesai),
+    alokasi: form.alokasi,
+  })
+
+  const handleSimpanDraft = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
 
     setLoading(true)
     try {
-      await createKegiatan(payload)
+      await createKegiatan(buildPayload())
       toast.success('Draft tersimpan!', {
         description: 'Kirim kegiatan dari daftar setelah siap. Setelah dikirim tidak dapat diedit.',
       })
@@ -150,8 +157,35 @@ function BuatKegiatan() {
     }
   }
 
+  const handleAjukanSekarang = async () => {
+    setShowAjukanConfirm(false)
+    if (!validateForm()) return
+
+    setLoading(true)
+    try {
+      const created = await createKegiatan(buildPayload())
+      await ajukanKegiatan(created?.id)
+      toast.success('Kegiatan berhasil diajukan!', {
+        description: 'Kegiatan telah dikirim dan menunggu verifikasi. Setelah dikirim tidak dapat diedit.',
+      })
+      navigate('/operator_ukmf/daftar-kegiatan')
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <DashboardLayout role="operator_ukmf" userName={user?.nama || 'Operator UKMF'} userRole="Operator UKMF">
+      <ConfirmModal
+        isOpen={showAjukanConfirm}
+        message="Setelah diajukan, kegiatan tidak dapat diedit. Lanjutkan?"
+        confirmText="Ya, Ajukan"
+        cancelText="Batal"
+        onConfirm={handleAjukanSekarang}
+        onCancel={() => setShowAjukanConfirm(false)}
+      />
       <div className="space-y-5">
         <button
           type="button"
@@ -169,7 +203,7 @@ function BuatKegiatan() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSimpanDraft} className="space-y-5">
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <h3 className="text-base font-bold text-brand-dark">1. Informasi Kegiatan</h3>
             <p className="mt-0.5 mb-5 text-sm text-[#616161]">Lengkapi informasi kegiatan terlebih dahulu</p>
@@ -200,7 +234,7 @@ function BuatKegiatan() {
                   type="text"
                   value={form.nama}
                   onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
-                  placeholder="Masukkan nama kegiatan..."
+                  placeholder="Masukkan nama kegiatan"
                   className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
                   required
                 />
@@ -232,7 +266,7 @@ function BuatKegiatan() {
                   value={form.deskripsi}
                   onChange={(e) => setForm((p) => ({ ...p, deskripsi: e.target.value }))}
                   rows={4}
-                  placeholder="Tujuan, agenda, dan manfaat kegiatan..."
+                  placeholder="Tujuan, agenda, dan manfaat kegiatan"
                   className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
                   maxLength={500}
                   required
@@ -387,7 +421,10 @@ function BuatKegiatan() {
                               checked={checked}
                               onChange={() => toggleSub(sc.id)}
                             />
-                            {sc.nama}
+                            <span className="min-w-0">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                           </label>
                         )
                       })}
@@ -406,7 +443,10 @@ function BuatKegiatan() {
                         if (!sc) return null
                         return (
                           <div key={alok.subCapaianId} className="flex items-center gap-3">
-                            <span className="w-40 shrink-0 text-sm text-[#444]">{sc.nama}</span>
+                            <span className="w-40 shrink-0 text-sm text-[#444]">
+                              <span className="block truncate">{sc.nama}</span>
+                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
+                            </span>
                             <input
                               type="number"
                               min={0}
@@ -435,21 +475,24 @@ function BuatKegiatan() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+              className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <Save className="h-4 w-4" />
               {loading ? 'Menyimpan...' : 'Simpan Draft'}
             </button>
             <button
               type="button"
-              onClick={() => setForm(EMPTY_FORM)}
-              className="rounded-lg bg-gray-500 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-gray-600"
+              disabled={loading}
+              onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
+              className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Reset
+              <Send className="h-4 w-4" />
+              {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/operator_ukmf/daftar-kegiatan')}
-              className="rounded-lg border border-[#d1d5db] bg-white px-8 py-2.5 text-sm font-bold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
+              className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
             >
               Batal
             </button>
