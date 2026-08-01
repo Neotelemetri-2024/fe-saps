@@ -315,6 +315,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
           peran: k.peranUsulan?.nama || '-',
           penyelenggara: k.partisipasi.kegiatan.organisasi?.nama || k.partisipasi.kegiatan.penyelenggaraExt || 'Ditmawa/Universitas',
           tanggal: k.partisipasi.kegiatan.tanggalMulai,
+          tanggalKlaim: k.createdAt,
           bukti: k.bukti[0]?.url || null,
           poin: k.perolehanPoin?.totalPoin || '-',
           status: statusStr
@@ -403,6 +404,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         penyelenggara: p.kegiatan.organisasi?.nama || 'Ditmawa/Universitas',
         tanggalMulai: p.kegiatan.tanggalMulai,
         tanggalSelesai: p.kegiatan.tanggalSelesai,
+        tanggalDiajukan: p.createdAt,
         kehadiran: statusKehadiran,
         peran: p.peranVerif?.nama || '-',
         poin: p.klaimPoin?.perolehanPoin?.totalPoin ?? (p.klaimPoin?.status === 'disetujui' ? 0 : '-'),

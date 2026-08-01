@@ -79,6 +79,7 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
         skala: k.skala?.nama || '-',
         tanggalMulai: k.tanggalMulai,
         tanggalSelesai: k.tanggalSelesai,
+        diajukanPada: k.createdAt,
         status: statusStr
       };
     });

@@ -51,6 +51,7 @@ export const dashboardAdminDitmawa = async (req: Request, res: Response) => {
         skala: k.skala?.nama || '-',
         tanggalMulai: k.tanggalMulai,
         tanggalSelesai: k.tanggalSelesai,
+        diajukanPada: k.createdAt,
         peserta: k._count.partisipasi,
         poin: 50, // default fallback sesuai UI
         status: statusStr

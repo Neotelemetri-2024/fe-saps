@@ -118,6 +118,7 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
         skala: k.skala?.nama || '-',
         tanggalMulai: k.tanggalMulai,
         tanggalSelesai: k.tanggalSelesai,
+        diajukanPada: k.createdAt,
         status: statusStr,
         jumlahPeserta,
         statusPeserta: sudahTercatat ? 'sudah_tercatat' : 'belum_tercatat'

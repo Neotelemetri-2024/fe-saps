@@ -101,6 +101,7 @@ export const getDashboardFakultas = async (req: Request, res: Response) => {
         skala: k.skala?.nama || '-',
         tanggalMulai: k.tanggalMulai,
         tanggalSelesai: k.tanggalSelesai,
+        diajukanPada: k.createdAt,
         status: statusStr
       };
     });
