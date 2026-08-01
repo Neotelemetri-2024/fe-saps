@@ -154,6 +154,7 @@ model User {
   aktif         Boolean  @default(true)
   nomorTelepon  String?  @map("nomor_telepon") @db.VarChar(30)
   alamat        String?  @map("alamat") @db.VarChar(255)
+  fcmToken      String?  @map("fcm_token") @db.VarChar(500)
   createdAt     DateTime @default(now()) @map("created_at")
 
   // Relasi 1:1 ke profil

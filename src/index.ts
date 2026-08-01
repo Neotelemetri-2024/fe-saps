@@ -22,8 +22,12 @@ import umumRoutes from './routes/umum.routes';
 import organisasiRoutes from './routes/organisasi.routes';
 import organisasiFakultasRoutes from './routes/organisasi_fakultas.routes';
 import pesertaRoutes from './routes/peserta.routes';
+import { initializeFirebase } from './lib/fcm';
 
 dotenv.config();
+
+// Inisialisasi Firebase Cloud Messaging (Push Notification)
+initializeFirebase();
 
 const app = express();
 const port = process.env.PORT || 3000;

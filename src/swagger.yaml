@@ -81,6 +81,67 @@ paths:
         '200': { description: Berhasil }
         '401': { description: Token tidak valid }
 
+  /api/auth/profil:
+    put:
+      summary: Update Profil User
+      description: "Mengubah data profil (nama, email, nomor telepon, alamat)."
+      tags: ["Autentikasi"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama: { type: string, example: "Nama Baru" }
+                email: { type: string, example: "email@baru.com" }
+                nomorTelepon: { type: string, example: "08123456789" }
+                alamat: { type: string, example: "Jl. Contoh No. 1" }
+      responses:
+        '200': { description: Berhasil }
+
+  /api/auth/ganti-password:
+    put:
+      summary: Ganti Password
+      description: "Mengganti password user yang sedang login."
+      tags: ["Autentikasi"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passwordLama, passwordBaru, konfirmasiPassword]
+              properties:
+                passwordLama: { type: string, example: "password_lama" }
+                passwordBaru: { type: string, example: "password_baru_123" }
+                konfirmasiPassword: { type: string, example: "password_baru_123" }
+      responses:
+        '200': { description: Password berhasil diubah }
+
+  /api/auth/fcm-token:
+    put:
+      summary: Simpan FCM Device Token
+      description: "Menyimpan token FCM dari perangkat user untuk push notification. Dipanggil setelah login dan browser memberikan izin notifikasi."
+      tags: ["Autentikasi"]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fcmToken]
+              properties:
+                fcmToken: { type: string, example: "dKj3x9..." }
+      responses:
+        '200': { description: FCM Token berhasil disimpan }
+
   # =================================================================
   # KURIKULUM & MATRIKS POIN (Pimpinan Ditmawa)
   # =================================================================
