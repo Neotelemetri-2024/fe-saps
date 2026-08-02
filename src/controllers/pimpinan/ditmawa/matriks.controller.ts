@@ -509,7 +509,7 @@ export const upsertMatriksPoin = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// GET /api/matriks/histori/:matriksPoinId — Histori perubahan nilai
+// GET /api/matriks/histori/:matriksPoinId — Histori perubahan nilai (satu sel)
 export const getMatriksHistori = async (req: Request, res: Response) => {
   try {
     const matriksPoinId = req.params.matriksPoinId as string;
@@ -522,6 +522,116 @@ export const getMatriksHistori = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// GET /api/matriks/histori — Seluruh histori perubahan nilai (semua sel)
+export const getAllMatriksHistori = async (req: Request, res: Response) => {
+  try {
+    const data = await prisma.matriksPoinHistori.findMany({
+      include: {
+        pengubah: { select: { id: true, nama: true } },
+        matriksPoin: {
+          include: {
+            kategori: true,
+            skala: true,
+            peran: true,
+            kurikulum: { select: { nama: true } },
+          },
+        },
+      },
+      orderBy: { diubahPada: 'desc' },
+      take: 200,
+    });
+    const mapped = data.map((h) => ({
+      id: h.id,
+      poinLama: h.poinLama,
+      poinBaru: h.poinBaru,
+      diubahPada: h.diubahPada,
+      kategori: h.matriksPoin.kategori.nama,
+      skala: h.matriksPoin.skala.nama,
+      peran: h.matriksPoin.peran.nama,
+      kurikulum: h.matriksPoin.kurikulum.nama,
+      oleh: h.pengubah.nama,
+    }));
+    res.json({ success: true, data: mapped });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// DELETE /api/matriks/kategori/:id — Hapus 1 matriks (kategori) beserta baris/kolom/nilainya
+// Soft-delete: nama kategori/peran/skala diganti prefix "(tidak digunakan)" agar
+// referensi FK dari Kegiatan lama tetap valid dan dropdown lain tidak rusak.
+export const deleteKategori = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const kategoriId = Number(id);
+
+    const kategori = await prisma.mpKategori.findUnique({ where: { id: kategoriId } });
+    if (!kategori) {
+      res.status(404).json({ success: false, message: 'Kategori tidak ditemukan' });
+      return;
+    }
+    if (kategori.nama.startsWith('(tidak digunakan)')) {
+      res.status(400).json({ success: false, message: 'Kategori sudah dinonaktifkan' });
+      return;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Hapus nilai matriks + histori milik kategori ini
+      const cells = await tx.matriksPoin.findMany({
+        where: { kategoriId },
+        select: { id: true },
+      });
+      const cellIds = cells.map((c) => c.id);
+      if (cellIds.length > 0) {
+        await tx.matriksPoinHistori.deleteMany({ where: { matriksPoinId: { in: cellIds } } });
+        await tx.matriksPoin.deleteMany({ where: { kategoriId } });
+      }
+
+      // Soft-delete peran & skala milik kategori ini
+      const perans = await tx.mpPeran.findMany({ where: { kategoriId } });
+      for (const p of perans) {
+        await tx.mpPeran.update({
+          where: { id: p.id },
+          data: { nama: softDeleteName(p.nama, p.id) },
+        });
+      }
+      const skalas = await tx.mpSkala.findMany({ where: { kategoriId } });
+      for (const s of skalas) {
+        await tx.mpSkala.update({
+          where: { id: s.id },
+          data: { nama: softDeleteName(s.nama, s.id) },
+        });
+      }
+
+      // Soft-delete kategori itu sendiri
+      await tx.mpKategori.update({
+        where: { id: kategoriId },
+        data: { nama: softDeleteName(kategori.nama, kategoriId) },
+      });
+
+      await logAudit({
+        entitas: 'matriks_poin',
+        entitasId: BigInt(kategoriId),
+        aksi: 'hapus_kategori',
+        statusLama: kategori.nama,
+        aktorId: BigInt(req.user!.id),
+      });
+    });
+
+    res.json({
+      success: true,
+      message: `Matriks "${kategori.nama}" berhasil dihapus`,
+    });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Terjadi kesalahan pada server',
+    });
   }
 };
 
