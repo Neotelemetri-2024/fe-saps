@@ -8,6 +8,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import InfoTooltip from '../../components/ui/InfoTooltip'
 import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatan,
@@ -362,9 +363,12 @@ function DaftarKegiatan() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
-              Daftar Kegiatan
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+                Daftar Kegiatan
+              </h2>
+              <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
+            </div>
 
             <p className="mt-1 text-sm text-[#616161]">
               Simpan draft terlebih dahulu,
@@ -384,16 +388,6 @@ function DaftarKegiatan() {
           >
             <Plus className="h-4 w-4" /> Buat Kegiatan
           </button>
-        </div>
-
-        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
-          <p>
-            Kegiatan berstatus{' '}
-            <strong>draft</strong> dapat
-            diedit atau dihapus. Setelah{' '}
-            <strong>Kirim</strong>, kegiatan
-            tidak dapat diedit.
-          </p>
         </div>
 
         <TableCard title="Kegiatan Saya">

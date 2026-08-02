@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Bell, FileText, Users, Info, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Bell, FileText, Users, Info, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../services/authService'
 import { getNotifikasi, bacaNotifikasi, bacaSemua } from '../services/notifikasiService'
@@ -138,6 +138,8 @@ function Notifikasi() {
 
   const [loading, setLoading] = useState(true)
   const [notifs, setNotifs] = useState([])
+  const [activeTab, setActiveTab] = useState('semua')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let active = true
@@ -161,6 +163,47 @@ function Notifikasi() {
   }, [])
 
   const belumDibacaCount = notifs.filter((n) => n.belumDibaca).length
+  const sudahDibacaCount = notifs.length - belumDibacaCount
+
+  const TABS = [
+    { key: 'semua', label: 'Semua', count: notifs.length },
+    { key: 'belum_dibaca', label: 'Belum Dibaca', count: belumDibacaCount },
+    { key: 'sudah_dibaca', label: 'Sudah Dibaca', count: sudahDibacaCount },
+  ]
+
+  const filteredNotifs = notifs.filter((n) => {
+    if (activeTab === 'belum_dibaca') return n.belumDibaca
+    if (activeTab === 'sudah_dibaca') return !n.belumDibaca
+    return true
+  })
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(filteredNotifs.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageItems = filteredNotifs.slice(start, start + PAGE_SIZE)
+
+  const handleTabChange = (key) => {
+    setActiveTab(key)
+    setPage(1)
+  }
+
+  // Bangun daftar nomor halaman dengan elipsis untuk halaman yang banyak, mis: 1 2 3 … 8
+  function buildPageNumbers(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+    const pages = new Set([1, total, current, current - 1, current + 1])
+    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b)
+    const result = []
+    let prev = 0
+    for (const p of sorted) {
+      if (prev && p - prev > 1) result.push('...')
+      result.push(p)
+      prev = p
+    }
+    return result
+  }
+
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   const tandaiSudahDibaca = async (id) => {
     try {
@@ -207,68 +250,150 @@ function Notifikasi() {
           )}
         </div>
 
-        {/* Daftar kartu notifikasi */}
-        <div className="space-y-3">
-          {loading ? (
-            <div className="rounded-xl border border-[#dddee3] bg-white px-6 py-12 text-center text-sm text-[#6d6868]">
-              Memuat notifikasi…
-            </div>
-          ) : notifs.length === 0 ? (
-            <div className="rounded-xl border border-[#dddee3] bg-white px-6 py-12 text-center text-sm text-[#6d6868]">
-              Belum ada notifikasi.
-            </div>
-          ) : (
-            notifs.map((notif) => {
-              const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.default
-              const Icon = cfg.icon
-              const action = resolveAction(notif, role)
-              return (
-                <div
-                  key={notif.id}
-                  className="rounded-xl border border-[#dddee3] bg-white p-4 sm:p-5"
+        {/* Card putih pembungkus tab, daftar, dan pagination */}
+        <div className="rounded-xl border border-[#dddee3] bg-white p-4 sm:p-5">
+          {/* Tab filter */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#dddee3]">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => handleTabChange(tab.key)}
+                className={`relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition ${
+                  activeTab === tab.key
+                    ? 'text-brand-dark'
+                    : 'text-[#6d6868] hover:text-[#212529]'
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                    activeTab === tab.key ? 'bg-[#e7fdef] text-[#203820]' : 'bg-[#f1f2f4] text-[#6d6868]'
+                  }`}
                 >
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${cfg.bg}`}>
-                      <Icon className={`h-5 w-5 sm:h-[22px] sm:w-[22px] ${cfg.iconColor}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold leading-snug text-[#212529]">
-                          {notif.title}
-                          {notif.belumDibaca && (
-                            <span className="ml-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#203820] align-middle" title="Belum dibaca"></span>
-                          )}
-                        </p>
-                        <span className="shrink-0 text-xs text-[#9aa49c]">{notif.time}</span>
+                  {tab.count}
+                </span>
+                {activeTab === tab.key && (
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand-dark" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Daftar kartu notifikasi */}
+          <div className="mt-4 space-y-3">
+            {loading ? (
+              <div className="rounded-xl border border-[#dddee3] bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
+                Memuat notifikasi…
+              </div>
+            ) : filteredNotifs.length === 0 ? (
+              <div className="rounded-xl border border-[#dddee3] bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
+                {activeTab === 'belum_dibaca'
+                  ? 'Tidak ada notifikasi belum dibaca.'
+                  : activeTab === 'sudah_dibaca'
+                    ? 'Tidak ada notifikasi yang sudah dibaca.'
+                    : 'Belum ada notifikasi.'}
+              </div>
+            ) : (
+              pageItems.map((notif) => {
+                const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.default
+                const Icon = cfg.icon
+                const action = resolveAction(notif, role)
+                return (
+                  <div
+                    key={notif.id}
+                    className="rounded-xl border border-[#dddee3] bg-[#fafbfc] p-4 sm:p-5"
+                  >
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${cfg.bg}`}>
+                        <Icon className={`h-5 w-5 sm:h-[22px] sm:w-[22px] ${cfg.iconColor}`} />
                       </div>
-                      {notif.message && (
-                        <p className="mt-1.5 text-sm leading-relaxed text-[#6d6868]">{notif.message}</p>
-                      )}
-                      {action && (
-                        <div className="mt-3 flex flex-wrap items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => navigate(action.path)}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:opacity-80 ${action.cls}`}
-                          >
-                            {action.label}
-                          </button>
-                          {notif.belumDibaca && (
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-semibold leading-snug text-[#212529]">
+                            {notif.title}
+                            {notif.belumDibaca && (
+                              <span className="ml-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#203820] align-middle" title="Belum dibaca"></span>
+                            )}
+                          </p>
+                          <span className="shrink-0 text-xs text-[#9aa49c]">{notif.time}</span>
+                        </div>
+                        {notif.message && (
+                          <p className="mt-1.5 text-sm leading-relaxed text-[#6d6868]">{notif.message}</p>
+                        )}
+                        {action && (
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
                             <button
                               type="button"
-                              onClick={() => tandaiSudahDibaca(notif.id)}
-                              className="text-xs font-medium text-brand-dark underline underline-offset-4 transition hover:opacity-80"
+                              onClick={() => navigate(action.path)}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:opacity-80 ${action.cls}`}
                             >
-                              Tandai dibaca
+                              {action.label}
                             </button>
-                          )}
-                        </div>
-                      )}
+                            {notif.belumDibaca && (
+                              <button
+                                type="button"
+                                onClick={() => tandaiSudahDibaca(notif.id)}
+                                className="text-xs font-medium text-brand-dark underline underline-offset-4 transition hover:opacity-80"
+                              >
+                                Tandai dibaca
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })
+                )
+              })
+            )}
+          </div>
+
+          {/* Pagination */}
+          {!loading && filteredNotifs.length > 0 && totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between border-t border-[#dddee3] pt-4">
+              <span className="text-xs text-[#888]">
+                Menampilkan {start + 1}–{Math.min(start + PAGE_SIZE, filteredNotifs.length)} dari {filteredNotifs.length} notifikasi
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(currentPage - 1)}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#dddee3] text-[#616161] transition hover:bg-[#f1f2f4] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {pageNumbers.map((p, idx) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-[#9aa0a6]">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPage(p)}
+                      className={`flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-xs font-medium transition ${
+                        p === currentPage
+                          ? 'bg-brand-dark text-white'
+                          : 'border border-[#dddee3] text-[#616161] hover:bg-[#f1f2f4]'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(currentPage + 1)}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#dddee3] text-[#616161] transition hover:bg-[#f1f2f4] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

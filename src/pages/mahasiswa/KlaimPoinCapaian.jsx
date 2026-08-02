@@ -69,7 +69,10 @@ function KlaimPoinCapaian() {
       userRole="Mahasiswa"
     >
       <div className="space-y-6">
-        <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Klaim Poin Capaian</h2>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Klaim Poin Capaian</h2>
+          <p className="mt-1 text-sm text-[#616161]">Pantau riwayat klaim poin kegiatan eksternal yang telah Anda ajukan.</p>
+        </div>
 
         <TableCard title="Riwayat Klaim Poin Anda">
           <div className="flex flex-wrap items-center gap-3">

@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { ArrowLeft, Save } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import InfoTooltip from '../../components/ui/InfoTooltip'
 import {
   ajukanKegiatan,
   simpanDraftKegiatanEksternal,
@@ -188,9 +189,12 @@ function AjukanKegiatanForm() {
 
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
-              {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
+                {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
+              </h2>
+              <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
+            </div>
             <p className="mt-1 text-sm text-[#616161]">
               {isRevisi
                 ? 'Perbaiki data sesuai catatan revisi, lalu ajukan ulang.'
@@ -209,12 +213,6 @@ function AjukanKegiatanForm() {
               Draft
             </span>
           ) : null}
-        </div>
-
-        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
-          <p>
-            Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
-          </p>
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">

@@ -9,6 +9,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import InfoTooltip from '../../components/ui/InfoTooltip'
 import { getPengajuan, mintaPersetujuanDosenEksternal, hapusDraftKegiatanEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
@@ -333,7 +334,10 @@ function AjukanKegiatanEksternal() {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-[#222] sm:text-2xl">Daftar Pengajuan</h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-lg font-bold text-[#222] sm:text-2xl">Daftar Pengajuan</h2>
+            <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
+          </div>
           <button
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
@@ -342,12 +346,6 @@ function AjukanKegiatanEksternal() {
             <span className="sm:hidden">Ajukan Baru</span>
             <span className="hidden sm:inline">Tambah Ajukan Kegiatan</span>
           </button>
-        </div>
-
-        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
-          <p>
-            Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
-          </p>
         </div>
 
         <TableCard title="Ajukan Kegiatan Eksternal">
