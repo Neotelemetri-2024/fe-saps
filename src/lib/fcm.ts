@@ -45,7 +45,14 @@ export async function sendPushNotification(
   body: string,
   data?: Record<string, string>
 ): Promise<void> {
-  if (!isInitialized || !fcmToken) return;
+  if (!isInitialized) {
+    console.warn('[FCM] Dilewati: Firebase Admin SDK belum terinisialisasi (cek firebase-adminsdk.json).');
+    return;
+  }
+  if (!fcmToken) {
+    console.warn('[FCM] Dilewati: user penerima tidak punya fcmToken tersimpan di database.');
+    return;
+  }
 
   try {
     await getMessaging().send({

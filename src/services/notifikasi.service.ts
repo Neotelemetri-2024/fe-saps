@@ -39,6 +39,7 @@ export const NotifikasiService = {
           refId: refId || null,
         },
       });
+      console.log(`[NotifikasiService] Notifikasi in-app tersimpan untuk userId=${userId}: "${judul}"`);
 
       // 2. Kirim push notification via FCM
       const user = await prisma.user.findUnique({
@@ -47,7 +48,10 @@ export const NotifikasiService = {
       });
 
       if (user?.fcmToken) {
+        console.log(`[NotifikasiService] Mengirim push FCM ke userId=${userId}...`);
         await sendPushNotification(user.fcmToken, judul, isi || judul);
+      } else {
+        console.warn(`[NotifikasiService] userId=${userId} tidak punya fcmToken, push notification dilewati.`);
       }
     } catch (error) {
       console.error('[NotifikasiService] Gagal mengirim notifikasi:', error);
@@ -72,6 +76,8 @@ export const NotifikasiService = {
         })),
       });
 
+      console.log(`[NotifikasiService] Notifikasi in-app tersimpan untuk ${userIds.length} user: "${judul}"`);
+
       // 2. Kirim push notification via FCM (batch)
       const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
@@ -83,7 +89,10 @@ export const NotifikasiService = {
         .filter((t): t is string => !!t);
 
       if (tokens.length > 0) {
+        console.log(`[NotifikasiService] Mengirim push FCM batch ke ${tokens.length} dari ${userIds.length} user...`);
         await sendPushNotificationBatch(tokens, judul, isi || judul);
+      } else {
+        console.warn(`[NotifikasiService] Tidak ada user dari batch ini yang punya fcmToken, push notification dilewati.`);
       }
     } catch (error) {
       console.error('[NotifikasiService] Gagal mengirim notifikasi batch:', error);
