@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
 import prisma from '../../lib/prisma';
 import { bagiPoin } from '../../lib/distribusiPoin';
 
@@ -375,19 +376,21 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file CSV.' });
     }
 
-    const peserta: { nim: string; hadir: boolean; peranId: number | null }[] = [];
+    const peserta: { nim: string; nama: string; hadir: boolean; peranId: number | null }[] = [];
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
       const nim = (cols[0] ?? '').trim();
       if (!nim) continue;
 
-      const hadirStr = (cols[1] ?? '').trim().toLowerCase();
+      const nama = (cols[1] ?? '').trim();
+
+      const hadirStr = (cols[2] ?? '').trim().toLowerCase();
       const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes';
 
-      const peranIdRaw = (cols[2] ?? '').trim();
+      const peranIdRaw = (cols[3] ?? '').trim();
       const peranId = peranIdRaw && !isNaN(Number(peranIdRaw)) ? Number(peranIdRaw) : null;
 
-      peserta.push({ nim, hadir, peranId });
+      peserta.push({ nim, nama, hadir, peranId });
     }
 
     if (peserta.length === 0) {
@@ -408,12 +411,73 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
     const imported: any[] = [];
     const errors: any[] = [];
 
+    // Cari prodi default untuk akun bayangan (prodi pertama yang ada di database)
+    const prodiDefault = await prisma.programStudi.findFirst({ orderBy: { id: 'asc' } });
+    if (!prodiDefault) {
+      return res.status(500).json({ success: false, message: 'Data Program Studi belum tersedia di database. Hubungi Admin.' });
+    }
+
+    const autoCreated: any[] = [];
+
     await prisma.$transaction(async (tx) => {
       for (const p of peserta) {
-        const mahasiswa = nimToMahasiswa.get(p.nim);
+        let mahasiswa = nimToMahasiswa.get(p.nim);
+
+        // Auto-create akun bayangan jika NIM belum terdaftar
         if (!mahasiswa) {
-          errors.push({ nim: p.nim, error: 'NIM tidak ditemukan di database' });
-          continue;
+          if (!p.nama) {
+            errors.push({ nim: p.nim, error: 'NIM belum terdaftar dan kolom NAMA kosong. Isi kolom NAMA di CSV agar akun bisa dibuat otomatis.' });
+            continue;
+          }
+
+          try {
+            // Buat password default dari NIM (mahasiswa bisa ganti nanti via SSO/ganti-password)
+            const hashedPassword = await bcrypt.hash(p.nim, 10);
+
+            // 1. Buat User bayangan
+            const newUser = await tx.user.create({
+              data: {
+                nama: p.nama,
+                email: `${p.nim}@student.unand.ac.id`,
+                passwordHash: hashedPassword,
+                peran: 'mahasiswa',
+                aktif: true,
+              }
+            });
+
+            // 2. Buat profil Mahasiswa
+            await tx.mahasiswa.create({
+              data: {
+                userId: newUser.id,
+                nim: p.nim,
+                prodiId: prodiDefault.id,
+              }
+            });
+
+            // Simpan referensi agar bisa dipakai di upsert partisipasi di bawah
+            mahasiswa = {
+              userId: newUser.id,
+              nim: p.nim,
+              prodiId: prodiDefault.id,
+              dosenPaId: null,
+              angkatan: null,
+              publicCvToken: null,
+              user: { nama: p.nama },
+              prodi: { ...prodiDefault, fakultas: null },
+            } as any;
+
+            // Tambah ke Map agar tidak duplikat jika NIM sama muncul 2x di CSV
+            nimToMahasiswa.set(p.nim, mahasiswa as any);
+            autoCreated.push({ nim: p.nim, nama: p.nama });
+          } catch (createErr: any) {
+            // Jika email sudah ada (duplikat), skip
+            if (createErr.code === 'P2002') {
+              errors.push({ nim: p.nim, error: 'Email atau NIM sudah terdaftar dengan data berbeda.' });
+            } else {
+              errors.push({ nim: p.nim, error: `Gagal membuat akun: ${createErr.message}` });
+            }
+            continue;
+          }
         }
 
         try {
@@ -421,7 +485,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
             where: {
               kegiatanId_mahasiswaId: {
                 kegiatanId,
-                mahasiswaId: mahasiswa.userId
+                mahasiswaId: mahasiswa!.userId
               }
             },
             update: {
@@ -431,7 +495,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
             },
             create: {
               kegiatanId,
-              mahasiswaId: mahasiswa.userId,
+              mahasiswaId: mahasiswa!.userId,
               kehadiran: p.hadir,
               peranVerifId: p.peranId ?? null,
               status: p.hadir ? 'hadir' : 'tidak_hadir'
@@ -440,7 +504,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
           imported.push({
             nim: p.nim,
-            nama: mahasiswa.user.nama,
+            nama: (mahasiswa as any).user.nama,
             status: p.hadir ? 'hadir' : 'tidak_hadir'
           });
         } catch (err: any) {
@@ -451,8 +515,12 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
     res.status(200).json({
       success: true,
-      message: `Berhasil mengimport ${imported.length} dari ${peserta.length} peserta.`,
-      data: { imported, errors: errors.length > 0 ? errors : undefined }
+      message: `Berhasil mengimport ${imported.length} dari ${peserta.length} peserta.${autoCreated.length > 0 ? ` (${autoCreated.length} akun baru dibuat otomatis)` : ''}`,
+      data: {
+        imported,
+        autoCreated: autoCreated.length > 0 ? autoCreated : undefined,
+        errors: errors.length > 0 ? errors : undefined
+      }
     });
 
   } catch (error: any) {
@@ -507,8 +575,8 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
 
     // Build CSV: sheet utama + referensi peran digabung dalam satu file
     const rows: string[] = [];
-    rows.push('NIM,HADIR (true/false),PERAN_ID');
-    rows.push(`2311210001,true,${peranList[0]?.id ?? 1}`);
+    rows.push('NIM,NAMA,HADIR (true/false),PERAN_ID');
+    rows.push(`2311210001,Nama Mahasiswa,true,${peranList[0]?.id ?? 1}`);
     rows.push('');
     rows.push('# Referensi Peran:');
     rows.push('PERAN_ID,NAMA PERAN');
