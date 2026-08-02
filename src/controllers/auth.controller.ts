@@ -375,3 +375,48 @@ export const gantiPassword = async (req: Request, res: Response): Promise<void> 
     }
   }
 };
+
+// ==================== UPDATE FCM TOKEN ====================
+
+const fcmTokenSchema = z.object({
+  fcmToken: z.string().min(1, 'FCM Token wajib diisi'),
+});
+
+/**
+ * PUT /api/auth/fcm-token
+ *
+ * Menyimpan/memperbarui FCM device token untuk push notification.
+ * Dipanggil oleh Frontend setelah user login dan mendapatkan izin notifikasi browser.
+ */
+export const updateFcmToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const data = fcmTokenSchema.parse(req.body);
+    const userId = BigInt(req.user.id);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { fcmToken: data.fcmToken },
+    });
+
+    res.json({ success: true, message: 'FCM Token berhasil disimpan.' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        message: 'Validasi gagal',
+        errors: error.issues,
+      });
+    } else {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Terjadi kesalahan pada server',
+      });
+    }
+  }
+};

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../lib/auditLog';
+import { NotifikasiService } from '../../services/notifikasi.service';
 
 // ==================== VALIDASI ====================
 const izinDecisionSchema = z.object({
@@ -198,14 +199,12 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
     if (body.status === 'ditolak') statusText = 'ditolak ❌';
     if (body.status === 'revisi') statusText = 'diminta revisi ⚠️';
     
-    await prisma.notifikasi.create({
-      data: {
-        userId: izin.partisipasi.mahasiswaId,
-        judul: `Izin Kegiatan ${statusText}`,
-        isi: `Izin Anda untuk mengikuti kegiatan telah ${statusText} oleh Dosen PA.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-        refType: 'izin_pa',
-        refId: BigInt(id as string),
-      },
+    await NotifikasiService.kirim({
+      userId: izin.partisipasi.mahasiswaId,
+      judul: `Izin Kegiatan ${statusText}`,
+      isi: `Izin Anda untuk mengikuti kegiatan telah ${statusText} oleh Dosen PA.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+      refType: 'izin_pa',
+      refId: BigInt(id as string),
     });
 
     await logAudit({
@@ -249,14 +248,12 @@ export const createSaranPA = async (req: Request, res: Response, next: NextFunct
       data: { dosenPaId, mahasiswaId, isi },
     });
 
-    await prisma.notifikasi.create({
-      data: {
-        userId: mahasiswaId,
-        judul: 'Saran dari Dosen PA',
-        isi: `Dosen PA Anda memberikan saran baru.`,
-        refType: 'saran_pa',
-        refId: saran.id,
-      },
+    await NotifikasiService.kirim({
+      userId: mahasiswaId,
+      judul: 'Saran dari Dosen PA',
+      isi: `Dosen PA Anda memberikan saran baru.`,
+      refType: 'saran_pa',
+      refId: saran.id,
     });
 
     res.status(201).json({ success: true, data: { ...saran, id: saran.id.toString(), dosenPaId: saran.dosenPaId.toString(), mahasiswaId: saran.mahasiswaId.toString() } });

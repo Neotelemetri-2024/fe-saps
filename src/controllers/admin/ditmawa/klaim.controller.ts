@@ -3,6 +3,7 @@ import prisma from "../../../lib/prisma";
 import { z } from "zod";
 import { logAudit } from "../../../lib/auditLog";
 import { bagiPoin } from "../../../lib/distribusiPoin";
+import { NotifikasiService } from '../../../services/notifikasi.service';
 
 // ==================== VALIDASI ====================
 const createKlaimSchema = z.object({
@@ -532,14 +533,12 @@ export const validasiKlaim = async (
       });
 
       // Notifikasi ke mahasiswa
-      await prisma.notifikasi.create({
-        data: {
-          userId: klaim.partisipasi.mahasiswaId,
-          judul: "Poin Diperoleh! ðŸŽ‰",
-          isi: `Klaim poin Anda disetujui. Anda memperoleh ${matriks.poin} poin dari kegiatan "${kegiatan.nama}".${body.alasan ? ` Catatan: ${body.alasan}` : ""}`,
-          refType: "perolehan_poin",
-          refId: perolehan.id,
-        },
+      await NotifikasiService.kirim({
+        userId: klaim.partisipasi.mahasiswaId,
+        judul: "Poin Diperoleh! 🎉",
+        isi: `Klaim poin Anda disetujui. Anda memperoleh ${matriks.poin} poin dari kegiatan "${kegiatan.nama}".${body.alasan ? ` Catatan: ${body.alasan}` : ""}`,
+        refType: "perolehan_poin",
+        refId: perolehan.id,
       });
 
       await logAudit({
@@ -569,14 +568,12 @@ export const validasiKlaim = async (
       // Notifikasi ke mahasiswa
       const statusTitle =
         body.keputusan === "perlu_revisi" ? "Perlu Revisi âš ï¸" : "Ditolak âŒ";
-      await prisma.notifikasi.create({
-        data: {
-          userId: klaim.partisipasi.mahasiswaId,
-          judul: `Klaim Poin ${statusTitle}`,
-          isi: `Klaim poin Anda ${body.keputusan === "perlu_revisi" ? "perlu direvisi" : "ditolak"}. Alasan: ${body.alasan}`,
-          refType: "klaim_poin",
-          refId: BigInt(id),
-        },
+      await NotifikasiService.kirim({
+        userId: klaim.partisipasi.mahasiswaId,
+        judul: `Klaim Poin ${statusTitle}`,
+        isi: `Klaim poin Anda ${body.keputusan === "perlu_revisi" ? "perlu direvisi" : "ditolak"}. Alasan: ${body.alasan}`,
+        refType: "klaim_poin",
+        refId: BigInt(id),
       });
 
       await logAudit({

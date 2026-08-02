@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../../lib/auditLog';
+import { NotifikasiService } from '../../../services/notifikasi.service';
 
 // ==================== VALIDASI ====================
 const createKegiatanSchema = z.object({
@@ -468,14 +469,12 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       });
 
       // Notifikasi ke pembuat kegiatan
-      await prisma.notifikasi.create({
-        data: {
-          userId: kegiatan.dibuatOleh,
-          judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi ✅' : body.keputusan === 'revisi' ? 'Perlu Revisi ⚠️' : 'Ditolak ❌'}`,
-          isi: `Kegiatan "${kegiatan.nama}" telah diverifikasi oleh Admin. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
-          refType: 'kegiatan',
-          refId: BigInt(kegiatan.id),
-        },
+      await NotifikasiService.kirim({
+        userId: kegiatan.dibuatOleh,
+        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+        isi: `Kegiatan "${kegiatan.nama}" telah diverifikasi oleh Admin. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
+        refType: 'kegiatan',
+        refId: BigInt(kegiatan.id),
       });
 
       // Jika setuju dan bukan eksternal, beri notif ke pimpinan
@@ -496,14 +495,12 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
         }
 
         if (pimpinanTargets.length > 0) {
-          await prisma.notifikasi.createMany({
-            data: pimpinanTargets.map(t => ({
-              userId: t.userId,
-              judul: 'Kegiatan Menunggu Approval ⏳',
-              isi: `Kegiatan "${kegiatan.nama}" telah lolos verifikasi Admin dan menunggu approval final Anda.`,
-              refType: 'kegiatan',
-              refId: BigInt(kegiatan.id),
-            })),
+          await NotifikasiService.kirimBatch({
+            userIds: pimpinanTargets.map(t => t.userId),
+            judul: 'Kegiatan Menunggu Approval',
+            isi: `Kegiatan "${kegiatan.nama}" telah lolos verifikasi Admin dan menunggu approval final Anda.`,
+            refType: 'kegiatan',
+            refId: BigInt(kegiatan.id),
           });
         }
       }
@@ -626,14 +623,12 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
     });
 
     if (notifTargets.length > 0) {
-      await prisma.notifikasi.createMany({
-        data: notifTargets.map((t) => ({
-          userId: t.userId,
-          judul: notifJudul,
-          isi: notifIsi,
-          refType: 'kegiatan',
-          refId: BigInt(kegiatan.id),
-        })),
+      await NotifikasiService.kirimBatch({
+        userIds: notifTargets.map(t => t.userId),
+        judul: notifJudul,
+        isi: notifIsi,
+        refType: 'kegiatan',
+        refId: BigInt(kegiatan.id),
       });
     }
 
@@ -843,14 +838,12 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     }
 
     // Notifikasi ke pembuat kegiatan
-    await prisma.notifikasi.create({
-      data: {
-        userId: kegiatan.dibuatOleh,
-        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi âœ…' : body.keputusan === 'revisi' ? 'Perlu Revisi âš ï¸' : 'Ditolak âŒ'}`,
-        isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Admin.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-        refType: 'kegiatan',
-        refId: BigInt(id as string),
-      },
+    await NotifikasiService.kirim({
+      userId: kegiatan.dibuatOleh,
+      judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+      isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Admin.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+      refType: 'kegiatan',
+      refId: BigInt(id as string),
     });
 
     // Jika disetujui (terverifikasi), notifikasi ke Pimpinan yang tepat
@@ -874,14 +867,12 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       }
 
       if (pimpinanTargets.length > 0) {
-        await prisma.notifikasi.createMany({
-          data: pimpinanTargets.map(t => ({
-            userId: t.userId,
-            judul: 'Kegiatan Menunggu Approval ðŸ“‹',
-            isi: `Kegiatan "${kegiatan.nama}" telah terverifikasi dan menunggu persetujuan Anda.`,
-            refType: 'kegiatan',
-            refId: BigInt(kegiatan.id),
-          })),
+        await NotifikasiService.kirimBatch({
+          userIds: pimpinanTargets.map(t => t.userId),
+          judul: 'Kegiatan Menunggu Approval',
+          isi: `Kegiatan "${kegiatan.nama}" telah terverifikasi dan menunggu persetujuan Anda.`,
+          refType: 'kegiatan',
+          refId: BigInt(kegiatan.id),
         });
       }
     }
@@ -1117,14 +1108,12 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
       data: { status: statusBaru as any },
     });
 
-    await prisma.notifikasi.create({
-      data: {
-        userId: kegiatan.dibuatOleh,
-        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui âœ…' : body.keputusan === 'revisi' ? 'Perlu Revisi âš ï¸' : 'Ditolak âŒ'}`,
-        isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-        refType: 'kegiatan',
-        refId: BigInt(id as string),
-      },
+    await NotifikasiService.kirim({
+      userId: kegiatan.dibuatOleh,
+      judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+      isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+      refType: 'kegiatan',
+      refId: BigInt(id as string),
     });
 
     await logAudit({
@@ -1211,14 +1200,12 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
 
         await prisma.kegiatan.update({ where: { id: kegiatanId }, data: { status: statusBaru as any } });
 
-        await prisma.notifikasi.create({
-          data: {
-            userId: kegiatan.dibuatOleh,
-            judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
-            isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-            refType: 'kegiatan',
-            refId: BigInt(kegiatanId),
-          },
+        await NotifikasiService.kirim({
+          userId: kegiatan.dibuatOleh,
+          judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+          isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+          refType: 'kegiatan',
+          refId: BigInt(kegiatanId),
         });
 
         await logAudit({
