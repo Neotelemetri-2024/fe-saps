@@ -424,7 +424,10 @@ export const GridScan = ({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendererRef.current = renderer;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    // Container bisa berukuran 0x0 saat disembunyikan (mis. class `hidden` di breakpoint mobile).
+    // setSize(0,0) membuat framebuffer WebGL berukuran nol dan memicu error GL_INVALID_FRAMEBUFFER_OPERATION
+    // yang berulang saat render loop jalan, jadi render di-skip selama ukurannya nol (lihat tick()).
+    renderer.setSize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.autoClear = false;
@@ -501,9 +504,12 @@ export const GridScan = ({
     }
 
     const onResize = () => {
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      material.uniforms.iResolution.value.set(container.clientWidth, container.clientHeight, renderer.getPixelRatio());
-      if (composerRef.current) composerRef.current.setSize(container.clientWidth, container.clientHeight);
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
+      renderer.setSize(w, h);
+      material.uniforms.iResolution.value.set(w, h, renderer.getPixelRatio());
+      if (composerRef.current) composerRef.current.setSize(w, h);
     };
     window.addEventListener('resize', onResize);
 
@@ -545,11 +551,13 @@ export const GridScan = ({
       material.uniforms.uYaw.value = THREE.MathUtils.clamp(yawCurrent.current * yawScale, -0.6, 0.6);
 
       material.uniforms.iTime.value = now / 1000;
-      renderer.clear(true, true, true);
-      if (composerRef.current) {
-        composerRef.current.render(dt);
-      } else {
-        renderer.render(scene, camera);
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        renderer.clear(true, true, true);
+        if (composerRef.current) {
+          composerRef.current.render(dt);
+        } else {
+          renderer.render(scene, camera);
+        }
       }
       rafRef.current = requestAnimationFrame(tick);
     };

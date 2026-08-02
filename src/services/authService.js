@@ -1,4 +1,5 @@
 import { post, get, put } from './apiClient'
+import { setupFirebaseMessaging, isFirebaseConfigured } from '../lib/firebase'
 
 const USER_STORAGE_KEY = 'saps_current_user'
 
@@ -91,6 +92,26 @@ export async function login(email, password) {
     token,
   }
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+
+  // Registrasi FCM token setelah login sukses (non-blocking, gagal diam-diam).
+  if (isFirebaseConfigured()) {
+    setupFirebaseMessaging()
+      .then((fcmToken) => {
+        if (!fcmToken) {
+          console.warn('[FCM] Tidak ada token FCM didapat, token TIDAK dikirim ke backend.')
+          return
+        }
+        return put('/api/auth/fcm-token', { fcmToken }).then(() => {
+          console.log('[FCM] Token berhasil disimpan ke backend.')
+        })
+      })
+      .catch((err) => {
+        console.error('[FCM] Gagal registrasi/simpan token FCM:', err)
+      })
+  } else {
+    console.warn('[FCM] isFirebaseConfigured() = false, cek VITE_FIREBASE_* di .env.')
+  }
+
   return user
 }
 
