@@ -123,7 +123,7 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
         await tx.notifikasi.create({
           data: {
             userId: izin.partisipasi.mahasiswaId,
-            judul: 'Izin Kegiatan disetujui ✅',
+            judul: 'Izin Kegiatan disetujui',
             isi: 'Izin Anda untuk mengikuti kegiatan telah disetujui oleh Dosen PA.',
             refType: 'izin_pa',
             refId: izin.id,
