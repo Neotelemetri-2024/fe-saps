@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { RadarChartCJ, HorizontalBarChart } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
-import { get } from '../../services/apiClient'
+import { get, post } from '../../services/apiClient'
 
 const defaultMahasiswa = {
   nama: '-',
@@ -82,6 +82,7 @@ function DosenPADetail() {
   const [pesan, setPesan] = useState('')
   const [showAllCatatan, setShowAllCatatan] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sendingPesan, setSendingPesan] = useState(false)
 
   // Load capaian dari kurikulum aktif (dropdown)
   useEffect(() => {
@@ -196,13 +197,36 @@ function DosenPADetail() {
   const pctTarget = Math.round((m.poin / (m.targetPoin ?? 550)) * 100)
   const displayedCatatan = showAllCatatan ? riwayatCatatan : riwayatCatatan.slice(0, 2)
 
-  const handleKirimPesan = () => {
+  const handleKirimPesan = async () => {
     if (!pesan.trim()) {
       toast.error('Pesan kosong', { description: 'Tuliskan pesan terlebih dahulu.' })
       return
     }
-    toast.success('Pesan Terkirim!', { description: 'Pesan kepada mahasiswa berhasil dikirim.' })
-    setPesan('')
+    const mahasiswaId = m.mahasiswaId || stateMhs?.mahasiswaId
+    if (!mahasiswaId) {
+      toast.error('Data mahasiswa tidak ditemukan', { description: 'Tidak dapat mengirim pesan.' })
+      return
+    }
+    setSendingPesan(true)
+    try {
+      await post('/api/dosen/saran', { mahasiswaId: String(mahasiswaId), isi: pesan.trim() })
+      toast.success('Pesan Terkirim!', { description: 'Pesan kepada mahasiswa berhasil dikirim.' })
+      setPesan('')
+      const res = await get(`/api/dosen/mahasiswa-bimbingan/${mahasiswaId}`)
+      const data = res?.data || res || {}
+      if (Array.isArray(data.riwayatCatatan)) {
+        setRiwayatCatatan(
+          data.riwayatCatatan.map((c) => ({
+            message: c.isi || c.message || '',
+            date: formatTanggal(c.tanggal || c.date || c.createdAt),
+          })),
+        )
+      }
+    } catch (err) {
+      toast.error('Gagal mengirim pesan', { description: err.message })
+    } finally {
+      setSendingPesan(false)
+    }
   }
 
   return (
@@ -361,9 +385,10 @@ function DosenPADetail() {
           <button
             type="button"
             onClick={handleKirimPesan}
-            className="mt-3 w-full rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+            disabled={sendingPesan}
+            className="mt-3 w-full rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
-            Kirim Pesan
+            {sendingPesan ? 'Mengirim…' : 'Kirim Pesan'}
           </button>
         </div>
 

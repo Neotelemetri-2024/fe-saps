@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
@@ -147,8 +147,7 @@ function TambahMatriks() {
           onClick={() => navigate('/pimpinan_ditmawa/manajemen-kurikulum')}
           className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Kembali
+          <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
         <div className="space-y-6 rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
@@ -192,17 +191,13 @@ function TambahMatriks() {
                   type="button"
                   onClick={addKolom}
                   className="inline-flex items-center gap-1 rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-xs font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Tambah Kolom
+                >Tambah Kolom
                 </button>
                 <button
                   type="button"
                   onClick={addBaris}
                   className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Tambah Baris
+                >Tambah Baris
                 </button>
               </div>
             </div>

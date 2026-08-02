@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CalendarDays, BookOpen } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
@@ -64,7 +64,9 @@ function DetailKegiatan({ role, userRole }) {
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
       <div className="flex flex-col items-center gap-4 py-20">
         <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">Kembali</button>
+        <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
+          <ArrowLeft className="h-4 w-4" /> Kembali
+        </button>
       </div>
     </DashboardLayout>
   )

@@ -21,6 +21,19 @@ function mapStatus(status) {
   return s || 'pending'
 }
 
+function formatTanggalValue(value) {
+  if (!value) return '-'
+  const s = String(value)
+  if (s === '-') return s
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return s
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return s
+  }
+}
+
 function normalizeItem(item) {
   return {
     id: item.id,
@@ -29,13 +42,13 @@ function normalizeItem(item) {
     kategori: item.kategori?.nama || item.kategori || item.jenis || '-',
     skala: item.skala?.nama || item.skala || '-',
     tanggal: item.tanggalMulai
-      ? new Date(item.tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-      : (item.tanggal || '-'),
+      ? formatTanggalValue(item.tanggalMulai)
+      : formatTanggalValue(item.tanggal),
     status: mapStatus(item.status),
     rawStatus: String(item.status || '').toLowerCase(),
     diajukanPada: item.createdAt
       ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : (item.diajukanPada || '-'),
+      : formatTanggalValue(item.diajukanPada),
   }
 }
 

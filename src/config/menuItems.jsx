@@ -95,7 +95,6 @@ export const ukmMenu = [
 export const ukmfMenu = [
   { path: '/operator_ukmf/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/operator_ukmf/daftar-kegiatan', label: 'Daftar Kegiatan', icon: <FileText className="h-4 w-4" /> },
-  { path: '/operator_ukmf/buat-kegiatan', label: 'Buat Kegiatan', icon: <PlusCircle className="h-4 w-4" /> },
 ]
 // Objek ini berfungsi memetakan string role dari backend ke menu yang sesuai
 export const roleMenus = {

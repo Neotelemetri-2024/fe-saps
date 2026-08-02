@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 
 function EditPoin() {
@@ -43,8 +43,7 @@ function EditPoin() {
           onClick={() => navigate('/pimpinan_ditmawa/bobot-poin')}
           className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Kembali ke Bobot Poin
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Bobot Poin
         </button>
 
         <div className="max-w-lg rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm space-y-5">

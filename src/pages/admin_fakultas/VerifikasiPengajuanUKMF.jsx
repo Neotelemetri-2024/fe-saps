@@ -6,8 +6,9 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import DataTable from "../../components/dashboard/DataTable";
 import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
 import KegiatanCell from "../../components/dashboard/KegiatanCell";
+import ConfirmModal from "../../components/ui/ConfirmModal";
 import { getCurrentUser } from "../../services/authService";
-import { getKegiatanVerifikasi } from "../../services/kegiatanService";
+import { getKegiatanVerifikasi, verifikasiBulk } from "../../services/kegiatanService";
 
 const statusStyle = {
   Pending: "bg-yellow-100 text-yellow-600 border border-yellow-300",
@@ -57,6 +58,7 @@ function normalizeItem(item) {
     skala: item.skala?.nama || "-",
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
     status: mapStatusLabel(item.status),
+    statusRaw: item.status,
   };
 }
 
@@ -70,15 +72,22 @@ function VerifikasiPengajuanUKMF() {
   const [filterJenis, setFilterJenis] = useState("");
   const [filterSkala, setFilterSkala] = useState("");
 
-  useEffect(() => {
-    getKegiatanVerifikasi({ limit: 50 })
+  const [pilihanMode, setPilihanMode] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    getKegiatanVerifikasi({ limit: 50, asal: "kurikuler_ukmf" })
       .then((data) => setItems(Array.isArray(data) ? data.map(normalizeItem) : []))
       .catch((err) => {
         setItems([]);
         toast.error("Gagal memuat pengajuan", { description: err.message });
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load() }, []);
 
   const filtered = items.filter((p) => {
     const q = search.trim().toLowerCase();
@@ -94,6 +103,31 @@ function VerifikasiPengajuanUKMF() {
     setFilterStatus("");
     setFilterJenis("");
     setFilterSkala("");
+  };
+
+  const isPending = (row) => row.statusRaw === "diajukan" || row.status === "Pending";
+
+  const toggleSelect = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkConfirm = async () => {
+    try {
+      await verifikasiBulk(Array.from(selected), "setuju");
+      toast.success(`${selected.size} pengajuan UKMF disetujui dan diteruskan ke Pimpinan Fakultas.`);
+      setSelected(new Set());
+      setPilihanMode(false);
+      setShowBulkConfirm(false);
+      load();
+    } catch (err) {
+      toast.error("Gagal menyetujui", { description: err.message });
+      setShowBulkConfirm(false);
+    }
   };
 
   const columns = useMemo(() => [
@@ -137,12 +171,29 @@ function VerifikasiPengajuanUKMF() {
     },
   ], [navigate]);
 
+  const pendingItems = filtered.filter(isPending);
+  const allPendingSelected = pendingItems.length > 0 && pendingItems.every((i) => selected.has(i.id));
+
+  const centangSemua = () => {
+    if (allPendingSelected) setSelected(new Set());
+    else setSelected(new Set(pendingItems.map((i) => i.id)));
+  };
+
   return (
     <DashboardLayout
       role="admin_fakultas"
       userName={user?.nama || "Admin Fakultas"}
       userRole="Admin Fakultas"
     >
+      <ConfirmModal
+        isOpen={showBulkConfirm}
+        message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan UKMF ini dan meneruskannya ke Pimpinan Fakultas?`}
+        confirmText="TERUSKAN KE PIMPINAN"
+        cancelText="BATAL"
+        onConfirm={handleBulkConfirm}
+        onCancel={() => setShowBulkConfirm(false)}
+      />
+
       <div className="space-y-6">
         {/* Header Halaman */}
         <div>
@@ -216,8 +267,36 @@ function VerifikasiPengajuanUKMF() {
         Reset Filter
       </button>
     )}
+
+    <button
+      type="button"
+      onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
+      className={`rounded-lg border border-brand-dark px-4 py-2 text-sm font-semibold transition ${
+        pilihanMode
+          ? 'bg-brand-dark text-white'
+          : 'bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
+      }`}
+    >
+      Pilih Beberapa
+    </button>
   </div>
 </div>
+
+  {pilihanMode && (
+    <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+      <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
+      <div className="ml-auto flex gap-2">
+        <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
+          className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
+          Batal Pilih
+        </button>
+        <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
+          className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
+          Selanjutnya
+        </button>
+      </div>
+    </div>
+  )}
   
           {/* Tabel */}
           <TableFrame>
@@ -226,6 +305,11 @@ function VerifikasiPengajuanUKMF() {
               data={filtered}
               loading={loading}
               emptyText="Tidak ada pengajuan ditemukan."
+              selectable={pilihanMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onSelectAll={centangSemua}
+              isSelectable={isPending}
             />
           </TableFrame>
         </TableCard>

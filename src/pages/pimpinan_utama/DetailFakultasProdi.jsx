@@ -256,6 +256,15 @@ function DetailFakultasProdi() {
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#616161]" />
             </div>
+            {selectedProdi !== 'Semua Prodi' && (
+              <button
+                type="button"
+                onClick={() => setSelectedProdi('Semua Prodi')}
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
         </div>
 

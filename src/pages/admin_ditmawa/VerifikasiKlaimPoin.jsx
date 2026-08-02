@@ -35,10 +35,26 @@ function formatTanggal(start, end) {
   }
 }
 
+function formatTanggalValue(value) {
+  if (!value) return '-'
+  const s = String(value)
+  if (s === '-' || s.toLowerCase().includes('invalid')) return s
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return s
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return s
+  }
+}
+
 function normalizeItem(item) {
   const part = item.partisipasi || {}
   const kegiatan = part.kegiatan || {}
   const mahasiswa = part.mahasiswa || {}
+  const tanggal = item.tanggal
+    ? formatTanggalValue(item.tanggal)
+    : formatTanggal(kegiatan.tanggalMulai, kegiatan.tanggalSelesai)
   return {
     id: String(item.id),
     mahasiswa: mahasiswa.user?.nama || item.mahasiswa || item.namaMahasiswa || '-',
@@ -47,12 +63,12 @@ function normalizeItem(item) {
     kegiatan: kegiatan.nama || item.kegiatan || '-',
     kategori: kegiatan.kategori?.nama || item.kategori || '-',
     peran: item.peranUsulan?.nama || part.peranVerif?.nama || item.peran || '-',
-    tanggal: item.tanggal || formatTanggal(kegiatan.tanggalMulai, kegiatan.tanggalSelesai),
+    tanggal,
     info: kegiatan.penyelenggaraExt || kegiatan.organisasi?.nama || item.info || '-',
     skala: kegiatan.skala?.nama || item.skala || '-',
     status: mapStatus(item.status),
     statusRaw: item.status,
-    dibuatPada: item.createdAt,
+    dibuatPada: formatTanggalValue(item.createdAt),
   }
 }
 
@@ -173,7 +189,7 @@ function VerifikasiKlaimPoin() {
         <p className="text-[11px] text-sky-500">{row.prodi}</p>
       </div>
     )},
-    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada ? formatTanggal(row.dibuatPada) : ''} /> },
+    { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada || ''} /> },
     { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
     { key: 'peran', label: 'Peran', render: (row) => <span className="text-[#616161]">{row.peran}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },

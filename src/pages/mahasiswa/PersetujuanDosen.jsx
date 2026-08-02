@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, FileText, UploadCloud, Eye, RefreshCw } from 'lucide-react'
+import { Search, FileText, UploadCloud, Eye, Pencil, RefreshCw } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
@@ -465,8 +465,8 @@ function PersetujuanDosen() {
                     ),
                 },
                 {
-                  key: 'keterangan',
-                  label: 'Keterangan',
+                  key: 'aksi',
+                  label: 'Aksi',
                   stopPropagation: true,
                   render: (row) => (
                     <div className="flex flex-wrap items-center gap-2">
@@ -480,6 +480,15 @@ function PersetujuanDosen() {
                       </button>
                       <button
                         type="button"
+                        title="Edit"
+                        disabled={row.status !== 'revisi'}
+                        onClick={() => handleOpenRevisi(row)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         title="Ajukan Ulang"
                         disabled={row.status !== 'revisi'}
                         onClick={() => handleOpenRevisi(row)}
@@ -487,11 +496,6 @@ function PersetujuanDosen() {
                       >
                         <RefreshCw className="h-4 w-4" />
                       </button>
-                      {row.status === 'disetujui' && (
-                        row.sudahDiklaim
-                          ? <span className="text-xs font-medium text-brand-dark">Klaim diajukan ✓</span>
-                          : <span className="text-xs font-medium text-green-600">Disetujui Dosen PA ✓</span>
-                      )}
                     </div>
                   ),
                 },

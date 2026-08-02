@@ -8,22 +8,35 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
+function formatTanggal(value) {
+  if (!value) return ''
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return String(value)
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return String(value)
+  }
+}
+
+function mapKegiatanRow(item, i) {
+  return {
+    id: item.id,
+    no: i + 1,
+    kegiatan: item.nama,
+    diajukanPada: formatTanggal(item.createdAt),
+    pengaju: 'Mahasiswa',
+    nim: '-',
+    tgl: formatTanggal(item.tgl || item.tanggal || item.tanggalMulai),
+    status: item.status,
+  }
+}
+
 function PimpinanFakultasPersetujuan() {
   const [data, setData] = useState([])
 
   useEffect(() => {
-    getKegiatan().then((res) => setData(res.slice(0, 4).map((item, i) => ({
-      id: item.id,
-      no: i + 1,
-      kegiatan: item.nama,
-      diajukanPada: item.createdAt
-        ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-        : '',
-      pengaju: 'Mahasiswa',
-      nim: '-',
-      tgl: item.tgl || item.tanggal || '',
-      status: item.status,
-    }))))
+    getKegiatan().then((res) => setData(res.slice(0, 4).map(mapKegiatanRow)))
   }, [])
 
   const columns = [
@@ -46,7 +59,7 @@ function PimpinanFakultasPersetujuan() {
                 await updateKegiatan(row.id, { status: 'disetujui' })
                 toast.success('Disetujui!', { description: `Pengajuan "${row.kegiatan}" telah disetujui.` })
                 const res = await getKegiatan()
-                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, no: i + 1, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
+                setData(res.slice(0, 4).map(mapKegiatanRow))
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >
@@ -60,7 +73,7 @@ function PimpinanFakultasPersetujuan() {
                 await updateKegiatan(row.id, { status: 'ditolak' })
                 toast.error('Ditolak!', { description: `Pengajuan "${row.kegiatan}" telah ditolak.` })
                 const res = await getKegiatan()
-                setData(res.slice(0, 4).map((item, i) => ({ id: item.id, no: i + 1, kegiatan: item.nama, pengaju: 'Mahasiswa', nim: '-', tgl: item.tgl || item.tanggal || '', status: item.status })))
+                setData(res.slice(0, 4).map(mapKegiatanRow))
               } catch (err) { toast.error('Gagal', { description: err.message }) }
             }}
           >

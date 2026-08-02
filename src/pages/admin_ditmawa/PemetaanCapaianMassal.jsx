@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, AlertTriangle, CheckCircle2, ChevronDown, X, ClipboardList } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, X, ClipboardList } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiBulk } from '../../services/kegiatanService'
@@ -210,8 +210,7 @@ function PemetaanCapaianMassal() {
       <div className="space-y-5">
         <button type="button" onClick={backToList}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" />
-          Kembali ke Daftar
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
         </button>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -308,9 +307,7 @@ function PemetaanCapaianMassal() {
                   >
                     <span className={active.capaianIds.length === 0 ? 'text-[#9aa0a6]' : ''}>
                       {active.capaianIds.length === 0 ? 'Pilih capaian' : `${active.capaianIds.length} capaian dipilih`}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-[#9aa0a6] shrink-0" />
-                  </button>
+                    </span></button>
                   {capaianOpen && (
                     <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
                       {allCapaian.map((c) => (
@@ -462,9 +459,7 @@ function PemetaanCapaianMassal() {
               disabled={submitting || !allLengkap}
               onClick={handleSubmit}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              {submitting ? 'Memproses…' : `Teruskan ke Pimpinan (${kegiatans.length})`}
+            >{submitting ? 'Memproses…' : `Teruskan ke Pimpinan (${kegiatans.length})`}
             </button>
           </div>
         </div>

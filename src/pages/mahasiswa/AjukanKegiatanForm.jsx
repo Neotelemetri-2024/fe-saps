@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { Save, Send, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
@@ -182,8 +182,7 @@ function AjukanKegiatanForm() {
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
             className="flex items-center gap-1 text-sm text-brand-dark hover:underline"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali
+            <ArrowLeft className="h-4 w-4" /> Kembali
           </button>
         </div>
 
@@ -210,6 +209,12 @@ function AjukanKegiatanForm() {
               Draft
             </span>
           ) : null}
+        </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
+          <p>
+            Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
+          </p>
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
@@ -335,9 +340,7 @@ function AjukanKegiatanForm() {
                   disabled={loading || !isDirty}
                   onClick={handleSimpanDraft}
                   className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Save className="h-4 w-4" />
-                  {draftId ? 'Perbarui Draft' : 'Simpan Draft'}
+                >{draftId ? 'Perbarui Draft' : 'Simpan Draft'}
                 </button>
               )}
 
@@ -347,9 +350,7 @@ function AjukanKegiatanForm() {
                 disabled={loading || !isDirty}
                 onClick={() => setShowKirimConfirm(true)}
                 className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Send className="h-4 w-4" />
-                {loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
+              >{loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
               </button>
 
               <button

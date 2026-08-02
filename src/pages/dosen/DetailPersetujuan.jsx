@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, CheckCircle2, RotateCcw, User, XCircle } from 'lucide-react'
+import { ArrowLeft, CalendarDays, User } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -113,16 +113,13 @@ function DetailPersetujuanDosen() {
             {!actionType ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button type="button" onClick={handleSetuju} disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
-                  <CheckCircle2 className="h-4 w-4" />{loading ? 'Memproses...' : 'Setujui'}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
                 </button>
                 <button type="button" onClick={() => { setActionType('revisi'); setAlasan('') }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
-                  <RotateCcw className="h-4 w-4" /> Revisi
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Revisi
                 </button>
                 <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
-                  <XCircle className="h-4 w-4" /> Tolak
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
                 </button>
               </div>
             ) : (

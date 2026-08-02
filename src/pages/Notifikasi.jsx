@@ -56,7 +56,7 @@ const ACTION_ROUTES = {
     mahasiswa: (id) => `/mahasiswa/persetujuan-dosen/${id}`,
   },
   saran_pa: {
-    mahasiswa: (id) => `/mahasiswa/persetujuan-dosen/${id}`,
+    mahasiswa: () => '/mahasiswa/dashboard',
   },
   klaim_poin: {
     mahasiswa: () => '/mahasiswa/klaim-poin',

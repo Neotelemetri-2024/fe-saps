@@ -95,6 +95,11 @@ export async function tambahKategori(data) {
   return res?.data || res
 }
 
+export async function hapusKategori(id) {
+  await del(`/api/matriks/kategori/${id}`)
+  return true
+}
+
 export async function getMatriksSkala() {
   const res = await get('/api/matriks/skala')
   return res?.data || res || []
@@ -137,5 +142,10 @@ export async function hapusPeran(id) {
 
 export async function getHistoriMatriks(matriksPoinId) {
   const res = await get(`/api/matriks/histori/${matriksPoinId}`)
+  return res?.data || res || []
+}
+
+export async function getAllHistoriMatriks() {
+  const res = await get('/api/matriks/histori')
   return res?.data || res || []
 }

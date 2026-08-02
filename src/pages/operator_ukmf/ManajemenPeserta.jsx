@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { Download, Upload, ArrowLeft, Info } from 'lucide-react'
+import { ArrowLeft, Info, ChevronLeft, ChevronRight } from 'lucide-react'
 import StatCard from '../../components/dashboard/StatCard'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -57,6 +57,7 @@ function ManajemenPeserta() {
   const [filterKehadiran, setFilterKehadiran] = useState('semua')
   const [isEditing, setIsEditing] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [page, setPage] = useState(1)
 
   const loadData = () => {
     setLoading(true)
@@ -176,6 +177,12 @@ function ManajemenPeserta() {
   const hadir = pesertaData.filter((p) => p.hadir).length
   const tidakHadir = total - hadir
 
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageItems = filtered.slice(start, start + PAGE_SIZE)
+
   return (
     <DashboardLayout role="operator_ukmf" userName={user?.nama || 'Operator UKMF'} userRole="Operator UKMF">
       <div className="space-y-6">
@@ -224,18 +231,25 @@ function ManajemenPeserta() {
                 {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
               </button>
             ))}
+            {(search || filterKehadiran !== 'semua') && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2.5 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
             <button
               onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
               className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"
-            >
-              <Download className="h-4 w-4" /> Template CSV
+            >Template CSV
             </button>
             <button
               onClick={() => fileRef.current?.click()}
               disabled={importing}
               className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0] disabled:opacity-60"
-            >
-              <Upload className="h-4 w-4" /> {importing ? 'Mengimpor…' : 'Import CSV'}
+            >{importing ? 'Mengimpor…' : 'Import CSV'}
             </button>
             <input
               ref={fileRef}
@@ -271,7 +285,7 @@ function ManajemenPeserta() {
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
-                ) : filtered.map((p) => (
+                ) : pageItems.map((p) => (
                   <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
                     <td className="w-16 px-4 py-3 text-center text-[#616161]">{p.no}</td>
                     <td className="px-4 py-3 font-medium text-[#333]">{p.nim || '-'}</td>
@@ -312,6 +326,29 @@ function ManajemenPeserta() {
                 Menampilkan {filtered.length} dari {pesertaData.length} peserta
               </span>
               <div className="flex items-center gap-3">
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage(currentPage - 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="px-2 text-xs text-[#9aa0a6]">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage(currentPage + 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
                 {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}

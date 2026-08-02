@@ -124,6 +124,15 @@ function MahasiswaBimbingan() {
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
+          {(search || filterProdi) && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
+              className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+            >
+              Reset Filter
+            </button>
+          )}
         </div>
 
         <TableCard title="Daftar Mahasiswa Bimbingan">

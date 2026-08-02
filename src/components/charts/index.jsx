@@ -230,11 +230,18 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
   const tickColor = darkBg ? 'rgba(255,255,255,0.7)' : '#616161'
   const pointLabelColor = darkBg ? 'rgba(255,255,255,0.85)' : '#333'
 
+  // Batasi nilai agar tidak keluar dari area radar, dan sesuaikan skala maks
+  // jika ada nilai yang melebihi 100 (mis. poin melebihi target tahunan).
+  const rawMax = values.length ? Math.max(...values) : 0
+  const needsScale = rawMax > 100
+  const scaleMax = needsScale ? Math.ceil((rawMax + 4) / 25) * 25 : 100
+  const displayValues = values.map((v) => (needsScale ? Math.min(v, scaleMax) : v))
+
   const data = {
     labels,
     datasets: [
       {
-        data: values,
+        data: displayValues,
         backgroundColor: darkBg ? 'rgba(255,255,255,0.2)' : `${color}33`,
         borderColor: darkBg ? 'rgba(255,255,255,0.9)' : color,
         borderWidth: 2,
@@ -254,12 +261,12 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
     scales: {
       r: {
         min: 0,
-        max: 100,
+        max: scaleMax,
         grid: { color: gridColor },
         angleLines: { color: gridColor },
         ticks: {
           display: false,
-          stepSize: 25,
+          stepSize: scaleMax / 4,
         },
         pointLabels: {
           color: pointLabelColor,

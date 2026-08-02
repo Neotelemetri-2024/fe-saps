@@ -158,7 +158,6 @@ function RiwayatPoin() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress per Tahun Kurikulum</h3>
             <div className="flex items-center gap-2 text-sm font-medium text-brand-dark">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-light text-white text-xs">⭐</span>
               Total Capaian: <span className="font-bold">{loading ? '…' : totalPoin}</span> / {totalTarget} poin
             </div>
           </div>

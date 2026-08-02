@@ -7,13 +7,14 @@ const USER_STORAGE_KEY = 'saps_current_user'
  *   "operator_org" → UKM atau UKMF (dibedakan dari /api/auth/me)
  *   "admin_org"    → admin_ditmawa atau admin_fakultas
  *
- * /api/auth/me diharapkan punya field:
- *   tipeOrganisasi: "ukm" | "ukmf"
- *   tipe: "universitas" | "fakultas"
- *   tingkat: sama
+ * Tipe organisasi (UKM/UKMF) dikembalikan oleh GET /api/auth/me di path
+ * bertingkat: data.organisasiOperator.organisasi.tipe (enum "UKM" | "UKMF").
+ * Fallback ke field flat (tipeOrganisasi/tipe/organisasi.tipe/tingkat) untuk
+ * jaga-jaga bila bentuk respons backend berubah di kemudian hari.
  */
 function resolveRoleFromMe(peranRaw, meData) {
   const tipe = (
+    meData?.organisasiOperator?.organisasi?.tipe ||
     meData?.tipeOrganisasi ||
     meData?.tipe ||
     meData?.organisasi?.tipe ||
@@ -26,6 +27,12 @@ function resolveRoleFromMe(peranRaw, meData) {
     // ukmf identifiers
     if (['ukmf', 'fakultas', 'ukmf_org'].includes(tipe)) return 'operator_ukmf'
     return 'operator_ukm'
+  }
+
+  if (peranRaw === 'staff') {
+    // fallback: jabatan staff langsung dari getMe (mis. admin_ditmawa, pimpinan_fakultas, dst)
+    const jabatan = (meData?.staff?.jabatan || '').toLowerCase()
+    if (jabatan) return jabatan
   }
 
   if (peranRaw === 'admin_org') {
@@ -76,9 +83,9 @@ export async function login(email, password) {
     nama: userData.nama || meData.nama || emailLower,
     peran: userData.peran || null,
     jabatan: userData.jabatan || null,
-    organisasiId: userData.organisasiId ?? meData.organisasiId ?? null,
-    namaOrganisasi: userData.namaOrganisasi ?? meData.namaOrganisasi ?? null,
-    tipeOrganisasi: meData.tipeOrganisasi ?? meData.tipe ?? meData.organisasi?.tipe ?? null,
+    organisasiId: userData.organisasiId ?? meData.organisasiOperator?.organisasi?.id ?? null,
+    namaOrganisasi: userData.namaOrganisasi ?? meData.organisasiOperator?.organisasi?.nama ?? null,
+    tipeOrganisasi: meData.organisasiOperator?.organisasi?.tipe ?? meData.tipeOrganisasi ?? meData.tipe ?? meData.organisasi?.tipe ?? null,
     role,
     userRole: userData.jabatan || userData.peran || role,
     token,

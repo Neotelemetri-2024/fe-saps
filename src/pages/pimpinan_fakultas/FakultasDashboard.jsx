@@ -32,7 +32,7 @@ function KategoriPoinBar({ organisasi, prestasi, seminar }) {
 function VerticalStackedBar({ data }) {
   const categories = ['organisasi', 'seminar', 'prestasi']
   const COLORS = { organisasi: '#3b82f6', seminar: '#15803d', prestasi: '#eab308' }
-  const LABELS = { organisasi: 'organisasi', seminar: 'seminar', prestasi: 'prestasi' }
+  const LABELS = { organisasi: 'Organisasi', seminar: 'Seminar', prestasi: 'Prestasi' }
   const maxSum = Math.max(...data.map((d) => categories.reduce((s, c) => s + d[c], 0)), 1)
   const BAR_H = 220
 

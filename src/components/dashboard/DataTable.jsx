@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function isPlainObject(value) {
@@ -38,6 +39,9 @@ function isCenteredCol(col) {
  *   page?          number
  *   totalPages?    number
  *   onPageChange?  (page) => void
+ *   pageSize?      number — ukuran halaman internal (default 10).
+ *                  Dipakai hanya jika page/totalPages/onPageChange TIDAK diberikan,
+ *                  yaitu halaman tidak mengelola pagination sendiri.
  *
  *   // Row interaksi
  *   onRowClick?    (row) => void  — klik seluruh baris
@@ -57,17 +61,43 @@ function DataTable({
   page,
   totalPages,
   onPageChange,
+  pageSize = 10,
   // row
   onRowClick,
 }) {
-  const selectableRows = selectable && data ? data.filter((r) => !isSelectable || isSelectable(r)) : []
+  const [internalPage, setInternalPage] = useState(1)
+  const hasManagedPagination = page != null && totalPages != null && onPageChange != null
+
+  // Saat pemakai tidak mengelola pagination, reset halaman internal ke 1
+  // ketika jumlah data berubah (misal setelah filter/search).
+  const dataLength = data ? data.length : 0
+  useEffect(() => {
+    if (!hasManagedPagination) setInternalPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLength])
+
+  // Saat pemakai tidak mengelola pagination, aktifkan pagination internal.
+  const total = data ? data.length : 0
+  const internalTotalPages = Math.max(1, Math.ceil(total / pageSize))
+  const safeInternalPage = Math.min(internalPage, internalTotalPages)
+  const displayData = hasManagedPagination
+    ? data
+    : (data || []).slice((safeInternalPage - 1) * pageSize, safeInternalPage * pageSize)
+  const currentPage = hasManagedPagination ? page : safeInternalPage
+  const currentTotalPages = hasManagedPagination ? totalPages : internalTotalPages
+  const changePage = (p) => {
+    if (hasManagedPagination) onPageChange(p)
+    else setInternalPage(p)
+  }
+
+  const selectableRows = selectable && displayData ? displayData.filter((r) => !isSelectable || isSelectable(r)) : []
   const allSelected =
     selectable && selectableRows.length > 0 && selected
       ? selectableRows.every((r) => selected.has(r.id ?? r.id))
       : false
   const someSelected = selectable && selected ? selectableRows.some((r) => selected.has(r.id)) : false
 
-  const hasPagination = page != null && totalPages != null && onPageChange != null && totalPages > 1
+  const hasPagination = currentTotalPages > 1
 
   const totalCols = columns.length + (selectable ? 1 : 0)
 
@@ -106,14 +136,14 @@ function DataTable({
                   Memuat data…
                 </td>
               </tr>
-            ) : !data || data.length === 0 ? (
+            ) : !displayData || displayData.length === 0 ? (
               <tr>
                 <td colSpan={totalCols} className="px-3 py-8 text-center text-[#616161] sm:px-4">
                   {emptyText}
                 </td>
               </tr>
             ) : (
-              data.map((row, i) => {
+              displayData.map((row, i) => {
                 const rowSelectable = selectable ? (!isSelectable || isSelectable(row)) : false
                 const isSelected = selectable && selected ? selected.has(row.id) : false
                 const isClickable = !!onRowClick
@@ -189,19 +219,19 @@ function DataTable({
       {hasPagination && (
         <div className="flex items-center justify-between px-1">
           <p className="text-xs text-[#9aa0a6]">
-            Halaman {page} dari {totalPages}
+            Halaman {currentPage} dari {currentTotalPages}
           </p>
           <div className="flex items-center gap-1">
             <button
               type="button"
-              disabled={page <= 1}
-              onClick={() => onPageChange(page - 1)}
+              disabled={currentPage <= 1}
+              onClick={() => changePage(currentPage - 1)}
               className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            {Array.from({ length: currentTotalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === currentTotalPages || Math.abs(p - currentPage) <= 1)
               .reduce((acc, p, idx, arr) => {
                 if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…')
                 acc.push(p)
@@ -214,9 +244,9 @@ function DataTable({
                   <button
                     key={p}
                     type="button"
-                    onClick={() => onPageChange(p)}
+                    onClick={() => changePage(p)}
                     className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold transition ${
-                      p === page
+                      p === currentPage
                         ? 'bg-brand-dark text-white'
                         : 'border border-[#e9ebf8] text-[#616161] hover:bg-[#f0f2ff]'
                     }`}
@@ -227,8 +257,8 @@ function DataTable({
               )}
             <button
               type="button"
-              disabled={page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
+              disabled={currentPage >= currentTotalPages}
+              onClick={() => changePage(currentPage + 1)}
               className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />

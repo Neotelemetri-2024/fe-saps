@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, MapPin, Users, X, ChevronDown, Save, Send } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -430,9 +430,7 @@ function BuatKegiatan() {
                     >
                       <span className={form.selectedCapaianIds.length === 0 ? 'text-[#9aa0a6]' : ''}>
                         {form.selectedCapaianIds.length === 0 ? 'Pilih capaian' : `${form.selectedCapaianIds.length} capaian dipilih`}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-[#9aa0a6] shrink-0" />
-                    </button>
+                      </span></button>
                     {capaianOpen && (
                       <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
                         {allCapaian.map((c) => (
@@ -552,18 +550,14 @@ function BuatKegiatan() {
               type="submit"
               disabled={loading}
               className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {loading ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
+            >{loading ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
             </button>
             <button
               type="button"
               disabled={loading}
               onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
               className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Send className="h-4 w-4" />
-              {loading ? 'Mengirim…' : 'Ajukan Sekarang'}
+            >{loading ? 'Mengirim…' : 'Ajukan Sekarang'}
             </button>
             <button
               type="button"
@@ -573,7 +567,6 @@ function BuatKegiatan() {
               Batal
             </button>
           </div>
-
 
         </form>
       </div>

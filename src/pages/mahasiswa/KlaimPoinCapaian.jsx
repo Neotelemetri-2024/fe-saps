@@ -41,7 +41,7 @@ function mapRiwayat(item, i) {
     penyelenggara: item.penyelenggara || '-',
     tanggal: item.tanggalPelaksanaan
       ? new Date(item.tanggalPelaksanaan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : item.tanggal || '-',
+      : (item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'),
     skala: item.skala || '-',
     status: String(item.status || 'pending').toLowerCase(),
     alasan: item.alasan || null,
@@ -71,7 +71,7 @@ function KlaimPoinCapaian() {
       <div className="space-y-6">
         <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Klaim Poin Capaian</h2>
 
-        <TableCard title="Klaim Poin Anda">
+        <TableCard title="Riwayat Klaim Poin Anda">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Plus, Edit3, Trash2, Send, RefreshCw, Users } from 'lucide-react'
+import { Search, Edit3, Plus, Trash2, Send, RefreshCw, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -322,8 +322,7 @@ function ManajemenEvent() {
             onClick={goToCreate}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            Tambah Event
+            <Plus className="h-4 w-4" /> Tambah Event
           </button>
         </div>
 

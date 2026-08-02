@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, BookOpen, CheckCircle2, FileText, RotateCcw, User, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, BookOpen, FileText, User } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
@@ -115,7 +115,9 @@ function DetailVerifikasiKlaimPoin() {
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
       <div className="flex flex-col items-center gap-4 py-20">
         <p className="text-base font-semibold text-[#616161]">Data klaim tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">Kembali</button>
+        <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
+          <ArrowLeft className="h-4 w-4" /> Kembali
+        </button>
       </div>
     </DashboardLayout>
   )
@@ -220,23 +222,17 @@ function DetailVerifikasiKlaimPoin() {
         )}
 
         {canAct && (
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-[#333]">Keputusan Verifikasi</h3>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => setShowConfirmSetujui(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">
-                <CheckCircle2 className="h-4 w-4" /> Setujui Klaim
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
               </button>
               <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">
-                <RotateCcw className="h-4 w-4" /> Minta Revisi
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Minta Revisi
               </button>
-              <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">
-                <XCircle className="h-4 w-4" /> Tolak
+              <button type="button" onClick={() => setShowConfirmSetujui(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Setujui Klaim
               </button>
             </div>
-          </div>
         )}
       </div>
     </DashboardLayout>

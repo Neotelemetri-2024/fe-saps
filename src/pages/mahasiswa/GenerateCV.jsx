@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Download, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Download, Share2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
@@ -145,12 +145,7 @@ function GenerateCV() {
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <div className="text-xs text-[#9aa0a6]">
-          <span>Activities</span>
-          <span className="mx-1.5">›</span>
-          <span className="font-medium text-[#444]">Generate CV</span>
-        </div>
+       
 
         {/* Tombol Generate CV + deskripsi */}
         <div className="space-y-2">

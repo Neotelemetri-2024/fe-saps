@@ -8,7 +8,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanUtama } from '../../services/dashboardService'
 
-const PAGE_SIZE = 9
+const PAGE_SIZE = 10
 
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {

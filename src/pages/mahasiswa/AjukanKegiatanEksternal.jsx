@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { PlusCircle, Search, Filter, UserCheck, Pencil, Trash2, RefreshCw, Eye } from 'lucide-react'
+import { Search, Filter, Pencil, Plus, Trash2, RefreshCw, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { toast } from 'sonner'
@@ -338,10 +338,16 @@ function AjukanKegiatanEksternal() {
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
           >
-            <PlusCircle className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+            <Plus className="h-4 w-4" />
             <span className="sm:hidden">Ajukan Baru</span>
             <span className="hidden sm:inline">Tambah Ajukan Kegiatan</span>
           </button>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
+          <p>
+            Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
+          </p>
         </div>
 
         <TableCard title="Ajukan Kegiatan Eksternal">
@@ -358,7 +364,6 @@ function AjukanKegiatanEksternal() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Filter className="h-4 w-4 text-[#616161]" />
               <select
                 value={filterKategori}
                 onChange={(e) => setFilterKategori(e.target.value)}
@@ -486,9 +491,7 @@ function AjukanKegiatanEksternal() {
                       disabled={selected.size === 0 || submittingIzin}
                       onClick={handleOpenPeranModal}
                       className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <UserCheck className="h-4 w-4" />
-                      Minta Persetujuan Dosen PA
+                    >Minta Persetujuan Dosen PA
                     </button>
                   </div>
                 </>
@@ -497,9 +500,7 @@ function AjukanKegiatanEksternal() {
                   type="button"
                   onClick={() => setPilihanMode(true)}
                   className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                >
-                  <UserCheck className="h-4 w-4" />
-                  Minta Persetujuan Dosen PA
+                >Minta Persetujuan Dosen PA
                 </button>
               )}
             </div>

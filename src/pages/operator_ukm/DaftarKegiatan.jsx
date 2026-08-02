@@ -1,15 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import {
-  Eye,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Send,
-  Trash2,
-  Users,
-} from 'lucide-react'
+import { Eye, Pencil, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -104,10 +96,6 @@ function DaftarKegiatan() {
     ].includes(statusLower(item))
   }
 
-  const bisaKirim = (item) => {
-    return statusLower(item) === 'draft'
-  }
-
   const bisaAjukanUlang = (item) => {
     return statusLower(item) === 'perlu_revisi'
   }
@@ -173,10 +161,6 @@ function DaftarKegiatan() {
   }
 
   const confirmMessage = () => {
-    if (konfirmasi?.type === 'kirim') {
-      return 'Setelah dikirim, kegiatan tidak dapat diedit. Lanjutkan?'
-    }
-
     if (konfirmasi?.type === 'ajukan') {
       return 'Ajukan ulang kegiatan ini setelah revisi?'
     }
@@ -185,12 +169,6 @@ function DaftarKegiatan() {
   }
 
   const confirmText = () => {
-    if (konfirmasi?.type === 'kirim') {
-      return actionLoading
-        ? 'Mengirim…'
-        : 'Ya, Kirim'
-    }
-
     if (konfirmasi?.type === 'ajukan') {
       return actionLoading
         ? 'Mengajukan…'
@@ -205,10 +183,7 @@ function DaftarKegiatan() {
   const onConfirm = () => {
     if (!konfirmasi || actionLoading) return
 
-    if (
-      konfirmasi.type === 'kirim' ||
-      konfirmasi.type === 'ajukan'
-    ) {
+    if (konfirmasi.type === 'ajukan') {
       handleAjukan(konfirmasi.id)
       return
     }
@@ -338,24 +313,6 @@ function DaftarKegiatan() {
 
           <button
             type="button"
-            title="Kirim"
-            onClick={() =>
-              setKonfirmasi({
-                type: 'kirim',
-                id: item.id,
-              })
-            }
-            disabled={
-              !bisaKirim(item) ||
-              actionLoading
-            }
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
             title="Ajukan Ulang"
             onClick={() =>
               setKonfirmasi({
@@ -425,12 +382,11 @@ function DaftarKegiatan() {
             }
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            Buat Kegiatan
+            <Plus className="h-4 w-4" /> Buat Kegiatan
           </button>
         </div>
 
-        <div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-[#fff6ad] px-5 py-4 text-sm text-brand-dark shadow-sm">
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
           <p>
             Kegiatan berstatus{' '}
             <strong>draft</strong> dapat

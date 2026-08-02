@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, ChevronRight, Eye } from 'lucide-react'
+import { Clock, Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { useNavigate } from 'react-router-dom'
@@ -233,8 +233,7 @@ function DosenPADashboard() {
                   onClick={() => navigate('/dosen/permintaan-persetujuan')}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-brand-dark hover:underline"
                 >
-                  Lihat Detail <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+                  Lihat Detail</button>
               </div>
             </div>
           </div>

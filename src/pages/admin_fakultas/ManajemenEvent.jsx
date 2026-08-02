@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  Send,
-  RefreshCw,
-  Users,
-} from 'lucide-react'
+import { Search, Pencil, Plus, Trash2, Send, RefreshCw, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -541,8 +533,7 @@ function ManajemenEvent() {
             onClick={goToCreate}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            Buat Event
+            <Plus className="h-4 w-4" /> Buat Event
           </button>
         </div>
 

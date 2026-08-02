@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Bell, Eye, Pencil, Plus, RefreshCw, Send, Trash2, Users } from 'lucide-react'
+import { Eye, Pencil, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -49,20 +49,8 @@ function DaftarKegiatan() {
   const statusLower = (item) => String(item?.status || '').toLowerCase()
   const bisaEdit = (item) => ['draft', 'perlu_revisi'].includes(statusLower(item))
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(statusLower(item))
-  const bisaKirim = (item) => statusLower(item) === 'draft'
   const bisaAjukanUlang = (item) => statusLower(item) === 'perlu_revisi'
   const bisaPeserta = (item) => statusLower(item) !== 'draft'
-
-  const draftCount = data.filter((d) => statusLower(d) === 'draft').length
-  const pending = data.filter((d) => ['diajukan', 'terverifikasi'].includes(statusLower(d))).length
-  const disetujui = data.filter((d) => ['disetujui', 'terpublikasi'].includes(statusLower(d))).length
-  const ditolak = data.filter((d) => statusLower(d) === 'ditolak').length
-  const stats = [
-    { label: 'DRAFT', value: draftCount },
-    { label: 'MENUNGGU', value: pending },
-    { label: 'DISETUJUI', value: disetujui },
-    { label: 'DITOLAK', value: ditolak },
-  ]
 
   const handleAjukan = async (id) => {
     setActionLoading(true)
@@ -94,13 +82,13 @@ function DaftarKegiatan() {
 
   const onConfirm = () => {
     if (!konfirmasi) return
-    if (konfirmasi.type === 'kirim' || konfirmasi.type === 'ajukan') return handleAjukan(konfirmasi.id)
+    if (konfirmasi.type === 'ajukan') return handleAjukan(konfirmasi.id)
     return handleHapus(konfirmasi.id)
   }
 
   return (
     <DashboardLayout role="operator_ukmf" userName={user?.nama || 'Operator UKMF'} userRole="Operator UKMF">
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Daftar Kegiatan</h2>
@@ -111,30 +99,19 @@ function DaftarKegiatan() {
           <button
             type="button"
             onClick={() => navigate('/operator_ukmf/buat-kegiatan')}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            Buat Kegiatan
+            <Plus className="h-4 w-4" /> Buat Kegiatan
           </button>
         </div>
 
-        <div className="flex items-start gap-3 rounded-lg bg-[#fff6ad] px-5 py-4 text-sm text-brand-dark shadow-sm">
-          <Bell className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm text-brand-dark shadow-sm">
           <p>
-            Kegiatan <b>draft</b> bisa diedit/dihapus. Setelah <b>Kirim</b>, tidak dapat diedit.
+            Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border-2 border-brand-dark bg-white p-5 shadow-sm">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{stat.label}</p>
-              <p className="mt-2 text-3xl font-extrabold text-brand-dark">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-
-        <TableCard title="Daftar Kegiatan UKMF">
+        <TableCard title="Kegiatan Saya">
           <TableFrame>
           <DataTable
             loading={loading}
@@ -152,7 +129,7 @@ function DaftarKegiatan() {
               {
                 key: 'aksi', label: 'Aksi', stopPropagation: true,
                   render: (item) => (
-                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button type="button" title="Detail"
                       onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}`)}
                       className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
@@ -169,12 +146,6 @@ function DaftarKegiatan() {
                         disabled={!bisaEdit(item)}
                         className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
                         <Pencil className="h-4 w-4" />
-                      </button>
-                    <button type="button" title="Kirim"
-                        onClick={() => setKonfirmasi({ type: 'kirim', id: item.id })}
-                        disabled={!bisaKirim(item)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                        <Send className="h-4 w-4" />
                       </button>
                     <button type="button" title="Ajukan Ulang"
                         onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
@@ -199,16 +170,12 @@ function DaftarKegiatan() {
         <ConfirmModal
           isOpen={!!konfirmasi}
           message={
-            konfirmasi?.type === 'kirim'
-              ? 'Setelah dikirim, kegiatan tidak dapat diedit. Lanjutkan?'
-              : konfirmasi?.type === 'ajukan'
+            konfirmasi?.type === 'ajukan'
                 ? 'Ajukan ulang kegiatan ini setelah revisi?'
-                : 'Hapus kegiatan ini secara permanen?'
+                : 'Hapus kegiatan draft ini secara permanen?'
           }
           confirmText={
-            konfirmasi?.type === 'kirim'
-              ? (actionLoading ? 'Mengirim…' : 'Ya, Kirim')
-              : konfirmasi?.type === 'ajukan'
+            konfirmasi?.type === 'ajukan'
                 ? 'Ya, Ajukan Ulang'
                 : 'Ya, Hapus'
           }

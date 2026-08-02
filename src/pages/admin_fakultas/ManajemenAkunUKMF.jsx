@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import {
-  Search,
-  Plus,
-  Key,
-  Trash2,
-  Eye,
-  EyeOff,
-  X,
-} from 'lucide-react'
+import { Search, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -619,15 +611,13 @@ function ManajemenAkunUKMF() {
             type="button"
             onClick={() => setShowTambah(true)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Akun UKMF
+          >Tambah Akun UKMF
           </button>
         </div>
 
         <TableCard title="Akun UKMF yang Telah Dibuat">
-          <div className="mt-4 sm:mt-6">
-            <div className="relative w-full sm:max-w-md">
+          <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-6">
+            <div className="relative w-full flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
 
               <input
@@ -640,6 +630,15 @@ function ManajemenAkunUKMF() {
                 className="w-full rounded-lg border border-[#e9ebf8] bg-white py-2.5 pl-9 pr-3 text-sm text-[#333] outline-none transition placeholder:text-[#9aa0a6] focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
 
           <TableFrame>

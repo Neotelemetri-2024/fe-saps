@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, MapPin, Users, X, ChevronDown, Save, Send } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
-import { createKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
+import { createKegiatan, updateKegiatan, ajukanKegiatan, getKegiatanById } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
 
@@ -25,7 +25,10 @@ const EMPTY_FORM = {
 
 function BuatKegiatan() {
   const navigate = useNavigate()
+  const location = useLocation()
   const user = getCurrentUser()
+  const editItem = location.state?.edit || null
+  const isEdit = !!editItem
 
   const [loading, setLoading] = useState(false)
   const [showAjukanConfirm, setShowAjukanConfirm] = useState(false)
@@ -37,6 +40,7 @@ function BuatKegiatan() {
   const [loadingKur, setLoadingKur] = useState(true)
   const [kategoriList, setKategoriList] = useState([])
   const [skalaList, setSkalaList] = useState([])
+  const [loadingSkala, setLoadingSkala] = useState(false)
 
   useEffect(() => {
     const handler = (e) => {
@@ -58,15 +62,80 @@ function BuatKegiatan() {
       .finally(() => setLoadingKur(false))
   }, [])
 
+  // Reload skala saat kategori berubah
   useEffect(() => {
     if (!form.kategoriId) {
       setSkalaList([])
+      setLoadingSkala(false)
       return
     }
+    let cancelled = false
+    setLoadingSkala(true)
     getSkalaKegiatan(form.kategoriId)
-      .then((ska) => setSkalaList(Array.isArray(ska) ? ska : []))
-      .catch(() => setSkalaList([]))
+      .then((ska) => {
+        if (cancelled) return
+        const list = Array.isArray(ska) ? ska : []
+        setSkalaList(list)
+        if (list.length === 0) {
+          toast.warning('Tidak ada skala untuk jenis kegiatan ini')
+        }
+      })
+      .catch(() => {
+        if (cancelled) return
+        setSkalaList([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSkala(false)
+      })
+    return () => { cancelled = true }
   }, [form.kategoriId])
+
+  // Isi form saat mode edit (dari state daftar atau fetch detail)
+  useEffect(() => {
+    if (!editItem) return
+    let cancelled = false
+
+    const fillForm = (data) => {
+      if (cancelled) return
+      const alokasi = (data.alokasi || data.kegiatanCapaian || []).map((a) => ({
+        subCapaianId: a.subCapaianId ?? a.id,
+        alokasiPersen: Number(a.alokasiPersen ?? 100),
+      }))
+      const selectedCapaianIds = [...new Set(
+        (data.kegiatanCapaian || [])
+          .map((kc) => kc.subCapaian?.capaianId ?? kc.capaianId)
+          .filter((v) => v != null)
+      )]
+      setForm({
+        nama: data.nama || data.judul || '',
+        kategoriId: data.kategoriId ?? data.kategori?.id ?? '',
+        skalaId: data.skalaId ?? data.skala?.id ?? '',
+        deskripsi: data.deskripsi || '',
+        tanggalMulai: data.tanggalMulai ? new Date(data.tanggalMulai) : null,
+        tanggalSelesai: data.tanggalSelesai ? new Date(data.tanggalSelesai) : null,
+        lokasi: data.lokasi || '',
+        kuota: data.kuota || data.kuotaPeserta || '',
+        selectedCapaianIds,
+        alokasi,
+      })
+    }
+
+    // Item dari daftar belum punya detail alokasi → ambil dari GET /api/kegiatan/:id
+    const hasDetail = (editItem.kegiatanCapaian || []).length > 0
+    if (hasDetail) {
+      fillForm(editItem)
+    } else {
+      getKegiatanById(editItem.id)
+        .then((detail) => {
+          if (cancelled) return
+          fillForm(detail || editItem)
+        })
+        .catch(() => {
+          if (!cancelled) fillForm(editItem)
+        })
+    }
+    return () => { cancelled = true }
+  }, [editItem])
 
   const allCapaian = kurikulum?.capaian || []
 
@@ -145,10 +214,16 @@ function BuatKegiatan() {
 
     setLoading(true)
     try {
-      await createKegiatan(buildPayload())
-      toast.success('Draft tersimpan!', {
-        description: 'Kirim kegiatan dari daftar setelah siap. Setelah dikirim tidak dapat diedit.',
-      })
+      const payload = buildPayload()
+      if (isEdit) {
+        await updateKegiatan(editItem.id, payload)
+        toast.success('Draft kegiatan berhasil diperbarui!')
+      } else {
+        await createKegiatan(payload)
+        toast.success('Draft tersimpan!', {
+          description: 'Kirim kegiatan dari daftar setelah siap. Setelah dikirim tidak dapat diedit.',
+        })
+      }
       navigate('/operator_ukmf/daftar-kegiatan')
     } catch (err) {
       toast.error('Gagal', { description: err.message })
@@ -163,8 +238,15 @@ function BuatKegiatan() {
 
     setLoading(true)
     try {
-      const created = await createKegiatan(buildPayload())
-      await ajukanKegiatan(created?.id)
+      const payload = buildPayload()
+      let id = editItem?.id
+      if (isEdit) {
+        await updateKegiatan(editItem.id, payload)
+      } else {
+        const created = await createKegiatan(payload)
+        id = created?.id
+      }
+      await ajukanKegiatan(id)
       toast.success('Kegiatan berhasil diajukan!', {
         description: 'Kegiatan telah dikirim dan menunggu verifikasi. Setelah dikirim tidak dapat diedit.',
       })
@@ -196,10 +278,13 @@ function BuatKegiatan() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Buat Kegiatan</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+            {isEdit ? 'Edit Kegiatan' : 'Buat Kegiatan'}
+          </h2>
           <p className="mt-1 text-sm text-[#616161]">
-            Isi detail kegiatan dan petakan ke Capaian &amp; Sub Capaian sesuai kurikulum. Kegiatan
-            Simpan sebagai draft. Setelah siap, kirim dari daftar kegiatan.
+            {isEdit
+              ? 'Perbarui draft kegiatan. Setelah siap, kirim dari daftar kegiatan.'
+              : 'Isi detail kegiatan dan petakan ke Capaian &amp; Sub Capaian sesuai kurikulum. Kegiatan Simpan sebagai draft. Setelah siap, kirim dari daftar kegiatan.'}
           </p>
         </div>
 
@@ -279,13 +364,13 @@ function BuatKegiatan() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <DatePickerInput
                   label="Tanggal Mulai"
-                  selected={form.tanggalMulai}
+                  value={form.tanggalMulai}
                   onChange={(d) => setForm((p) => ({ ...p, tanggalMulai: d }))}
                   required
                 />
                 <DatePickerInput
                   label="Tanggal Selesai"
-                  selected={form.tanggalSelesai}
+                  value={form.tanggalSelesai}
                   onChange={(d) => setForm((p) => ({ ...p, tanggalSelesai: d }))}
                   required
                 />
@@ -356,9 +441,7 @@ function BuatKegiatan() {
                         {form.selectedCapaianIds.length === 0
                           ? 'Pilih capaian'
                           : `${form.selectedCapaianIds.length} capaian dipilih`}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-[#9aa0a6] shrink-0" />
-                    </button>
+                      </span></button>
                     {capaianOpen && (
                       <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
                         {allCapaian.map((c) => (
@@ -476,18 +559,14 @@ function BuatKegiatan() {
               type="submit"
               disabled={loading}
               className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {loading ? 'Menyimpan...' : 'Simpan Draft'}
+            >{loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
             </button>
             <button
               type="button"
               disabled={loading}
               onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
               className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Send className="h-4 w-4" />
-              {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
+            >{loading ? 'Mengirim...' : 'Ajukan Sekarang'}
             </button>
             <button
               type="button"
@@ -498,12 +577,7 @@ function BuatKegiatan() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
-            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Pastikan informasi sudah benar sebelum dikirim!
-          </div>
+         
         </form>
       </div>
     </DashboardLayout>

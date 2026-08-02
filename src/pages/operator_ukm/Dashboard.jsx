@@ -146,13 +146,12 @@ function UKMDashboard() {
       label: 'Tanggal',
       render: (row) => (
         <span className="text-[#616161]">
-          {row.tanggal ||
+          {formatTanggal(
+            row.tanggal ||
             row.tgl ||
-            formatTanggal(
-              row.tanggalMulai ||
-              row.tanggalPelaksanaan
-            ) ||
-            '-'}
+            row.tanggalMulai ||
+            row.tanggalPelaksanaan
+          ) || '-'}
         </span>
       ),
     },

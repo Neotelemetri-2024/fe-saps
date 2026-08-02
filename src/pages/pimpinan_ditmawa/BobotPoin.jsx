@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, History, Pencil, X, Trash2 } from 'lucide-react'
+import { History, X, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getMatriks,
   syncMatriks,
-  getHistoriMatriks,
+  getAllHistoriMatriks,
+  hapusKategori,
 } from '../../services/kurikulumService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
@@ -90,22 +91,24 @@ function EditableCell({ value, onChange, editing }) {
     return (
       <input
         ref={inputRef}
+        type="number"
+        min={0}
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') commit() }}
-        className="w-full rounded border border-brand-dark px-1 py-0.5 text-sm outline-none"
+        className="w-full rounded border border-brand-dark px-1 py-0.5 text-center text-sm outline-none"
       />
     )
   }
 
   return (
     <span
-      className={`block w-full rounded px-1 py-0.5 text-sm text-[#333] ${editing ? 'cursor-pointer hover:bg-[#f0f7f0]' : ''}`}
+      className={`block w-full rounded px-1 py-0.5 text-center text-sm text-[#333] ${editing ? 'cursor-pointer hover:bg-[#f0f7f0]' : ''}`}
       onClick={() => { if (editing) setEditing_(true) }}
       title={editing ? 'Klik untuk mengedit' : ''}
     >
-      {value ?? ''}
+      {value ?? '0'}
     </span>
   )
 }
@@ -148,7 +151,7 @@ function EditableRowLabel({ value, onChange, editing }) {
   )
 }
 
-function SectionTable({ section, onUpdate }) {
+function SectionTable({ section, onUpdate, onDelete }) {
   const [modal, setModal] = useState(null)
   const [draft, setDraft] = useState(() => structuredClone(section))
   const [saved, setSaved] = useState(() => structuredClone(section))
@@ -199,7 +202,7 @@ function SectionTable({ section, onUpdate }) {
     updated.rows.push({
       id: undefined,
       label,
-      values: updated.columns.map(() => '0 Poin'),
+      values: updated.columns.map(() => '0'),
     })
     updateDraft(updated)
   }
@@ -207,7 +210,7 @@ function SectionTable({ section, onUpdate }) {
   function addCol(colName) {
     const updated = structuredClone(draftRef.current)
     updated.columns.push({ id: undefined, nama: colName })
-    updated.rows = updated.rows.map((r) => ({ ...r, values: [...r.values, '0 Poin'] }))
+    updated.rows = updated.rows.map((r) => ({ ...r, values: [...r.values, '0'] }))
     updateDraft(updated)
   }
 
@@ -238,7 +241,8 @@ function SectionTable({ section, onUpdate }) {
   function handleConfirmDelete() {
     if (!deleteConfirm) return
     if (deleteConfirm.type === 'row') deleteRow(deleteConfirm.index)
-    else deleteCol(deleteConfirm.index)
+    else if (deleteConfirm.type === 'col') deleteCol(deleteConfirm.index)
+    else if (deleteConfirm.type === 'matriks') onDelete()
     setDeleteConfirm(null)
   }
 
@@ -275,11 +279,13 @@ function SectionTable({ section, onUpdate }) {
 
       <ConfirmModal
         isOpen={!!deleteConfirm}
-        title={deleteConfirm?.type === 'row' ? 'Hapus Baris?' : 'Hapus Kolom?'}
+        title={deleteConfirm?.type === 'matriks' ? 'Hapus Matriks?' : deleteConfirm?.type === 'row' ? 'Hapus Baris?' : 'Hapus Kolom?'}
         message={
-          deleteConfirm?.type === 'row'
-            ? `Baris "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
-            : `Kolom "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
+          deleteConfirm?.type === 'matriks'
+            ? `Seluruh data matriks "${draft.title}" akan dihapus, termasuk semua peran, skala, dan nilai poinnya. Tindakan ini tidak dapat dibatalkan. Lanjutkan?`
+            : deleteConfirm?.type === 'row'
+              ? `Baris "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
+              : `Kolom "${deleteConfirm?.label}" akan dihapus beserta seluruh nilai poinnya. Lanjutkan?`
         }
         confirmText="Ya, Hapus"
         cancelText="Batal"
@@ -295,8 +301,13 @@ function SectionTable({ section, onUpdate }) {
               type="button"
               onClick={handleEdit}
               className="flex items-center gap-1 rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-medium text-brand-dark hover:bg-brand-dark hover:text-white"
-            >
-              <Pencil className="h-3 w-3" /> Edit Tabel
+            >Edit Tabel
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteConfirm({ type: 'matriks' })}
+              className="flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+            ><Trash2 className="h-3.5 w-3.5" /> Hapus Matriks
             </button>
             <button
               type="button"
@@ -308,8 +319,7 @@ function SectionTable({ section, onUpdate }) {
                 onConfirm: addRow,
               })}
               className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="h-3 w-3" /> Baris
+            >Baris
             </button>
             <button
               type="button"
@@ -321,8 +331,7 @@ function SectionTable({ section, onUpdate }) {
                 onConfirm: addCol,
               })}
               className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="h-3 w-3" /> Kolom
+            >Kolom
             </button>
           </div>
         </div>
@@ -484,8 +493,6 @@ function TambahMatriksModal({ isOpen, onClose, onNext }) {
   )
 }
 
-const HISTORY_COLORS = ['bg-green-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-rose-500', 'bg-sky-500']
-
 function HistoryModal({ isOpen, onClose }) {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
@@ -493,8 +500,7 @@ function HistoryModal({ isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen) return
     setLoading(true)
-    // Fetch histori dari endpoint pertama yang tersedia (id=1 sebagai default)
-    getHistoriMatriks(1)
+    getAllHistoriMatriks()
       .then((data) => setHistory(Array.isArray(data) ? data : []))
       .catch(() => setHistory([]))
       .finally(() => setLoading(false))
@@ -503,18 +509,18 @@ function HistoryModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-[#e5e7eb] px-6 py-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
+      <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col px-4 py-6 sm:px-8">
+        <div className="flex items-center justify-between border-b border-[#e9ebf8] pb-4">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-gray-700" />
+            <History className="h-5 w-5 text-[#616161]" />
             <h4 className="text-lg font-bold text-[#222]">Histori Perubahan</h4>
           </div>
-          <button type="button" onClick={onClose} className="text-[#999] hover:text-[#333]">
-            <X className="h-5 w-5" />
+          <button type="button" onClick={onClose} className="rounded-lg border border-[#d1d5db] bg-white px-4 py-2 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]">
+            Tutup
           </button>
         </div>
-        <div className="p-6">
+        <div className="flex-1 py-6">
           {loading ? (
             <p className="text-sm text-[#9aa0a6]">Memuat histori...</p>
           ) : history.length === 0 ? (
@@ -522,33 +528,29 @@ function HistoryModal({ isOpen, onClose }) {
           ) : (
             <ul className="space-y-6">
               {history.map((event, index) => (
-                <li key={event.id || index} className="flex items-start gap-4">
-                  <div className={`mt-1 h-3 w-3 shrink-0 rounded-full ${HISTORY_COLORS[index % HISTORY_COLORS.length]}`} />
-                  <div>
+                <li key={event.id || index} className="flex items-start gap-4 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[#333]">
-                      {event.kategori || event.type || '-'} {event.subType ? `· ${event.subType}` : ''}
+                      {event.kategori || event.kategoriNama || '-'}
+                      {event.peran ? ` · ${event.peran}` : ''}
+                      {event.skala ? ` · ${event.skala}` : ''}
                     </p>
-                    <p className="text-sm text-[#555]">
-                      {event.keterangan || event.desc || `${event.nilaiLama ?? '-'} → ${event.nilaiBaru ?? '-'} Poin`}
+                    <p className="mt-0.5 text-sm text-[#555]">
+                      {event.keterangan || event.desc || `${event.poinLama ?? '-'} → ${event.poinBaru ?? '-'} Poin`}
                     </p>
                     <p className="mt-1 text-xs text-[#999]">
-                      {event.tanggal || event.createdAt || event.date || '-'}
-                      {event.oleh || event.by ? ` • oleh ${event.oleh || event.by}` : ''}
+                      {event.tanggal || event.diubahPada
+                        ? new Date(event.diubahPada || event.tanggal).toLocaleString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                          })
+                        : '-'}
+                      {event.oleh || event.namaPengubah ? ` • oleh ${event.oleh || event.namaPengubah}` : ''}
                     </p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </div>
-        <div className="flex justify-end border-t border-[#e5e7eb] px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Tutup
-          </button>
         </div>
       </div>
     </div>
@@ -595,7 +597,7 @@ function apiToSections(data) {
     if (!map[katNama].peranMap.has(peranNama)) {
       map[katNama].peranMap.set(peranNama, { id: peranId, nama: peranNama })
     }
-    map[katNama].poinMap[`${peranNama}__${skalaNama}`] = `${item.poin ?? 0} Poin`
+    map[katNama].poinMap[`${peranNama}__${skalaNama}`] = String(item.poin ?? 0)
   })
 
   return Object.entries(map).map(([kat, { kategoriId, skalaMap, peranMap, poinMap }], i) => {
@@ -603,7 +605,7 @@ function apiToSections(data) {
     const rows = [...peranMap.values()].map((peran) => ({
       id: peran.id,
       label: peran.nama,
-      values: columns.map((skala) => poinMap[`${peran.nama}__${skala.nama}`] || '0 Poin'),
+      values: columns.map((skala) => poinMap[`${peran.nama}__${skala.nama}`] || '0'),
     }))
     return {
       id: `api-${kategoriId || i}`,
@@ -655,7 +657,7 @@ function BobotPoin() {
           cells.push({
             peranKey,
             skalaKey,
-            poin: parseInt(String(val).replace(/\D/g, ''), 10) || 0,
+            poin: Math.max(0, parseInt(String(val).replace(/\D/g, ''), 10) || 0),
           })
         })
       })
@@ -688,9 +690,24 @@ function BobotPoin() {
         title: `${idx}. ${namaMatriks}`,
         rowHeader: 'PERAN',
         columns: [{ id: undefined, nama: 'Kolom 1' }],
-        rows: [{ id: undefined, label: 'Baris 1', values: ['0 Poin'] }],
+        rows: [{ id: undefined, label: 'Baris 1', values: ['0'] }],
       },
     ])
+  }
+
+  async function handleHapusMatriks(sec) {
+    if (!sec.kategoriId) {
+      setSections((prev) => prev.filter((s) => s.id !== sec.id))
+      toast.success(`Matriks "${sec.title}" dihapus`)
+      return
+    }
+    try {
+      await hapusKategori(sec.kategoriId)
+      toast.success(`Matriks "${sec.title}" dihapus`)
+      await loadMatriks()
+    } catch (err) {
+      toast.error('Gagal menghapus matriks', { description: err.message })
+    }
   }
 
   return (
@@ -717,16 +734,13 @@ function BobotPoin() {
             type="button"
             onClick={() => setShowTambahMatriks(true)}
             className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> Matriks
+          >Matriks
           </button>
           <button
             type="button"
             onClick={() => setShowHistory(true)}
             className="flex items-center gap-1.5 rounded-lg border border-[#ccc] bg-white px-4 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f5f5]"
-          >
-            <History className="h-4 w-4" />
-            Histori Perubahan
+          >Histori Perubahan
           </button>
         </div>
 
@@ -743,6 +757,7 @@ function BobotPoin() {
                 key={sec.id}
                 section={sec}
                 onUpdate={(updated) => handleUpdate(idx, updated)}
+                onDelete={() => handleHapusMatriks(sec)}
               />
             ))
           )}

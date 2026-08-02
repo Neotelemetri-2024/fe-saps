@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { ArrowLeft, X, ChevronDown, Save, Send } from 'lucide-react'
+import { ArrowLeft, X, ChevronDown } from 'lucide-react'
 import DatePickerInput from './ui/DatePickerInput'
 import ConfirmModal from './ui/ConfirmModal'
 import { createKegiatan, updateKegiatan, getKegiatanById, ajukanKegiatan } from '../services/kegiatanService'
@@ -523,7 +523,6 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             onClick={handleSimpanDraft}
             className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Save className="h-4 w-4" />
             {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
           </button>
           <button
@@ -532,7 +531,6 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
             className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Send className="h-4 w-4" />
             {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
           </button>
           <button

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, BookOpen, AlignJustify } from 'lucide-react'
+import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -85,7 +85,15 @@ function ManajemenKurikulum() {
   const [showHapusSubCapaianConfirm, setShowHapusSubCapaianConfirm] = useState(false)
   const [hapusSubCapaianTarget, setHapusSubCapaianTarget] = useState(null)
 
+  const [page, setPage] = useState(1)
+
   const activeKur = kurikulum.find((k) => k.id === activeKurId) || null
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil((activeKur?.capaian?.length || 0) / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageCapaian = (activeKur?.capaian || []).slice(start, start + PAGE_SIZE)
 
   const loadList = () => {
     setLoading(true)
@@ -112,6 +120,7 @@ function ManajemenKurikulum() {
   useEffect(() => { loadList() }, [])
 
   useEffect(() => {
+    setPage(1)
     if (activeKurId) loadDetail(activeKurId)
   }, [activeKurId])
 
@@ -478,9 +487,7 @@ function ManajemenKurikulum() {
             type="button"
             onClick={() => { setKurForm({ tahun: '', nama: '' }); setShowTambahKurikulum(true) }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Kurikulum
+          >Tambah Kurikulum
           </button>
         </div>
 
@@ -519,9 +526,7 @@ function ManajemenKurikulum() {
                       }`}>
                         {kur.status === 'aktif' ? 'Aktif' : kur.status === 'draft' ? 'Draft' : 'Arsip'}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-[#616161]">
-                        <BookOpen className="h-3.5 w-3.5" />
-                        {totalSub} Sub Capaian
+                      <span className="flex items-center gap-1 text-xs text-[#616161]">{totalSub} Sub Capaian
                       </span>
                     </div>
                   </button>
@@ -555,17 +560,13 @@ function ManajemenKurikulum() {
                 type="button"
                 onClick={() => { setCapaianForm({ nama: '', jumlahPoin: '' }); setShowTambahCapaian(true) }}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                Tambah Capaian
+              >Tambah Capaian
               </button>
               <button
                 type="button"
                 onClick={() => { setSubCapaianForm({ capaianId: '', nama: '', presentasi: '', bobot: '' }); setShowTambahSubCapaian(true) }}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                Tambah Sub Capaian
+              >Tambah Sub Capaian
               </button>
             </div>
 
@@ -590,7 +591,7 @@ function ManajemenKurikulum() {
                         </td>
                       </tr>
                     ) : (
-                      activeKur.capaian.map((cap) =>
+                      pageCapaian.map((cap) =>
                         cap.subCapaian.length === 0 ? (
                           <tr key={cap.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8]">
                             <td className="px-5 py-3 align-top">
@@ -633,7 +634,7 @@ function ManajemenKurikulum() {
                                 </>
                               )}
                               <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
-                              <td className="px-5 py-3 text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
+                              <td className="px-5 py-3 text-center text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
                               <td className="px-5 py-3">
                                 <div className="flex items-center justify-center gap-2">
                                   <button
@@ -662,6 +663,29 @@ function ManajemenKurikulum() {
                   </tbody>
                 </table>
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end gap-1 border-t border-[#e9ebf8] px-5 py-3">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="px-2 text-xs text-[#9aa0a6]">
+                    Halaman {currentPage} dari {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               </TableFrame>
             </TableCard>
           </div>

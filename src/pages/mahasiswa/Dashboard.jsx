@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MessageSquareText } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { RadarChartCJ } from '../../components/charts'
@@ -68,12 +69,22 @@ function MahasiswaDashboard() {
   const [pengajuan, setPengajuan] = useState([])
   const [klaim, setKlaim] = useState([])
   const [loadingTables, setLoadingTables] = useState(true)
+  const [saranPa, setSaranPa] = useState([])
+  const [loadingSaran, setLoadingSaran] = useState(true)
 
   useEffect(() => {
     get('/api/mahasiswa/dashboard')
       .then((res) => setDashData(res?.data || res))
       .catch(() => setDashData(null))
       .finally(() => setLoadingDash(false))
+
+    get('/api/mahasiswa/saran-pa')
+      .then((res) => {
+        const list = res?.data || res || []
+        setSaranPa(Array.isArray(list) ? list : [])
+      })
+      .catch(() => setSaranPa([]))
+      .finally(() => setLoadingSaran(false))
 
     Promise.all([
       getPersetujuanMahasiswa().catch(() => []),
@@ -160,6 +171,30 @@ function MahasiswaDashboard() {
               )
             })}
           </div>
+        </div>
+
+        {/* Pesan dari Dosen PA */}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="h-5 w-5 text-brand-dark" />
+            <h3 className="text-lg font-bold text-[#222]">Pesan dari Dosen PA</h3>
+          </div>
+          {loadingSaran ? (
+            <p className="py-6 text-center text-sm text-[#9aa0a6]">Memuat pesan…</p>
+          ) : saranPa.length === 0 ? (
+            <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada pesan dari Dosen PA.</p>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {saranPa.slice(0, 3).map((s) => (
+                <div key={s.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+                  <p className="text-sm leading-relaxed text-[#333]">{s.isi}</p>
+                  <p className="mt-1 text-xs text-[#888]">
+                    {formatTanggal(s.createdAt || s.tanggal)} &nbsp;Dosen PA
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tabel Pengajuan Eksternal */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, Download, Upload, X, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Search, X, ChevronLeft, ChevronRight, Download, UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import {
@@ -26,6 +26,17 @@ function mapPesertaRow(p, i) {
     fakultas: p.fakultas || '-',
     hadir: p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true,
     peranVerifId: peranId !== '' && peranId != null ? String(peranId) : '',
+  }
+}
+
+function formatTanggal(value) {
+  if (!value) return ''
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return String(value)
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return String(value)
   }
 }
 
@@ -74,6 +85,7 @@ function ManajemenPesertaEvent() {
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
 
   const loadData = () => {
     setLoading(true)
@@ -84,7 +96,7 @@ function ManajemenPesertaEvent() {
           setEvent({
             nama: keg.nama || keg.judul || 'Kegiatan',
             jenis: keg.kategori?.nama || keg.jenis || '',
-            tanggal: keg.tanggalMulai || keg.tanggal || '',
+            tanggal: formatTanggal(keg.tanggalMulai || keg.tanggal || ''),
             lokasi: keg.lokasi || '',
           })
           const kategoriId = keg.kategoriId || keg.kategori?.id
@@ -180,7 +192,14 @@ function ManajemenPesertaEvent() {
   function handleResetFilter() {
     setSearch('')
     setFilterKehadiran('semua')
+    setPage(1)
   }
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
   const belumDisetujui = !['disetujui', 'terpublikasi'].includes(eventStatus)
 
@@ -242,15 +261,13 @@ function ManajemenPesertaEvent() {
               type="button"
               onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
               className="flex items-center gap-1.5 rounded-lg border border-[#d1d5db] bg-white px-3 py-2 text-xs font-semibold text-[#444] hover:bg-[#f5f5f5]"
-            >
-              <Download className="h-3.5 w-3.5" /> unduh template
+            ><Download className="h-4 w-4" /> Unduh Template
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
               className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-xs font-semibold text-white hover:opacity-90"
-            >
-              <Upload className="h-3.5 w-3.5" /> Import file
+            ><UploadCloud className="h-4 w-4" /> Import File
             </button>
             <input
               ref={fileRef}
@@ -267,8 +284,7 @@ function ManajemenPesertaEvent() {
               type="button"
               onClick={handleResetFilter}
               className="flex items-center gap-1.5 rounded-lg border border-brand-dark bg-white px-3 py-2 text-xs font-semibold text-brand-dark hover:bg-[#f5f5f5]"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset filter
+            >Reset filter
             </button>
           </div>
         </div>
@@ -291,9 +307,9 @@ function ManajemenPesertaEvent() {
               <tbody className="divide-y divide-[#f0f0f0]">
                 {loading ? (
                   <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-[#9aa0a6]">Memuat data…</td></tr>
-                ) : filtered.map((p, i) => (
+                ) : pageItems.map((p, i) => (
                   <tr key={p.id} className="divide-x divide-[#f0f0f0] hover:bg-[#f9fafb]">
-                    <td className="w-16 px-4 py-3.5 text-center text-[#616161]">{i + 1}</td>
+                    <td className="w-16 px-4 py-3.5 text-center text-[#616161]">{start + i + 1}</td>
                     <td className="px-4 py-3.5 text-[#616161]">{p.nim}</td>
                     <td className="px-4 py-3.5 font-medium text-[#222]">{p.nama}</td>
                     <td className="px-4 py-3.5 text-[#616161]">{p.fakultas}</td>
@@ -337,6 +353,29 @@ function ManajemenPesertaEvent() {
               Showing {filtered.length} from Total {pesertaList.length}
             </span>
             <div className="flex items-center gap-3">
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="px-2 text-xs text-[#9aa0a6]">
+                    Halaman {currentPage} dari {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               {belumDisetujui && !submitted && !isEditing && (
                 <span className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                   Event belum disetujui pimpinan

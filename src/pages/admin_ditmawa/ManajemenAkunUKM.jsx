@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
-import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
+import { Search, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -301,14 +301,23 @@ function ManajemenAkunUKM() {
               className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
             />
           </div>
+          <div className="flex items-center gap-2 sm:self-end">
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
           <button
             type="button"
             onClick={() => setShowTambah(true)}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
-          >
-            <Plus className="h-4 w-4" />
-            Akun UKM
+          >Akun UKM
           </button>
+          </div>
         </div>
 
         <div>

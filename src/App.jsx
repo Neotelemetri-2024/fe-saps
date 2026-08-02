@@ -1,7 +1,6 @@
 import { Toaster } from 'sonner'
 import { Route, Routes, Outlet, Navigate } from 'react-router-dom'
 import AuthGuard, { RoleGuard } from './components/AuthGuard'
-import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import MahasiswaDashboard from './pages/mahasiswa/Dashboard'
 import AjukanKegiatanEksternal from './pages/mahasiswa/AjukanKegiatanEksternal'
@@ -187,7 +186,7 @@ function App() {
           <Route path="dashboard" element={<UKMDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMDaftarKegiatan />} />
           <Route path="buat-kegiatan" element={<UKMBuatKegiatan />} />
-          <Route path="daftar-kegiatan/:id" element={<UKMDetailKegiatan />} />
+          <Route path="daftar-kegiatan/:id" element={<UKMDetailKegiatan role="operator_ukm" userRole="UKM" />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMManajemenPeserta />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
@@ -197,7 +196,7 @@ function App() {
         <Route path="operator_ukmf" element={<AuthGuard><RoleGuard allowedRoles={['operator_ukmf']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<UKMFDashboard />} />
           <Route path="daftar-kegiatan" element={<UKMFDaftarKegiatan />} />
-          <Route path="daftar-kegiatan/:id" element={<UKMFDetailKegiatan />} />
+          <Route path="daftar-kegiatan/:id" element={<UKMFDetailKegiatan role="operator_ukmf" userRole="UKMF" />} />
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMFManajemenPeserta />} />
           <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />

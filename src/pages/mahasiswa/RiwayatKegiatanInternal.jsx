@@ -43,7 +43,15 @@ const columns = [
   { key: 'penyelenggara', label: 'PENYELENGGARA' },
   { key: 'tanggal', label: 'TANGGAL', render: (row) => formatTanggal(row.tanggalMulai, row.tanggalSelesai) },
   { key: 'peran', label: 'PERAN' },
-  { key: 'kehadiran', label: 'KEHADIRAN', render: (row) => <KehadiranBadge status={row.kehadiran} /> },
+  {
+    key: 'kehadiran',
+    label: 'KEHADIRAN',
+    render: (row) => (
+      <div className="flex w-full justify-center">
+        <KehadiranBadge status={row.kehadiran} />
+      </div>
+    ),
+  },
   { key: 'poin', label: 'POIN' },
 ]
 

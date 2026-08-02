@@ -14,6 +14,19 @@ export function subscribeDataUpdate(callback) {
   return () => window.removeEventListener(EVENT_NAME, handler)
 }
 
+function formatTanggalValue(value) {
+  if (!value) return ''
+  const s = String(value)
+  if (s === '-' || /invalid/i.test(s)) return s
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return s
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return s
+  }
+}
+
 function normalizePersetujuan(item, i = 0) {
   const id = item.id ?? item.partisipasiId ?? item.izinId ?? i
   // BE getIzinForDosen kembalikan struktur nested: item.partisipasi.kegiatan, dll.
@@ -34,7 +47,7 @@ function normalizePersetujuan(item, i = 0) {
     jenis: (typeof kegiatanObj?.kategori === 'object' ? kegiatanObj?.kategori?.nama : kegiatanObj?.kategori) || item.jenis || item.jenisKegiatan || '-',
     peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
     penyelenggara: kegiatanObj?.penyelenggara || kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
-    tanggal: tanggalMulai || item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan || '-',
+    tanggal: tanggalMulai || formatTanggalValue(item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan),
     mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     namaMahasiswa: mhsObj?.user?.nama || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     status: (item.statusIzin || item.status || 'pending').toLowerCase(),
@@ -51,11 +64,11 @@ function normalizePengajuanMahasiswa(item, i = 0) {
     jenis: item.jenisKegiatan || item.jenis || '-',
     kategori: item.jenisKegiatan || item.kategori || '-',
     penyelenggara: item.penyelenggara || '-',
-    tanggal: item.tanggalPelaksanaan || item.tanggal || '-',
+    tanggal: formatTanggalValue(item.tanggalPelaksanaan || item.tanggal),
     skala: item.skala || '-',
     status: (item.status || 'pending').toLowerCase(),
     alasan: item.alasan || null,
-    dibuatPada: item.tanggalPengajuan || item.createdAt || item.dibuatPada,
+    dibuatPada: formatTanggalValue(item.tanggalPengajuan || item.createdAt || item.dibuatPada),
   }
 }
 
@@ -116,7 +129,8 @@ function normalizeKlaimEksternal(item, i = 0) {
     skala: kegiatan.skala?.nama || item.skala || '-',
     status,
     statusRaw,
-    dibuatPada: item.createdAt || item.dibuatPada,
+    dibuatPada: formatTanggalValue(item.createdAt || item.dibuatPada),
+    diajukanPada: formatTanggalValue(item.createdAt || item.dibuatPada),
     alasan: item.alasan || null,
   }
 }
