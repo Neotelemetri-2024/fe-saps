@@ -4,12 +4,7 @@ import { ChevronDown, Menu, X, ChevronRight } from 'lucide-react'
 import logoUnand from '../../assets/logo_unand.png'
 
 function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
-  const [openMenus, setOpenMenus] = useState(() =>
-    menuItems.reduce((acc, item) => {
-      if (item.children?.length) acc[item.label] = true
-      return acc
-    }, {})
-  )
+  const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (label) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
@@ -153,12 +148,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
 
 /* Mobile overlay sidebar */
 function MobileSidebar({ menuItems, isOpen, onClose }) {
-  const [openMenus, setOpenMenus] = useState(() =>
-    menuItems.reduce((acc, item) => {
-      if (item.children?.length) acc[item.label] = true
-      return acc
-    }, {})
-  )
+  const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (label) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))

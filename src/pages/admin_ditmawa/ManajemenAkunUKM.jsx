@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
-import { Search, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
+import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -315,7 +315,7 @@ function ManajemenAkunUKM() {
             type="button"
             onClick={() => setShowTambah(true)}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
-          >Akun UKM
+          ><Plus className="h-4 w-4" />Akun UKM
           </button>
           </div>
         </div>
