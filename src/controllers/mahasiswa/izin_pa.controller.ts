@@ -77,14 +77,29 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
         });
       }
 
-      // 4. Buat Izin PA
-      const izin = await tx.izinPA.create({
-        data: {
-          partisipasiId: partisipasi.id,
-          dosenPaId: mahasiswa.dosenPaId,
-          status: 'diajukan'
-        }
+      // 4. Buat atau Update Izin PA (mencegah duplikasi)
+      let izin = await tx.izinPA.findFirst({
+        where: { partisipasiId: partisipasi.id }
       });
+
+      if (izin) {
+        izin = await tx.izinPA.update({
+          where: { id: izin.id },
+          data: {
+            status: 'diajukan',
+            dosenPaId: mahasiswa.dosenPaId,
+            alasan: null // Hapus alasan revisi sebelumnya
+          }
+        });
+      } else {
+        izin = await tx.izinPA.create({
+          data: {
+            partisipasiId: partisipasi.id,
+            dosenPaId: mahasiswa.dosenPaId,
+            status: 'diajukan'
+          }
+        });
+      }
 
       return izin;
     });
