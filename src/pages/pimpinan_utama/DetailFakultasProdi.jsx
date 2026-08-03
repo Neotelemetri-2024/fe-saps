@@ -234,8 +234,8 @@ function DetailFakultasProdi() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
-              Fakultas {namaFakultas || fakultasId}
+            <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
+              {namaFakultas || fakultasId}
             </h2>
             <p className="mt-1 text-sm text-[#616161]">Detail program studi dan poin capaian mahasiswa.</p>
           </div>

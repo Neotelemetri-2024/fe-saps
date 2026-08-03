@@ -119,7 +119,7 @@ function PimpinanUtamaDashboard() {
     <DashboardLayout role="pimpinan_utama" userName={user?.nama || 'Pimpinan Utama'} userRole="Pimpinan Utama (Rektor)">
       <div className="space-y-6">
         <div>
-          <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
             Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
           </h2>
           <p className="mt-3 max-w-2xl text-sm text-[#616161]">
