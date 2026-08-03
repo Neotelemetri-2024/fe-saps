@@ -1,30 +1,30 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import prisma from '../lib/prisma';
-import { JWT_SECRET } from '../middlewares/auth.middleware';
-import { z } from 'zod';
+import { Request, Response } from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma";
+import { JWT_SECRET } from "../middlewares/auth.middleware";
+import { z } from "zod";
 
 // ==================== VALIDASI ====================
 const loginSchema = z.object({
-  email: z.string().email('Format email tidak valid'),
-  password: z.string().min(1, 'Password wajib diisi'),
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(1, "Password wajib diisi"),
 });
 
 const registerSchema = z.object({
-  nama: z.string().min(2, 'Nama minimal 2 karakter'),
-  email: z.string().email('Format email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
+  nama: z.string().min(2, "Nama minimal 2 karakter"),
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(6, "Password minimal 6 karakter"),
 });
 
 // ==================== LOGIN ====================
 
 /**
  * POST /api/auth/login
- * 
+ *
  * Menerima email + password, memverifikasi, dan mengembalikan JWT token.
  * Token berisi: id, peran, jabatan (jika staff), dan nama.
- * 
+ *
  * Alur penentuan role di token:
  * - Jika user.peran === 'staff', kita query tabel Staff untuk mendapatkan jabatan
  *   (admin_ditmawa, pimpinan_ditmawa, admin_fakultas, pimpinan_fakultas)
@@ -44,7 +44,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: 'Email atau password salah.',
+        message: 'Email tidak terdaftar. Pastikan Anda memasukkan email lengkap (contoh: @ukm.unand.ac.id)',
       });
       return;
     }
@@ -53,17 +53,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user.aktif) {
       res.status(403).json({
         success: false,
-        message: 'Akun Anda dinonaktifkan. Hubungi admin.',
+        message: "Akun Anda dinonaktifkan. Hubungi admin.",
       });
       return;
     }
 
     // 3. Verifikasi password
-    const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      data.password,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,
-        message: 'Email atau password salah.',
+        message: 'Password salah. Silakan coba lagi.',
       });
       return;
     }
@@ -76,7 +79,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     };
 
     // Jika staff, ambil jabatan spesifik
-    if (user.peran === 'staff') {
+    if (user.peran === "staff") {
       const staff = await prisma.staff.findUnique({
         where: { userId: user.id },
       });
@@ -86,7 +89,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Jika operator_org, ambil organisasi terkait
-    if (user.peran === 'operator_org') {
+    if (user.peran === "operator_org") {
       const operator = await prisma.organisasiOperator.findUnique({
         where: { userId: user.id },
         include: { organisasi: { select: { id: true, nama: true } } },
@@ -98,11 +101,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // 5. Generate JWT token (berlaku 24 jam)
-    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "24h" });
 
     res.json({
       success: true,
-      message: 'Login berhasil!',
+      message: "Login berhasil!",
       data: {
         token,
         user: {
@@ -120,14 +123,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: 'Validasi gagal',
+        message: "Validasi gagal",
         errors: error.issues,
       });
     } else {
       console.error(error);
       res.status(500).json({
         success: false,
-        message: 'Terjadi kesalahan pada server',
+        message: "Terjadi kesalahan pada server",
       });
     }
   }
@@ -137,14 +140,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 /**
  * GET /api/auth/me
- * 
+ *
  * Mengembalikan profil lengkap user yang sedang login.
  * Membutuhkan token JWT yang valid.
  */
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
@@ -164,7 +167,9 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
           select: {
             nim: true,
             angkatan: true,
-            prodi: { select: { nama: true, fakultas: { select: { nama: true } } } },
+            prodi: {
+              select: { nama: true, fakultas: { select: { nama: true } } },
+            },
             dosenPA: { select: { user: { select: { nama: true } } } },
           },
         },
@@ -189,14 +194,16 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!user) {
-      res.status(404).json({ success: false, message: 'User tidak ditemukan' });
+      res.status(404).json({ success: false, message: "User tidak ditemukan" });
       return;
     }
 
     res.json({ success: true, data: user });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada server" });
   }
 };
 
@@ -214,16 +221,16 @@ export const hashPassword = async (plainPassword: string): Promise<string> => {
 // ==================== UPDATE PROFIL ====================
 
 const updateProfilSchema = z.object({
-  nama: z.string().min(2, 'Nama minimal 2 karakter').optional(),
-  email: z.string().email('Format email tidak valid').optional(),
+  nama: z.string().min(2, "Nama minimal 2 karakter").optional(),
+  email: z.string().email("Format email tidak valid").optional(),
   nomorTelepon: z
     .string()
-    .max(30, 'Nomor telepon maksimal 30 karakter')
+    .max(30, "Nomor telepon maksimal 30 karakter")
     .nullable()
     .optional(),
   alamat: z
     .string()
-    .max(255, 'Alamat maksimal 255 karakter')
+    .max(255, "Alamat maksimal 255 karakter")
     .nullable()
     .optional(),
 });
@@ -237,17 +244,22 @@ const updateProfilSchema = z.object({
  *
  * Membutuhkan token JWT yang valid.
  */
-export const updateProfil = async (req: Request, res: Response): Promise<void> => {
+export const updateProfil = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
     const data = updateProfilSchema.parse(req.body);
 
     if (Object.keys(data).length === 0) {
-      res.status(400).json({ success: false, message: 'Tidak ada data yang dikirim.' });
+      res
+        .status(400)
+        .json({ success: false, message: "Tidak ada data yang dikirim." });
       return;
     }
 
@@ -259,7 +271,12 @@ export const updateProfil = async (req: Request, res: Response): Promise<void> =
         where: { email: data.email, NOT: { id: userId } },
       });
       if (existing) {
-        res.status(400).json({ success: false, message: 'Email sudah digunakan oleh akun lain.' });
+        res
+          .status(400)
+          .json({
+            success: false,
+            message: "Email sudah digunakan oleh akun lain.",
+          });
         return;
       }
     }
@@ -269,7 +286,9 @@ export const updateProfil = async (req: Request, res: Response): Promise<void> =
       data: {
         ...(data.nama !== undefined && { nama: data.nama }),
         ...(data.email !== undefined && { email: data.email }),
-        ...(data.nomorTelepon !== undefined && { nomorTelepon: data.nomorTelepon }),
+        ...(data.nomorTelepon !== undefined && {
+          nomorTelepon: data.nomorTelepon,
+        }),
         ...(data.alamat !== undefined && { alamat: data.alamat }),
       },
       select: {
@@ -282,19 +301,23 @@ export const updateProfil = async (req: Request, res: Response): Promise<void> =
       },
     });
 
-    res.json({ success: true, message: 'Profil berhasil diperbarui.', data: user });
+    res.json({
+      success: true,
+      message: "Profil berhasil diperbarui.",
+      data: user,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: 'Validasi gagal',
+        message: "Validasi gagal",
         errors: error.issues,
       });
     } else {
       console.error(error);
       res.status(500).json({
         success: false,
-        message: 'Terjadi kesalahan pada server',
+        message: "Terjadi kesalahan pada server",
       });
     }
   }
@@ -304,13 +327,13 @@ export const updateProfil = async (req: Request, res: Response): Promise<void> =
 
 const gantiPasswordSchema = z
   .object({
-    passwordLama: z.string().min(1, 'Password lama wajib diisi'),
-    passwordBaru: z.string().min(6, 'Password baru minimal 6 karakter'),
-    konfirmasiPassword: z.string().min(1, 'Konfirmasi password wajib diisi'),
+    passwordLama: z.string().min(1, "Password lama wajib diisi"),
+    passwordBaru: z.string().min(6, "Password baru minimal 6 karakter"),
+    konfirmasiPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
   })
   .refine((d) => d.passwordBaru === d.konfirmasiPassword, {
-    message: 'Konfirmasi password tidak cocok.',
-    path: ['konfirmasiPassword'],
+    message: "Konfirmasi password tidak cocok.",
+    path: ["konfirmasiPassword"],
   });
 
 /**
@@ -321,10 +344,13 @@ const gantiPasswordSchema = z
  *
  * Membutuhkan token JWT yang valid.
  */
-export const gantiPassword = async (req: Request, res: Response): Promise<void> => {
+export const gantiPassword = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
@@ -334,21 +360,29 @@ export const gantiPassword = async (req: Request, res: Response): Promise<void> 
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
-      res.status(404).json({ success: false, message: 'User tidak ditemukan' });
+      res.status(404).json({ success: false, message: "User tidak ditemukan" });
       return;
     }
 
     // Verifikasi password lama
     const isMatch = await bcrypt.compare(data.passwordLama, user.passwordHash);
     if (!isMatch) {
-      res.status(400).json({ success: false, message: 'Password lama salah.' });
+      res.status(400).json({ success: false, message: "Password lama salah." });
       return;
     }
 
     // Jangan mengubah password jika sama dengan yang lama
-    const sameAsOld = await bcrypt.compare(data.passwordBaru, user.passwordHash);
+    const sameAsOld = await bcrypt.compare(
+      data.passwordBaru,
+      user.passwordHash,
+    );
     if (sameAsOld) {
-      res.status(400).json({ success: false, message: 'Password baru tidak boleh sama dengan password lama.' });
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Password baru tidak boleh sama dengan password lama.",
+        });
       return;
     }
 
@@ -358,19 +392,19 @@ export const gantiPassword = async (req: Request, res: Response): Promise<void> 
       data: { passwordHash },
     });
 
-    res.json({ success: true, message: 'Password berhasil diubah.' });
+    res.json({ success: true, message: "Password berhasil diubah." });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: 'Validasi gagal',
+        message: "Validasi gagal",
         errors: error.issues,
       });
     } else {
       console.error(error);
       res.status(500).json({
         success: false,
-        message: 'Terjadi kesalahan pada server',
+        message: "Terjadi kesalahan pada server",
       });
     }
   }
@@ -379,7 +413,7 @@ export const gantiPassword = async (req: Request, res: Response): Promise<void> 
 // ==================== UPDATE FCM TOKEN ====================
 
 const fcmTokenSchema = z.object({
-  fcmToken: z.string().min(1, 'FCM Token wajib diisi'),
+  fcmToken: z.string().min(1, "FCM Token wajib diisi"),
 });
 
 /**
@@ -388,10 +422,13 @@ const fcmTokenSchema = z.object({
  * Menyimpan/memperbarui FCM device token untuk push notification.
  * Dipanggil oleh Frontend setelah user login dan mendapatkan izin notifikasi browser.
  */
-export const updateFcmToken = async (req: Request, res: Response): Promise<void> => {
+export const updateFcmToken = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
@@ -403,19 +440,19 @@ export const updateFcmToken = async (req: Request, res: Response): Promise<void>
       data: { fcmToken: data.fcmToken },
     });
 
-    res.json({ success: true, message: 'FCM Token berhasil disimpan.' });
+    res.json({ success: true, message: "FCM Token berhasil disimpan." });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: 'Validasi gagal',
+        message: "Validasi gagal",
         errors: error.issues,
       });
     } else {
       console.error(error);
       res.status(500).json({
         success: false,
-        message: 'Terjadi kesalahan pada server',
+        message: "Terjadi kesalahan pada server",
       });
     }
   }

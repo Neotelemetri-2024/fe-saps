@@ -378,7 +378,8 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
     const peserta: { nim: string; nama: string; hadir: boolean; peranId: number | null }[] = [];
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',');
+      const separator = lines[i].includes(';') ? ';' : ',';
+      const cols = lines[i].split(separator);
       const nim = (cols[0] ?? '').trim();
       if (!nim) continue;
 
