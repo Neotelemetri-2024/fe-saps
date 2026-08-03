@@ -92,7 +92,6 @@ function DetailKegiatan({ role, userRole }) {
           <InfoRow label={role === 'operator_ukm' ? 'Nama UKM' : 'Nama UKMF'} value={item.organisasi} />
           <InfoRow label="Jenis Kegiatan" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
-          <InfoRow label="Tanggal" value={item.tanggal} />
           <InfoRow label="Lokasi" value={item.lokasi} />
           <InfoRow label="Kuota" value={item.kuota} />
           {item.deskripsi && item.deskripsi !== '-' && <InfoRow label="Deskripsi" value={item.deskripsi} multiline />}

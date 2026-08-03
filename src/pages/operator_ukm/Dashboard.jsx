@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -206,18 +207,7 @@ function UKMDashboard() {
         {/* Statistik */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map(({ label, value }) => (
-            <div
-              key={label}
-              className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm"
-            >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">
-                {label}
-              </p>
-
-              <p className="mt-2 text-3xl font-extrabold text-brand-dark">
-                {value}
-              </p>
-            </div>
+            <StatCard key={label} label={label} value={value} />
           ))}
         </div>
 

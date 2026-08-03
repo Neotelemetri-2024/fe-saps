@@ -5,36 +5,13 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import { VerticalBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardDosen } from '../../services/dashboardService'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-function StatCard({ label, value, numColor, link, sublabel, sublink, action }) {
-  const navigate = useNavigate()
-  return (
-    <div
-      onClick={() => action && navigate(action)}
-      className={`rounded-xl bg-white p-5 shadow-sm ${action ? 'cursor-pointer' : ''}`}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">{label}</p>
-      <p className={`mt-2 text-3xl font-extrabold ${numColor}`}>{value}</p>
-      {sublabel && (
-        <p className={`mt-0.5 text-sm font-semibold ${numColor}`}>{sublabel}</p>
-      )}
-      {sublink && (
-        <p className="mt-1 flex items-center gap-0.5 text-xs font-medium text-[#444]">
-          → {sublink}
-        </p>
-      )}
-      {link && (
-        <p className="mt-2 text-xs font-medium text-emerald-600 hover:underline">Lihat Detail</p>
-      )}
-    </div>
-  )
-}
-
 function CapaianBar({ pct, status }) {
   return (
     <div className="flex items-center gap-2">
@@ -83,31 +60,23 @@ function buildStats(data) {
     {
       label: 'TOTAL MAHASISWA',
       value: String(data?.totalMahasiswa ?? 0),
-      border: 'border-emerald-400',
-      numColor: 'text-brand-dark',
       link: true,
       action: '/dosen/mahasiswa-bimbingan',
     },
     {
       label: 'RATA RATA IPK',
       value: String(data?.rataRataIpk ?? '-'),
-      border: 'border-emerald-400',
-      numColor: 'text-brand-dark',
       link: false,
     },
     {
       label: 'PENDING APPROVAL',
       value: String(data?.pendingApproval ?? 0),
-      border: 'border-amber-400',
-      numColor: 'text-amber-500',
       link: false,
       action: '/dosen/permintaan-persetujuan',
     },
     {
       label: 'PERLU PERHATIAN',
       value: String(data?.perluPerhatian ?? 0),
-      border: 'border-red-400',
-      numColor: 'text-red-600',
       link: false,
       sublabel: 'Mahasiswa',
       sublink: 'lihat Detail',

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { StackedBarChart } from '../../components/charts'
@@ -66,10 +67,10 @@ function Dashboard() {
   }, [])
 
   const statCards = [
-    { label: 'PENDING', value: stats.pending ?? 0, border: 'border-green-600', numColor: 'text-green-800' },
-    { label: 'DISETUJUI', value: stats.disetujui ?? 0, border: 'border-green-600', numColor: 'text-green-800' },
-    { label: 'MENUNGGU PIMPINAN', value: stats.menungguPimpinan ?? 0, border: 'border-green-600', numColor: 'text-green-600' },
-    { label: 'DITOLAK', value: stats.ditolak ?? 0, border: 'border-red-400', numColor: 'text-red-500' },
+    { label: 'PENDING', value: stats.pending ?? 0 },
+    { label: 'DISETUJUI', value: stats.disetujui ?? 0 },
+    { label: 'MENUNGGU PIMPINAN', value: stats.menungguPimpinan ?? 0 },
+    { label: 'DITOLAK', value: stats.ditolak ?? 0 },
   ]
 
   const columns = useMemo(() => [
@@ -110,10 +111,11 @@ function Dashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
-            <div key={card.label} className="rounded-xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">{card.label}</p>
-              <p className={`mt-2 text-3xl font-extrabold ${card.numColor}`}>{loading ? '…' : card.value}</p>
-            </div>
+            <StatCard
+              key={card.label}
+              label={card.label}
+              value={loading ? '…' : card.value}
+            />
           ))}
         </div>
 

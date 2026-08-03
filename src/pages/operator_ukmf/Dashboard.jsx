@@ -3,6 +3,7 @@ import { Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import PanduanCard from '../../components/dashboard/PanduanCard'
@@ -81,10 +82,7 @@ function UKMFDashboard() {
             { label: 'Ditolak', value: loading ? '…' : ditolak },
             { label: 'Event Aktif', value: loading ? '…' : aktif },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-xl bg-white p-5 shadow-sm">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">{label}</p>
-              <p className="mt-2 text-3xl font-extrabold text-brand-dark">{value}</p>
-            </div>
+            <StatCard key={label} label={label} value={value} />
           ))}
         </div>
 

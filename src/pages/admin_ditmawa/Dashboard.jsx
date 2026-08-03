@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import StatCard from "../../components/dashboard/StatCard";
 import StatusBadge from "../../components/dashboard/StatusBadge";
 import DataTable from "../../components/dashboard/DataTable";
 import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
@@ -32,30 +33,10 @@ function formatTanggal(start, end) {
 function AdminDitmawaDashboard() {
   const user = getCurrentUser();
   const [stats, setStats] = useState([
-    {
-      label: "DISETUJUI",
-      value: 0,
-      border: "border-brand-dark",
-      valueColor: "text-brand-dark",
-    },
-    {
-      label: "PENDING",
-      value: 0,
-      border: "border-yellow-400",
-      valueColor: "text-yellow-500",
-    },
-    {
-      label: "DITOLAK",
-      value: 0,
-      border: "border-red-500",
-      valueColor: "text-red-600",
-    },
-    {
-      label: "EVENT GLOBAL AKTIF",
-      value: 0,
-      border: "border-brand-dark",
-      valueColor: "text-brand-dark",
-    },
+    { label: "DISETUJUI", value: 0 },
+    { label: "PENDING", value: 0 },
+    { label: "DITOLAK", value: 0 },
+    { label: "EVENT GLOBAL AKTIF", value: 0 },
   ]);
   const [kegiatanTerbaru, setKegiatanTerbaru] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,30 +47,10 @@ function AdminDitmawaDashboard() {
       .then((data) => {
         const s = data?.statistik || {};
         setStats([
-          {
-            label: "DISETUJUI",
-            value: s.disetujui ?? 0,
-            border: "border-brand-dark",
-            valueColor: "text-brand-dark",
-          },
-          {
-            label: "PENDING",
-            value: s.pending ?? 0,
-            border: "border-yellow-400",
-            valueColor: "text-yellow-500",
-          },
-          {
-            label: "DITOLAK",
-            value: s.ditolak ?? 0,
-            border: "border-red-500",
-            valueColor: "text-red-600",
-          },
-          {
-            label: "EVENT GLOBAL AKTIF",
-            value: s.eventGlobalAktif ?? 0,
-            border: "border-brand-dark",
-            valueColor: "text-brand-dark",
-          },
+          { label: "DISETUJUI", value: s.disetujui ?? 0 },
+          { label: "PENDING", value: s.pending ?? 0 },
+          { label: "DITOLAK", value: s.ditolak ?? 0 },
+          { label: "EVENT GLOBAL AKTIF", value: s.eventGlobalAktif ?? 0 },
         ]);
         const list = data?.kegiatanTerbaru || [];
         setKegiatanTerbaru(
@@ -190,17 +151,11 @@ function AdminDitmawaDashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
-            <div
+            <StatCard
               key={stat.label}
-              className="rounded-xl bg-white p-4 shadow-sm sm:p-5 lg:p-6"
-            >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#616161]">
-                {stat.label}
-              </p>
-              <p className={`mt-2 text-3xl font-extrabold ${stat.valueColor}`}>
-                {loading ? "…" : stat.value}
-              </p>
-            </div>
+              label={stat.label}
+              value={loading ? "…" : stat.value}
+            />
           ))}
         </div>
 

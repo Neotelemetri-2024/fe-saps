@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, X, BookOpen, CalendarDays } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, BookOpen, CalendarDays } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanService'
-import { getKurikulumAktif } from '../../services/kurikulumService'
 import { InfoRow, SectionCard, mapUiStatus, formatTanggal } from '../../components/ui/DetailComponents'
 
 function normalizeDetail(raw) {
@@ -42,23 +42,11 @@ function DetailVerifikasiPengajuanInternal() {
 
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showCapaianForm, setShowCapaianForm] = useState(false)
+  const [showConfirmSetujui, setShowConfirmSetujui] = useState(false)
   const [showActionModal, setShowActionModal] = useState(false)
   const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [kurikulum, setKurikulum] = useState(null)
-  const [loadingKur, setLoadingKur] = useState(false)
-  const [selectedCapaianIds, setSelectedCapaianIds] = useState([])
-  const [alokasi, setAlokasi] = useState([])
-  const [capaianOpen, setCapaianOpen] = useState(false)
-  const capaianRef = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => { if (capaianRef.current && !capaianRef.current.contains(e.target)) setCapaianOpen(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -71,36 +59,14 @@ function DetailVerifikasiPengajuanInternal() {
       .finally(() => setLoading(false))
   }, [id, location.state])
 
-  useEffect(() => {
-    if (!showCapaianForm || kurikulum) return
-    setLoadingKur(true)
-    getKurikulumAktif().then(setKurikulum).catch(() => toast.error('Gagal memuat kurikulum')).finally(() => setLoadingKur(false))
-  }, [showCapaianForm])
-
   const backToList = () => navigate('/admin_ditmawa/verifikasi-pengajuan-internal')
 
-  const allCapaian = kurikulum?.capaian || []
-  const visibleSubCapaian = allCapaian.filter((c) => selectedCapaianIds.includes(c.id)).flatMap((c) => (c.subCapaian || []).map((sc) => ({ ...sc, namaCapaian: c.nama })))
-  const totalBobot = alokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-
-  const toggleCapaian = (cid) => {
-    setSelectedCapaianIds((prev) => {
-      const next = prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid]
-      const validSubIds = allCapaian.filter((c) => next.includes(c.id)).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-      setAlokasi((a) => a.filter((x) => validSubIds.includes(x.subCapaianId)))
-      return next
-    })
-  }
-  const toggleSub = (scId) => setAlokasi((prev) => prev.find((a) => a.subCapaianId === scId) ? prev.filter((a) => a.subCapaianId !== scId) : [...prev, { subCapaianId: scId, alokasiPersen: 100 }])
-  const setAlokasiPersen = (scId, persen) => setAlokasi((prev) => prev.map((a) => a.subCapaianId === scId ? { ...a, alokasiPersen: Number(persen) } : a))
-
-  const handleSubmitSetuju = async () => {
-    if (alokasi.length === 0) { toast.error('Pilih minimal satu sub-capaian'); return }
-    if (Math.abs(totalBobot - 100) > 0.01) { toast.error(`Total bobot harus 100%. Saat ini: ${totalBobot}%`); return }
+  const handleSetujui = async () => {
     setSubmitting(true)
     try {
-      await verifikasiKegiatan(id, { keputusan: 'setuju', alokasi })
+      await verifikasiKegiatan(id, { keputusan: 'setuju' })
       toast.success('Diteruskan ke Pimpinan Ditmawa', { description: `Pengajuan "${item?.kegiatan}" telah diteruskan.` })
+      setShowConfirmSetujui(false)
       backToList()
     } catch (err) { toast.error('Gagal', { description: err.message }) }
     finally { setSubmitting(false) }
@@ -142,6 +108,14 @@ function DetailVerifikasiPengajuanInternal() {
 
   return (
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
+      <ConfirmModal
+        isOpen={showConfirmSetujui}
+        message="Pengajuan ini akan diteruskan ke Pimpinan Ditmawa?"
+        confirmText={submitting ? 'Memproses...' : 'TERUSKAN KE PIMPINAN'}
+        cancelText="BATAL"
+        onConfirm={handleSetujui}
+        onCancel={() => setShowConfirmSetujui(false)}
+      />
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
         <div className="space-y-4">
           <div>
@@ -213,7 +187,7 @@ function DetailVerifikasiPengajuanInternal() {
           </SectionCard>
         )}
 
-        {canAct && !showCapaianForm && (
+        {canAct && (
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
@@ -221,99 +195,10 @@ function DetailVerifikasiPengajuanInternal() {
               <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Minta Revisi
               </button>
-              <button type="button" onClick={() => setShowCapaianForm(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Setuju
+              <button type="button" onClick={() => setShowConfirmSetujui(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Teruskan ke Pimpinan
               </button>
             </div>
-        )}
-
-        {canAct && showCapaianForm && (
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm space-y-5">
-            <div>
-              <h3 className="text-base font-bold text-[#222]">Pemetaan Capaian Kurikulum</h3>
-              <p className="mt-0.5 text-sm text-[#616161]">Tentukan capaian sebelum meneruskan ke Pimpinan.</p>
-            </div>
-            {loadingKur ? <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p> : !kurikulum ? <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan.</p> : (
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-black">Capaian<span className="text-red-500">*</span> <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span></label>
-                  <div className="relative mt-1" ref={capaianRef}>
-                    <button type="button" onClick={() => setCapaianOpen((o) => !o)}
-                      className="flex w-full items-center justify-between rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark bg-white">
-                      <span className={selectedCapaianIds.length === 0 ? 'text-[#9aa0a6]' : ''}>{selectedCapaianIds.length === 0 ? 'Pilih capaian' : `${selectedCapaianIds.length} capaian dipilih`}</span></button>
-                    {capaianOpen && (
-                      <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
-                        {allCapaian.map((c) => (
-                          <label key={c.id} className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-[#f5f5f5]">
-                            <input type="checkbox" className="accent-brand-dark" checked={selectedCapaianIds.includes(c.id)} onChange={() => toggleCapaian(c.id)} />
-                            {c.nama}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {selectedCapaianIds.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {allCapaian.filter((c) => selectedCapaianIds.includes(c.id)).map((c) => (
-                        <span key={c.id} className="inline-flex items-center gap-1 rounded-full border border-brand-dark/30 bg-brand-dark/5 px-3 py-1 text-xs font-medium text-brand-dark">
-                          {c.nama}<button type="button" onClick={() => toggleCapaian(c.id)}><X className="h-3 w-3 text-red-600" /></button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {visibleSubCapaian.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-black">Sub Capaian<span className="text-red-500">*</span> <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span></label>
-                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {visibleSubCapaian.map((sc) => {
-                        const checked = !!alokasi.find((a) => a.subCapaianId === sc.id)
-                        return (
-                          <label key={sc.id} className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? 'border-brand-dark bg-brand-dark/5 font-medium text-brand-dark' : 'border-[#e9ebf8] text-[#444] hover:border-brand-dark/40'}`}>
-                            <input type="checkbox" className="accent-brand-dark shrink-0" checked={checked} onChange={() => toggleSub(sc.id)} />
-                            <span className="min-w-0">
-                              <span className="block truncate">{sc.nama}</span>
-                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
-                            </span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-                {alokasi.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-black">Bobot Persentase Sub Capaian<span className="text-red-500">*</span></label>
-                    <div className="mt-2 space-y-2">
-                      {alokasi.map((alok) => {
-                        const sc = visibleSubCapaian.find((s) => s.id === alok.subCapaianId)
-                        if (!sc) return null
-                        return (
-                          <div key={alok.subCapaianId} className="flex items-center gap-3">
-                            <span className="flex-1 text-sm text-[#444]">
-                              <span className="block truncate">{sc.nama}</span>
-                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
-                            </span>
-                            <input type="number" min={1} max={100} value={alok.alokasiPersen} onChange={(e) => setAlokasiPersen(alok.subCapaianId, e.target.value)}
-                              className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark" />
-                            <span className="text-sm text-[#9aa0a6]">%</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <p className={`mt-2 text-xs font-medium ${totalBobot >= 100 ? 'text-green-600' : 'text-[#9aa0a6]'}`}>Total bobot: {totalBobot}% {totalBobot >= 100 ? '✓' : '(belum 100%)'}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="flex flex-col gap-3 pt-2 border-t border-[#e9ebf8] sm:flex-row sm:justify-end">
-              <button type="button" disabled={submitting || loadingKur} onClick={handleSubmitSetuju}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{submitting ? 'Memproses...' : 'Teruskan ke Pimpinan'}
-              </button>
-              <button type="button" onClick={() => { setShowCapaianForm(false); setSelectedCapaianIds([]); setAlokasi([]) }}
-                className="rounded-xl border border-[#d1d5db] bg-white px-5 py-2.5 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]">Batal</button>
-            </div>
-          </div>
         )}
       </div>
     </DashboardLayout>

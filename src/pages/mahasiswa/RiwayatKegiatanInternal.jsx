@@ -52,7 +52,7 @@ const columns = [
       </div>
     ),
   },
-  { key: 'poin', label: 'POIN' },
+  { key: 'poin', label: 'POIN', center: true },
 ]
 
 function RiwayatKegiatanInternal() {

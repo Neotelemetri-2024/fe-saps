@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import { VerticalBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { get } from '../../services/apiClient'
@@ -55,10 +56,7 @@ function Dashboard() {
             { label: 'Total Pending',   value: loading ? '…' : totalPending },
             { label: 'Kurikulum Aktif', value: loading ? '…' : kurikulumAktif, small: true },
           ].map(({ label, value, small }) => (
-            <div key={label} className="rounded-xl bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#616161]">{label}</p>
-              <p className={`mt-2 font-extrabold text-brand-dark ${small ? 'text-sm mt-3' : 'text-3xl'}`}>{value}</p>
-            </div>
+            <StatCard key={label} label={label} value={value} small={small} />
           ))}
         </div>
 

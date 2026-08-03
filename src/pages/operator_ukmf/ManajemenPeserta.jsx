@@ -200,9 +200,9 @@ function ManajemenPeserta() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Total Terdaftar" value={total} color="green" />
-          <StatCard label="Hadir" value={hadir} color="green" />
-          <StatCard label="Tidak Hadir" value={tidakHadir} color="green" />
+          <StatCard label="Total Terdaftar" value={total} />
+          <StatCard label="Hadir" value={hadir} />
+          <StatCard label="Tidak Hadir" value={tidakHadir} />
         </div>
 
         <div className="flex items-start gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">

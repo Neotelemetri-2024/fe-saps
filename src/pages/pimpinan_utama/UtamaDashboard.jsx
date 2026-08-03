@@ -3,25 +3,12 @@ import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { StackedBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
-
-const toneStyles = {
-  emerald: { label: 'text-emerald-700', value: 'text-brand-dark' },
-}
-
-function StatBox({ label, value, tone }) {
-  const s = toneStyles[tone] || toneStyles.emerald
-  return (
-    <div className="rounded-xl bg-white p-5 shadow-sm">
-      <p className={`text-xs font-semibold tracking-wide ${s.label}`}>{label}</p>
-      <p className={`mt-2 text-3xl font-extrabold ${s.value}`}>{value}</p>
-    </div>
-  )
-}
 
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {
@@ -57,32 +44,28 @@ function PimpinanUtamaDashboard() {
   const stats = useMemo(() => {
     if (!statistik) {
       return [
-        { label: 'TOTAL MAHASISWA AKTIF', value: loading ? '…' : '—', tone: 'emerald' },
-        { label: 'RATA RATA CAPAIAN', value: loading ? '…' : '—', tone: 'emerald' },
-        { label: 'TOTAL FAKULTAS', value: loading ? '…' : '—', tone: 'emerald' },
-        { label: 'KURIKULUM AKTIF', value: loading ? '…' : '—', tone: 'emerald' },
+        { label: 'TOTAL MAHASISWA AKTIF', value: loading ? '…' : '—' },
+        { label: 'RATA RATA CAPAIAN', value: loading ? '…' : '—' },
+        { label: 'TOTAL FAKULTAS', value: loading ? '…' : '—' },
+        { label: 'KURIKULUM AKTIF', value: loading ? '…' : '—' },
       ]
     }
     return [
       {
         label: 'TOTAL MAHASISWA AKTIF',
         value: Number(statistik.totalMahasiswa ?? 0).toLocaleString('id-ID'),
-        tone: 'emerald',
       },
       {
         label: 'RATA RATA CAPAIAN',
         value: `${statistik.rataRataCapaian ?? 0}%`,
-        tone: 'emerald',
       },
       {
         label: 'TOTAL FAKULTAS',
         value: String(statistik.totalFakultas ?? 0),
-        tone: 'emerald',
       },
       {
         label: 'KURIKULUM AKTIF',
         value: statistik.kurikulumAktif || '—',
-        tone: 'emerald',
       },
     ]
   }, [statistik, loading])
@@ -129,7 +112,7 @@ function PimpinanUtamaDashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <StatBox key={s.label} {...s} />
+            <StatCard key={s.label} {...s} />
           ))}
         </div>
 

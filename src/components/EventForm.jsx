@@ -507,8 +507,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                     })}
                   </div>
                   <p className={`mt-2 text-xs font-medium ${totalBobot === 100 ? 'text-emerald-600' : 'text-[#616161]'}`}>
-                    Total bobot: {totalBobot}/100 poin
-                    {totalBobot === 100 && ' ✓ Sudah mencukupi'}
+                    Total bobot: {totalBobot}%{totalBobot !== 100 && <span className="ml-1">(belum 100%)</span>}
                   </p>
                 </div>
               )}

@@ -413,13 +413,9 @@ function PemetaanCapaianMassal() {
                     ) : (
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                     )}
-                    <span>
-                      <span className="font-semibold">Total bobot: {totalBobot(active)}%</span>{' '}
-                      {getBobotStatus(active) === 'pas'
-                        ? '— Bobot sudah tepat 100%.'
-                        : getBobotStatus(active) === 'kurang'
-                          ? `— Masih kurang ${(100 - totalBobot(active)).toFixed(0)}%. Tambahkan atau naikkan bobot sub capaian.`
-                          : `— Melebihi 100% sebesar ${(totalBobot(active) - 100).toFixed(0)}%. Kurangi bobot sub capaian.`}
+                    <span className={`text-xs font-medium ${getBobotStatus(active) === 'pas' ? 'text-emerald-600' : getBobotStatus(active) === 'lebih' ? 'text-red-500' : 'text-[#616161]'}`}>
+                      <span className="font-semibold">Total bobot: {totalBobot(active)}%</span>
+                      {getBobotStatus(active) !== 'pas' && <span className="ml-1">(belum 100%)</span>}
                     </span>
                   </div>
                 </div>

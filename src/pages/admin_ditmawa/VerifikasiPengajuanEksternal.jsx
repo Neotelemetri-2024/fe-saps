@@ -177,10 +177,6 @@ function VerifikasiPengajuanEksternal() {
         <p className="font-bold uppercase text-[#333]">{row.namaMahasiswa || '-'}</p>
         <p className="text-sm font-medium text-orange-500">{row.nim || '-'}</p>
         <p className="text-sm text-sky-500">{row.prodi || '-'}</p>
-        <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
-          <span>{row.diajukanPada || '-'}</span>
-        </div>
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || '-'} tanggal={row.diajukanPada} /> },

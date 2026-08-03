@@ -531,12 +531,13 @@ function BuatKegiatan() {
                               onChange={(e) => setAlokasiPersen(alok.subCapaianId, e.target.value)}
                               className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark"
                             />
+                            <span className="text-sm text-[#9aa0a6]">%</span>
                           </div>
                         )
                       })}
                     </div>
-                    <p className={`mt-2 text-xs font-medium ${totalBobot >= 100 ? 'text-green-600' : 'text-[#9aa0a6]'}`}>
-                      Total bobot sudah {totalBobot >= 100 ? 'mencukupi' : `${totalBobot}% (belum 100%)`} 100 poin
+                    <p className={`mt-2 text-xs font-medium ${totalBobot === 100 ? 'text-emerald-600' : 'text-[#616161]'}`}>
+                      Total bobot: {totalBobot}%{totalBobot !== 100 && <span className="ml-1">(belum 100%)</span>}
                     </p>
                   </div>
                 )}

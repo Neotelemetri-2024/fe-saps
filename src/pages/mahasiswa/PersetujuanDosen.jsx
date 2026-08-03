@@ -436,9 +436,9 @@ function PersetujuanDosen() {
               <button
                 type="button"
                 onClick={() => { setSearch(''); setFilterStatus('') }}
-                className="text-xs font-medium text-[#616161] hover:underline"
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
               >
-                Reset
+                Reset Filter
               </button>
             )}
           </div>

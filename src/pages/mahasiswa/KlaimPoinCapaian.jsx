@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -51,6 +51,8 @@ function mapRiwayat(item, i) {
 function KlaimPoinCapaian() {
   const user = getCurrentUser()
   const [data, setData] = useState([])
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
 
   const loadRiwayat = () => {
     getKlaim()
@@ -61,6 +63,25 @@ function KlaimPoinCapaian() {
   useEffect(() => {
     loadRiwayat()
   }, [])
+
+  const statusOptions = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'disetujui', label: 'Disetujui' },
+    { value: 'ditolak', label: 'Ditolak' },
+  ]
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return data.filter((row) => {
+      if (filterStatus && row.status !== filterStatus) return false
+      if (!q) return true
+      return (
+        row.kegiatan.toLowerCase().includes(q) ||
+        row.penyelenggara.toLowerCase().includes(q) ||
+        row.jenis.toLowerCase().includes(q)
+      )
+    })
+  }, [data, search, filterStatus])
 
   return (
     <DashboardLayout
@@ -78,11 +99,36 @@ function KlaimPoinCapaian() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
-              <input type="text" placeholder="Cari kegiatan..." className="flex-1 text-sm outline-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari kegiatan..."
+                className="flex-1 text-sm outline-none"
+              />
             </div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-sm text-[#333] outline-none"
+            >
+              <option value="">Semua Status</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            {(search || filterStatus) && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setFilterStatus('') }}
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
           <TableFrame>
-            <DataTable columns={columns} data={data} />
+            <DataTable columns={columns} data={filtered} />
           </TableFrame>
         </TableCard>
       </div>
