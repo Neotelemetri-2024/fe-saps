@@ -77,15 +77,13 @@ h2 {
   background-color: var(--brand-dark);
 }
 
-/* override text-brand-dark jadi hitam */
-.text-brand-dark {
-  color: #111 !important;
-}
 .bg-brand-light {
   background-color: var(--brand-light);
 }
+/* text-brand-dark selalu hitam — jangan tambah definisi lain di bawah/atas
+   supaya urutan CSS di build production tidak mengubah pemenangnya. */
 .text-brand-dark {
-  color: var(--brand-dark);
+  color: #111 !important;
 }
 /* Pastikan hover:text-white bisa override .text-brand-dark */
 .hover\:text-white:hover,
