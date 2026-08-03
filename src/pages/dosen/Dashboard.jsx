@@ -178,7 +178,7 @@ function DosenPADashboard() {
           <h2 className="text-2xl font-extrabold sm:text-3xl">
             <span className="text-[#333]">Selamat Datang</span>
             <br />
-            <span className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-transparent">
+            <span className="text-brand-dark">
               {namaDosen}
             </span>
           </h2>
