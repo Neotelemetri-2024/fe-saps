@@ -44,7 +44,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: 'Email tidak terdaftar. Pastikan Anda memasukkan email lengkap (contoh: @ukm.unand.ac.id)',
+        message: "Email atau password salah.",
       });
       return;
     }
@@ -66,7 +66,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,
-        message: 'Password salah. Silakan coba lagi.',
+        message: "Password salah. Silakan coba lagi.",
       });
       return;
     }
@@ -271,12 +271,10 @@ export const updateProfil = async (
         where: { email: data.email, NOT: { id: userId } },
       });
       if (existing) {
-        res
-          .status(400)
-          .json({
-            success: false,
-            message: "Email sudah digunakan oleh akun lain.",
-          });
+        res.status(400).json({
+          success: false,
+          message: "Email sudah digunakan oleh akun lain.",
+        });
         return;
       }
     }
@@ -377,12 +375,10 @@ export const gantiPassword = async (
       user.passwordHash,
     );
     if (sameAsOld) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "Password baru tidak boleh sama dengan password lama.",
-        });
+      res.status(400).json({
+        success: false,
+        message: "Password baru tidak boleh sama dengan password lama.",
+      });
       return;
     }
 

@@ -412,73 +412,16 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
     const imported: any[] = [];
     const errors: any[] = [];
 
-    // Cari prodi default untuk akun bayangan (prodi pertama yang ada di database)
-    const prodiDefault = await prisma.programStudi.findFirst({ orderBy: { id: 'asc' } });
-    if (!prodiDefault) {
-      return res.status(500).json({ success: false, message: 'Data Program Studi belum tersedia di database. Hubungi Admin.' });
-    }
-
     const autoCreated: any[] = [];
 
     await prisma.$transaction(async (tx) => {
       for (const p of peserta) {
         let mahasiswa = nimToMahasiswa.get(p.nim);
 
-        // Auto-create akun bayangan jika NIM belum terdaftar
+        // Jika NIM belum terdaftar, tolak dan beri pesan error
         if (!mahasiswa) {
-          if (!p.nama) {
-            errors.push({ nim: p.nim, error: 'NIM belum terdaftar dan kolom NAMA kosong. Isi kolom NAMA di CSV agar akun bisa dibuat otomatis.' });
-            continue;
-          }
-
-          try {
-            // Buat password default dari NIM (mahasiswa bisa ganti nanti via SSO/ganti-password)
-            const hashedPassword = await bcrypt.hash(p.nim, 10);
-
-            // 1. Buat User bayangan
-            const newUser = await tx.user.create({
-              data: {
-                nama: p.nama,
-                email: `${p.nim}@student.unand.ac.id`,
-                passwordHash: hashedPassword,
-                peran: 'mahasiswa',
-                aktif: true,
-              }
-            });
-
-            // 2. Buat profil Mahasiswa
-            await tx.mahasiswa.create({
-              data: {
-                userId: newUser.id,
-                nim: p.nim,
-                prodiId: prodiDefault.id,
-              }
-            });
-
-            // Simpan referensi agar bisa dipakai di upsert partisipasi di bawah
-            mahasiswa = {
-              userId: newUser.id,
-              nim: p.nim,
-              prodiId: prodiDefault.id,
-              dosenPaId: null,
-              angkatan: null,
-              publicCvToken: null,
-              user: { nama: p.nama },
-              prodi: { ...prodiDefault, fakultas: null },
-            } as any;
-
-            // Tambah ke Map agar tidak duplikat jika NIM sama muncul 2x di CSV
-            nimToMahasiswa.set(p.nim, mahasiswa as any);
-            autoCreated.push({ nim: p.nim, nama: p.nama });
-          } catch (createErr: any) {
-            // Jika email sudah ada (duplikat), skip
-            if (createErr.code === 'P2002') {
-              errors.push({ nim: p.nim, error: 'Email atau NIM sudah terdaftar dengan data berbeda.' });
-            } else {
-              errors.push({ nim: p.nim, error: `Gagal membuat akun: ${createErr.message}` });
-            }
-            continue;
-          }
+          errors.push({ nim: p.nim, error: 'Belum terdaftar di sistem SAPS. Mahasiswa harus login/register terlebih dahulu sebelum bisa di-import.' });
+          continue;
         }
 
         try {
