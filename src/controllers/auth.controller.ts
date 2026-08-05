@@ -222,7 +222,9 @@ export const hashPassword = async (plainPassword: string): Promise<string> => {
 
 const updateProfilSchema = z.object({
   nama: z.string().min(2, "Nama minimal 2 karakter").optional(),
-  email: z.string().email("Format email tidak valid").optional(),
+  email: z
+    .union([z.string().email("Format email tidak valid"), z.null()])
+    .optional(),
   nomorTelepon: z
     .string()
     .max(30, "Nomor telepon maksimal 30 karakter")
@@ -283,7 +285,7 @@ export const updateProfil = async (
       where: { id: userId },
       data: {
         ...(data.nama !== undefined && { nama: data.nama }),
-        ...(data.email !== undefined && { email: data.email }),
+        ...(data.email ? { email: data.email } : {}),
         ...(data.nomorTelepon !== undefined && {
           nomorTelepon: data.nomorTelepon,
         }),

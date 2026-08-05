@@ -7,6 +7,8 @@ import {
   submitPoinPesertaUKM as submitPoinPeserta,
   downloadTemplatePesertaUKM as downloadTemplatePeserta,
   updatePesertaUKM as updatePeserta,
+  cariMahasiswaPeserta,
+  tambahPesertaManual,
 } from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
@@ -20,6 +22,20 @@ router.get(
   '/:id/peserta',
   authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
   getPesertaKegiatan
+);
+
+// GET /api/kegiatan/:id/peserta/search — Cari mahasiswa yang belum terdaftar
+router.get(
+  '/:id/peserta/search',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  cariMahasiswaPeserta
+);
+
+// POST /api/kegiatan/:id/peserta — Tambah peserta manual
+router.post(
+  '/:id/peserta',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  tambahPesertaManual
 );
 
 // GET /api/kegiatan/:id/peserta/template — Download CSV template
