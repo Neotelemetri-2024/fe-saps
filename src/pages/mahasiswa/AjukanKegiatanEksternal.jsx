@@ -10,6 +10,7 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import InfoTooltip from '../../components/ui/InfoTooltip'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getPengajuan, mintaPersetujuanDosenEksternal, hapusDraftKegiatanEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
@@ -63,6 +64,7 @@ function AjukanKegiatanEksternal() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterKategori, setFilterKategori] = useState('')
+  const [filterSkala, setFilterSkala] = useState('')
 
   // Checkbox selection — hanya baris yg disetujui
   const [pilihanMode, setPilihanMode] = useState(false)
@@ -110,13 +112,14 @@ function AjukanKegiatanEksternal() {
     return data.filter((row) => {
       if (filterStatus && row.statusRaw !== filterStatus) return false
       if (filterKategori && row.jenis !== filterKategori) return false
+      if (filterSkala && row.skala !== filterSkala) return false
       if (!q) return true
       return (
         row.kegiatan.toLowerCase().includes(q) ||
         row.penyelenggara.toLowerCase().includes(q)
       )
     })
-  }, [data, search, filterStatus, filterKategori])
+  }, [data, search, filterStatus, filterKategori, filterSkala])
 
   const allDiapproved = disetujuiRows.filter((r) =>
     filtered.some((f) => f.id === r.id)
@@ -373,6 +376,16 @@ function AjukanKegiatanEksternal() {
                 ))}
               </select>
               <select
+                value={filterSkala}
+                onChange={(e) => setFilterSkala(e.target.value)}
+                className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+              >
+                <option value="">Semua Skala</option>
+                {[...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort().map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
@@ -382,10 +395,10 @@ function AjukanKegiatanEksternal() {
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
-              {(filterStatus || filterKategori || search) && (
+              {(filterStatus || filterKategori || filterSkala || search) && (
                 <button
                   type="button"
-                  onClick={() => { setFilterStatus(''); setFilterKategori(''); setSearch('') }}
+                  onClick={() => { setFilterStatus(''); setFilterKategori(''); setFilterSkala(''); setSearch('') }}
                   className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-[#f5f5f5] sm:text-sm"
                 >
                   Reset Filter
@@ -414,44 +427,37 @@ function AjukanKegiatanEksternal() {
                   label: 'Aksi',
                   stopPropagation: true,
                   render: (row) => (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        title="Detail"
-                        onClick={() => navigate(`/mahasiswa/kegiatan-eksternal/${row.id}`, { state: { row } })}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Edit"
-                        disabled={row.statusRaw !== 'draft'}
-                        onClick={() => handleEditDraft(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Hapus"
-                        disabled={row.statusRaw !== 'draft'}
-                        onClick={() => setHapusDraftTarget(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Ajukan Ulang"
-                        disabled={row.statusRaw !== 'revisi'}
-                        onClick={() => handleEditRevisi(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                    </div>
-
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Detail',
+                          icon: <Eye className="h-4 w-4" />,
+                          color: 'text-blue-600',
+                          onClick: () => navigate(`/mahasiswa/kegiatan-eksternal/${row.id}`, { state: { row } }),
+                        },
+                        {
+                          label: 'Edit',
+                          icon: <Pencil className="h-4 w-4" />,
+                          color: 'text-yellow-600',
+                          disabled: row.statusRaw !== 'draft',
+                          onClick: () => handleEditDraft(row),
+                        },
+                        {
+                          label: 'Hapus',
+                          icon: <Trash2 className="h-4 w-4" />,
+                          color: 'text-red-500',
+                          disabled: row.statusRaw !== 'draft',
+                          onClick: () => setHapusDraftTarget(row),
+                        },
+                        {
+                          label: 'Ajukan Ulang',
+                          icon: <RefreshCw className="h-4 w-4" />,
+                          color: 'text-amber-600',
+                          disabled: row.statusRaw !== 'revisi',
+                          onClick: () => handleEditRevisi(row),
+                        },
+                      ]}
+                    />
                   ),
                 },
               ]}

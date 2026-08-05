@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { VerticalBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
@@ -249,14 +250,16 @@ function DosenPADashboard() {
                 label: 'Aksi',
                 stopPropagation: true,
                 render: (row) => (
-                  <button
-                    type="button"
-                    title="Detail"
-                    onClick={() => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } })}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
+                  <ActionMenu
+                    items={[
+                      {
+                        label: 'Detail',
+                        icon: <Eye className="h-4 w-4" />,
+                        color: 'text-blue-600',
+                        onClick: () => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } }),
+                      },
+                    ]}
+                  />
                 ),
               },
             ]}

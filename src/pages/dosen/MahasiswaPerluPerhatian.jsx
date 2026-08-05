@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
@@ -82,27 +83,30 @@ function MahasiswaPerluPerhatian() {
     {
       key: 'aksi',
       label: 'AKSI',
+      stopPropagation: true,
       render: (row) => (
-        <button
-          type="button"
-          title="Detail"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-          onClick={() => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, {
-            state: {
-              mahasiswa: {
-                mahasiswaId: row.mahasiswaId,
-                nama: row.mahasiswa,
-                nim: row.nim,
-                prodi: row.prodi,
-                ipk: row.ipk,
-                poin: row.poin,
-                capaianPersen: row.capaian,
-              },
+        <ActionMenu
+          items={[
+            {
+              label: 'Detail',
+              icon: <Eye className="h-4 w-4" />,
+              color: 'text-blue-600',
+              onClick: () => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, {
+                state: {
+                  mahasiswa: {
+                    mahasiswaId: row.mahasiswaId,
+                    nama: row.mahasiswa,
+                    nim: row.nim,
+                    prodi: row.prodi,
+                    ipk: row.ipk,
+                    poin: row.poin,
+                    capaianPersen: row.capaian,
+                  },
+                },
+              }),
             },
-          })}
-        >
-          <Eye className="h-4 w-4" />
-        </button>
+          ]}
+        />
       ),
     },
   ], [navigate])

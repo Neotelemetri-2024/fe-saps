@@ -8,6 +8,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
 
@@ -60,7 +61,6 @@ function VerifikasiPengajuanInternal() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
-  const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
   const [skala, setSkala] = useState('')
   const [page, setPage] = useState(1)
@@ -88,7 +88,6 @@ function VerifikasiPengajuanInternal() {
       if (status && item.status !== status) return false
       if (kategori && item.kategori !== kategori) return false
       if (skala && String(item.skala).toLowerCase() !== skala.toLowerCase()) return false
-      if (tahun && !String(item.tanggal).includes(tahun)) return false
       if (!q) return true
       return (
         (item.namaMahasiswa || '').toLowerCase().includes(q) ||
@@ -97,14 +96,14 @@ function VerifikasiPengajuanInternal() {
         (item.kategori || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, tahun, status, skala])
+  }, [items, search, kategori, status, skala])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
   const resetFilter = () => {
-    setSearch(''); setKategori(''); setTahun(''); setStatus(''); setSkala(''); setPage(1)
+    setSearch(''); setKategori(''); setStatus(''); setSkala(''); setPage(1)
   }
 
   const toggleSelect = (id) => {
@@ -131,14 +130,16 @@ function VerifikasiPengajuanInternal() {
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <button
-        type="button"
-        onClick={() => navigate(`/admin_ditmawa/verifikasi-pengajuan-internal/${row.id}`, { state: { item: row } })}
-        title="Detail"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
+      <ActionMenu
+        items={[
+          {
+            label: 'Detail',
+            icon: <Eye className="h-4 w-4" />,
+            color: 'text-blue-600',
+            onClick: () => navigate(`/admin_ditmawa/verifikasi-pengajuan-internal/${row.id}`, { state: { item: row } }),
+          },
+        ]}
+      />
     )},
   ], [pageItems, start, navigate])
 
@@ -202,20 +203,14 @@ function VerifikasiPengajuanInternal() {
           <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Kategori</option>
+              <option value="">Semua Kategori</option>
               {[...new Set(items.map((i) => i.kategori).filter(Boolean))].map((k) => (
                 <option key={k} value={k}>{k}</option>
               ))}
             </select>
-            <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Tahun</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="pending">Pending</option>
               <option value="diteruskan">Diteruskan</option>
               <option value="ditolak">Ditolak</option>
@@ -223,16 +218,18 @@ function VerifikasiPengajuanInternal() {
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Skala</option>
+              <option value="">Semua Skala</option>
               <option value="nasional">Nasional</option>
               <option value="internasional">Internasional</option>
               <option value="regional">Regional</option>
               <option value="universitas">Universitas</option>
             </select>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
-              Reset filter
-            </button>
+            {(search || kategori || status || skala) && (
+              <button type="button" onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+                Reset filter
+              </button>
+            )}
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${

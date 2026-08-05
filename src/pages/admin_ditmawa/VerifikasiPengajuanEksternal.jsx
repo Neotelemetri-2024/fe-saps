@@ -10,6 +10,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanVerifikasi } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
+import ActionMenu from '../../components/ui/ActionMenu'
 
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
@@ -54,7 +55,6 @@ function VerifikasiPengajuanEksternal() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
-  const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
   const [skala, setSkala] = useState('')
   const [page, setPage] = useState(1)
@@ -98,25 +98,12 @@ function VerifikasiPengajuanEksternal() {
     return [...set]
   }, [items])
 
-  const tahunOptions = useMemo(() => {
-    const set = new Set(
-      items
-        .map((i) => (i.dibuatPada ? String(new Date(i.dibuatPada).getFullYear()) : null))
-        .filter(Boolean),
-    )
-    return [...set].sort((a, b) => Number(b) - Number(a))
-  }, [items])
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return items.filter((item) => {
       if (status && item.status !== status) return false
       if (kategori && item.kategori !== kategori) return false
       if (skala && item.skala !== skala) return false
-      if (tahun) {
-        const y = item.dibuatPada ? String(new Date(item.dibuatPada).getFullYear()) : ''
-        if (y !== tahun) return false
-      }
       if (!q) return true
       return (
         (item.namaMahasiswa || '').toLowerCase().includes(q) ||
@@ -126,7 +113,7 @@ function VerifikasiPengajuanEksternal() {
         (item.prodi || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, tahun, status, skala])
+  }, [items, search, kategori, status, skala])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -135,7 +122,6 @@ function VerifikasiPengajuanEksternal() {
   const resetFilter = () => {
     setSearch('')
     setKategori('')
-    setTahun('')
     setStatus('')
     setSkala('')
     setPage(1)
@@ -192,14 +178,16 @@ function VerifikasiPengajuanEksternal() {
       )
     },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <button
-        type="button"
-        onClick={() => navigate(`/admin_ditmawa/verifikasi-pengajuan-eksternal/${row.id}`, { state: { item: row } })}
-        title="Detail"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
+      <ActionMenu
+        items={[
+          {
+            label: 'Detail',
+            icon: <Eye className="h-4 w-4" />,
+            color: 'text-blue-600',
+            onClick: () => navigate(`/admin_ditmawa/verifikasi-pengajuan-eksternal/${row.id}`, { state: { item: row } }),
+          },
+        ]}
+      />
     )},
   ], [pageItems, start, navigate])
 
@@ -232,18 +220,8 @@ function VerifikasiPengajuanEksternal() {
               onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Kategori</option>
+              <option value="">Semua Kategori</option>
               {kategoriOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            <select
-              value={tahun}
-              onChange={(e) => { setTahun(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
-            >
-              <option value="">Tahun</option>
-              {tahunOptions.map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
@@ -252,7 +230,7 @@ function VerifikasiPengajuanEksternal() {
               onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="diajukan">Diajukan</option>
               <option value="terverifikasi">Terverifikasi</option>
               <option value="perlu_revisi">Perlu Revisi</option>
@@ -263,19 +241,21 @@ function VerifikasiPengajuanEksternal() {
               onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Skala</option>
+              <option value="">Semua Skala</option>
               {Object.entries(SKALA_LABEL).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
 
-            <button
-              type="button"
-              onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
-            >
-              Reset filter
-            </button>
+            {(search || kategori || status || skala) && (
+              <button
+                type="button"
+                onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
+              >
+                Reset filter
+              </button>
+            )}
 
             {/* Pilih Beberapa toggle */}
             <button

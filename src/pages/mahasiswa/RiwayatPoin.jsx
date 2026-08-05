@@ -38,6 +38,7 @@ const columns = [
   { key: 'kegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
   { key: 'jenis', label: 'JENIS' },
   { key: 'peran', label: 'PERAN' },
+  { key: 'skala', label: 'SKALA' },
   { key: 'penyelenggara', label: 'PENYELENGGARA' },
   { key: 'tanggal', label: 'TANGGAL' },
   {
@@ -68,6 +69,7 @@ function RiwayatPoin() {
   const [filterPeran, setFilterPeran] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPenyelenggara, setFilterPenyelenggara] = useState('')
+  const [filterSkala, setFilterSkala] = useState('')
 
   useEffect(() => {
     setLoading(true)
@@ -104,6 +106,7 @@ function RiwayatPoin() {
             diajukanPada: formatTanggal(item.tanggalKlaim || item.tanggalDiajukan || item.dibuatPada || item.createdAt),
             jenis: item.jenisKegiatan || item.jenis || '-',
             peran: item.peran || '-',
+            skala: item.skala || '-',
             penyelenggara: item.penyelenggara || '-',
             tanggal: formatTanggal(item.tanggal),
             bukti: item.bukti ? (String(item.bukti).split('/').pop() || 'Bukti') : '-',
@@ -127,6 +130,7 @@ function RiwayatPoin() {
     () => [...new Set(riwayat.map((r) => r.penyelenggara).filter((v) => v && v !== '-'))],
     [riwayat],
   )
+  const skalaOptions = useMemo(() => [...new Set(riwayat.map((r) => r.skala).filter((s) => s && s !== '-'))].sort(), [riwayat])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -136,9 +140,10 @@ function RiwayatPoin() {
       if (filterPeran && r.peran !== filterPeran) return false
       if (filterStatus && r.status !== filterStatus) return false
       if (filterPenyelenggara && r.penyelenggara !== filterPenyelenggara) return false
+      if (filterSkala && r.skala !== filterSkala) return false
       return true
     })
-  }, [riwayat, search, filterKategori, filterPeran, filterStatus, filterPenyelenggara])
+  }, [riwayat, search, filterKategori, filterPeran, filterStatus, filterPenyelenggara, filterSkala])
 
   const resetFilter = () => {
     setSearch('')
@@ -146,6 +151,7 @@ function RiwayatPoin() {
     setFilterPeran('')
     setFilterStatus('')
     setFilterPenyelenggara('')
+    setFilterSkala('')
   }
 
   return (
@@ -190,37 +196,45 @@ function RiwayatPoin() {
         </div>
 
         <TableCard title="Riwayat Poin">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
-              <Search className="h-4 w-4 text-[#616161]" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex w-full sm:flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="flex-1 text-sm outline-none"
+                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
               />
             </div>
 
-            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-              <option value="">Kategori</option>
-              {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
-            </select>
-            <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-              <option value="">Peran</option>
-              {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-              <option value="">Status</option>
-              <option value="pending">Pending</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="ditolak">Ditolak</option>
-            </select>
-            <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="rounded-lg border border-[#e9ebf8] px-4 py-2 text-sm text-[#333] outline-none">
-              <option value="">Penyelenggara</option>
-              {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Kategori</option>
+                {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
+              </select>
+              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Peran</option>
+                {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="disetujui">Disetujui</option>
+                <option value="ditolak">Ditolak</option>
+              </select>
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Skala</option>
+                {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Penyelenggara</option>
+                {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+              {(search || filterKategori || filterPeran || filterStatus || filterSkala || filterPenyelenggara) && (
+                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+              )}
+            </div>
           </div>
 
           <TableFrame>

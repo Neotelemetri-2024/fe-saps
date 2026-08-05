@@ -99,6 +99,25 @@ export async function getPesertaKegiatan(kegiatanId, params = {}) {
 }
 
 /**
+ * Cari mahasiswa (NIM/nama) yang belum terdaftar sebagai peserta kegiatan.
+ * Returns [{ userId, nim, nama, fakultas, prodi }]
+ */
+export async function cariMahasiswaPeserta(kegiatanId, q) {
+  const res = await get(`/api/kegiatan/${kegiatanId}/peserta/search`, { q })
+  return res?.data || res || []
+}
+
+/**
+ * Tambah mahasiswa menjadi peserta kegiatan secara manual.
+ * @param {number|string} kegiatanId
+ * @param {string|number} mahasiswaId (userId mahasiswa)
+ */
+export async function tambahPesertaManual(kegiatanId, mahasiswaId) {
+  const res = await post(`/api/kegiatan/${kegiatanId}/peserta`, { mahasiswaId: String(mahasiswaId) })
+  return res?.data || res
+}
+
+/**
  * Ambil data peserta lengkap dengan statusSubmit dari backend.
  * Returns { peserta: [], statusSubmit: 'belum_submit'|'sudah_submit', peranTersedia: [] }
  */

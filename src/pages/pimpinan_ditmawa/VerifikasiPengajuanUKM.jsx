@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getKategoriKegiatanValid } from '../../services/matriksService'
@@ -59,7 +60,6 @@ function VerifikasiPengajuanUKM() {
   const [search, setSearch] = useState('')
   const [kategori, setKategori] = useState('')
   const [kategoriOptions, setKategoriOptions] = useState([])
-  const [tahun, setTahun] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
 
@@ -95,7 +95,7 @@ function VerifikasiPengajuanUKM() {
         (item.kategori || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, tahun, status])
+  }, [items, search, kategori, status])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -103,7 +103,7 @@ function VerifikasiPengajuanUKM() {
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
   const resetFilter = () => {
-    setSearch(''); setKategori(''); setTahun(''); setStatus(''); setPage(1)
+    setSearch(''); setKategori(''); setStatus(''); setPage(1)
   }
 
   const toggleSelect = (id) => {
@@ -180,27 +180,23 @@ function VerifikasiPengajuanUKM() {
           <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Kategori</option>
+              <option value="">Semua Kategori</option>
               {kategoriOptions.map((k) => (
                 <option key={k.id} value={k.nama}>{k.nama}</option>
               ))}
             </select>
-            <select value={tahun} onChange={(e) => { setTahun(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Tahun</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="pending">Pending</option>
               <option value="disetujui">Disetujui</option>
             </select>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
-              Reset filter
-            </button>
+            {(search || kategori || status) && (
+              <button type="button" onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+                Reset filter
+              </button>
+            )}
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
@@ -266,12 +262,16 @@ function VerifikasiPengajuanUKM() {
             {
               key: 'aksi', label: 'Aksi', stopPropagation: true,
               render: (item) => pilihanMode ? null : (
-                <button type="button"
-                  onClick={() => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-ukm/${item.id}`, { state: { item } })}
-                  title="Detail & Verifikasi"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
-                  <Eye className="h-4 w-4" />
-                </button>
+                <ActionMenu
+                  items={[
+                    {
+                      label: 'Detail & Verifikasi',
+                      icon: <Eye className="h-4 w-4" />,
+                      color: 'text-blue-600',
+                      onClick: () => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-ukm/${item.id}`, { state: { item } }),
+                    },
+                  ]}
+                />
               ),
             },
           ]}

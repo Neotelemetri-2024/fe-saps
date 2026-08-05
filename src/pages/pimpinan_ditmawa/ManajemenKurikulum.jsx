@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import Modal from '../../components/ui/Modal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import {
   getKurikulum,
@@ -535,14 +536,16 @@ function ManajemenKurikulum() {
                       checked={kur.status === 'aktif'}
                       onChange={() => handleToggleStatus(kur.id)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleHapus(kur.id, kur.nama)}
-                      title="Hapus kurikulum"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Hapus Kurikulum',
+                          icon: <Trash2 className="h-4 w-4" />,
+                          color: 'text-red-500',
+                          onClick: () => handleHapus(kur.id, kur.nama),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               )
@@ -599,11 +602,16 @@ function ManajemenKurikulum() {
                                 <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
                                   {cap.label}
                                 </span>
-                                <button type="button" onClick={() => handleHapusCapaian(cap)}
-                                  title="Hapus capaian"
-                                  className="flex h-6 w-6 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
+                                <ActionMenu
+                                  items={[
+                                    {
+                                      label: 'Hapus Capaian',
+                                      icon: <Trash2 className="h-3.5 w-3.5" />,
+                                      color: 'text-red-500',
+                                      onClick: () => handleHapusCapaian(cap),
+                                    },
+                                  ]}
+                                />
                               </div>
                             </td>
                             <td className="px-5 py-3 text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
@@ -621,11 +629,16 @@ function ManajemenKurikulum() {
                                       <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
                                         {cap.label}
                                       </span>
-                                      <button type="button" onClick={() => handleHapusCapaian(cap)}
-                                        title="Hapus capaian"
-                                        className="flex h-6 w-6 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white">
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
+                                      <ActionMenu
+                                        items={[
+                                          {
+                                            label: 'Hapus Capaian',
+                                            icon: <Trash2 className="h-3.5 w-3.5" />,
+                                            color: 'text-red-500',
+                                            onClick: () => handleHapusCapaian(cap),
+                                          },
+                                        ]}
+                                      />
                                     </div>
                                   </td>
                                   <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top text-[#616161]">
@@ -636,24 +649,23 @@ function ManajemenKurikulum() {
                               <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
                               <td className="px-5 py-3 text-center text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
                               <td className="px-5 py-3">
-                                <div className="flex items-center justify-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditSubCapaian({ ...sc })}
-                                    title="Edit sub capaian"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white"
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHapusSubCapaian(sc)}
-                                    title="Hapus sub capaian"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                                <ActionMenu
+                                  align="right"
+                                  items={[
+                                    {
+                                      label: 'Edit Sub Capaian',
+                                      icon: <Pencil className="h-3.5 w-3.5" />,
+                                      color: 'text-brand-dark',
+                                      onClick: () => setEditSubCapaian({ ...sc }),
+                                    },
+                                    {
+                                      label: 'Hapus Sub Capaian',
+                                      icon: <Trash2 className="h-3.5 w-3.5" />,
+                                      color: 'text-red-500',
+                                      onClick: () => handleHapusSubCapaian(sc),
+                                    },
+                                  ]}
+                                />
                               </td>
                             </tr>
                           ))

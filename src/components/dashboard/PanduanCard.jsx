@@ -47,7 +47,7 @@ function PanduanCard({ title, description, fileLabel = 'PDF', fileUrl, className
           type="button"
           onClick={handleView}
           title="Lihat Panduan"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-blue-600 transition hover:bg-[#f0f4f0]"
         >
           <Eye className="h-4 w-4" />
         </button>

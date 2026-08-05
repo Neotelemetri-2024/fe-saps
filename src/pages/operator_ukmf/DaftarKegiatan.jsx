@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Eye, Pencil, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
+import { Search, Eye, Pencil, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -9,6 +9,7 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import InfoTooltip from '../../components/ui/InfoTooltip'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatan,
@@ -34,6 +35,10 @@ function DaftarKegiatan() {
   const user = getCurrentUser()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterKategori, setFilterKategori] = useState('')
+  const [filterSkala, setFilterSkala] = useState('')
   const [konfirmasi, setKonfirmasi] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -46,6 +51,37 @@ function DaftarKegiatan() {
   }
 
   useEffect(() => { load() }, [])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return data.filter((item) => {
+      if (filterStatus && statusLower(item) !== filterStatus) return false
+      if (filterKategori && (item.kategori !== filterKategori && item.jenis !== filterKategori)) return false
+      if (filterSkala && labelOf(item.skala) !== filterSkala) return false
+      if (!q) return true
+      return (
+        (item.nama || '').toLowerCase().includes(q) ||
+        (item.kategori || '').toLowerCase().includes(q) ||
+        (item.jenis || '').toLowerCase().includes(q)
+      )
+    })
+  }, [data, search, filterStatus, filterKategori, filterSkala])
+
+  const kategoriOptions = useMemo(() => {
+    return [...new Set(data.map((item) => item.kategori || item.jenis).filter(Boolean))].sort()
+  }, [data])
+
+  const skalaOptions = useMemo(() => {
+    return [...new Set(data.map((item) => labelOf(item.skala)).filter((s) => s && s !== '-'))].sort()
+  }, [data])
+
+  const statusOptions = [
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'aktif', label: 'Aktif' },
+    { value: 'ditolak', label: 'Ditolak' },
+    { value: 'perlu_revisi', label: 'Perlu Revisi' },
+  ]
 
   const statusLower = (item) => String(item?.status || '').toLowerCase()
   const bisaEdit = (item) => ['draft', 'perlu_revisi'].includes(statusLower(item))
@@ -110,10 +146,39 @@ function DaftarKegiatan() {
         </div>
 
         <TableCard title="Kegiatan Saya">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex w-full sm:flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari kegiatan..."
+                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Kategori</option>
+                {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
+              </select>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Status</option>
+                {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+                <option value="">Semua Skala</option>
+                {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {(search || filterStatus || filterKategori || filterSkala) && (
+                <button type="button" onClick={() => { setSearch(''); setFilterStatus(''); setFilterKategori(''); setFilterSkala('') }} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+              )}
+            </div>
+          </div>
           <TableFrame>
           <DataTable
             loading={loading}
-            data={data}
+            data={filtered}
             emptyText="Belum ada kegiatan."
             columns={[
               { key: 'no', label: 'No', render: (_item, i) => i + 1 },
@@ -127,37 +192,44 @@ function DaftarKegiatan() {
               {
                 key: 'aksi', label: 'Aksi', stopPropagation: true,
                   render: (item) => (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button type="button" title="Detail"
-                      onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}`)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button type="button" title="Peserta"
-                        onClick={() => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`)}
-                        disabled={!bisaPeserta(item)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                        <Users className="h-4 w-4" />
-                      </button>
-                    <button type="button" title="Edit"
-                        onClick={() => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } })}
-                        disabled={!bisaEdit(item)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    <button type="button" title="Ajukan Ulang"
-                        onClick={() => setKonfirmasi({ type: 'ajukan', id: item.id })}
-                        disabled={!bisaAjukanUlang(item)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                    <button type="button" title="Hapus"
-                        onClick={() => setKonfirmasi({ type: 'hapus', id: item.id })}
-                        disabled={!bisaHapus(item)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                  </div>
+                  <ActionMenu
+                    items={[
+                      {
+                        label: 'Detail',
+                        icon: <Eye className="h-4 w-4" />,
+                        color: 'text-blue-600',
+                        onClick: () => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}`),
+                      },
+                      {
+                        label: 'Peserta',
+                        icon: <Users className="h-4 w-4" />,
+                        color: 'text-yellow-600',
+                        disabled: !bisaPeserta(item),
+                        onClick: () => navigate(`/operator_ukmf/daftar-kegiatan/${item.id}/manajemen-peserta`),
+                      },
+                      {
+                        label: 'Edit',
+                        icon: <Pencil className="h-4 w-4" />,
+                        color: 'text-yellow-600',
+                        disabled: !bisaEdit(item),
+                        onClick: () => navigate('/operator_ukmf/buat-kegiatan', { state: { edit: item } }),
+                      },
+                      {
+                        label: 'Ajukan Ulang',
+                        icon: <RefreshCw className="h-4 w-4" />,
+                        color: 'text-amber-600',
+                        disabled: !bisaAjukanUlang(item),
+                        onClick: () => setKonfirmasi({ type: 'ajukan', id: item.id }),
+                      },
+                      {
+                        label: 'Hapus',
+                        icon: <Trash2 className="h-4 w-4" />,
+                        color: 'text-red-500',
+                        disabled: !bisaHapus(item),
+                        onClick: () => setKonfirmasi({ type: 'hapus', id: item.id }),
+                      },
+                    ]}
+                  />
                 ),
               },
             ]}

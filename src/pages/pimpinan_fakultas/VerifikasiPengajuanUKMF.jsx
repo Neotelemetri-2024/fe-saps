@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 
@@ -161,12 +162,16 @@ function VerifikasiPengajuanUKMF() {
     {
       key: 'aksi', label: 'Aksi', stopPropagation: true,
       render: (item) => pilihanMode ? null : (
-        <button type="button"
-          onClick={() => navigate(`/pimpinan_fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } })}
-          title="Detail & Verifikasi"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
-          <Eye className="h-4 w-4" />
-        </button>
+        <ActionMenu
+          items={[
+            {
+              label: 'Detail & Verifikasi',
+              icon: <Eye className="h-4 w-4" />,
+              color: 'text-blue-600',
+              onClick: () => navigate(`/pimpinan_fakultas/verifikasi-pengajuan-ukmf/${item.id}`, { state: { item } }),
+            },
+          ]}
+        />
       ),
     },
   ], [navigate, pilihanMode, start])
@@ -209,30 +214,32 @@ function VerifikasiPengajuanUKMF() {
           <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Jenis</option>
+              <option value="">Semua Jenis</option>
               {uniqueJenis.map((j) => (
                 <option key={j} value={j}>{j}</option>
               ))}
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Skala</option>
+              <option value="">Semua Skala</option>
               {uniqueSkala.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="pending">Pending</option>
               <option value="disetujui">Disetujui</option>
               <option value="revisi">Revisi</option>
               <option value="ditolak">Ditolak</option>
             </select>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
-              Reset filter
-            </button>
+            {(search || kategori || skala || status) && (
+              <button type="button" onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+                Reset filter
+              </button>
+            )}
             <button type="button"
               onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${

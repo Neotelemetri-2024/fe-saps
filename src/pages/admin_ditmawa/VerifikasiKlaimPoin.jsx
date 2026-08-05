@@ -8,6 +8,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimForValidasi, validasiBulk } from '../../services/poinService'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
@@ -82,7 +83,6 @@ function VerifikasiKlaimPoin() {
   const [peran, setPeran] = useState('')
   const [status, setStatus] = useState('')
   const [skala, setSkala] = useState('')
-  const [tahun, setTahun] = useState('')
   const [page, setPage] = useState(1)
 
   const [pilihanMode, setPilihanMode] = useState(false)
@@ -110,12 +110,6 @@ function VerifikasiKlaimPoin() {
 
   const kategoriOptions = useMemo(() => [...new Set(items.map((i) => i.kategori).filter(Boolean))], [items])
   const peranOptions = useMemo(() => [...new Set(items.map((i) => i.peran).filter(Boolean))], [items])
-  const tahunOptions = useMemo(() => {
-    const set = new Set(
-      items.map((i) => (i.dibuatPada ? String(new Date(i.dibuatPada).getFullYear()) : null)).filter(Boolean),
-    )
-    return [...set].sort((a, b) => Number(b) - Number(a))
-  }, [items])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -124,10 +118,6 @@ function VerifikasiKlaimPoin() {
       if (kategori && item.kategori !== kategori) return false
       if (peran && item.peran !== peran) return false
       if (skala && String(item.skala).toLowerCase() !== skala.toLowerCase()) return false
-      if (tahun) {
-        const y = item.dibuatPada ? String(new Date(item.dibuatPada).getFullYear()) : ''
-        if (y !== tahun) return false
-      }
       if (!q) return true
       return (
         (item.mahasiswa || '').toLowerCase().includes(q) ||
@@ -136,7 +126,7 @@ function VerifikasiKlaimPoin() {
         (item.kategori || '').toLowerCase().includes(q)
       )
     })
-  }, [items, search, kategori, peran, status, skala, tahun])
+  }, [items, search, kategori, peran, status, skala])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -196,14 +186,16 @@ function VerifikasiKlaimPoin() {
     { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-[#616161]">{row.info}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <button
-        type="button"
-        onClick={() => navigate(`/admin_ditmawa/verifikasi-klaim/${row.id}`, { state: { item: row } })}
-        title="Detail"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
+      <ActionMenu
+        items={[
+          {
+            label: 'Detail',
+            icon: <Eye className="h-4 w-4" />,
+            color: 'text-blue-600',
+            onClick: () => navigate(`/admin_ditmawa/verifikasi-klaim/${row.id}`, { state: { item: row } }),
+          },
+        ]}
+      />
     )},
   ], [pageItems, start, navigate])
 
@@ -213,7 +205,6 @@ function VerifikasiKlaimPoin() {
     setPeran('')
     setStatus('')
     setSkala('')
-    setTahun('')
     setPage(1)
   }
 
@@ -265,7 +256,7 @@ function VerifikasiKlaimPoin() {
               }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Kategori</option>
+              <option value="">Semua Kategori</option>
               {kategoriOptions.map((k) => (
                 <option key={k} value={k}>
                   {k}
@@ -280,7 +271,7 @@ function VerifikasiKlaimPoin() {
               }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Peran</option>
+              <option value="">Semua Peran</option>
               {peranOptions.map((p) => (
                 <option key={p} value={p}>
                   {p}
@@ -295,7 +286,7 @@ function VerifikasiKlaimPoin() {
               }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="pending">Menunggu Verifikasi</option>
               <option value="disetujui">Disetujui</option>
               <option value="ditolak">Ditolak</option>
@@ -309,32 +300,19 @@ function VerifikasiKlaimPoin() {
               }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
-              <option value="">Skala</option>
+              <option value="">Semua Skala</option>
               <option value="nasional">Nasional</option>
               <option value="internasional">Internasional</option>
             </select>
-            <select
-              value={tahun}
-              onChange={(e) => {
-                setTahun(e.target.value)
-                setPage(1)
-              }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
-            >
-              <option value="">Tahun</option>
-              {tahunOptions.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
-            >
-              Reset filter
-            </button>
+            {(search || kategori || peran || status || skala) && (
+              <button
+                type="button"
+                onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
+              >
+                Reset filter
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {

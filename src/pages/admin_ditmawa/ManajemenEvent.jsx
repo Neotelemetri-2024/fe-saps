@@ -10,6 +10,7 @@ import EventForm from '../../components/EventForm'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 
 function HapusEventModal({ event, onClose, onConfirm }) {
   const [namaInput, setNamaInput] = useState('')
@@ -118,7 +119,6 @@ function ManajemenEvent() {
   const [filterJenis, setFilterJenis] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSkala, setFilterSkala] = useState('')
-  const [filterTahun, setFilterTahun] = useState('')
   const [hapusTarget, setHapusTarget] = useState(null)
   const [kirimTarget, setKirimTarget] = useState(null)
   const [page, setPage] = useState(1)
@@ -161,11 +161,10 @@ function ManajemenEvent() {
       if (filterJenis && d.jenis !== filterJenis) return false
       if (filterStatus && d.status !== filterStatus) return false
       if (filterSkala && d.skala !== filterSkala) return false
-      if (filterTahun && !d.tanggal.includes(filterTahun)) return false
       if (!q) return true
       return d.nama.toLowerCase().includes(q)
     })
-  }, [data, search, filterJenis, filterStatus, filterSkala, filterTahun])
+  }, [data, search, filterJenis, filterStatus, filterSkala])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -217,58 +216,39 @@ function ManajemenEvent() {
     { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <div className="flex items-center gap-2">
-        {bisaKirim(row)
-          ? row.rawStatus === 'perlu_revisi' ? (
-            <button
-              type="button"
-              onClick={() => setKirimTarget(row)}
-              disabled={!bisaKirim(row)}
-              title="Ajukan Ulang"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setKirimTarget(row)}
-              disabled={!bisaKirim(row)}
-              title="Kirim"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          )
-          : null}
-        <button
-            type="button"
-            onClick={() => navigate(`/admin_ditmawa/manajemen-peserta-event/${row.id}`)}
-            disabled={!bisaPeserta(row)}
-            title="Manajemen Peserta"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Users className="h-4 w-4" />
-          </button>
-        <button
-            type="button"
-            onClick={() => goToEdit(row)}
-            disabled={!bisaEdit(row)}
-            title="Edit"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Edit3 className="h-4 w-4" />
-          </button>
-        <button
-            type="button"
-            onClick={() => setHapusTarget(row)}
-            disabled={!bisaHapus(row)}
-            title="Hapus"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-      </div>
+      <ActionMenu
+        items={[
+          bisaKirim(row)
+            ? {
+                label: row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim',
+                icon: row.rawStatus === 'perlu_revisi' ? <RefreshCw className="h-4 w-4" /> : <Send className="h-4 w-4" />,
+                color: row.rawStatus === 'perlu_revisi' ? 'text-amber-600' : 'text-brand-dark',
+                onClick: () => setKirimTarget(row),
+              }
+            : null,
+          {
+            label: 'Manajemen Peserta',
+            icon: <Users className="h-4 w-4" />,
+            color: 'text-blue-600',
+            disabled: !bisaPeserta(row),
+            onClick: () => navigate(`/admin_ditmawa/manajemen-peserta-event/${row.id}`),
+          },
+          {
+            label: 'Edit',
+            icon: <Edit3 className="h-4 w-4" />,
+            color: 'text-yellow-600',
+            disabled: !bisaEdit(row),
+            onClick: () => goToEdit(row),
+          },
+          {
+            label: 'Hapus',
+            icon: <Trash2 className="h-4 w-4" />,
+            color: 'text-red-500',
+            disabled: !bisaHapus(row),
+            onClick: () => setHapusTarget(row),
+          },
+        ]}
+      />
     )},
   ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus, bisaPeserta])
 
@@ -277,7 +257,6 @@ function ManajemenEvent() {
     setFilterJenis('')
     setFilterStatus('')
     setFilterSkala('')
-    setFilterTahun('')
     setPage(1)
   }
 
@@ -344,14 +323,14 @@ function ManajemenEvent() {
           <div className="mb-3 flex flex-wrap gap-2">
             <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Jenis</option>
+              <option value="">Semua Jenis</option>
               {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
                 <option key={j} value={j}>{j}</option>
               ))}
             </select>
             <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Status</option>
+              <option value="">Semua Status</option>
               <option value="draft">Draft</option>
               <option value="aktif">Aktif</option>
               <option value="pending">Pending</option>
@@ -360,21 +339,17 @@ function ManajemenEvent() {
             </select>
             <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Skala</option>
+              <option value="">Semua Skala</option>
               {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select value={filterTahun} onChange={(e) => { setFilterTahun(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Tahun</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
-            <button type="button" onClick={resetFilter}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
-              Reset filter
-            </button>
+            {(search || filterJenis || filterStatus || filterSkala) && (
+              <button type="button" onClick={resetFilter}
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
+                Reset filter
+              </button>
+            )}
           </div>
 
           <TableCard title="Daftar Event Global">

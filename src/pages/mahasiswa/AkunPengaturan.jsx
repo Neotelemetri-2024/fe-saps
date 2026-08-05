@@ -69,7 +69,6 @@ function AkunPengaturan() {
     try {
       await updateProfil({
         nama: form.namaLengkap,
-        email: null,
         nomorTelepon: form.nomorTelepon || null,
         alamat: form.alamat || null,
       })

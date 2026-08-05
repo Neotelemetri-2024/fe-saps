@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { ArrowLeft, Info, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Info, ChevronLeft, ChevronRight, Search, Download, UploadCloud, UserPlus } from 'lucide-react'
 import StatCard from '../../components/dashboard/StatCard'
 import { getCurrentUser } from '../../services/authService'
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import TambahPesertaModal from '../../components/ui/TambahPesertaModal'
 
 function formatTanggal(val) {
   if (!val) return ''
@@ -56,6 +57,7 @@ function ManajemenPeserta() {
   const [search, setSearch] = useState('')
   const [filterKehadiran, setFilterKehadiran] = useState('semua')
   const [isEditing, setIsEditing] = useState(false)
+  const [showTambahModal, setShowTambahModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [page, setPage] = useState(1)
 
@@ -213,59 +215,69 @@ function ManajemenPeserta() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <input
-            type="text"
-            placeholder="Cari NIM atau nama…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
-          />
-          <div className="flex flex-wrap gap-2">
-            {['semua', 'hadir', 'tidak'].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilterKehadiran(f)}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
-              >
-                {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
-              </button>
-            ))}
-            {(search || filterKehadiran !== 'semua') && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2.5 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-              >
-                Reset Filter
-              </button>
-            )}
-            <button
-              onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"
-            >Template CSV
-            </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={importing}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2.5 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0] disabled:opacity-60"
-            >{importing ? 'Mengimpor…' : 'Import CSV'}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) handleImport(file)
-                e.target.value = ''
-              }}
-            />
-          </div>
-        </div>
-
         <TableCard title="Daftar Peserta">
+          <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative flex w-full flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <input
+                type="text"
+                placeholder="Cari NIM atau nama…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-[#d9dce7] bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['semua', 'hadir', 'tidak'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilterKehadiran(f)}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
+                >
+                  {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                </button>
+              ))}
+              {(search || filterKehadiran !== 'semua') && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
+                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                >
+                  Reset Filter
+                </button>
+              )}
+              <button
+                onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"
+              ><Download className="h-4 w-4" /> Template CSV
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={importing}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0] disabled:opacity-60"
+              >{importing ? 'Mengimpor…' : <><UploadCloud className="h-4 w-4" /> Import CSV</>}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleImport(file)
+                  e.target.value = ''
+                }}
+              />
+            </div>
+          </div>
+
+          <TambahPesertaModal
+            isOpen={showTambahModal}
+            kegiatanId={id}
+            onClose={() => setShowTambahModal(false)}
+            onAdded={loadData}
+          />
+
           <TableFrame>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
@@ -349,23 +361,31 @@ function ManajemenPeserta() {
                     </button>
                   </div>
                 )}
-                {!isEditing && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsEditing(true)}
-                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
-                  >
-                    Edit
+                    type="button"
+                    onClick={() => setShowTambahModal(true)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-brand-dark bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-[#f0faf0]"
+                  ><UserPlus className="h-4 w-4" /> Tambah Peserta
                   </button>
-                )}
-                {isEditing && (
-                  <button
-                    onClick={handleSubmitPoin}
-                    disabled={submitLoading}
-                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                  >
-                    {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
-                  </button>
-                )}
+                  {!isEditing && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {isEditing && (
+                    <button
+                      onClick={handleSubmitPoin}
+                      disabled={submitLoading}
+                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                    >
+                      {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}

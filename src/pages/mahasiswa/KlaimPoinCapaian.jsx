@@ -53,6 +53,7 @@ function KlaimPoinCapaian() {
   const [data, setData] = useState([])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterSkala, setFilterSkala] = useState('')
 
   const loadRiwayat = () => {
     getKlaim()
@@ -74,6 +75,7 @@ function KlaimPoinCapaian() {
     const q = search.trim().toLowerCase()
     return data.filter((row) => {
       if (filterStatus && row.status !== filterStatus) return false
+      if (filterSkala && row.skala !== filterSkala) return false
       if (!q) return true
       return (
         row.kegiatan.toLowerCase().includes(q) ||
@@ -81,7 +83,11 @@ function KlaimPoinCapaian() {
         row.jenis.toLowerCase().includes(q)
       )
     })
-  }, [data, search, filterStatus])
+  }, [data, search, filterStatus, filterSkala])
+
+  const skalaOptions = useMemo(() => {
+    return [...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort()
+  }, [data])
 
   return (
     <DashboardLayout
@@ -96,36 +102,48 @@ function KlaimPoinCapaian() {
         </div>
 
         <TableCard title="Riwayat Klaim Poin Anda">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2">
-              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex w-full sm:flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="flex-1 text-sm outline-none"
+                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
               />
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-sm text-[#333] outline-none"
-            >
-              <option value="">Semua Status</option>
-              {statusOptions.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            {(search || filterStatus) && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setFilterStatus('') }}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
-                Reset Filter
-              </button>
-            )}
+                <option value="">Semua Status</option>
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              <select
+                value={filterSkala}
+                onChange={(e) => setFilterSkala(e.target.value)}
+                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+              >
+                <option value="">Semua Skala</option>
+                {skalaOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              {(search || filterStatus || filterSkala) && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
           </div>
           <TableFrame>
             <DataTable columns={columns} data={filtered} />

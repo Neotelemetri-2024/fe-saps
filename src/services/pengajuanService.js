@@ -48,6 +48,7 @@ function normalizePersetujuan(item, i = 0) {
     peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
     penyelenggara: kegiatanObj?.penyelenggara || kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
     tanggal: tanggalMulai || formatTanggalValue(item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan),
+    skala: kegiatanObj?.skala?.nama || item.skala || '-',
     mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     namaMahasiswa: mhsObj?.user?.nama || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     status: (item.statusIzin || item.status || 'pending').toLowerCase(),

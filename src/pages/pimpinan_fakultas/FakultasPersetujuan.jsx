@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
 
 function formatTanggal(value) {
@@ -49,37 +50,38 @@ function PimpinanFakultasPersetujuan() {
     {
       key: 'aksi',
       label: 'Aksi',
+      stopPropagation: true,
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <button
-            title="Setujui"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-500 hover:text-white"
-            onClick={async () => {
-              try {
-                await updateKegiatan(row.id, { status: 'disetujui' })
-                toast.success('Disetujui!', { description: `Pengajuan "${row.kegiatan}" telah disetujui.` })
-                const res = await getKegiatan()
-                setData(res.slice(0, 4).map(mapKegiatanRow))
-              } catch (err) { toast.error('Gagal', { description: err.message }) }
-            }}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-          </button>
-          <button
-            title="Tolak"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
-            onClick={async () => {
-              try {
-                await updateKegiatan(row.id, { status: 'ditolak' })
-                toast.error('Ditolak!', { description: `Pengajuan "${row.kegiatan}" telah ditolak.` })
-                const res = await getKegiatan()
-                setData(res.slice(0, 4).map(mapKegiatanRow))
-              } catch (err) { toast.error('Gagal', { description: err.message }) }
-            }}
-          >
-            <XCircle className="h-4 w-4" />
-          </button>
-        </div>
+        <ActionMenu
+          items={[
+            {
+              label: 'Setujui',
+              icon: <CheckCircle2 className="h-4 w-4" />,
+              color: 'text-emerald-600',
+              onClick: async () => {
+                try {
+                  await updateKegiatan(row.id, { status: 'disetujui' })
+                  toast.success('Disetujui!', { description: `Pengajuan "${row.kegiatan}" telah disetujui.` })
+                  const res = await getKegiatan()
+                  setData(res.slice(0, 4).map(mapKegiatanRow))
+                } catch (err) { toast.error('Gagal', { description: err.message }) }
+              },
+            },
+            {
+              label: 'Tolak',
+              icon: <XCircle className="h-4 w-4" />,
+              color: 'text-red-500',
+              onClick: async () => {
+                try {
+                  await updateKegiatan(row.id, { status: 'ditolak' })
+                  toast.error('Ditolak!', { description: `Pengajuan "${row.kegiatan}" telah ditolak.` })
+                  const res = await getKegiatan()
+                  setData(res.slice(0, 4).map(mapKegiatanRow))
+                } catch (err) { toast.error('Gagal', { description: err.message }) }
+              },
+            },
+          ]}
+        />
       ),
     },
   ]

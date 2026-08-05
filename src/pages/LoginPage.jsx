@@ -128,6 +128,7 @@ function LoginPage() {
                     type="text"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
+                    placeholder="Masukkan email Anda"
                     className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
                   />
                 </div>
@@ -142,6 +143,7 @@ function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
+                    placeholder="Masukkan password Anda"
                     className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
                   />
                   <button
@@ -157,7 +159,7 @@ function LoginPage() {
 
               {/* Error message */}
               {errorMsg && (
-                <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <div className="flex items-center gap-2 px-1 py-1">
                   <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
                   <p className="text-sm text-red-600">{errorMsg}</p>
                 </div>

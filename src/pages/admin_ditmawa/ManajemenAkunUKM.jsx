@@ -6,6 +6,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import {
   getAkunUKM,
   createAkunUKM,
@@ -247,24 +248,22 @@ function ManajemenAkunUKM() {
       </button>
     )},
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setResetTarget(row)}
-          title="Reset Password"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-dark bg-[#eaf5ec] text-brand-dark transition hover:bg-brand-dark hover:text-white"
-        >
-          <Key className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(row)}
-          title="Hapus"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
+      <ActionMenu
+        items={[
+          {
+            label: 'Reset Password',
+            icon: <Key className="h-4 w-4" />,
+            color: 'text-brand-dark',
+            onClick: () => setResetTarget(row),
+          },
+          {
+            label: 'Hapus',
+            icon: <Trash2 className="h-4 w-4" />,
+            color: 'text-red-500',
+            onClick: () => setConfirmDelete(row),
+          },
+        ]}
+      />
     )},
   ], [filtered, handleToggleStatus])
 

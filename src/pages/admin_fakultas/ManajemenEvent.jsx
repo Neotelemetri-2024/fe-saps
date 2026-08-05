@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import EventForm from '../../components/EventForm'
 import { toast } from 'sonner'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -397,64 +398,39 @@ function ManajemenEvent() {
         label: 'AKSI',
         stopPropagation: true,
         render: (row) => (
-          <div className="flex flex-wrap items-center gap-2">
-            {bisaKirim(row) && (
-              <button
-                type="button"
-                onClick={() => setKirimTarget(row)}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition hover:text-white ${
-                  row.rawStatus === 'perlu_revisi'
-                    ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-500'
-                    : 'border-brand-dark bg-[#eaf5ec] text-brand-dark hover:bg-brand-dark'
-                }`}
-                title={
-                  row.rawStatus === 'perlu_revisi'
-                    ? 'Ajukan Ulang'
-                    : 'Kirim'
-                }
-              >
-                {row.rawStatus === 'perlu_revisi' ? (
-                  <RefreshCw className="h-4 w-4" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/admin_fakultas/manajemen-event/${row.id}/peserta`
-                )
-              }
-              disabled={!bisaPeserta(row)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-              title="Manajemen Peserta"
-            >
-              <Users className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goToEdit(row)}
-              disabled={!bisaEdit(row)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-              title="Edit"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDeleteId(row.id)}
-              disabled={!bisaHapus(row)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-400 bg-red-50 text-red-500 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-              title="Hapus"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
+          <ActionMenu
+            items={[
+              bisaKirim(row)
+                ? {
+                    label: row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim',
+                    icon: row.rawStatus === 'perlu_revisi' ? <RefreshCw className="h-4 w-4" /> : <Send className="h-4 w-4" />,
+                    color: row.rawStatus === 'perlu_revisi' ? 'text-amber-600' : 'text-brand-dark',
+                    onClick: () => setKirimTarget(row),
+                  }
+                : null,
+              {
+                label: 'Manajemen Peserta',
+                icon: <Users className="h-4 w-4" />,
+                color: 'text-blue-600',
+                disabled: !bisaPeserta(row),
+                onClick: () => navigate(`/admin_fakultas/manajemen-event/${row.id}/peserta`),
+              },
+              {
+                label: 'Edit',
+                icon: <Pencil className="h-4 w-4" />,
+                color: 'text-yellow-600',
+                disabled: !bisaEdit(row),
+                onClick: () => goToEdit(row),
+              },
+              {
+                label: 'Hapus',
+                icon: <Trash2 className="h-4 w-4" />,
+                color: 'text-red-500',
+                disabled: !bisaHapus(row),
+                onClick: () => setDeleteId(row.id),
+              },
+            ]}
+          />
         ),
       },
     ],

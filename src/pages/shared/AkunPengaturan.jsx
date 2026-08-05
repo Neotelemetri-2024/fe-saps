@@ -73,12 +73,12 @@ function AkunPengaturan({ role: roleProp } = {}) {
   const handleSimpan = async () => {
     setSaving(true)
     try {
-      await updateProfil({
+      const payload = {
         nama: form.namaLengkap,
-        email: form.email,
         nomorTelepon: form.nomorTelepon || null,
-        alamat: null,
-      })
+      }
+      if (form.email) payload.email = form.email
+      await updateProfil(payload)
       toast.success('Berhasil Disimpan!', {
         description: 'Perubahan informasi akun telah disimpan.',
       })

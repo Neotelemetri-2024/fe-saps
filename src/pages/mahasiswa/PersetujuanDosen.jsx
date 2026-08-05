@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getIzinPAMahasiswa, mintaPersetujuanDosenEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { klaimPoin } from '../../services/poinService'
@@ -48,6 +49,7 @@ function normalizeIzinPA(item, i = 0) {
     peran: item.peran || '-',
     penyelenggara: kegiatan.penyelenggara || item.penyelenggara || '-',
     tanggal: formatTanggal(kegiatan.tanggalMulai || item.tanggalDiajukan || item.tanggal),
+    skala: kegiatan.skala?.nama || item.skala || '-',
     status: statusUI,
     alasan: item.alasanDitolak || item.alasan || null,
   }
@@ -60,6 +62,7 @@ function PersetujuanDosen() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterSkala, setFilterSkala] = useState('')
 
   // Modal info (alasan/catatan)
   const [infoModal, setInfoModal] = useState(null) // { judul, isi }
@@ -249,6 +252,7 @@ function PersetujuanDosen() {
     const q = search.trim().toLowerCase()
     return data.filter((row) => {
       if (filterStatus && row.status !== filterStatus) return false
+      if (filterSkala && row.skala !== filterSkala) return false
       if (!q) return true
       return (
         row.kegiatan.toLowerCase().includes(q) ||
@@ -256,7 +260,7 @@ function PersetujuanDosen() {
         row.jenis.toLowerCase().includes(q)
       )
     })
-  }, [data, search, filterStatus])
+  }, [data, search, filterStatus, filterSkala])
 
   const statusOptions = [
     { value: 'pending', label: 'Menunggu' },
@@ -264,6 +268,10 @@ function PersetujuanDosen() {
     { value: 'ditolak', label: 'Ditolak' },
     { value: 'revisi', label: 'Revisi' },
   ]
+
+  const skalaOptions = useMemo(() => {
+    return [...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort()
+  }, [data])
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -411,36 +419,51 @@ function PersetujuanDosen() {
         </div>
 
         <TableCard title="Persetujuan Dosen PA">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#e9ebf8] px-4 py-2">
-              <Search className="h-4 w-4 text-[#616161]" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex w-full sm:flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="flex-1 text-sm outline-none"
+                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
               />
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-sm text-[#333] outline-none"
-            >
-              <option value="">Semua Status</option>
-              {statusOptions.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            {(search || filterStatus) && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setFilterStatus('') }}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
-                Reset Filter
-              </button>
-            )}
+                <option value="">Semua Status</option>
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+
+              <select
+                value={filterSkala}
+                onChange={(e) => setFilterSkala(e.target.value)}
+                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+              >
+                <option value="">Semua Skala</option>
+                {skalaOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+
+              {(search || filterStatus || filterSkala) && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
           </div>
 
           <TableFrame>
@@ -450,6 +473,7 @@ function PersetujuanDosen() {
                 { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
+                { key: 'skala', label: 'Skala' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
                 { key: 'tanggal', label: 'Tanggal' },
                 {
@@ -469,34 +493,30 @@ function PersetujuanDosen() {
                   label: 'Aksi',
                   stopPropagation: true,
                   render: (row) => (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        title="Detail"
-                        onClick={() => navigate(`/mahasiswa/persetujuan-dosen/${row.id}`, { state: { row } })}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Edit"
-                        disabled={row.status !== 'revisi'}
-                        onClick={() => handleOpenRevisi(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-400 bg-amber-50 text-yellow-600 transition hover:bg-yellow-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Ajukan Ulang"
-                        disabled={row.status !== 'revisi'}
-                        onClick={() => handleOpenRevisi(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-400 bg-amber-50 text-amber-600 transition hover:bg-amber-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Detail',
+                          icon: <Eye className="h-4 w-4" />,
+                          color: 'text-blue-600',
+                          onClick: () => navigate(`/mahasiswa/persetujuan-dosen/${row.id}`, { state: { row } }),
+                        },
+                        {
+                          label: 'Edit',
+                          icon: <Pencil className="h-4 w-4" />,
+                          color: 'text-yellow-600',
+                          disabled: row.status !== 'revisi',
+                          onClick: () => handleOpenRevisi(row),
+                        },
+                        {
+                          label: 'Ajukan Ulang',
+                          icon: <RefreshCw className="h-4 w-4" />,
+                          color: 'text-amber-600',
+                          disabled: row.status !== 'revisi',
+                          onClick: () => handleOpenRevisi(row),
+                        },
+                      ]}
+                    />
                   ),
                 },
               ]}

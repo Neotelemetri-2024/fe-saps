@@ -5,6 +5,7 @@ import { Eye } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanUtama } from '../../services/dashboardService'
 
@@ -120,12 +121,16 @@ function DetailFakultas() {
             {
               key: 'aksi', label: 'Aksi', stopPropagation: true,
               render: (item) => (
-                <button type="button"
-                  onClick={() => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
-                  title="Detail"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400 bg-blue-50 text-blue-600 transition hover:bg-blue-500 hover:text-white">
-                  <Eye className="h-4 w-4" />
-                </button>
+                <ActionMenu
+                  items={[
+                    {
+                      label: 'Detail',
+                      icon: <Eye className="h-4 w-4" />,
+                      color: 'text-blue-600',
+                      onClick: () => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } }),
+                    },
+                  ]}
+                />
               ),
             },
           ]}
