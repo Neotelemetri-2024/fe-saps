@@ -13,6 +13,7 @@ import { getIzinPAMahasiswa, mintaPersetujuanDosenEksternal, subscribeDataUpdate
 import { getPeranKegiatan } from '../../services/matriksService'
 import { klaimPoin } from '../../services/poinService'
 import { getCurrentUser } from '../../services/authService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(value) {
   if (!value) return '-'
@@ -262,12 +263,10 @@ function PersetujuanDosen() {
     })
   }, [data, search, filterStatus, filterSkala])
 
-  const statusOptions = [
-    { value: 'pending', label: 'Menunggu' },
-    { value: 'disetujui', label: 'Disetujui' },
-    { value: 'ditolak', label: 'Ditolak' },
-    { value: 'revisi', label: 'Revisi' },
-  ]
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(data, 'status'),
+    [data],
+  )
 
   const skalaOptions = useMemo(() => {
     return [...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort()

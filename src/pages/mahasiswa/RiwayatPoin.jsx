@@ -9,6 +9,7 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(val) {
   if (!val) return '-'
@@ -131,6 +132,7 @@ function RiwayatPoin() {
     [riwayat],
   )
   const skalaOptions = useMemo(() => [...new Set(riwayat.map((r) => r.skala).filter((s) => s && s !== '-'))].sort(), [riwayat])
+  const statusOptions = useMemo(() => statusOptionsFromRows(riwayat, 'status'), [riwayat])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -219,9 +221,7 @@ function RiwayatPoin() {
               </select>
               <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Status</option>
-                <option value="pending">Pending</option>
-                <option value="disetujui">Disetujui</option>
-                <option value="ditolak">Ditolak</option>
+                {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Skala</option>

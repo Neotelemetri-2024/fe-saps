@@ -14,6 +14,7 @@ import ActionMenu from '../../components/ui/ActionMenu'
 import { getPengajuan, mintaPersetujuanDosenEksternal, hapusDraftKegiatanEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(value) {
   if (!value) return '-'
@@ -242,11 +243,10 @@ function AjukanKegiatanEksternal() {
     return [...set]
   }, [data])
 
-  const statusOptions = [
-    { value: 'disetujui', label: 'Disetujui' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'ditolak', label: 'Ditolak' },
-  ]
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(data, 'statusRaw'),
+    [data],
+  )
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">

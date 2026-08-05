@@ -7,6 +7,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getCurrentUser } from '../../services/authService'
 import { getRiwayatKegiatanInternal } from '../../services/kegiatanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(start, end) {
   if (!start) return '-'
@@ -92,11 +93,10 @@ function RiwayatKegiatanInternal() {
     () => [...new Set(riwayat.map((r) => r.skala).filter((s) => s && s !== '-'))].sort(),
     [riwayat],
   )
-  const statusOptions = [
-    { value: 'selesai', label: 'Selesai' },
-    { value: 'terverifikasi', label: 'Terverifikasi' },
-    { value: 'pending', label: 'Pending' },
-  ]
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(riwayat, 'status'),
+    [riwayat],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()

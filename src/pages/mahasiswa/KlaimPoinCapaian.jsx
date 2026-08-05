@@ -5,6 +5,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 import { getKlaim } from '../../services/poinService'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 
@@ -65,11 +66,10 @@ function KlaimPoinCapaian() {
     loadRiwayat()
   }, [])
 
-  const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'disetujui', label: 'Disetujui' },
-    { value: 'ditolak', label: 'Ditolak' },
-  ]
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(data, 'status'),
+    [data],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()

@@ -9,8 +9,10 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
+import InfoTooltip from '../../components/ui/InfoTooltip'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const PAGE_SIZE = 10
 
@@ -102,6 +104,7 @@ function VerifikasiPengajuanInternal() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
   const resetFilter = () => {
     setSearch(''); setKategori(''); setStatus(''); setSkala(''); setPage(1)
   }
@@ -181,13 +184,16 @@ function VerifikasiPengajuanInternal() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
-            Verifikasi Pengajuan Kegiatan Internal
-          </h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+              Verifikasi Pengajuan Kegiatan Internal
+            </h2>
+            <InfoTooltip message="Pengajuan kegiatan internal oleh mahasiswa." />
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 lg:flex-row">
+        <TableCard title="Daftar Pengajuan Internal">
+          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -200,7 +206,7 @@ function VerifikasiPengajuanInternal() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Kategori</option>
@@ -211,10 +217,9 @@ function VerifikasiPengajuanInternal() {
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
-              <option value="pending">Pending</option>
-              <option value="diteruskan">Diteruskan</option>
-              <option value="ditolak">Ditolak</option>
-              <option value="revisi">Revisi</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
@@ -242,7 +247,7 @@ function VerifikasiPengajuanInternal() {
           </div>
 
           {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
@@ -256,9 +261,6 @@ function VerifikasiPengajuanInternal() {
               </div>
             </div>
           )}
-        </div>
-
-        <TableCard title="Daftar Pengajuan Internal" description="Pengajuan kegiatan internal oleh mahasiswa.">
           <TableFrame>
             <DataTable
               columns={columns}

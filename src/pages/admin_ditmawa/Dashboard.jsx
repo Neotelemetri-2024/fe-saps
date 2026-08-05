@@ -63,7 +63,6 @@ function AdminDitmawaDashboard() {
             skala: k.skala || "-",
             tanggal: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
             peserta: k.peserta ?? 0,
-            poin: k.poin ?? 50,
             status: String(k.status || "pending").toLowerCase(),
           })),
         );
@@ -118,11 +117,6 @@ function AdminDitmawaDashboard() {
         key: "peserta",
         label: "Peserta",
         render: (row) => <span className="text-[#616161]">{row.peserta}</span>,
-      },
-      {
-        key: "poin",
-        label: "Poin",
-        render: (row) => <span className="text-[#616161]">{row.poin}</span>,
       },
       {
         key: "status",

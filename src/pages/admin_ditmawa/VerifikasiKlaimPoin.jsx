@@ -9,9 +9,11 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
+import InfoTooltip from '../../components/ui/InfoTooltip'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimForValidasi, validasiBulk } from '../../services/poinService'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const PAGE_SIZE = 10
 
@@ -110,6 +112,7 @@ function VerifikasiKlaimPoin() {
 
   const kategoriOptions = useMemo(() => [...new Set(items.map((i) => i.kategori).filter(Boolean))], [items])
   const peranOptions = useMemo(() => [...new Set(items.map((i) => i.peran).filter(Boolean))], [items])
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -225,13 +228,16 @@ function VerifikasiKlaimPoin() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
-            Verifikasi Klaim Poin Kegiatan Eksternal
-          </h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+              Verifikasi Klaim Poin Kegiatan Eksternal
+            </h2>
+            <InfoTooltip message="Klaim poin kegiatan eksternal yang diajukan mahasiswa." />
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 lg:flex-row">
+        <TableCard title="Daftar Klaim Poin">
+          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -247,7 +253,7 @@ function VerifikasiKlaimPoin() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             <select
               value={kategori}
               onChange={(e) => {
@@ -287,10 +293,9 @@ function VerifikasiKlaimPoin() {
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Status</option>
-              <option value="pending">Menunggu Verifikasi</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="ditolak">Ditolak</option>
-              <option value="revisi">Revisi</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
             <select
               value={skala}
@@ -330,7 +335,7 @@ function VerifikasiKlaimPoin() {
           </div>
 
           {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button
@@ -359,9 +364,6 @@ function VerifikasiKlaimPoin() {
               </div>
             </div>
           )}
-        </div>
-
-        <TableCard title="Daftar Klaim Poin">
           <TableFrame>
             <DataTable
               columns={columns}

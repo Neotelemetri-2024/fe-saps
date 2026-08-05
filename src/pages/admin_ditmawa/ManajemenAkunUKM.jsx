@@ -289,38 +289,37 @@ function ManajemenAkunUKM() {
           <h2 className="text-2xl font-bold text-[#222]">Manajemen Akun UKM</h2>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari UKM..."
-              className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
-            />
-          </div>
-          <div className="flex items-center gap-2 sm:self-end">
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-              >
-                Reset Filter
-              </button>
-            )}
-          <button
-            type="button"
-            onClick={() => setShowTambah(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
-          ><Plus className="h-4 w-4" />Akun UKM
-          </button>
-          </div>
-        </div>
-
         <div>
           <TableCard title="Akun UKM yang telah dibuat">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cari UKM..."
+                  className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                />
+              </div>
+              <div className="flex items-center gap-2 sm:self-end">
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowTambah(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
+                ><Plus className="h-4 w-4" />Akun UKM
+                </button>
+              </div>
+            </div>
             <TableFrame>
               <DataTable
                 columns={columns}

@@ -9,6 +9,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import EventForm from '../../components/EventForm'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan, deleteKegiatan, ajukanKegiatan } from '../../services/kegiatanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
 
@@ -171,6 +172,8 @@ function ManajemenEvent() {
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
+  const statusOptions = useMemo(() => statusOptionsFromRows(data, 'status'), [data])
+
   const handleConfirmHapus = async (event) => {
     try {
       await deleteKegiatan(event.id)
@@ -306,53 +309,50 @@ function ManajemenEvent() {
         </div>
 
         <section>
-
-          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
-              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Cari mahasiswa atau kegiatan..."
-                className="w-full text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="mb-3 flex flex-wrap gap-2">
-            <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Semua Jenis</option>
-              {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
-                <option key={j} value={j}>{j}</option>
-              ))}
-            </select>
-            <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Semua Status</option>
-              <option value="draft">Draft</option>
-              <option value="aktif">Aktif</option>
-              <option value="pending">Pending</option>
-              <option value="ditolak">Ditolak</option>
-              <option value="revisi">Revisi</option>
-            </select>
-            <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
-              <option value="">Semua Skala</option>
-              {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            {(search || filterJenis || filterStatus || filterSkala) && (
-              <button type="button" onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
-                Reset filter
-              </button>
-            )}
-          </div>
-
           <TableCard title="Daftar Event Global">
+            <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+              <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                  placeholder="Cari mahasiswa atau kegiatan..."
+                  className="w-full text-sm outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                <option value="">Semua Jenis</option>
+                {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
+                  <option key={j} value={j}>{j}</option>
+                ))}
+              </select>
+              <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                <option value="">Semua Status</option>
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                <option value="">Semua Skala</option>
+                {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              {(search || filterJenis || filterStatus || filterSkala) && (
+                <button type="button" onClick={resetFilter}
+                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
+                  Reset filter
+                </button>
+              )}
+            </div>
+
             <TableFrame>
               <DataTable
                 columns={columns}

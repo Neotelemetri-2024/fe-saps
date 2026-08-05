@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Eye } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { useNavigate } from 'react-router-dom'
@@ -235,9 +235,6 @@ function DosenPADashboard() {
                   <div>
                     <p className="font-semibold text-[#222]">{row.nama}</p>
                     <p className="text-xs text-sky-600">{row.prodi}</p>
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-[#9aa0a6]">
-                      <Clock className="h-3 w-3 shrink-0" /> {row.tanggalInput}
-                    </p>
                   </div>
                 ),
               },

@@ -104,39 +104,38 @@ function MahasiswaBimbingan() {
       <div className="space-y-5">
         <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Mahasiswa Bimbingan</h2>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 shadow-sm">
-            <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Cari mahasiswa..."
-              className="flex-1 text-sm outline-none"
-            />
-          </div>
-          <select
-            value={filterProdi}
-            onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
-            className="rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 text-sm text-[#333] shadow-sm outline-none"
-          >
-            <option value="">Semua Prodi</option>
-            {prodiOptions.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          {(search || filterProdi) && (
-            <button
-              type="button"
-              onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
-              className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-            >
-              Reset Filter
-            </button>
-          )}
-        </div>
-
         <TableCard title="Daftar Mahasiswa Bimbingan">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 shadow-sm">
+              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                placeholder="Cari mahasiswa..."
+                className="flex-1 text-sm outline-none"
+              />
+            </div>
+            <select
+              value={filterProdi}
+              onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
+              className="rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 text-sm text-[#333] shadow-sm outline-none"
+            >
+              <option value="">Semua Prodi</option>
+              {prodiOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            {(search || filterProdi) && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
           <TableFrame>
         <DataTable
           columns={[

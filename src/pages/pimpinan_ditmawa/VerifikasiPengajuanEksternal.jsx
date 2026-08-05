@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -13,6 +13,7 @@ import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
 import { getKategoriKegiatanValid, getSkalaKegiatan } from '../../services/matriksService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
@@ -111,6 +112,7 @@ function VerifikasiPengajuanEksternal() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
 
   const resetFilter = () => {
     setSearch(''); setKategori(''); setStatus(''); setSkala(''); setPage(1)
@@ -173,77 +175,77 @@ function VerifikasiPengajuanEksternal() {
           </p>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
-              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Cari mahasiswa atau kegiatan..."
-                className="w-full text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Semua Kategori</option>
-              {kategoriOptions.map((k) => (
-                <option key={k.id} value={k.nama}>{k.nama}</option>
-              ))}
-            </select>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Semua Status</option>
-              <option value="terverifikasi">Menunggu Persetujuan</option>
-              <option value="disetujui">Disetujui</option>
-            </select>
-            <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
-              <option value="">Semua Skala</option>
-              {skalaOptions.map((s) => (
-                <option key={s.id} value={s.nama}>{s.nama}</option>
-              ))}
-            </select>
-            {(search || kategori || status || skala) && (
-              <button type="button" onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
-                Reset filter
-              </button>
-            )}
-            <button type="button"
-              onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
-              className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
-                pilihanMode
-                  ? 'border-brand-dark bg-brand-dark text-white'
-                  : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
-              }`}>
-              Pilih Beberapa
-            </button>
-          </div>
-
-          {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-              <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
-              <div className="ml-auto flex gap-2">
-                <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
-                  Batal Pilih
-                </button>
-                <button type="button"
-                  onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
-                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
-                  Selanjutnya
-                </button>
+        <TableCard title="Daftar Pengajuan Eksternal">
+          <div className="mb-3 space-y-3">
+            <div className="flex flex-col gap-3 lg:flex-row">
+              <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                  placeholder="Cari mahasiswa atau kegiatan..."
+                  className="w-full text-sm outline-none"
+                />
               </div>
             </div>
-          )}
-        </div>
 
-        <TableCard title="Daftar Pengajuan Eksternal">
+            <div className="flex flex-wrap items-center gap-3">
+              <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                <option value="">Semua Kategori</option>
+                {kategoriOptions.map((k) => (
+                  <option key={k.id} value={k.nama}>{k.nama}</option>
+                ))}
+              </select>
+              <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                <option value="">Semua Status</option>
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
+                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                <option value="">Semua Skala</option>
+                {skalaOptions.map((s) => (
+                  <option key={s.id} value={s.nama}>{s.nama}</option>
+                ))}
+              </select>
+              {(search || kategori || status || skala) && (
+                <button type="button" onClick={resetFilter}
+                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+                  Reset filter
+                </button>
+              )}
+              <button type="button"
+                onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
+                className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
+                  pilihanMode
+                    ? 'border-brand-dark bg-brand-dark text-white'
+                    : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
+                }`}>
+                Pilih Beberapa
+              </button>
+            </div>
+
+            {pilihanMode && (
+              <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+                <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
+                <div className="ml-auto flex gap-2">
+                  <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
+                    className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
+                    Batal Pilih
+                  </button>
+                  <button type="button"
+                    onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
+                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
+                    Selanjutnya
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <TableFrame>
         <DataTable
           loading={loading}
@@ -266,10 +268,6 @@ function VerifikasiPengajuanEksternal() {
                   <p className="font-bold uppercase text-[#333]">{item.namaMahasiswa}</p>
                   <p className="text-sm font-medium text-orange-500">{item.nim}</p>
                   <p className="text-sm text-sky-500">{item.prodi}</p>
-                  <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
-                    <span>{item.diajukanPada}</span>
-                  </div>
                 </div>
               ),
             },

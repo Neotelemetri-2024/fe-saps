@@ -10,6 +10,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const PAGE_SIZE = 10
 
@@ -100,6 +101,7 @@ function VerifikasiPengajuanUKMF() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
 
   const resetFilter = () => {
     setSearch(''); setKategori(''); setSkala(''); setStatus(''); setPage(1)
@@ -229,10 +231,9 @@ function VerifikasiPengajuanUKMF() {
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
-              <option value="pending">Pending</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="revisi">Revisi</option>
-              <option value="ditolak">Ditolak</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
             {(search || kategori || skala || status) && (
               <button type="button" onClick={resetFilter}

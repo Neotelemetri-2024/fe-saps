@@ -29,8 +29,6 @@ import PimpinanDitmawaBobotPoin from './pages/pimpinan_ditmawa/BobotPoin'
 import PimpinanDitmawaEditPoin from './pages/pimpinan_ditmawa/EditPoin'
 import PimpinanDitmawaVerifikasiEksternal from './pages/pimpinan_ditmawa/VerifikasiPengajuanEksternal'
 import PimpinanDitmawaDetailVerifikasiEksternal from './pages/pimpinan_ditmawa/DetailVerifikasiPengajuanEksternal'
-import PimpinanDitmawaVerifikasiUKM from './pages/pimpinan_ditmawa/VerifikasiPengajuanUKM'
-import PimpinanDitmawaDetailVerifikasiUKM from './pages/pimpinan_ditmawa/DetailVerifikasiPengajuanUKM'
 import PimpinanDitmawaVerifikasiInternal from './pages/pimpinan_ditmawa/VerifikasiPengajuanInternal'
 import PimpinanDitmawaDetailVerifikasiInternal from './pages/pimpinan_ditmawa/DetailVerifikasiPengajuanInternal'
 import PimpinanFakultasDashboard from './pages/pimpinan_fakultas/FakultasDashboard'
@@ -49,8 +47,6 @@ import AdminDitmawaDetailVerifikasiPengajuanEksternal from './pages/admin_ditmaw
 import AdminDitmawaPemetaanCapaianMassal from './pages/admin_ditmawa/PemetaanCapaianMassal'
 import AdminDitmawaManajemenAkunUKM from './pages/admin_ditmawa/ManajemenAkunUKM'
 import AdminDitmawaManajemenEvent from './pages/admin_ditmawa/ManajemenEvent'
-import AdminDitmawaVerifikasiPengajuanUKM from './pages/admin_ditmawa/VerifikasiPengajuanUKM'
-import AdminDitmawaDetailVerifikasiPengajuanUKM from './pages/admin_ditmawa/DetailVerifikasiPengajuanUKM'
 import AdminDitmawaManajemenPesertaEvent from './pages/admin_ditmawa/ManajemenPesertaEvent'
 import AdminDitmawaDetailVerifikasiKlaimPoin from './pages/admin_ditmawa/DetailVerifikasiKlaimPoin'
 import AdminDitmawaVerifikasiPengajuanInternal from './pages/admin_ditmawa/VerifikasiPengajuanInternal'
@@ -120,8 +116,6 @@ function App() {
           <Route path="edit-poin/:id" element={<PimpinanDitmawaEditPoin />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />
           <Route path="verifikasi-pengajuan-eksternal/:id" element={<PimpinanDitmawaDetailVerifikasiEksternal />} />
-          <Route path="verifikasi-pengajuan-ukm" element={<PimpinanDitmawaVerifikasiUKM />} />
-          <Route path="verifikasi-pengajuan-ukm/:id" element={<PimpinanDitmawaDetailVerifikasiUKM />} />
           <Route path="verifikasi-pengajuan-internal" element={<PimpinanDitmawaVerifikasiInternal />} />
           <Route path="verifikasi-pengajuan-internal/:id" element={<PimpinanDitmawaDetailVerifikasiInternal />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
@@ -161,8 +155,6 @@ function App() {
           <Route path="verifikasi-pengajuan-internal/:id" element={<AdminDitmawaDetailVerifikasiPengajuanInternal />} />
           <Route path="manajemen-akun-ukm" element={<AdminDitmawaManajemenAkunUKM />} />
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
-          <Route path="verifikasi-pengajuan-ukm" element={<AdminDitmawaVerifikasiPengajuanUKM />} />
-          <Route path="verifikasi-pengajuan-ukm/:id" element={<AdminDitmawaDetailVerifikasiPengajuanUKM />} />
           <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />

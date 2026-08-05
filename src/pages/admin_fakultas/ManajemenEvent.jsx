@@ -14,6 +14,7 @@ import {
   deleteKegiatan,
   ajukanKegiatan,
 } from '../../services/kegiatanService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const statusStyle = {
   Draft: 'bg-gray-100 text-gray-700 border border-gray-300',
@@ -241,6 +242,8 @@ function ManajemenEvent() {
 
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
+
+  const statusOptions = useMemo(() => statusOptionsFromRows(data, 'status'), [data])
 
   const pageItems = filtered.slice(
     start,
@@ -567,17 +570,9 @@ function ManajemenEvent() {
                 className="min-w-[120px] flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2.5 text-xs text-[#444] outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Status</option>
-                <option value="Draft">Draft</option>
-                <option value="Pending">Pending</option>
-                <option value="Disetujui Pimpinan">
-                  Disetujui Pimpinan
-                </option>
-                <option value="Ditolak">
-                  Ditolak
-                </option>
-                <option value="Revisi">
-                  Revisi
-                </option>
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
               </select>
 
               <select

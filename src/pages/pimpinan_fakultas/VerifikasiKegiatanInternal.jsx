@@ -12,6 +12,7 @@ import ActionMenu from '../../components/ui/ActionMenu'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
 import { getKategoriKegiatanValid } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const PAGE_SIZE = 10
 
@@ -100,6 +101,7 @@ function VerifikasiKegiatanInternal() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
 
   const resetFilter = () => {
     setSearch(''); setKategori(''); setStatus(''); setPage(1)
@@ -186,9 +188,9 @@ function VerifikasiKegiatanInternal() {
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
-              <option value="pending">Pending</option>
-              <option value="disetujui">Disetujui</option>
-              <option value="revisi">Perlu Revisi</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
             {(search || kategori || status) && (
               <button type="button" onClick={resetFilter}

@@ -15,6 +15,7 @@ import {
   subscribeDataUpdate,
 } from "../../services/pengajuanService";
 import { getCurrentUser } from "../../services/authService";
+import { statusOptionsFromRows } from "../../utils/statusFilter";
 
 const labelMap = {
   prestasi: "Prestasi/Kompetisi",
@@ -83,13 +84,10 @@ function PermintaanPersetujuan() {
     return [...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort();
   }, [data]);
 
-  const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'diajukan', label: 'Diajukan' },
-    { value: 'disetujui', label: 'Disetujui' },
-    { value: 'ditolak', label: 'Ditolak' },
-    { value: 'revisi', label: 'Revisi' },
-  ]
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(data, "status"),
+    [data],
+  );
 
   useEffect(() => {
     loadData().catch((err) =>

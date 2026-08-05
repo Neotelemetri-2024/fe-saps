@@ -10,6 +10,7 @@ import ConfirmModal from "../../components/ui/ConfirmModal";
 import ActionMenu from "../../components/ui/ActionMenu";
 import { getCurrentUser } from "../../services/authService";
 import { getKegiatanVerifikasi, verifikasiBulk } from "../../services/kegiatanService";
+import { statusOptionsFromRows } from "../../utils/statusFilter";
 
 const statusStyle = {
   Pending: "bg-yellow-100 text-yellow-600 border border-yellow-300",
@@ -105,6 +106,8 @@ function VerifikasiPengajuanUKMF() {
     setFilterJenis("");
     setFilterSkala("");
   };
+
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, "status"), [items]);
 
   const isPending = (row) => row.statusRaw === "diajukan" || row.status === "Pending";
 
@@ -229,11 +232,9 @@ function VerifikasiPengajuanUKMF() {
       className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
     >
       <option value="">Semua Status</option>
-      <option value="Pending">Pending</option>
-      <option value="Diteruskan">Diteruskan</option>
-      <option value="Disetujui">Disetujui</option>
-      <option value="Ditolak">Ditolak</option>
-      <option value="Revisi">Revisi</option>
+      {statusOptions.map((s) => (
+        <option key={s.value} value={s.value}>{s.label}</option>
+      ))}
     </select>
 
     <select

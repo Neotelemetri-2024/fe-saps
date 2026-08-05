@@ -11,6 +11,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import InfoTooltip from '../../components/ui/InfoTooltip'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 import {
   getKegiatan,
   ajukanKegiatan,
@@ -52,38 +53,35 @@ function DaftarKegiatan() {
 
   useEffect(() => { load() }, [])
 
+  const statusLower = (item) => String(item?.status || '').toLowerCase()
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return data.filter((item) => {
       if (filterStatus && statusLower(item) !== filterStatus) return false
-      if (filterKategori && (item.kategori !== filterKategori && item.jenis !== filterKategori)) return false
+      if (filterKategori && labelOf(item.kategori || item.jenis) !== filterKategori) return false
       if (filterSkala && labelOf(item.skala) !== filterSkala) return false
       if (!q) return true
       return (
         (item.nama || '').toLowerCase().includes(q) ||
-        (item.kategori || '').toLowerCase().includes(q) ||
-        (item.jenis || '').toLowerCase().includes(q)
+        labelOf(item.kategori).toLowerCase().includes(q) ||
+        labelOf(item.jenis).toLowerCase().includes(q)
       )
     })
   }, [data, search, filterStatus, filterKategori, filterSkala])
 
   const kategoriOptions = useMemo(() => {
-    return [...new Set(data.map((item) => item.kategori || item.jenis).filter(Boolean))].sort()
+    return [...new Set(data.map((item) => labelOf(item.kategori || item.jenis)).filter((k) => k && k !== '-'))].sort()
   }, [data])
 
   const skalaOptions = useMemo(() => {
     return [...new Set(data.map((item) => labelOf(item.skala)).filter((s) => s && s !== '-'))].sort()
   }, [data])
 
-  const statusOptions = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'aktif', label: 'Aktif' },
-    { value: 'ditolak', label: 'Ditolak' },
-    { value: 'perlu_revisi', label: 'Perlu Revisi' },
-  ]
-
-  const statusLower = (item) => String(item?.status || '').toLowerCase()
+  const statusOptions = useMemo(
+    () => statusOptionsFromRows(data.map((item) => ({ status: statusLower(item) })), 'status'),
+    [data],
+  )
   const bisaEdit = (item) => ['draft', 'perlu_revisi'].includes(statusLower(item))
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(statusLower(item))
   const bisaAjukanUlang = (item) => statusLower(item) === 'perlu_revisi'

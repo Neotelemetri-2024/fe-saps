@@ -11,6 +11,8 @@ import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanVerifikasi } from '../../services/kegiatanService'
 import { getCurrentUser } from '../../services/authService'
 import ActionMenu from '../../components/ui/ActionMenu'
+import InfoTooltip from '../../components/ui/InfoTooltip'
+import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
@@ -119,6 +121,7 @@ function VerifikasiPengajuanEksternal() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
+  const statusOptions = useMemo(() => statusOptionsFromRows(items, 'status'), [items])
   const resetFilter = () => {
     setSearch('')
     setKategori('')
@@ -195,13 +198,16 @@ function VerifikasiPengajuanEksternal() {
     <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
-            Verifikasi Pengajuan Kegiatan Eksternal
-          </h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+              Verifikasi Pengajuan Kegiatan Eksternal
+            </h2>
+            <InfoTooltip message="Pengajuan kegiatan nasional/internasional oleh mahasiswa." />
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 lg:flex-row">
+        <TableCard title="Daftar Pengajuan Eksternal">
+          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -214,7 +220,7 @@ function VerifikasiPengajuanEksternal() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             <select
               value={kategori}
               onChange={(e) => { setKategori(e.target.value); setPage(1) }}
@@ -231,10 +237,9 @@ function VerifikasiPengajuanEksternal() {
               className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Status</option>
-              <option value="diajukan">Diajukan</option>
-              <option value="terverifikasi">Terverifikasi</option>
-              <option value="perlu_revisi">Perlu Revisi</option>
-              <option value="ditolak">Ditolak</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
             <select
               value={skala}
@@ -273,7 +278,7 @@ function VerifikasiPengajuanEksternal() {
 
           {/* Pilih Beberapa action bar */}
           {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">
                 {selected.size} dipilih
               </span>
@@ -295,9 +300,6 @@ function VerifikasiPengajuanEksternal() {
               </div>
             </div>
           )}
-        </div>
-
-        <TableCard title="Daftar Pengajuan Eksternal" description="Pengajuan kegiatan nasional/internasional oleh mahasiswa.">
           <TableFrame>
             <DataTable
               columns={columns}
