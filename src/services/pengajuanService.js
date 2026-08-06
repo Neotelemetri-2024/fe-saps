@@ -34,16 +34,12 @@ function normalizePersetujuan(item, i = 0) {
   const kegiatanObj = part.kegiatan || (typeof item.kegiatan === 'object' && item.kegiatan ? item.kegiatan : null)
   const mhsObj = part.mahasiswa || {}
   const peranObj = part.peranVerif || {}
-  const tanggalMulai = kegiatanObj?.tanggalMulai
-    ? new Date(kegiatanObj.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-    : null
+  const tanggalMulai = formatTanggalValue(kegiatanObj?.tanggalMulai) || null
   return {
     ...item,
     id,
     kegiatan: kegiatanObj?.nama || item.kegiatan || item.namaKegiatan || item.kegiatanNama || item.judul || '-',
-    diajukanPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '',
+    diajukanPada: formatTanggalValue(item.createdAt),
     jenis: (typeof kegiatanObj?.kategori === 'object' ? kegiatanObj?.kategori?.nama : kegiatanObj?.kategori) || item.jenis || item.jenisKegiatan || '-',
     peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
     penyelenggara: kegiatanObj?.penyelenggara || kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
@@ -91,10 +87,13 @@ function normalizeKlaimEksternal(item, i = 0) {
   let tanggal = '-'
   try {
     if (tanggalMulai) {
-      const a = new Date(tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-      tanggal = tanggalSelesai
-        ? `${a} - ${new Date(tanggalSelesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-        : a
+      const ds = new Date(tanggalMulai)
+      if (!Number.isNaN(ds.getTime())) {
+        const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        tanggal = tanggalSelesai
+          ? `${a} - ${(() => { const de = new Date(tanggalSelesai); return Number.isNaN(de.getTime()) ? a : de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) })()}`
+          : a
+      }
     }
   } catch { /* ignore */ }
 

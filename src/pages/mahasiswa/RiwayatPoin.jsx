@@ -14,7 +14,9 @@ import { statusOptionsFromRows } from '../../utils/statusFilter'
 function formatTanggal(val) {
   if (!val) return '-'
   try {
-    return new Date(val).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return String(val)
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
   } catch {
     return String(val)
   }
@@ -211,23 +213,23 @@ function RiwayatPoin() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Kategori</option>
                 {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
               </select>
-              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Peran</option>
                 {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
-              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Penyelenggara</option>
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>

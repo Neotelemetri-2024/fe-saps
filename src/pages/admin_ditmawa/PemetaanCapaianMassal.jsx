@@ -10,7 +10,9 @@ import { getKurikulumAktif } from '../../services/kurikulumService'
 function formatTanggal(tanggal) {
   if (!tanggal) return '-'
   try {
-    return new Date(tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    const d = new Date(tanggal)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
   } catch {
     return '-'
   }

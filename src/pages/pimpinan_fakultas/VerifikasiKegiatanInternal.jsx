@@ -48,9 +48,7 @@ function normalizeItem(item) {
       : formatTanggalValue(item.tanggal),
     status: mapStatus(item.status),
     rawStatus: String(item.status || '').toLowerCase(),
-    diajukanPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : formatTanggalValue(item.diajukanPada),
+    diajukanPada: formatTanggalValue(item.createdAt) || formatTanggalValue(item.diajukanPada),
   }
 }
 
@@ -179,14 +177,14 @@ function VerifikasiKegiatanInternal() {
 
           <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Kategori</option>
               {kategoriOptions.map((k) => (
                 <option key={k.id} value={k.nama}>{k.nama}</option>
               ))}
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -247,7 +245,7 @@ function VerifikasiKegiatanInternal() {
               key: 'kegiatan', label: 'Kegiatan',
               render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} />,
             },
-            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori}</span> },
+            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-black">{item.kategori}</span> },
             { key: 'skala', label: 'Skala' },
             { key: 'tanggal', label: 'Tanggal' },
             { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },

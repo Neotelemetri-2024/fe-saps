@@ -20,7 +20,9 @@ import TambahPesertaModal from '../../components/ui/TambahPesertaModal'
 function formatTanggal(val) {
   if (!val) return ''
   try {
-    return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return String(val)
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
   } catch {
     return String(val)
   }
@@ -216,7 +218,7 @@ function ManajemenPeserta() {
         </div>
 
         <TableCard title="Daftar Peserta">
-          <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex w-full flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
               <input
@@ -299,11 +301,11 @@ function ManajemenPeserta() {
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
                 ) : pageItems.map((p) => (
                   <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="w-16 px-4 py-3 text-center text-[#616161]">{p.no}</td>
-                    <td className="px-4 py-3 font-medium text-[#333]">{p.nim || '-'}</td>
-                    <td className="px-4 py-3 text-[#616161]">{p.nama}</td>
-                    <td className="px-4 py-3 text-[#616161]">{p.fakultas}</td>
-                    <td className="px-4 py-3 text-[#616161]">{p.prodi}</td>
+                    <td className="w-16 px-4 py-3 text-center text-black">{p.no}</td>
+                    <td className="px-4 py-3 font-medium text-black">{p.nim || '-'}</td>
+                    <td className="px-4 py-3 text-black">{p.nama}</td>
+                    <td className="px-4 py-3 text-black">{p.fakultas}</td>
+                    <td className="px-4 py-3 text-black">{p.prodi}</td>
                     <td className="px-4 py-3 text-center">
                       <input
                         type="checkbox"

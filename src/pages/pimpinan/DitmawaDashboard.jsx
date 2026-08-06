@@ -9,6 +9,17 @@ import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatan } from '../../services/kegiatanService'
 
+function formatDate(val) {
+  if (!val) return ''
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return ''
+  }
+}
+
 function PimpinanDitmawaDashboard() {
   const user = getCurrentUser()
   const [stats, setStats] = useState({
@@ -42,9 +53,7 @@ function PimpinanDitmawaDashboard() {
       setEvents(kegList.map((k, i) => ({
         no: i + 1,
         nama: k.nama || '-',
-        diajukanPada: k.createdAt
-          ? new Date(k.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-          : '',
+        diajukanPada: formatDate(k.createdAt),
         tipe: k.kategori?.nama || '-',
         penyelenggara: k.organisasi?.nama || k.pembuat?.nama || '-',
         kategori: k.kategori?.nama || '-',

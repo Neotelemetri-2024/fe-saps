@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -14,6 +14,7 @@ import {
   nonaktifkanKurikulum,
   hapusKurikulum,
   tambahCapaian,
+  updateCapaian,
   hapusCapaian,
   tambahSubCapaian,
   updateSubCapaian,
@@ -79,6 +80,7 @@ function ManajemenKurikulum() {
   const [subCapaianForm, setSubCapaianForm] = useState({ capaianId: '', nama: '', presentasi: '', bobot: '' })
 
   const [editSubCapaian, setEditSubCapaian] = useState(null)
+  const [editCapaian, setEditCapaian] = useState(null)
 
   const [showHapusCapaianConfirm, setShowHapusCapaianConfirm] = useState(false)
   const [hapusCapaianTarget, setHapusCapaianTarget] = useState(null)
@@ -238,6 +240,22 @@ function ManajemenKurikulum() {
       loadDetail(activeKurId)
     } catch (err) {
       toast.error('Gagal memperbarui sub capaian', { description: err.message })
+    }
+  }
+
+  const handleEditCapaian = async () => {
+    if (!editCapaian.label.trim()) { toast.error('Nama capaian tidak boleh kosong.'); return }
+    if (!editCapaian.jumlahPoin || Number(editCapaian.jumlahPoin) <= 0) { toast.error('Jumlah poin harus diisi dan lebih dari 0.'); return }
+    try {
+      await updateCapaian(editCapaian.id, {
+        nama: editCapaian.label.trim(),
+        jumlahPoin: Number(editCapaian.jumlahPoin),
+      })
+      toast.success('Capaian diperbarui.')
+      setEditCapaian(null)
+      loadDetail(activeKurId)
+    } catch (err) {
+      toast.error('Gagal memperbarui capaian', { description: err.message })
     }
   }
 
@@ -439,6 +457,44 @@ function ManajemenKurikulum() {
         </div>
       </Modal>
 
+      {/* Modal Edit Capaian */}
+      <Modal isOpen={!!editCapaian} onClose={() => setEditCapaian(null)}>
+        {editCapaian && (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[#333]">Nama Capaian <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={editCapaian.label}
+                onChange={(e) => setEditCapaian((p) => ({ ...p, label: e.target.value }))}
+                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[#333]">Jumlah Poin <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                value={editCapaian.jumlahPoin}
+                onChange={(e) => setEditCapaian((p) => ({ ...p, jumlahPoin: e.target.value }))}
+                placeholder="Contoh: 100"
+                min="1"
+                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              />
+            </div>
+          </div>
+        )}
+        <div className="mt-5 flex justify-end gap-3">
+          <button type="button" onClick={() => setEditCapaian(null)}
+            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+            Batal
+          </button>
+          <button type="button" onClick={handleEditCapaian}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white hover:opacity-90">
+            Simpan
+          </button>
+        </div>
+      </Modal>
+
       {/* Modal Edit Sub Capaian */}
       <Modal isOpen={!!editSubCapaian} onClose={() => setEditSubCapaian(null)}>
         {editSubCapaian && (
@@ -488,7 +544,7 @@ function ManajemenKurikulum() {
             type="button"
             onClick={() => { setKurForm({ tahun: '', nama: '' }); setShowTambahKurikulum(true) }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
-          >Tambah Kurikulum
+          ><Plus className="h-4 w-4" /> Tambah Kurikulum
           </button>
         </div>
 
@@ -563,13 +619,13 @@ function ManajemenKurikulum() {
                 type="button"
                 onClick={() => { setCapaianForm({ nama: '', jumlahPoin: '' }); setShowTambahCapaian(true) }}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              >Tambah Capaian
+              ><Plus className="h-4 w-4" /> Tambah Capaian
               </button>
               <button
                 type="button"
                 onClick={() => { setSubCapaianForm({ capaianId: '', nama: '', presentasi: '', bobot: '' }); setShowTambahSubCapaian(true) }}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              >Tambah Sub Capaian
+              ><Plus className="h-4 w-4" /> Tambah Sub Capaian
               </button>
             </div>
 
@@ -605,6 +661,12 @@ function ManajemenKurikulum() {
                                 <ActionMenu
                                   items={[
                                     {
+                                      label: 'Edit Capaian',
+                                      icon: <Pencil className="h-3.5 w-3.5" />,
+                                      color: 'text-brand-dark',
+                                      onClick: () => setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
+                                    },
+                                    {
                                       label: 'Hapus Capaian',
                                       icon: <Trash2 className="h-3.5 w-3.5" />,
                                       color: 'text-red-500',
@@ -631,6 +693,12 @@ function ManajemenKurikulum() {
                                       </span>
                                       <ActionMenu
                                         items={[
+                                          {
+                                            label: 'Edit Capaian',
+                                            icon: <Pencil className="h-3.5 w-3.5" />,
+                                            color: 'text-brand-dark',
+                                            onClick: () => setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
+                                          },
                                           {
                                             label: 'Hapus Capaian',
                                             icon: <Trash2 className="h-3.5 w-3.5" />,

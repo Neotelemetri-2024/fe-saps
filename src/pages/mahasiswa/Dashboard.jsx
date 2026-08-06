@@ -47,7 +47,7 @@ function KegiatanCell({ nama, diajukanPada }) {
   const tanggal = formatTanggal(diajukanPada)
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-[#333]">{nama || '-'}</p>
+      <p className="text-black">{nama || '-'}</p>
       {tanggal && <p className="text-xs text-[#616161]">Diajukan: {tanggal}</p>}
     </div>
   )
@@ -206,7 +206,7 @@ function MahasiswaDashboard() {
                 { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} diajukanPada={row.tanggalPengajuan || row.dibuatPada || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggal) || '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
@@ -226,7 +226,7 @@ function MahasiswaDashboard() {
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggal) || '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}

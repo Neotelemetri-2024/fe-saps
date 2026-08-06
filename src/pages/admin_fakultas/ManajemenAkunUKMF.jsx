@@ -502,7 +502,7 @@ function ManajemenAkunUKMF() {
         key: 'no',
         label: 'No',
         render: (_, index) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {index + 1}
           </span>
         ),
@@ -612,7 +612,7 @@ function ManajemenAkunUKMF() {
         </div>
 
         <TableCard title="Akun UKMF yang Telah Dibuat">
-          <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-6">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
 

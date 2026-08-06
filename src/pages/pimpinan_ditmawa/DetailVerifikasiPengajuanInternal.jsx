@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, BookOpen, CalendarDays } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -44,7 +44,6 @@ function DetailVerifikasiPengajuanInternal() {
   const [loading, setLoading] = useState(true)
   const [showConfirmSetujui, setShowConfirmSetujui] = useState(false)
   const [showActionModal, setShowActionModal] = useState(false)
-  const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -76,9 +75,8 @@ function DetailVerifikasiPengajuanInternal() {
     if (!alasan.trim()) { toast.error('Alasan tidak boleh kosong.'); return }
     setSubmitting(true)
     try {
-      const keputusan = actionType === 'revisi' ? 'revisi' : 'tolak'
-      await approvalKegiatan(id, { keputusan, alasan: alasan.trim() })
-      toast.success(actionType === 'revisi' ? 'Revisi dikirim!' : 'Ditolak!')
+      await approvalKegiatan(id, { keputusan: 'tolak', alasan: alasan.trim() })
+      toast.success('Ditolak!')
       setShowActionModal(false)
       backToList()
     } catch (err) { toast.error('Gagal', { description: err.message }) }
@@ -117,16 +115,16 @@ function DetailVerifikasiPengajuanInternal() {
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-[#111]">{actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Pengajuan'}</h3>
-            <p className="mt-0.5 text-sm text-[#616161]">{actionType === 'revisi' ? 'Tuliskan catatan yang perlu diperbaiki.' : 'Tuliskan alasan penolakan.'}</p>
+            <h3 className="text-base font-bold text-[#111]">Tolak Pengajuan</h3>
+            <p className="mt-0.5 text-sm text-[#616161]">Tuliskan alasan penolakan.</p>
           </div>
           <textarea className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" rows={4}
-            placeholder={actionType === 'revisi' ? 'Contoh: Berkas belum lengkap...' : 'Contoh: Kegiatan tidak sesuai kriteria...'}
+            placeholder="Contoh: Kegiatan tidak sesuai kriteria..."
             value={alasan} onChange={(e) => setAlasan(e.target.value)} />
           <div className="flex gap-3 pt-1">
             <button type="button" disabled={submitting} onClick={handleKirimAction}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
-              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Pengajuan'}
+              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60">
+              {submitting ? 'Mengirim…' : 'Tolak Pengajuan'}
             </button>
             <button type="button" disabled={submitting} onClick={() => setShowActionModal(false)}
               className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">Batal</button>
@@ -164,7 +162,7 @@ function DetailVerifikasiPengajuanInternal() {
           </div>
         )}
 
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
           <InfoRow label="Penyelenggara" value={item.namaOrganisasi} />
           <InfoRow label="Jenis Kegiatan" value={item.jenis} />
@@ -174,7 +172,7 @@ function DetailVerifikasiPengajuanInternal() {
         </SectionCard>
 
         {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum" icon={BookOpen}>
+          <SectionCard title="Capaian Kurikulum">
             {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-[#111]">{typeof c === 'string' ? c : c.label}</p>)}
           </SectionCard>
         )}
@@ -187,11 +185,8 @@ function DetailVerifikasiPengajuanInternal() {
 
         {canAct && (
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
+              <button type="button" onClick={() => { setShowActionModal(true); setAlasan('') }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
-              </button>
-              <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Minta Revisi
               </button>
               <button type="button" onClick={() => setShowConfirmSetujui(true)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Setujui

@@ -29,9 +29,13 @@ function mapStatus(status) {
 function formatTanggal(start, end) {
   if (!start) return '-'
   try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     if (!end) return a
-    const b = new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    const b = de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     return `${a} - ${b}`
   } catch {
     return String(start)
@@ -174,7 +178,7 @@ function VerifikasiKlaimPoin() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
       <div>
         <p className="font-semibold text-brand-dark">{row.mahasiswa}</p>
@@ -183,10 +187,10 @@ function VerifikasiKlaimPoin() {
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada || ''} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
-    { key: 'peran', label: 'Peran', render: (row) => <span className="text-[#616161]">{row.peran}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
-    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-[#616161]">{row.info}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
+    { key: 'peran', label: 'Peran', render: (row) => <span className="text-black">{row.peran}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
+    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-black">{row.info}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -237,7 +241,7 @@ function VerifikasiKlaimPoin() {
         </div>
 
         <TableCard title="Daftar Klaim Poin">
-          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+          <div className="flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -253,14 +257,14 @@ function VerifikasiKlaimPoin() {
             </div>
           </div>
 
-          <div className="mb-3 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={kategori}
               onChange={(e) => {
                 setKategori(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Kategori</option>
               {kategoriOptions.map((k) => (
@@ -275,7 +279,7 @@ function VerifikasiKlaimPoin() {
                 setPeran(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Peran</option>
               {peranOptions.map((p) => (
@@ -290,7 +294,7 @@ function VerifikasiKlaimPoin() {
                 setStatus(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
@@ -303,7 +307,7 @@ function VerifikasiKlaimPoin() {
                 setSkala(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Skala</option>
               <option value="nasional">Nasional</option>
@@ -335,7 +339,7 @@ function VerifikasiKlaimPoin() {
           </div>
 
           {pilihanMode && (
-            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button

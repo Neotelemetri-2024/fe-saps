@@ -1,12 +1,23 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, User } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { setujuiTolak } from '../../services/pengajuanService'
 import { getCurrentUser } from '../../services/authService'
 import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
 
 function DetailPersetujuanDosen() {
   const navigate = useNavigate()
@@ -31,12 +42,8 @@ function DetailPersetujuanDosen() {
   const nim = mhs.nim || '-'
   const prodi = mhs.prodi?.nama || '-'
   const fakultas = mhs.prodi?.fakultas?.nama || '-'
-  const tanggalPengajuan = row.tanggalDiajukan || row.createdAt
-    ? new Date(row.tanggalDiajukan || row.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '-'
-  const tanggalKegiatan = kg.tanggalMulai
-    ? new Date(kg.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-    : row.tanggal || '-'
+  const tanggalPengajuan = formatDate(row.tanggalDiajukan || row.createdAt)
+  const tanggalKegiatan = formatDate(kg.tanggalMulai) || row.tanggal || '-'
   const isActionable = row.status === 'pending' || row.status === 'diajukan'
 
   const handleSetuju = async () => {
@@ -53,9 +60,8 @@ function DetailPersetujuanDosen() {
     if (!alasan.trim()) { toast.error('Alasan tidak boleh kosong'); return }
     setLoading(true)
     try {
-      const statusKey = actionType === 'revisi' ? 'revisi' : 'ditolak'
-      await setujuiTolak(row.id, statusKey, alasan.trim())
-      toast.success('Berhasil!', { description: `Kegiatan berhasil di${actionType}.` })
+      await setujuiTolak(row.id, 'ditolak', alasan.trim())
+      toast.success('Berhasil!', { description: 'Kegiatan berhasil ditolak.' })
       navigate(-1)
     } catch (err) { toast.error('Gagal', { description: err.message }) }
     finally { setLoading(false) }
@@ -83,7 +89,7 @@ function DetailPersetujuanDosen() {
           </div>
         </div>
 
-        <SectionCard title="Identitas Mahasiswa" icon={User}>
+        <SectionCard title="Identitas Mahasiswa">
           <InfoRow label="Nama Mahasiswa" value={row.mahasiswa} />
           <InfoRow label="NIM" value={nim} />
           <InfoRow label="Program Studi" value={prodi} />
@@ -91,7 +97,7 @@ function DetailPersetujuanDosen() {
           <InfoRow label="Tanggal Pengajuan" value={tanggalPengajuan} />
         </SectionCard>
 
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={row.kegiatan} />
           <InfoRow label="Jenis / Kategori" value={row.jenis} />
           <InfoRow label="Skala" value={kg.skala?.nama || '-'} />
@@ -112,29 +118,26 @@ function DetailPersetujuanDosen() {
             <h3 className="text-sm font-bold text-[#222]">Keputusan</h3>
             {!actionType ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={handleSetuju} disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
-                </button>
-                <button type="button" onClick={() => { setActionType('revisi'); setAlasan('') }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Revisi
-                </button>
                 <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
+                </button>
+                <button type="button" onClick={handleSetuju} disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm font-medium text-[#333]">
-                  Alasan {actionType === 'revisi' ? 'Revisi' : 'Penolakan'}<span className="text-red-500">*</span>
+                  Alasan Penolakan<span className="text-red-500">*</span>
                 </p>
                 <textarea rows={4} value={alasan} onChange={(e) => setAlasan(e.target.value)}
-                  placeholder={actionType === 'revisi' ? 'Tuliskan catatan revisi...' : 'Tuliskan alasan penolakan...'}
+                  placeholder="Tuliskan alasan penolakan..."
                   maxLength={500}
                   className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
                 <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <button type="button" onClick={handleKirimAlasan} disabled={loading}
-                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
                     {loading ? 'Mengirim...' : 'Kirim'}
                   </button>
                   <button type="button" onClick={() => { setActionType(null); setAlasan('') }}

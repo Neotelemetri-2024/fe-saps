@@ -33,13 +33,17 @@ function mapStatusLabel(status) {
 function formatTanggal(start, end) {
   if (!start) return "-";
   try {
-    const a = new Date(start).toLocaleDateString("id-ID", {
+    const ds = new Date(start);
+    if (Number.isNaN(ds.getTime())) return "-";
+    const a = ds.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
     if (!end) return a;
-    const b = new Date(end).toLocaleDateString("id-ID", {
+    const de = new Date(end);
+    if (Number.isNaN(de.getTime())) return a;
+    const b = de.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -138,7 +142,7 @@ function VerifikasiPengajuanUKMF() {
     {
       key: 'no',
       label: 'NO',
-      render: (_, i) => <span className="text-[#616161]">{i + 1}</span>,
+      render: (_, i) => <span className="text-black">{i + 1}</span>,
     },
     {
       key: 'kegiatan',
@@ -229,7 +233,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterStatus}
       onChange={(e) => setFilterStatus(e.target.value)}
-      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
     >
       <option value="">Semua Status</option>
       {statusOptions.map((s) => (
@@ -240,7 +244,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterJenis}
       onChange={(e) => setFilterJenis(e.target.value)}
-      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
     >
       <option value="">Semua Jenis</option>
       {[...new Set(items.map((p) => p.jenis))].map((j) => (
@@ -253,7 +257,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterSkala}
       onChange={(e) => setFilterSkala(e.target.value)}
-      className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
     >
       <option value="">Semua Skala</option>
       {[...new Set(items.map((p) => p.skala))].map((s) => (

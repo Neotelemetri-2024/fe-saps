@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, BookOpen, CalendarDays } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
@@ -166,7 +166,7 @@ function DetailVerifikasiPengajuanInternal() {
           </div>
         )}
 
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
           <InfoRow label="Penyelenggara" value={item.namaUkm} />
           <InfoRow label="Jenis Kegiatan" value={item.jenis} />
@@ -176,7 +176,7 @@ function DetailVerifikasiPengajuanInternal() {
         </SectionCard>
 
         {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum" icon={BookOpen}>
+          <SectionCard title="Capaian Kurikulum">
             {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-[#111]">{c}</p>)}
           </SectionCard>
         )}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, BookOpen, CalendarDays } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
@@ -87,7 +87,7 @@ function DetailKegiatan({ role, userRole }) {
           <div className="shrink-0"><StatusBadge status={item.status} /></div>
         </div>
 
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.nama} />
           <InfoRow label={role === 'operator_ukm' ? 'Nama UKM' : 'Nama UKMF'} value={item.organisasi} />
           <InfoRow label="Jenis Kegiatan" value={item.kategori} />
@@ -98,7 +98,7 @@ function DetailKegiatan({ role, userRole }) {
         </SectionCard>
 
         {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum" icon={BookOpen}>
+          <SectionCard title="Capaian Kurikulum">
             {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-[#111]">{c}</p>)}
           </SectionCard>
         )}

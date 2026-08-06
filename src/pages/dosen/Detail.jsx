@@ -46,7 +46,9 @@ const radarDataByCapaian = {
 function formatTanggal(val) {
   if (!val) return '-'
   try {
-    return new Date(val).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return String(val)
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch {
     return String(val)
   }

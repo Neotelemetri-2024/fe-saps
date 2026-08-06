@@ -14,6 +14,17 @@ import ActionMenu from '../../components/ui/ActionMenu'
 import InfoTooltip from '../../components/ui/InfoTooltip'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
+
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
   const mhs = pembuat.mahasiswa || {}
@@ -28,13 +39,9 @@ function normalizeKegiatan(k) {
     kegiatan: k.nama || '-',
     kategori: k.kategori?.nama || '-',
     skala: k.skala?.nama?.toLowerCase() || '',
-    tanggal: k.tanggalMulai
-      ? new Date(k.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '-',
+    tanggal: formatDate(k.tanggalMulai) || '-',
     dibuatPada: k.createdAt || k.tanggalMulai,
-    diajukanPada: k.createdAt
-      ? new Date(k.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '-',
+    diajukanPada: formatDate(k.createdAt) || '-',
     status: k.status,
     isUlang,
     penyelenggara: k.penyelenggaraExt || '-',
@@ -160,17 +167,17 @@ function VerifikasiPengajuanEksternal() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
       <div className="flex flex-col gap-0.5">
-        <p className="font-bold uppercase text-[#333]">{row.namaMahasiswa || '-'}</p>
+        <p className="font-bold uppercase text-black">{row.namaMahasiswa || '-'}</p>
         <p className="text-sm font-medium text-orange-500">{row.nim || '-'}</p>
         <p className="text-sm text-sky-500">{row.prodi || '-'}</p>
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || '-'} tanggal={row.diajukanPada} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori || '-'}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal || '-'}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori || '-'}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal || '-'}</span> },
     { key: 'status', label: 'Status', render: (row) =>
       row.isUlang && row.status === 'diajukan' ? (
         <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">Diajukan Ulang</span>
@@ -207,7 +214,7 @@ function VerifikasiPengajuanEksternal() {
         </div>
 
         <TableCard title="Daftar Pengajuan Eksternal">
-          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+          <div className="flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -220,11 +227,11 @@ function VerifikasiPengajuanEksternal() {
             </div>
           </div>
 
-          <div className="mb-3 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={kategori}
               onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Kategori</option>
               {kategoriOptions.map((opt) => (
@@ -234,7 +241,7 @@ function VerifikasiPengajuanEksternal() {
             <select
               value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
@@ -244,7 +251,7 @@ function VerifikasiPengajuanEksternal() {
             <select
               value={skala}
               onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
             >
               <option value="">Semua Skala</option>
               {Object.entries(SKALA_LABEL).map(([value, label]) => (
@@ -278,7 +285,7 @@ function VerifikasiPengajuanEksternal() {
 
           {/* Pilih Beberapa action bar */}
           {pilihanMode && (
-            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">
                 {selected.size} dipilih
               </span>

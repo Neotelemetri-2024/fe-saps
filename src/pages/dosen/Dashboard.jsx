@@ -14,29 +14,39 @@ import { getDashboardDosen } from '../../services/dashboardService'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function CapaianBar({ pct, status }) {
+  const clamped = Math.min(100, Math.max(0, pct))
   return (
     <div className="flex items-center gap-2">
       <div className="h-2 w-28 rounded-full bg-[#e9ebf8]">
         <div
           className={`h-2 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`}
-          style={{ width: `${pct}%` }}
+          style={{ width: `${clamped}%` }}
         />
       </div>
-      <span className="text-xs text-[#616161]">{pct}%</span>
+      <span className="text-xs text-[#616161]">{clamped}%</span>
     </div>
   )
 }
 
-function StatusDot({ status }) {
+function StatusPill({ status }) {
+  const isBaik = status === 'baik'
   return (
-    <span className={`inline-block h-3 w-3 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`}></span>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+        isBaik ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}
+    >
+      {isBaik ? 'Baik' : 'Perlu Perhatian'}
+    </span>
   )
 }
 
 function formatTanggal(val) {
   if (!val) return '-'
   try {
-    return new Date(val).toLocaleDateString('id-ID', {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return String(val)
+    return d.toLocaleDateString('id-ID', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -214,7 +224,7 @@ function DosenPADashboard() {
               Rata rata capaian jenis kegiatan mahasiswa bimbingan
             </h3>
             <VerticalBarChart
-              labels={['organisasi', 'seminar', 'prestasi']}
+              labels={['Organisasi', 'Seminar', 'Prestasi']}
               values={chartValues}
               colors={['#3b82f6', '#15803d', '#eab308']}
               height={280}
@@ -241,7 +251,7 @@ function DosenPADashboard() {
               { key: 'nim', label: 'NIM' },
               { key: 'ipk', label: 'IPK' },
               { key: 'capaian', label: 'Capaian', render: (row) => <CapaianBar pct={row.pct} status={row.status} /> },
-              { key: 'status', label: 'Status', render: (row) => <StatusDot status={row.status} /> },
+              { key: 'status', label: 'Status', render: (row) => <StatusPill status={row.status} /> },
               {
                 key: 'aksi',
                 label: 'Aksi',

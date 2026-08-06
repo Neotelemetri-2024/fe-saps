@@ -111,9 +111,9 @@ function DetailFakultas() {
           onPageChange={setPage}
           onRowClick={(item) => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
           columns={[
-            { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-[#333]">{item.rank}.</span> },
+            { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-black">{item.rank}.</span> },
             { key: 'nama', label: 'Fakultas' },
-            { key: 'total', label: 'Total Poin', render: (item) => <span className="block text-center font-medium text-[#444]">{item.total}%</span> },
+            { key: 'total', label: 'Total Poin', render: (item) => <span className="block text-center font-medium text-black">{item.total}%</span> },
             {
               key: 'kategori', label: 'Kategori Poin',
               render: (item) => <KategoriBar organisasi={item.organisasi} seminar={item.seminar} prestasi={item.prestasi} />,

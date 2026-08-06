@@ -23,9 +23,13 @@ const statusStyle = {
 function formatTanggal(start, end) {
   if (!start) return '-'
   try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     if (!end) return a
-    const b = new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    const b = de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     return `${a} – ${b}`
   } catch {
     return String(start)
@@ -77,7 +81,7 @@ function Dashboard() {
     {
       key: 'no',
       label: 'NO',
-      render: (row) => <span className="text-[#616161]">{row.no}</span>,
+      render: (row) => <span className="text-black">{row.no}</span>,
     },
     {
       key: 'kegiatan',

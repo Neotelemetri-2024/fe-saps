@@ -50,11 +50,24 @@ function mapStatusLabel(status) {
   return status || 'Pending'
 }
 
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
+
 function formatTanggal(start, end) {
   if (!start) return '-'
 
   try {
-    const tanggalMulai = new Date(start).toLocaleDateString('id-ID', {
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const tanggalMulai = ds.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -62,7 +75,9 @@ function formatTanggal(start, end) {
 
     if (!end) return tanggalMulai
 
-    const tanggalSelesai = new Date(end).toLocaleDateString('id-ID', {
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return tanggalMulai
+    const tanggalSelesai = de.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -81,13 +96,7 @@ function normalizeEvent(item) {
   return {
     id: item.id,
     kegiatan: item.nama || '-',
-    submitted: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        })
-      : '-',
+    submitted: formatDate(item.createdAt),
     kategori: item.kategori?.nama || '-',
     skala: item.skala?.nama || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
@@ -324,7 +333,7 @@ function ManajemenEvent() {
         key: 'no',
         label: 'NO',
         render: (row) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {start + pageItems.indexOf(row) + 1}
           </span>
         ),
@@ -334,7 +343,7 @@ function ManajemenEvent() {
         label: 'NAMA KEGIATAN',
         render: (row) => (
           <div>
-            <p className="font-medium text-[#222]">
+            <p className="font-medium text-black">
               {row.kegiatan}
             </p>
 
@@ -351,7 +360,7 @@ function ManajemenEvent() {
         key: 'kategori',
         label: 'KATEGORI',
         render: (row) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {row.kategori}
           </span>
         ),
@@ -360,7 +369,7 @@ function ManajemenEvent() {
         key: 'skala',
         label: 'SKALA',
         render: (row) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {row.skala}
           </span>
         ),
@@ -369,7 +378,7 @@ function ManajemenEvent() {
         key: 'tanggal',
         label: 'TANGGAL',
         render: (row) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {row.tanggal}
           </span>
         ),
@@ -378,7 +387,7 @@ function ManajemenEvent() {
         key: 'peserta',
         label: 'PESERTA',
         render: (row) => (
-          <span className="text-[#616161]">
+          <span className="text-black">
             {row.peserta}
           </span>
         ),
@@ -522,7 +531,7 @@ function ManajemenEvent() {
          */}
         <TableCard title="Daftar Event Fakultas">
           {/* Filter */}
-          <div className="mt-4 flex flex-col gap-3 sm:mt-6 lg:flex-row lg:flex-wrap lg:items-center">
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
             {/* Pencarian */}
             <div className="relative w-full min-w-[200px] lg:flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />

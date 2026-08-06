@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, CalendarDays } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
@@ -7,7 +7,7 @@ import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
   if (!val) return '-'
-  try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
+  try { const d = new Date(val); if (Number.isNaN(d.getTime())) return '-'; return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
   catch { return String(val) }
 }
 
@@ -61,7 +61,7 @@ function DetailIzinPAMahasiswa() {
           </div>
         )}
 
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={row.kegiatan} />
           <InfoRow label="Jenis / Kategori" value={row.jenis} />
           <InfoRow label="Skala" value={kg.skala?.nama || '-'} />

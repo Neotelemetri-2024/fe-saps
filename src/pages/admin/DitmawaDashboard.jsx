@@ -14,9 +14,13 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 function formatTanggal(start, end) {
   if (!start) return '-'
   try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     if (!end) return a
-    return `${a} - ${new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    return `${a} - ${de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
   } catch { return String(start) }
 }
 
@@ -59,7 +63,7 @@ function AdminDitmawaDashboard() {
   useEffect(() => { load() }, [])
 
   const columns = [
-    { key: 'no', label: 'NO', render: (row) => <span className="text-[#616161]">{row.no}</span> },
+    { key: 'no', label: 'NO', render: (row) => <span className="text-black">{row.no}</span> },
     { key: 'kegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'pengaju', label: 'KATEGORI' },
     { key: 'skala', label: 'SKALA' },

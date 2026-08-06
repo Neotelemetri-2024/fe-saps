@@ -140,7 +140,7 @@ function PermintaanPersetujuan() {
     { key: "kegiatan", label: "KEGIATAN", render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: "peran", label: "PERAN" },
     { key: "skala", label: "SKALA" },
-    { key: "jenis", label: "JENIS", render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
+    { key: "jenis", label: "JENIS", render: (row) => <span className="text-black">{row.jenis}</span> },
     { key: "penyelenggara", label: "PENYELENGGARA" },
     { key: "tanggal", label: "TANGGAL" },
     {
@@ -217,7 +217,7 @@ function PermintaanPersetujuan() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -228,7 +228,7 @@ function PermintaanPersetujuan() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (

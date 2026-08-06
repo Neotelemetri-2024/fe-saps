@@ -15,6 +15,17 @@ import { getCurrentUser } from '../../services/authService'
 import { getKategoriKegiatanValid, getSkalaKegiatan } from '../../services/matriksService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
+
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
   const mhs = pembuat.mahasiswa || {}
@@ -26,13 +37,9 @@ function normalizeKegiatan(k) {
     kegiatan: k.nama || '-',
     kategori: k.kategori?.nama || '-',
     skala: k.skala?.nama || '-',
-    tanggal: k.tanggalMulai
-      ? new Date(k.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '-',
+    tanggal: formatDate(k.tanggalMulai) || '-',
     dibuatPada: k.createdAt || k.tanggalMulai,
-    diajukanPada: k.createdAt
-      ? new Date(k.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '-',
+    diajukanPada: formatDate(k.createdAt) || '-',
     status: k.status,
   }
 }
@@ -176,7 +183,7 @@ function VerifikasiPengajuanEksternal() {
         </div>
 
         <TableCard title="Daftar Pengajuan Eksternal">
-          <div className="mb-3 space-y-3">
+          <div className="space-y-3">
             <div className="flex flex-col gap-3 lg:flex-row">
               <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
@@ -192,21 +199,21 @@ function VerifikasiPengajuanEksternal() {
 
             <div className="flex flex-wrap items-center gap-3">
               <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
                 <option value="">Semua Kategori</option>
                 {kategoriOptions.map((k) => (
                   <option key={k.id} value={k.nama}>{k.nama}</option>
                 ))}
               </select>
               <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
               <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (
                   <option key={s.id} value={s.nama}>{s.nama}</option>
@@ -265,14 +272,14 @@ function VerifikasiPengajuanEksternal() {
               key: 'mahasiswa', label: 'Mahasiswa',
               render: (item) => (
                 <div className="flex flex-col gap-0.5">
-                  <p className="font-bold uppercase text-[#333]">{item.namaMahasiswa}</p>
+                  <p className="font-bold uppercase text-black">{item.namaMahasiswa}</p>
                   <p className="text-sm font-medium text-orange-500">{item.nim}</p>
                   <p className="text-sm text-sky-500">{item.prodi}</p>
                 </div>
               ),
             },
             { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },
-            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-[#616161]">{item.kategori}</span> },
+            { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-black">{item.kategori}</span> },
             { key: 'tanggal', label: 'Tanggal' },
             { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
             {

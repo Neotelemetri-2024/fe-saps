@@ -14,7 +14,9 @@ function formatTanggal(value) {
   if (!value) return ''
 
   try {
-    return new Date(value).toLocaleDateString('id-ID', {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return String(value)
+    return d.toLocaleDateString('id-ID', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

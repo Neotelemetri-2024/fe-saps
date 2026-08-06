@@ -18,14 +18,15 @@ function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const mahasiswaAktif = stats?.mahasiswaAktif ?? stats?.totalMahasiswa ?? '—'
-  const totalFakultas  = stats?.totalFakultas ?? '—'
-  const totalPending   = stats?.totalPending ?? stats?.pendingVerifikasi ?? '—'
-  const kurikulumAktif = stats?.kurikulumAktif?.nama ?? stats?.namaKurikulum ?? '—'
+  const statistik = stats?.statistik || stats || {}
+  const mahasiswaAktif = statistik.mahasiswaAktif ?? statistik.totalMahasiswa ?? '—'
+  const totalFakultas  = statistik.totalFakultas ?? '—'
+  const totalPending   = statistik.totalPending ?? statistik.pendingVerifikasi ?? '—'
+  const kurikulumAktif = statistik.kurikulumAktif?.nama ?? statistik.kurikulumAktif ?? statistik.namaKurikulum ?? '—'
 
-  const ukmChart = stats?.ukmChart || stats?.grafik || []
-  const chartLabels = ukmChart.map((d) => d.label || d.nama || d.organisasi || '')
-  const chartValues = ukmChart.map((d) => d.poin || d.totalPoin || d.nilai || 0)
+  const ukmChart = stats?.grafikPoinUkm || stats?.ukmChart || stats?.grafik || []
+  const chartLabels = ukmChart.map((d) => d.ukm || d.label || d.nama || d.organisasi || '')
+  const chartValues = ukmChart.map((d) => d.totalPoin ?? d.poin ?? d.nilai ?? 0)
 
   const fallbackLabels = ['Neo Telemetri','Bola Voli','PKK','Pramuka','Sinematografi','Tapak','UKS','Forensic','Pancing','KKO','Penelitian','Karya Andalas','KBK Fast One','Ptek','Raharayo']
   const fallbackValues = [30,12,35,40,42,38,10,15,13,11,12,14,13,12,10]

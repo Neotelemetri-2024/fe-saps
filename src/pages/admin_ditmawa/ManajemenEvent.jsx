@@ -79,12 +79,27 @@ function mapStatus(status) {
   return s || 'pending'
 }
 
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
+
 function formatTanggal(start, end) {
   if (!start) return '-'
   try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     if (!end) return a
-    const b = new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    const b = de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     return `${a} - ${b}`
   } catch {
     return String(start)
@@ -104,9 +119,7 @@ function normalizeEvent(item) {
     poin: item.poin ?? '-',
     status: mapStatus(item.status),
     rawStatus,
-    dibuatPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '-',
+    dibuatPada: formatDate(item.createdAt),
   }
 }
 
@@ -203,20 +216,20 @@ function ManajemenEvent() {
   const bisaPeserta = (item) => ['disetujui', 'terpublikasi'].includes(item.rawStatus)
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
       <div>
-        <p className="text-[#333]">{row.nama}</p>
+        <p className="text-black">{row.nama}</p>
         {row.dibuatPada && row.dibuatPada !== '-' && (
           <p className="text-xs text-[#616161]">Diajukan: {row.dibuatPada}</p>
         )}
       </div>
     )},
-    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-[#616161]">{row.jenis}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
-    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-[#616161]">{row.peserta}</span> },
-    { key: 'poin', label: 'Poin', render: (row) => <span className="text-[#616161]">{row.poin}</span> },
+    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-black">{row.jenis}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
+    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-black">{row.peserta}</span> },
+    { key: 'poin', label: 'Poin', render: (row) => <span className="text-black">{row.poin}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -310,7 +323,7 @@ function ManajemenEvent() {
 
         <section>
           <TableCard title="Daftar Event Global">
-            <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+            <div className="flex flex-col gap-3 lg:flex-row">
               <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
                 <input
@@ -323,23 +336,23 @@ function ManajemenEvent() {
               </div>
             </div>
 
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
                 <option value="">Semua Jenis</option>
                 {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
                   <option key={j} value={j}>{j}</option>
                 ))}
               </select>
               <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
               <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
-                className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
                   <option key={s} value={s}>{s}</option>

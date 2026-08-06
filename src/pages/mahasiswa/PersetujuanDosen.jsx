@@ -18,7 +18,9 @@ import { statusOptionsFromRows } from '../../utils/statusFilter'
 function formatTanggal(value) {
   if (!value) return '-'
   try {
-    return new Date(value).toLocaleDateString('id-ID', {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', {
       day: '2-digit', month: 'short', year: 'numeric',
     })
   } catch {
@@ -434,7 +436,7 @@ function PersetujuanDosen() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -445,7 +447,7 @@ function PersetujuanDosen() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (
@@ -530,7 +532,7 @@ function PersetujuanDosen() {
           </TableFrame>
 
           {/* Tombol klaim poin — di bawah tabel */}
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
             {pilihanMode ? (
               <>
                 <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>

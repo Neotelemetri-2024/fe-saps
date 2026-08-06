@@ -26,12 +26,27 @@ function mapStatus(status) {
   return s || 'pending'
 }
 
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
+
 function formatTanggal(start, end) {
   if (!start) return '-'
   try {
-    const a = new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     if (!end) return a
-    const b = new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    const b = de.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     return `${a} - ${b}`
   } catch {
     return String(start)
@@ -49,9 +64,7 @@ function normalizeItem(item) {
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
     status: mapStatus(item.status),
     rawStatus: item.status,
-    diajukanPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : item.diajukanPada || '-',
+    diajukanPada: formatDate(item.createdAt) || item.diajukanPada || '-',
     skala: item.skala?.nama || item.skala || '-',
   }
 }
@@ -119,18 +132,18 @@ function VerifikasiPengajuanInternal() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'organisasi', label: 'Organisasi', render: (row) => (
       <div className="flex flex-col gap-0.5">
-        <p className="font-bold uppercase text-[#333]">{row.namaMahasiswa}</p>
+        <p className="font-bold uppercase text-black">{row.namaMahasiswa}</p>
         {row.nim && <p className="text-sm font-medium text-orange-500">{row.nim}</p>}
         {row.prodi && <p className="text-sm text-sky-500">{row.prodi}</p>}
       </div>
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-[#616161]">{row.kategori}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-[#616161]">{row.skala}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-[#616161]">{row.tanggal}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -193,7 +206,7 @@ function VerifikasiPengajuanInternal() {
         </div>
 
         <TableCard title="Daftar Pengajuan Internal">
-          <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+          <div className="flex flex-col gap-3 lg:flex-row">
             <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
               <input
@@ -206,23 +219,23 @@ function VerifikasiPengajuanInternal() {
             </div>
           </div>
 
-          <div className="mb-3 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Kategori</option>
               {[...new Set(items.map((i) => i.kategori).filter(Boolean))].map((k) => (
                 <option key={k} value={k}>{k}</option>
               ))}
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Skala</option>
               <option value="nasional">Nasional</option>
               <option value="internasional">Internasional</option>
@@ -247,7 +260,7 @@ function VerifikasiPengajuanInternal() {
           </div>
 
           {pilihanMode && (
-            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
               <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}

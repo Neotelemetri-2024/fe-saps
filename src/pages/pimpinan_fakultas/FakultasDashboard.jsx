@@ -264,8 +264,8 @@ function PimpinanFakultasDashboard() {
                   </div>
                 ),
               },
-              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="text-center block text-[#333]">{item.prodi}</span> },
-              { key: 'total', label: 'Total Poin', render: (item) => <span className="text-center block font-semibold text-[#333]">{item.total}</span> },
+              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="text-center block text-black">{item.prodi}</span> },
+              { key: 'total', label: 'Total Poin', render: (item) => <span className="text-center block font-semibold text-black">{item.total}</span> },
               {
                 key: 'kategori', label: 'Kategori Poin',
                 render: (item) => (

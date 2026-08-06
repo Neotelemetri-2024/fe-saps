@@ -19,7 +19,9 @@ import { statusOptionsFromRows } from '../../utils/statusFilter'
 function formatTanggal(value) {
   if (!value) return '-'
   try {
-    return new Date(value).toLocaleDateString('id-ID', {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', {
       day: '2-digit', month: 'short', year: 'numeric',
     })
   } catch {
@@ -368,7 +370,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterKategori}
                 onChange={(e) => setFilterKategori(e.target.value)}
-                className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
               >
                 <option value="">Semua Kategori</option>
                 {jenisOptions.map((j) => (
@@ -378,7 +380,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
               >
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort().map((s) => (
@@ -388,7 +390,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -478,7 +480,7 @@ function AjukanKegiatanEksternal() {
 
           {/* Tombol bawah tabel */}
           {!loading && (
-            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
               {pilihanMode ? (
                 <>
                   <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>

@@ -40,7 +40,7 @@ function AdminFakultasDashboard() {
   }, [])
 
   const columns = [
-    { key: 'no', label: 'No', render: (row) => <span className="text-[#616161]">{row.no}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-black">{row.no}</span> },
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'ukm', label: 'UKM' },
     { key: 'tgl', label: 'Tanggal' },

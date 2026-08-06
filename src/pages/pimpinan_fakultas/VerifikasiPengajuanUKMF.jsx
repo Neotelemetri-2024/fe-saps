@@ -47,9 +47,7 @@ function normalizeItem(item) {
       : formatTanggalValue(item.tgl || item.tanggal),
     status: mapStatus(item.status),
     rawStatus: String(item.status || '').toLowerCase(),
-    diajukanPada: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : formatTanggalValue(item.diajukanPada),
+    diajukanPada: formatTanggalValue(item.createdAt) || formatTanggalValue(item.diajukanPada),
   }
 }
 
@@ -148,7 +146,7 @@ function VerifikasiPengajuanUKMF() {
       key: 'namaUkmf', label: 'Nama UKMF',
       render: (item) => (
         <div className="flex flex-col gap-0.5">
-          <p className="font-bold uppercase text-[#333]">{item.namaUkmf}</p>
+          <p className="font-bold uppercase text-black">{item.namaUkmf}</p>
           <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
             <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
             <span>{item.diajukanPada}</span>
@@ -157,7 +155,7 @@ function VerifikasiPengajuanUKMF() {
       ),
     },
     { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },
-    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-[#616161]">{item.jenis}</span> },
+    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-black">{item.jenis}</span> },
     { key: 'skala', label: 'Skala' },
     { key: 'tanggal', label: 'Tanggal' },
     { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
@@ -215,21 +213,21 @@ function VerifikasiPengajuanUKMF() {
 
           <div className="flex flex-wrap items-center gap-3">
             <select value={kategori} onChange={(e) => { setKategori(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Jenis</option>
               {uniqueJenis.map((j) => (
                 <option key={j} value={j}>{j}</option>
               ))}
             </select>
             <select value={skala} onChange={(e) => { setSkala(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Skala</option>
               {uniqueSkala.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>

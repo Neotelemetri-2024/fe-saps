@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, X, CalendarDays, User } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
@@ -9,6 +9,17 @@ import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanServ
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { getCurrentUser } from '../../services/authService'
 import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+
+function formatDate(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+  } catch {
+    return '-'
+  }
+}
 
 function normalizeKegiatanDetail(k) {
   if (!k) return null
@@ -22,15 +33,11 @@ function normalizeKegiatanDetail(k) {
     nim: mhs.nim || '-',
     prodi: mhs.prodi?.nama || '-',
     fakultas: mhs.prodi?.fakultas?.nama || '-',
-    tanggalPengajuan: k.createdAt
-      ? new Date(k.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
-      : '-',
+    tanggalPengajuan: formatDate(k.createdAt),
     kegiatan: k.nama || '-',
     kategori: k.kategori?.nama || '-',
     skala: k.skala?.nama || '-',
-    tanggal: k.tanggalMulai
-      ? new Date(k.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
-      : '-',
+    tanggal: formatDate(k.tanggalMulai),
     penyelenggara: k.penyelenggaraExt || '-',
     email: k.emailPenyelenggara || '-',
     linkWebsite: k.linkPenyelenggara || k.linkWebsite || '-',
@@ -308,7 +315,7 @@ function DetailVerifikasiPengajuanEksternal() {
         )}
 
         {/* Info Mahasiswa */}
-        <SectionCard title="Informasi Mahasiswa" icon={User}>
+        <SectionCard title="Informasi Mahasiswa">
           <InfoRow label="Nama" value={item.namaMahasiswa} />
           <InfoRow label="NIM" value={item.nim} />
           <InfoRow label="Program Studi" value={item.prodi} />
@@ -317,7 +324,7 @@ function DetailVerifikasiPengajuanEksternal() {
         </SectionCard>
 
         {/* Info Kegiatan */}
-        <SectionCard title="Detail Kegiatan" icon={CalendarDays}>
+        <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
           <InfoRow label="Kategori" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />

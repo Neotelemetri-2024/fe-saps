@@ -2,7 +2,7 @@
  * TableFrame — sub-div pembungkus tabel
  * Mengelilingi DataTable atau <table> dengan border konsisten.
  */
-export function TableFrame({ children, className = 'mt-4 sm:mt-6' }) {
+export function TableFrame({ children, className = '' }) {
   return (
     <div className={`overflow-hidden rounded-xl border border-[#e9ebf8] ${className}`}>
       {children}
@@ -14,6 +14,10 @@ export function TableFrame({ children, className = 'mt-4 sm:mt-6' }) {
  * TableCard — card putih standar untuk tabel
  * Berisi judul (dan optional description / headerRight), lalu children.
  * Gunakan TableFrame di dalamnya untuk membungkus DataTable/<table>.
+ *
+ * Jarak antara header (judul) dan children dijamin oleh flex `gap` di sini
+ * (bukan margin milik children), supaya konsisten terlepas dari isi children
+ * (TableFrame langsung, toolbar search/filter, dsb).
  */
 export function TableCard({
   title,
@@ -23,7 +27,7 @@ export function TableCard({
   className = '',
 }) {
   return (
-    <div className={`rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:p-6 ${className}`}>
+    <div className={`flex flex-col gap-4 rounded-xl border border-[#e9ebf8] bg-white p-3 shadow-sm sm:gap-6 sm:p-6 ${className}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-bold text-[#222] sm:text-lg">{title}</h3>
@@ -33,7 +37,7 @@ export function TableCard({
         </div>
         {headerRight && <div>{headerRight}</div>}
       </div>
-      {children}
+      <div className="flex flex-col gap-4 sm:gap-6">{children}</div>
     </div>
   )
 }

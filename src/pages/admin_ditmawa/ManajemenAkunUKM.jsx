@@ -239,9 +239,9 @@ function ManajemenAkunUKM() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (_, i) => <span className="text-[#616161]">{i + 1}</span> },
-    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-[#333]">{row.nama}</span> },
-    { key: 'username', label: 'Username', render: (row) => <span className="text-[#616161]">{row.username}</span> },
+    { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{i + 1}</span> },
+    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-black">{row.nama}</span> },
+    { key: 'username', label: 'Username', render: (row) => <span className="text-black">{row.username}</span> },
     { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
       <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
         <StatusBadge status={row.status} />
@@ -291,7 +291,7 @@ function ManajemenAkunUKM() {
 
         <div>
           <TableCard title="Akun UKM yang telah dibuat">
-            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
                 <input

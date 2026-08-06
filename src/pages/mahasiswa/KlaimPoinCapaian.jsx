@@ -29,20 +29,27 @@ const columns = [
   },
 ]
 
+function formatDate(val) {
+  if (!val) return ''
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return ''
+  }
+}
+
 function mapRiwayat(item, i) {
   return {
     no: i + 1,
     id: item.id,
     kegiatan: item.namaKegiatan || item.kegiatan || '-',
-    diajukanPada: item.tanggalKlaim
-      ? new Date(item.tanggalKlaim).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '',
+    diajukanPada: formatDate(item.tanggalKlaim),
     jenis: item.jenisKegiatan || item.jenis || '-',
     peran: item.peran || '-',
     penyelenggara: item.penyelenggara || '-',
-    tanggal: item.tanggalPelaksanaan
-      ? new Date(item.tanggalPelaksanaan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-      : (item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'),
+    tanggal: formatDate(item.tanggalPelaksanaan) || formatDate(item.tanggal) || '-',
     skala: item.skala || '-',
     status: String(item.status || 'pending').toLowerCase(),
     alasan: item.alasan || null,
@@ -117,7 +124,7 @@ function KlaimPoinCapaian() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -127,7 +134,7 @@ function KlaimPoinCapaian() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
               >
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (

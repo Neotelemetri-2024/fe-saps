@@ -13,13 +13,17 @@ import KegiatanCell from "../../components/dashboard/KegiatanCell";
 function formatTanggal(start, end) {
   if (!start) return "-";
   try {
-    const a = new Date(start).toLocaleDateString("id-ID", {
+    const ds = new Date(start);
+    if (Number.isNaN(ds.getTime())) return "-";
+    const a = ds.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
     if (!end) return a;
-    const b = new Date(end).toLocaleDateString("id-ID", {
+    const de = new Date(end);
+    if (Number.isNaN(de.getTime())) return a;
+    const b = de.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -62,7 +66,6 @@ function AdminDitmawaDashboard() {
             kategori: k.kategori || "-",
             skala: k.skala || "-",
             tanggal: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
-            peserta: k.peserta ?? 0,
             status: String(k.status || "pending").toLowerCase(),
           })),
         );
@@ -82,14 +85,14 @@ function AdminDitmawaDashboard() {
       {
         key: "no",
         label: "No",
-        render: (row) => <span className="text-[#616161]">{row.no}</span>,
+        render: (row) => <span className="text-black">{row.no}</span>,
       },
       {
         key: "nama",
         label: "Nama Kegiatan",
         render: (row) => (
           <div>
-            <p className="text-[#333]">{row.nama}</p>
+            <p className="text-black">{row.nama}</p>
             {row.diajukanPada && row.diajukanPada !== "-" && (
               <p className="text-xs text-[#616161]">
                 Diajukan: {row.diajukanPada}
@@ -101,22 +104,17 @@ function AdminDitmawaDashboard() {
       {
         key: "kategori",
         label: "Kategori",
-        render: (row) => <span className="text-[#616161]">{row.kategori}</span>,
+        render: (row) => <span className="text-black">{row.kategori}</span>,
       },
       {
         key: "skala",
         label: "Skala",
-        render: (row) => <span className="text-[#616161]">{row.skala}</span>,
+        render: (row) => <span className="text-black">{row.skala}</span>,
       },
       {
         key: "tanggal",
         label: "Tanggal",
-        render: (row) => <span className="text-[#616161]">{row.tanggal}</span>,
-      },
-      {
-        key: "peserta",
-        label: "Peserta",
-        render: (row) => <span className="text-[#616161]">{row.peserta}</span>,
+        render: (row) => <span className="text-black">{row.tanggal}</span>,
       },
       {
         key: "status",
