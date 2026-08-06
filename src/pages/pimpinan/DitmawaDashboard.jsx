@@ -112,12 +112,12 @@ function PimpinanDitmawaDashboard() {
           )}
         </div>
 
-        <TableCard title="Daftar Event Terpublikasi">
+        <TableCard title="Daftar Event Disetujui">
           <TableFrame>
             <DataTable
               loading={loading}
               data={events}
-              emptyText="Belum ada event terpublikasi."
+              emptyText="Belum ada event disetujui."
               columns={[
                 { key: 'no', label: 'No', render: (e) => <span className="block text-center">{e.no}</span> },
                 { key: 'nama', label: 'Nama Kegiatan', render: (e) => <KegiatanCell nama={e.nama} tanggal={e.diajukanPada} /> },

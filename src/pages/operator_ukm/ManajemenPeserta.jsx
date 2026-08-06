@@ -221,36 +221,40 @@ function ManajemenPeserta() {
         </div>
 
         <TableCard title="Daftar Peserta">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative flex w-full flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
-              <input
-                type="text"
-                placeholder="Cari NIM atau nama…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-[#d9dce7] bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
-              />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
+              <div className="relative flex w-full flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <input
+                  type="text"
+                  placeholder="Cari NIM atau nama…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg border border-[#d9dce7] bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {['semua', 'hadir', 'tidak'].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilterKehadiran(f)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
+                  >
+                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                  </button>
+                ))}
+                {(search || filterKehadiran !== 'semua') && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
+                    className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {['semua', 'hadir', 'tidak'].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilterKehadiran(f)}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
-                >
-                  {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
-                </button>
-              ))}
-              {(search || filterKehadiran !== 'semua') && (
-                <button
-                  type="button"
-                  onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
-                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-                >
-                  Reset Filter
-                </button>
-              )}
               <button
                 onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"

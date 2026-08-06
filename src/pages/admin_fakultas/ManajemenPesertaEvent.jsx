@@ -237,40 +237,44 @@ function ManajemenPesertaEvent() {
         </div>
 
         <TableCard title="Daftar Peserta">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative flex w-full flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari nama, NIM, atau prodi…"
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
-              />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
+              <div className="relative flex w-full flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cari nama, NIM, atau prodi…"
+                  className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {['semua', 'hadir', 'tidak hadir'].map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilterKehadiran(f)}
+                    className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize transition ${
+                      filterKehadiran === f
+                        ? 'bg-gradient-to-r from-brand-dark to-brand-light text-white'
+                        : 'border border-[#d9dce7] bg-white text-[#444] hover:bg-[#f5f5f5]'
+                    }`}
+                  >
+                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                  </button>
+                ))}
+                {(search || filterKehadiran !== 'semua') && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilter}
+                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {['semua', 'hadir', 'tidak hadir'].map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => setFilterKehadiran(f)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize transition ${
-                    filterKehadiran === f
-                      ? 'bg-gradient-to-r from-brand-dark to-brand-light text-white'
-                      : 'border border-[#d9dce7] bg-white text-[#444] hover:bg-[#f5f5f5]'
-                  }`}
-                >
-                  {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
-                </button>
-              ))}
-              {(search || filterKehadiran !== 'semua') && (
-                <button
-                  type="button"
-                  onClick={handleResetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
-                >
-                  Reset Filter
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
