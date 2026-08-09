@@ -472,97 +472,6 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
   }
 };
 
-// ==================== TAMBAH PESERTA MANUAL ====================
-
-// POST /api/kegiatan/:id/peserta/tambah
-// Tambahkan peserta satu per satu (tanpa import CSV)
-export const tambahPesertaManual = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
-    if (isNaN(kegiatanId)) {
-      return res.status(400).json({ success: false, message: 'ID kegiatan tidak valid' });
-    }
-
-    const { nim, hadir, peranId } = req.body;
-
-    if (!nim) {
-      return res.status(400).json({ success: false, message: 'NIM wajib diisi' });
-    }
-
-    // Cek kegiatan
-    const kegiatan = await prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
-    if (!kegiatan) {
-      return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan' });
-    }
-
-    // Cek akses: jika operator_org, pastikan kegiatan milik organisasinya
-    const peran = req.user?.peran;
-    if (peran === 'operator_org') {
-      const operator = await getOrganisasiOperator(BigInt(userId));
-      if (!operator || kegiatan.organisasiId !== operator.organisasiId) {
-        return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses ke kegiatan ini' });
-      }
-    }
-
-    // Cari mahasiswa berdasarkan NIM
-    const mahasiswa = await prisma.mahasiswa.findUnique({
-      where: { nim: nim.trim() },
-      include: {
-        user: { select: { nama: true } },
-        prodi: { include: { fakultas: { select: { nama: true } } } }
-      }
-    });
-
-    if (!mahasiswa) {
-      return res.status(404).json({
-        success: false,
-        message: `NIM ${nim} belum terdaftar di sistem SAPS. Mahasiswa harus login/register terlebih dahulu.`
-      });
-    }
-
-    // Buat atau update partisipasi (upsert, anti-duplikat)
-    const partisipasi = await prisma.partisipasi.upsert({
-      where: {
-        kegiatanId_mahasiswaId: {
-          kegiatanId,
-          mahasiswaId: mahasiswa.userId
-        }
-      },
-      update: {
-        kehadiran: hadir ?? true,
-        peranVerifId: peranId ? parseInt(peranId) : null,
-        status: (hadir ?? true) ? 'hadir' : 'tidak_hadir'
-      },
-      create: {
-        kegiatanId,
-        mahasiswaId: mahasiswa.userId,
-        kehadiran: hadir ?? true,
-        peranVerifId: peranId ? parseInt(peranId) : null,
-        status: (hadir ?? true) ? 'hadir' : 'tidak_hadir'
-      }
-    });
-
-    res.status(200).json({
-      success: true,
-      message: `Peserta ${mahasiswa.user.nama} (${nim}) berhasil ditambahkan.`,
-      data: {
-        id: partisipasi.id.toString(),
-        nim: mahasiswa.nim,
-        nama: mahasiswa.user.nama,
-        prodi: mahasiswa.prodi?.nama || '-',
-        fakultas: mahasiswa.prodi?.fakultas?.nama || '-',
-        status: (hadir ?? true) ? 'hadir' : 'tidak_hadir'
-      }
-    });
-
-  } catch (error: any) {
-    next(error);
-  }
-};
-
 // ==================== DOWNLOAD TEMPLATE ====================
 
 // GET /api/ukm/kegiatan/:kegiatanId/peserta/template
@@ -1116,3 +1025,5 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
+
+
