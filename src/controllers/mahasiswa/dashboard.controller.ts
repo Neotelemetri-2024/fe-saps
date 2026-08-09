@@ -322,11 +322,20 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
         };
       });
 
+    // Hitung persentase dan tahap (sama persis dengan getDashboard)
+    const persentaseTotal = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
+    let tahap = 'Tahap I: Dasar';
+    if (persentaseTotal >= 75) tahap = 'Tahap IV: Akhir';
+    else if (persentaseTotal >= 50) tahap = 'Tahap III: Mahir';
+    else if (persentaseTotal >= 25) tahap = 'Tahap II: Menengah';
+
     res.status(200).json({
       success: true,
       data: {
         totalPoin,
         totalTarget,
+        persentaseTotal,
+        tahap,
         progressTahun,
         riwayat: tabelRiwayat
       }

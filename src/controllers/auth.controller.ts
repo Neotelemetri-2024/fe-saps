@@ -226,7 +226,7 @@ const updateProfilSchema = z.object({
     .union([z.string().email("Format email tidak valid"), z.null()])
     .optional(),
   nomorTelepon: z
-    .string()
+    .coerce.string()
     .max(30, "Nomor telepon maksimal 30 karakter")
     .nullable()
     .optional(),

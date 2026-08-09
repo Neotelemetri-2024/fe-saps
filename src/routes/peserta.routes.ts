@@ -67,4 +67,11 @@ router.put(
   updatePeserta
 );
 
+// POST /api/kegiatan/:id/peserta/tambah — Tambah peserta satu per satu (manual, alias)
+router.post(
+  '/:id/peserta/tambah',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  tambahPesertaManual
+);
+
 export default router;
