@@ -76,7 +76,7 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
     }
 
     const body = createAkunLengkapSchema.parse(req.body);
-    const emailFormat = `${body.username}@ukmf.unand.ac.id`;
+    const emailFormat = body.username;
 
     const checkExistingUser = await prisma.user.findFirst({
       where: { email: emailFormat }

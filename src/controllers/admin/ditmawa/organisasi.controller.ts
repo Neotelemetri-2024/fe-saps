@@ -59,7 +59,7 @@ export const createAkunLengkap = async (req: Request, res: Response): Promise<vo
     const aktorId = BigInt(req.user!.id);
     const body = createAkunLengkapSchema.parse(req.body);
 
-    const emailFormat = `${body.username}@ukm.unand.ac.id`;
+    const emailFormat = body.username;
 
     const checkExistingUser = await prisma.user.findFirst({
       where: { email: emailFormat }

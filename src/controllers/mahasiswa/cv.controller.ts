@@ -13,10 +13,16 @@ export const generatePublicCvToken = async (req: Request, res: Response): Promis
       data: { publicCvToken: token }
     });
 
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const publicCvUrl = `${baseUrl}/cv/public/${token}`;
+    const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicCvUrl)}`;
+
     res.json({
       success: true,
       data: {
         publicCvToken: mahasiswa.publicCvToken,
+        publicCvUrl,
+        linkedInShareUrl,
         message: 'Link publik berhasil dibuat'
       }
     });
@@ -125,9 +131,18 @@ const fetchPortofolioData = async (mahasiswaId: bigint) => {
     });
   }
 
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const token = mahasiswa.publicCvToken;
+  const publicCvUrl = token ? `${baseUrl}/cv/public/${token}` : null;
+  const linkedInShareUrl = publicCvUrl
+    ? `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicCvUrl)}`
+    : null;
+
   return {
     generatedAt: new Date().toISOString(),
     publicCvToken: mahasiswa.publicCvToken,
+    publicCvUrl,
+    linkedInShareUrl,
     mahasiswa: {
       nim: mahasiswa.nim,
       nama: mahasiswa.user.nama,

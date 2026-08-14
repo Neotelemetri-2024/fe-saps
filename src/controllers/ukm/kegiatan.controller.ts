@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma';
 import { bagiPoin } from '../../lib/distribusiPoin';
 
@@ -365,37 +366,113 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // Parse CSV
-    const csvText = req.file.buffer.toString('utf-8');
-    const lines = csvText.split(/\r?\n/).filter(line => {
-      const t = line.trim()
-      return t !== '' && !t.startsWith('#')
+    // Ambil daftar peran untuk kategori kegiatan ini
+    const peranList = await prisma.mpPeran.findMany({
+      where: kegiatan.kategoriId ? { kategoriId: kegiatan.kategoriId } : {},
+      orderBy: { urutan: 'asc' }
     });
 
-    if (lines.length < 2) {
-      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file CSV.' });
-    }
+    const findPeranId = (peranInput: any): number | null => {
+      if (peranInput === undefined || peranInput === null) return null;
+      const inputStr = String(peranInput).trim();
+      if (!inputStr) return null;
+
+      // 1. Jika berupa ID Angka (misal: 21, 22)
+      if (!isNaN(Number(inputStr))) {
+        const numId = Number(inputStr);
+        const matchById = peranList.find(p => p.id === numId);
+        if (matchById) return matchById.id;
+      }
+
+      // 2. Jika berupa Nama Peran (misal: "JUARA 1/ EMAS", "PESERTA") - Exact Match
+      const lower = inputStr.toLowerCase();
+      const exactMatch = peranList.find(p => p.nama.toLowerCase() === lower);
+      if (exactMatch) return exactMatch.id;
+
+      // 3. Partial Match (misal: "JUARA 1" mencocokkan "JUARA 1/ EMAS")
+      const partialMatch = peranList.find(p => 
+        p.nama.toLowerCase().includes(lower) || lower.includes(p.nama.toLowerCase())
+      );
+      if (partialMatch) return partialMatch.id;
+
+      return null;
+    };
 
     const peserta: { nim: string; nama: string; hadir: boolean; peranId: number | null }[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const separator = lines[i].includes(';') ? ';' : ',';
-      const cols = lines[i].split(separator);
-      const nim = (cols[0] ?? '').trim();
-      if (!nim) continue;
+    let isExcelParsed = false;
 
-      const nama = (cols[1] ?? '').trim();
+    // Coba parse sebagai file Excel (.xlsx)
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(req.file.buffer as any);
+      const worksheet = workbook.getWorksheet('Data Peserta') || workbook.worksheets[0];
 
-      const hadirStr = (cols[2] ?? '').trim().toLowerCase();
-      const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes';
+      if (worksheet) {
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          if (rowNumber === 1) return; // Skip header
 
-      const peranIdRaw = (cols[3] ?? '').trim();
-      const peranId = peranIdRaw && !isNaN(Number(peranIdRaw)) ? Number(peranIdRaw) : null;
+          const cellNim = row.getCell(1);
+          const cellNama = row.getCell(2);
+          const cellHadir = row.getCell(3);
+          const cellPeran = row.getCell(4);
 
-      peserta.push({ nim, nama, hadir, peranId });
+          let nim = String(cellNim.text || cellNim.value || '').trim();
+
+          // Penanganan Scientific Notation e.g. 2.31E+09 jika di-copy-paste di Excel
+          if (nim.toLowerCase().includes('e+')) {
+            nim = Number(nim).toLocaleString('fullwide', { useGrouping: false });
+          }
+          nim = nim.replace(/\s+/g, '');
+
+          if (!nim || nim.startsWith('#') || nim.toLowerCase() === 'nim') return;
+
+          const nama = String(cellNama.text || cellNama.value || '').trim();
+          const hadirStr = String(cellHadir.text || cellHadir.value || '').trim().toLowerCase();
+          const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes' || hadirStr === 'hadir';
+
+          const peranVal = cellPeran.text || cellPeran.value;
+          const peranId = findPeranId(peranVal);
+
+          peserta.push({ nim, nama, hadir, peranId });
+        });
+        isExcelParsed = peserta.length > 0;
+      }
+    } catch (err) {
+      // Jika bukan file XLSX valid, fallback ke parsing CSV
+    }
+
+    // Fallback: Parsing CSV Teks
+    if (!isExcelParsed) {
+      const csvText = req.file.buffer.toString('utf-8');
+      const lines = csvText.split(/\r?\n/).filter(line => {
+        const t = line.trim();
+        return t !== '' && !t.startsWith('#');
+      });
+
+      for (let i = 1; i < lines.length; i++) {
+        const separator = lines[i].includes(';') ? ';' : ',';
+        const cols = lines[i].split(separator);
+
+        let nim = (cols[0] ?? '').trim().replace(/^"/, '').replace(/"$/, '');
+        if (nim.toLowerCase().includes('e+')) {
+          nim = Number(nim).toLocaleString('fullwide', { useGrouping: false });
+        }
+        nim = nim.replace(/\s+/g, '');
+        if (!nim || nim.toLowerCase() === 'nim') continue;
+
+        const nama = (cols[1] ?? '').trim().replace(/^"/, '').replace(/"$/, '');
+        const hadirStr = (cols[2] ?? '').trim().toLowerCase().replace(/^"/, '').replace(/"$/, '');
+        const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes' || hadirStr === 'hadir';
+
+        const peranRaw = (cols[3] ?? '').trim().replace(/^"/, '').replace(/"$/, '');
+        const peranId = findPeranId(peranRaw);
+
+        peserta.push({ nim, nama, hadir, peranId });
+      }
     }
 
     if (peserta.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada data peserta di file CSV.' });
+      return res.status(400).json({ success: false, message: 'Tidak ada data peserta yang valid di file Excel/CSV.' });
     }
 
     // Cari mahasiswa berdasarkan NIM
@@ -517,20 +594,97 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
       orderBy: { urutan: 'asc' }
     });
 
-    // Build CSV: sheet utama + referensi peran digabung dalam satu file
-    const rows: string[] = [];
-    rows.push('NIM,NAMA,HADIR (true/false),PERAN_ID');
-    rows.push(`2311210001,Nama Mahasiswa,true,${peranList[0]?.id ?? 1}`);
-    rows.push('');
-    rows.push('# Referensi Peran:');
-    rows.push('PERAN_ID,NAMA PERAN');
-    peranList.forEach(p => rows.push(`${p.id},"${p.nama}"`));
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'SAPS UNAND';
+    workbook.created = new Date();
 
-    const csv = rows.join('\n');
+    // Sheet 1: Data Peserta
+    const sheetData = workbook.addWorksheet('Data Peserta');
+    sheetData.columns = [
+      { header: 'NIM', key: 'nim', width: 22 },
+      { header: 'NAMA MAHASISWA', key: 'nama', width: 32 },
+      { header: 'STATUS KEHADIRAN', key: 'hadir', width: 20 },
+      { header: 'PERAN / PRESTASI', key: 'peran', width: 35 }
+    ];
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="template_peserta_kegiatan_${kegiatanId}.csv"`);
-    res.send(csv);
+    // Style Header (Row 1)
+    const headerRow = sheetData.getRow(1);
+    headerRow.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFF' }, size: 11 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1E7E34' } // SAPS UNAND Green
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.height = 28;
+
+    // Sheet 2: Petunjuk & Referensi
+    const sheetRef = workbook.addWorksheet('Petunjuk & Referensi');
+    sheetRef.columns = [
+      { header: 'PERAN_ID', key: 'id', width: 12 },
+      { header: 'NAMA PERAN / PRESTASI', key: 'nama', width: 45 }
+    ];
+
+    const refHeaderRow = sheetRef.getRow(1);
+    refHeaderRow.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFF' } };
+    refHeaderRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '0D6EFD' }
+    };
+    refHeaderRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    peranList.forEach((p) => {
+      sheetRef.addRow({ id: p.id, nama: p.nama });
+    });
+
+    sheetRef.addRow({});
+    sheetRef.addRow({ id: 'PETUNJUK PENGISIAN TEMPLATE:' });
+    sheetRef.addRow({ id: '1. Kolom NIM diisi angka NIM Mahasiswa (contoh: 2311210001).' });
+    sheetRef.addRow({ id: '2. Kolom NAMA MAHASISWA opsional (bisa diisi untuk mempermudah pengecekan).' });
+    sheetRef.addRow({ id: '3. Kolom STATUS KEHADIRAN diisi: HADIR atau TIDAK HADIR.' });
+    const samplePeran = peranList[0]?.nama || 'PESERTA';
+    sheetRef.addRow({ id: `4. Kolom PERAN / PRESTASI pilih/ketik nama peran sesuai daftar (Contoh: ${samplePeran}).` });
+
+    // Format NIM column as Text '@' and set Dropdown Validations for C & D columns
+    const lastRefRow = peranList.length + 1;
+    for (let i = 2; i <= 500; i++) {
+      sheetData.getCell(`A${i}`).numFmt = '@';
+      sheetData.getCell(`C${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: ['"HADIR, TIDAK HADIR"'],
+        showErrorMessage: true,
+        errorTitle: 'Pilihan Tidak Valid',
+        error: 'Silakan pilih HADIR atau TIDAK HADIR dari daftar.'
+      };
+      if (peranList.length > 0) {
+        sheetData.getCell(`D${i}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`'Petunjuk & Referensi'!$B$2:$B$${lastRefRow}`],
+          showErrorMessage: true,
+          errorTitle: 'Peran Tidak Valid',
+          error: 'Silakan pilih Nama Peran / Prestasi dari daftar yang tersedia.'
+        };
+      }
+    }
+
+    // Add sample row to Sheet 1
+    const sampleRow = sheetData.addRow({
+      nim: '2311210001',
+      nama: 'Budi Santoso',
+      hadir: 'HADIR',
+      peran: samplePeran
+    });
+    sampleRow.getCell(1).numFmt = '@';
+    sampleRow.getCell(1).value = '2311210001';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const safeNama = namaKegiatan.replace(/[^a-zA-Z0-9_-]/g, '_');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Template_Peserta_${safeNama}.xlsx"`);
+    res.send(Buffer.from(buffer));
 
   } catch (error: any) {
     next(error);
