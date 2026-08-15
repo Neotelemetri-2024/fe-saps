@@ -7,7 +7,7 @@ function requiredEnv(name: string): string {
 }
 
 function linkedInApiVersion(): string {
-  return process.env.LINKEDIN_API_VERSION || '202401';
+  return process.env.LINKEDIN_API_VERSION || '202607';
 }
 
 function restHeaders(accessToken: string): Record<string, string> {
