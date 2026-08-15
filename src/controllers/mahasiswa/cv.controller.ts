@@ -24,7 +24,7 @@ function buildCvImageUrl(token: string): string {
 
 // Pesan default yang otomatis terisi di composer LinkedIn saat mahasiswa klik "Share ke LinkedIn".
 export function buildDefaultShareMessage(nama: string): string {
-  return `🎓 Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS (Sistem Akademik Poin Sistem) Universitas Andalas.`;
+  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS (Sistem Akademik Poin Sistem) Universitas Andalas.`;
 }
 
 // LinkedIn share-offsite lama hanya menerima parameter "url" dan tidak bisa diisi pesan default.

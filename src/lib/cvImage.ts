@@ -106,40 +106,40 @@ export async function generateCvImage(data: CvImageData): Promise<Buffer> {
 
   const padX = 88;
   const contentRight = WIDTH - padX;
-  let y = 72;
+  let y = 80;
   const footerY = HEIGHT - 52;
 
   // ---------- Header (Civitor: name, job title, contact lines) ----------
   ctx.fillStyle = TEXT;
-  ctx.font = '700 22px "Times Bold"';
-  drawCentered(ctx, truncate(data.nama, 48), y);
-  y += 22;
+  ctx.font = '700 36px "Times Bold"';
+  drawCentered(ctx, truncate(data.nama, 42), y);
+  y += 38;
 
   if (data.prodi) {
     ctx.fillStyle = MUTED;
-    ctx.font = '700 17px "Times Bold"';
-    drawCentered(ctx, truncate(data.prodi, 60), y);
-    y += 18;
+    ctx.font = '700 24px "Times Bold"';
+    drawCentered(ctx, truncate(data.prodi, 52), y);
+    y += 28;
   }
 
   ctx.fillStyle = MUTED;
-  ctx.font = '400 16px "Times"';
+  ctx.font = '400 20px "Times"';
   const primaryContact = joinMeta([
     data.fakultas ? `${data.fakultas}, Padang` : 'Padang',
     data.phone,
     data.email,
   ]);
   if (primaryContact) {
-    drawCentered(ctx, truncate(primaryContact, 92), y);
-    y += 16;
+    drawCentered(ctx, truncate(primaryContact, 78), y);
+    y += 24;
   }
   const secondaryContact = joinMeta([data.nim ? `NIM: ${data.nim}` : '', 'Universitas Andalas']);
   if (secondaryContact) {
-    drawCentered(ctx, truncate(secondaryContact, 92), y);
-    y += 16;
+    drawCentered(ctx, truncate(secondaryContact, 78), y);
+    y += 24;
   }
 
-  y += 10;
+  y += 14;
 
   const drawSectionTitle = (title: string) => {
     ctx.fillStyle = TEXT;

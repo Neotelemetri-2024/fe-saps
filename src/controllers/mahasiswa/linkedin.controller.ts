@@ -139,7 +139,15 @@ export const shareCvToLinkedIn = async (req: Request, res: Response): Promise<vo
     }
 
     const publicToken = await ensurePublicCvToken(userId);
-    const commentary = `${buildDefaultShareMessage(cvData.mahasiswa.nama)}\n\n${buildPublicCvUrl(publicToken)}`;
+    const publicCvUrl = buildPublicCvUrl(publicToken);
+
+    const rawCaption = typeof req.body?.caption === 'string' ? req.body.caption.trim() : '';
+    const caption = rawCaption.slice(0, 3000);
+    const defaultMessage = buildDefaultShareMessage(cvData.mahasiswa.nama);
+    let commentary = caption || defaultMessage;
+    if (!commentary.includes(publicCvUrl)) {
+      commentary = `${commentary}\n\n${publicCvUrl}`.slice(0, 3000);
+    }
 
     const imageBuffer = await generateCvImage({
       nama: cvData.mahasiswa.nama,
