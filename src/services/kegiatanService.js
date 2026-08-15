@@ -182,7 +182,10 @@ export async function downloadTemplatePeserta(kegiatanId) {
     if (raw) token = JSON.parse(raw)?.token || null
   } catch { /* ignore */ }
   const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   })
   if (!res.ok) {
     const errText = await res.text()

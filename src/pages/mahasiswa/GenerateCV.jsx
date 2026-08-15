@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Download, Share2 } from 'lucide-react'
+import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
+import { getCv, generateCvPublicLink } from '../../services/cvService'
+
+function LinkedInIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" {...props}>
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.56V9h3.554v11.452z" />
+    </svg>
+  )
+}
 
 function yearFromDate(val) {
   if (!val) return ''
@@ -35,6 +44,16 @@ function GenerateCV() {
   const [organisasiData, setOrganisasiData] = useState([])
   const [sertifikasiData, setSertifikasiData] = useState([])
   const [prestasiData, setPrestasiData] = useState([])
+  const [linkedInShareUrl, setLinkedInShareUrl] = useState(null)
+  const [sharingLinkedIn, setSharingLinkedIn] = useState(false)
+
+  useEffect(() => {
+    getCv()
+      .then((data) => {
+        if (data?.linkedInShareUrl) setLinkedInShareUrl(data.linkedInShareUrl)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const userId = user?.id
@@ -126,19 +145,24 @@ function GenerateCV() {
     window.print()
   }
 
-  const handleShare = async () => {
+  const handleShareLinkedIn = async () => {
+    if (linkedInShareUrl) {
+      window.open(linkedInShareUrl, '_blank', 'width=600,height=600')
+      return
+    }
+    setSharingLinkedIn(true)
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `CV — ${displayUser.name}`,
-          text: `CV ${displayUser.name} — ${displayUser.prodi}`,
-        })
+      const data = await generateCvPublicLink()
+      if (data?.linkedInShareUrl) {
+        setLinkedInShareUrl(data.linkedInShareUrl)
+        window.open(data.linkedInShareUrl, '_blank', 'width=600,height=600')
       } else {
-        await navigator.clipboard.writeText(window.location.href)
-        toast.success('Tautan halaman disalin ke clipboard')
+        toast.error('Gagal membuat link publik CV')
       }
-    } catch {
-      // dibatalkan pengguna, abaikan
+    } catch (err) {
+      toast.error('Gagal membuat link publik CV', { description: err.message })
+    } finally {
+      setSharingLinkedIn(false)
     }
   }
 
@@ -174,10 +198,11 @@ function GenerateCV() {
               </button>
               <button
                 type="button"
-                onClick={handleShare}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#d1d5db] bg-white px-4 py-2 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
+                onClick={handleShareLinkedIn}
+                disabled={sharingLinkedIn}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#004182] disabled:opacity-60"
               >
-                <Share2 className="h-4 w-4" /> Bagikan
+                <LinkedInIcon /> {sharingLinkedIn ? 'Memproses…' : 'Share ke LinkedIn'}
               </button>
             </div>
 

@@ -15,6 +15,10 @@ function buildHeaders(extra = {}) {
   const token = getToken()
   return {
     'Content-Type': 'application/json',
+    // Lewati halaman peringatan interstisial ngrok (free tier) — tanpa header ini,
+    // ngrok balas HTML warning (200 OK, tanpa header CORS) alih-alih meneruskan ke backend,
+    // yang browser laporkan sebagai error CORS padahal request belum sampai ke server.
+    'ngrok-skip-browser-warning': 'true',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extra,
   }
@@ -105,7 +109,10 @@ export async function del(path) {
 
 export async function postFormData(path, formData) {
   const token = getToken()
-  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const headers = {
+    'ngrok-skip-browser-warning': 'true',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
   const res = await fetch(buildUrl(path), {
     method: 'POST',
     headers,

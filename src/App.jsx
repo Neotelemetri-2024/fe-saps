@@ -2,6 +2,7 @@ import { Toaster } from 'sonner'
 import { Route, Routes, Outlet, Navigate } from 'react-router-dom'
 import AuthGuard, { RoleGuard } from './components/AuthGuard'
 import LoginPage from './pages/LoginPage'
+import CvPublic from './pages/CvPublic'
 import MahasiswaDashboard from './pages/mahasiswa/Dashboard'
 import AjukanKegiatanEksternal from './pages/mahasiswa/AjukanKegiatanEksternal'
 import AjukanKegiatanForm from './pages/mahasiswa/AjukanKegiatanForm'
@@ -78,6 +79,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/cv/public/:token" element={<CvPublic />} />
 
         {/* Mahasiswa */}
         <Route path="mahasiswa" element={<AuthGuard><RoleGuard allowedRoles={['mahasiswa']}><Outlet /></RoleGuard></AuthGuard>}>
