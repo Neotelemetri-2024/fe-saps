@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import crypto from 'crypto';
-import { generateCvImage } from '../../lib/cvImage';
+import { generateCvImage, CV_IMAGE_WIDTH, CV_IMAGE_HEIGHT } from '../../lib/cvImage';
 
 // URL publik CV (halaman SPA interaktif, untuk manusia)
 function buildPublicCvUrl(token: string): string {
@@ -194,8 +194,8 @@ export const getPublicCvOgPage = async (req: Request, res: Response): Promise<vo
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${imageUrl}" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="627" />
+  <meta property="og:image:width" content="${CV_IMAGE_WIDTH}" />
+  <meta property="og:image:height" content="${CV_IMAGE_HEIGHT}" />
   <meta property="og:url" content="${escapeHtml(buildOgPageUrl(token))}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
@@ -214,18 +214,14 @@ export const getPublicCvOgPage = async (req: Request, res: Response): Promise<vo
 };
 
 // GET /cv/public/:token/image.png (didaftarkan di root, lihat index.ts)
-// Gambar kartu ringkasan CV (nama, prodi, total poin, total kegiatan) yang dipakai sebagai
-// og:image. Di-generate on-the-fly dengan @napi-rs/canvas setiap diakses.
+// "Gambar CV" — kartu ringkasan visual (identitas, stat, progres capaian, riwayat kegiatan)
+// yang dipakai sebagai og:image. Di-generate on-the-fly dengan @napi-rs/canvas setiap diakses.
 export const getPublicCvImage = async (req: Request, res: Response): Promise<void> => {
   try {
     const token = req.params.token as string;
 
     const mahasiswa = await prisma.mahasiswa.findUnique({
       where: { publicCvToken: token },
-      include: {
-        user: { select: { nama: true } },
-        prodi: { include: { fakultas: true } },
-      },
     });
 
     if (!mahasiswa) {
@@ -233,18 +229,21 @@ export const getPublicCvImage = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const perolehan = await prisma.perolehanPoin.aggregate({
-      where: { mahasiswaId: mahasiswa.userId, status: 'sah' },
-      _sum: { totalPoin: true },
-      _count: true,
-    });
+    const cvData = await fetchPortofolioData(mahasiswa.userId);
+    if (!cvData) {
+      res.status(404).send('Not found');
+      return;
+    }
 
     const buffer = await generateCvImage({
-      nama: mahasiswa.user.nama,
-      prodi: mahasiswa.prodi.nama,
-      fakultas: mahasiswa.prodi.fakultas.nama,
-      totalPoin: perolehan._sum.totalPoin ?? 0,
-      totalKegiatan: perolehan._count,
+      nama: cvData.mahasiswa.nama,
+      nim: cvData.mahasiswa.nim,
+      prodi: cvData.mahasiswa.prodi,
+      fakultas: cvData.mahasiswa.fakultas,
+      totalPoin: cvData.ringkasan.totalPoin,
+      totalKegiatan: cvData.ringkasan.totalKegiatan,
+      capaianProgress: cvData.capaianProgress,
+      riwayatPerKategori: cvData.riwayatPerKategori,
     });
 
     res.set('Content-Type', 'image/png');
