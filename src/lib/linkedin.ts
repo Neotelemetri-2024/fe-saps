@@ -101,6 +101,13 @@ async function uploadImageBytes(uploadUrl: string, imageBuffer: Buffer): Promise
   }
 }
 
+// Posts API memakai "little text": | { } @ [ ] ( ) < > # \ * _ ~ harus di-escape.
+// Tanpa ini LinkedIn diam-diam memotong caption di karakter pertama (mis. '('),
+// sehingga yang tampil hanya "…tercatat di SAPS" dan sisa teks kustom hilang.
+function escapeLinkedInCommentary(text: string): string {
+  return text.replace(/[\\|{}\[\]()<>#*_~@]/g, '\\$&');
+}
+
 async function createImagePost(params: {
   accessToken: string;
   memberId: string;
@@ -112,7 +119,7 @@ async function createImagePost(params: {
     headers: restHeaders(params.accessToken),
     body: JSON.stringify({
       author: `urn:li:person:${params.memberId}`,
-      commentary: params.commentary,
+      commentary: escapeLinkedInCommentary(params.commentary),
       visibility: 'PUBLIC',
       distribution: {
         feedDistribution: 'MAIN_FEED',
