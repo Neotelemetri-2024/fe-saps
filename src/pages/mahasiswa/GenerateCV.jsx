@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import Modal from '../../components/ui/Modal'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
 import { shareCvToLinkedIn, getLinkedInConnectUrl } from '../../services/cvService'
@@ -35,6 +36,12 @@ function findKategoriEntries(riwayatPerKategori = {}, keys) {
   return matched
 }
 
+const CAPTION_STORAGE_KEY = 'saps_linkedin_caption'
+
+function defaultShareCaption(nama) {
+  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS (Sistem Akademik Poin Sistem) Universitas Andalas.`
+}
+
 function GenerateCV() {
   const user = getCurrentUser()
   const [generated, setGenerated] = useState(false)
@@ -45,6 +52,8 @@ function GenerateCV() {
   const [sertifikasiData, setSertifikasiData] = useState([])
   const [prestasiData, setPrestasiData] = useState([])
   const [sharingLinkedIn, setSharingLinkedIn] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareCaption, setShareCaption] = useState('')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -55,17 +64,10 @@ function GenerateCV() {
 
     if (linkedinStatus === 'connected') {
       setGenerated(true)
-      setSharingLinkedIn(true)
-      shareCvToLinkedIn()
-        .then(() => toast.success('Berhasil diposting ke LinkedIn'))
-        .catch((err) => {
-          if (err?.status === 428 && err?.body?.needsConnect) {
-            window.location.href = getLinkedInConnectUrl()
-            return
-          }
-          toast.error('Gagal membagikan CV ke LinkedIn', { description: err.message })
-        })
-        .finally(() => setSharingLinkedIn(false))
+      const saved = sessionStorage.getItem(CAPTION_STORAGE_KEY)
+      setShareCaption(saved || defaultShareCaption(user?.nama || 'Mahasiswa'))
+      setShareModalOpen(true)
+      toast.success('Akun LinkedIn terhubung. Periksa caption, lalu posting.')
       return
     }
 
@@ -77,7 +79,7 @@ function GenerateCV() {
     if (linkedinStatus === 'error') {
       toast.error('Gagal menghubungkan akun LinkedIn')
     }
-  }, [])
+  }, [user?.nama])
 
   useEffect(() => {
     const userId = user?.id
@@ -169,10 +171,24 @@ function GenerateCV() {
     window.print()
   }
 
-  const handleShareLinkedIn = async () => {
+  const openShareModal = () => {
+    const saved = sessionStorage.getItem(CAPTION_STORAGE_KEY)
+    setShareCaption(saved || defaultShareCaption(displayUser.name))
+    setShareModalOpen(true)
+  }
+
+  const handleConfirmShareLinkedIn = async () => {
+    const caption = shareCaption.trim()
+    if (!caption) {
+      toast.error('Caption tidak boleh kosong')
+      return
+    }
+    sessionStorage.setItem(CAPTION_STORAGE_KEY, caption)
     setSharingLinkedIn(true)
     try {
-      await shareCvToLinkedIn()
+      await shareCvToLinkedIn(caption)
+      sessionStorage.removeItem(CAPTION_STORAGE_KEY)
+      setShareModalOpen(false)
       toast.success('Berhasil diposting ke LinkedIn')
     } catch (err) {
       if (err?.status === 428 && err?.body?.needsConnect) {
@@ -217,7 +233,7 @@ function GenerateCV() {
               </button>
               <button
                 type="button"
-                onClick={handleShareLinkedIn}
+                onClick={openShareModal}
                 disabled={sharingLinkedIn}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#004182] disabled:opacity-60"
               >
@@ -232,18 +248,18 @@ function GenerateCV() {
               style={{ fontFamily: "'Times New Roman', Times, serif", color: '#111827' }}
             >
               <div className="mb-2 text-center">
-                <h1 className="text-[18px] font-bold tracking-wide">
+                <h1 className="text-[26px] font-bold tracking-wide">
                   {displayUser.name}
                 </h1>
                 {displayUser.prodi && displayUser.prodi !== '-' && (
-                  <p className="mt-0.5 text-[13.5px] font-bold text-[#374151]">
+                  <p className="mt-1 text-[16px] font-bold text-[#374151]">
                     {displayUser.prodi}
                   </p>
                 )}
-                <p className="mt-0.5 text-[12.5px] text-[#374151]">
+                <p className="mt-1 text-[14px] text-[#374151]">
                   {[displayUser.address, displayUser.phone, displayUser.email].filter((p) => p && p !== '-').join(' | ')}
                 </p>
-                <p className="mt-0.5 text-[12.5px] text-[#374151]">
+                <p className="mt-0.5 text-[14px] text-[#374151]">
                   {[displayUser.nim !== '-' ? `NIM: ${displayUser.nim}` : '', displayUser.universitas].filter(Boolean).join(' | ')}
                 </p>
               </div>
@@ -340,6 +356,42 @@ function GenerateCV() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={shareModalOpen}
+        onClose={() => !sharingLinkedIn && setShareModalOpen(false)}
+        title="Share ke LinkedIn"
+        size="lg"
+      >
+        <p className="mb-3 text-sm text-[#616161]">
+          Edit caption sebelum diposting. Gambar CV akan dilampirkan otomatis.
+        </p>
+        <textarea
+          value={shareCaption}
+          onChange={(e) => setShareCaption(e.target.value.slice(0, 3000))}
+          rows={6}
+          className="w-full resize-y rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#0A66C2] focus:ring-1 focus:ring-[#0A66C2]"
+        />
+        <p className="mt-1 text-right text-xs text-[#9aa0a6]">{shareCaption.length}/3000</p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShareModalOpen(false)}
+            disabled={sharingLinkedIn}
+            className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#f5f6f8] disabled:opacity-60"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmShareLinkedIn}
+            disabled={sharingLinkedIn || !shareCaption.trim()}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-60"
+          >
+            <LinkedInIcon /> {sharingLinkedIn ? 'Memposting…' : 'Posting'}
+          </button>
+        </div>
+      </Modal>
     </DashboardLayout>
   )
 }

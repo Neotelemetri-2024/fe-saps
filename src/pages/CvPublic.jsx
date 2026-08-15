@@ -54,14 +54,14 @@ function CvPublic() {
         style={{ fontFamily: "'Times New Roman', Times, serif", color: '#111827' }}
       >
         <div className="mb-2 text-center">
-          <h1 className="text-[18px] font-bold tracking-wide">{mahasiswa.nama}</h1>
+          <h1 className="text-[26px] font-bold tracking-wide">{mahasiswa.nama}</h1>
           {mahasiswa.prodi && (
-            <p className="mt-0.5 text-[13.5px] font-bold text-[#374151]">{mahasiswa.prodi}</p>
+            <p className="mt-1 text-[16px] font-bold text-[#374151]">{mahasiswa.prodi}</p>
           )}
-          <p className="mt-0.5 text-[12.5px] text-[#374151]">
+          <p className="mt-1 text-[14px] text-[#374151]">
             {[mahasiswa.fakultas ? `${mahasiswa.fakultas}, Padang` : 'Padang', mahasiswa.email].filter(Boolean).join(' | ')}
           </p>
-          <p className="mt-0.5 text-[12.5px] text-[#374151]">
+          <p className="mt-0.5 text-[14px] text-[#374151]">
             {[mahasiswa.nim ? `NIM: ${mahasiswa.nim}` : '', 'Universitas Andalas'].filter(Boolean).join(' | ')}
           </p>
         </div>

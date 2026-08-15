@@ -15,8 +15,8 @@ export async function getPublicCv(token) {
   return res?.data || res || {}
 }
 
-export async function shareCvToLinkedIn() {
-  return post('/api/mahasiswa/linkedin/share')
+export async function shareCvToLinkedIn(caption) {
+  return post('/api/mahasiswa/linkedin/share', { caption: caption || '' })
 }
 
 export function getLinkedInConnectUrl() {
