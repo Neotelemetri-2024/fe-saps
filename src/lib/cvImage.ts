@@ -1,8 +1,7 @@
 import { GlobalFonts, createCanvas } from '@napi-rs/canvas';
 import path from 'path';
 
-// Tinos = metrik Times New Roman (Google Croscore). Di-bundle via npm supaya
-// rendering konsisten di server Linux yang tidak punya Times New Roman.
+// Tinos = metrik Times New Roman (Google Croscore), meniru font Times-Roman Civitor.
 let fontsRegistered = false;
 function ensureFontsRegistered() {
   if (fontsRegistered) return;
@@ -12,16 +11,14 @@ function ensureFontsRegistered() {
   fontsRegistered = true;
 }
 
-// Rasio kira-kira A4 (210×297 mm)
-const WIDTH = 1200;
-const HEIGHT = 1700;
+// A4 595×842 pt @ 2x supaya tajam di LinkedIn
+const WIDTH = 1190;
+const HEIGHT = 1684;
 
-const INK = '#1a1a1a';
-const SUB = '#333333';
-const MUTED = '#666666';
-const FOOTER = '#888888';
-const RULE = '#1a1a1a';
-const RULE_LIGHT = '#cccccc';
+const TEXT = '#111827';
+const MUTED = '#374151';
+const LINE = '#1f2937';
+const FOOTER = '#6b7280';
 
 function truncate(text: string, max: number): string {
   if (!text) return '';
@@ -38,6 +35,10 @@ function yearFromDate(val: unknown): string {
   } catch {
     return '';
   }
+}
+
+function joinMeta(parts: Array<string | undefined | null | false>): string {
+  return parts.filter((p): p is string => Boolean(p && String(p).trim() && p !== '-')).join(' | ');
 }
 
 export interface CvImageRiwayatItem {
@@ -84,8 +85,8 @@ function drawCentered(ctx: CanvasCtx, text: string, y: number) {
   ctx.fillText(text, (WIDTH - w) / 2, y);
 }
 
-function drawHLine(ctx: CanvasCtx, x1: number, x2: number, y: number, color: string, width = 2) {
-  ctx.strokeStyle = color;
+function drawHLine(ctx: CanvasCtx, x1: number, x2: number, y: number, width = 1.5) {
+  ctx.strokeStyle = LINE;
   ctx.lineWidth = width;
   ctx.beginPath();
   ctx.moveTo(x1, y);
@@ -93,7 +94,7 @@ function drawHLine(ctx: CanvasCtx, x1: number, x2: number, y: number, color: str
   ctx.stroke();
 }
 
-// Render dokumen CV ATS-friendly — meniru #cv-print-area di GenerateCV.jsx
+// Layout meniru Civitor (CvDocument.tsx / CvPreview.tsx): padat, Times, ATS.
 export async function generateCvImage(data: CvImageData): Promise<Buffer> {
   ensureFontsRegistered();
 
@@ -103,80 +104,86 @@ export async function generateCvImage(data: CvImageData): Promise<Buffer> {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  const padX = 90;
+  const padX = 88;
   const contentRight = WIDTH - padX;
-  let y = 88;
-  const footerY = HEIGHT - 56;
+  let y = 72;
+  const footerY = HEIGHT - 52;
 
-  // ---------- Header ----------
-  ctx.fillStyle = INK;
-  ctx.font = '700 42px "Times Bold"';
-  drawCentered(ctx, truncate(data.nama.toUpperCase(), 36), y);
-  y += 36;
-
-  ctx.fillStyle = SUB;
-  ctx.font = '400 22px "Times"';
-  drawCentered(ctx, truncate(`${data.prodi} — Universitas Andalas`, 60), y);
-  y += 32;
-
-  const contactParts = [data.nim, data.email, data.phone, data.fakultas].filter((p) => p && p !== '-');
-  ctx.font = '400 18px "Times"';
-  drawCentered(ctx, truncate(contactParts.join('  |  '), 92), y);
+  // ---------- Header (Civitor: name, job title, contact lines) ----------
+  ctx.fillStyle = TEXT;
+  ctx.font = '700 22px "Times Bold"';
+  drawCentered(ctx, truncate(data.nama, 48), y);
   y += 22;
 
-  drawHLine(ctx, padX, contentRight, y, RULE, 3);
-  y += 48;
+  if (data.prodi) {
+    ctx.fillStyle = MUTED;
+    ctx.font = '700 17px "Times Bold"';
+    drawCentered(ctx, truncate(data.prodi, 60), y);
+    y += 18;
+  }
+
+  ctx.fillStyle = MUTED;
+  ctx.font = '400 16px "Times"';
+  const primaryContact = joinMeta([
+    data.fakultas ? `${data.fakultas}, Padang` : 'Padang',
+    data.phone,
+    data.email,
+  ]);
+  if (primaryContact) {
+    drawCentered(ctx, truncate(primaryContact, 92), y);
+    y += 16;
+  }
+  const secondaryContact = joinMeta([data.nim ? `NIM: ${data.nim}` : '', 'Universitas Andalas']);
+  if (secondaryContact) {
+    drawCentered(ctx, truncate(secondaryContact, 92), y);
+    y += 16;
+  }
+
+  y += 10;
 
   const drawSectionTitle = (title: string) => {
-    ctx.fillStyle = INK;
-    ctx.font = '700 20px "Times Bold"';
+    ctx.fillStyle = TEXT;
+    ctx.font = '700 17px "Times Bold"';
     ctx.fillText(title.toUpperCase(), padX, y);
-    y += 10;
-    drawHLine(ctx, padX, contentRight, y, RULE, 1.5);
-    y += 32;
+    y += 6;
+    drawHLine(ctx, padX, contentRight, y, 1.5);
+    y += 22;
   };
 
-  const drawEmpty = (text: string) => {
-    ctx.fillStyle = MUTED;
-    ctx.font = '400 19px "Times"';
-    ctx.fillText(text, padX, y);
-    y += 36;
-  };
+  // Title bold + optional " | meta" on the left; date pinned on the right.
+  const drawEntryHeader = (title: string, metaText: string, date: string) => {
+    if (y > footerY - 48) return false;
+    ctx.font = '700 17px "Times Bold"';
+    const titleText = truncate(title, 42);
+    const titleW = ctx.measureText(titleText).width;
 
-  const drawTwoLineItem = (title: string, subtitle: string, right: string) => {
-    if (y > footerY - 70) return false;
-    ctx.fillStyle = INK;
-    ctx.font = '700 21px "Times Bold"';
-    ctx.fillText(truncate(title, 48), padX, y);
-    if (right) {
-      ctx.fillStyle = SUB;
-      ctx.font = '400 19px "Times"';
-      const rw = ctx.measureText(right).width;
-      ctx.fillText(right, contentRight - rw, y);
+    ctx.fillStyle = TEXT;
+    ctx.fillText(titleText, padX, y);
+
+    let cursorX = padX + titleW;
+    if (metaText) {
+      ctx.font = '400 17px "Times"';
+      const meta = truncate(` | ${metaText}`, 36);
+      ctx.fillText(meta, cursorX, y);
     }
-    y += 26;
-    if (subtitle) {
-      ctx.fillStyle = SUB;
-      ctx.font = '400 19px "Times"';
-      ctx.fillText(truncate(subtitle, 62), padX, y);
-      y += 28;
-    } else {
-      y += 8;
+
+    if (date) {
+      ctx.fillStyle = TEXT;
+      ctx.font = '400 17px "Times"';
+      const dw = ctx.measureText(date).width;
+      ctx.fillText(date, contentRight - dw, y);
     }
+    y += 22;
     return true;
   };
 
-  const drawBulletRow = (left: string, right: string) => {
-    if (y > footerY - 50) return false;
-    ctx.fillStyle = INK;
-    ctx.font = '400 19px "Times"';
-    ctx.fillText(`•  ${truncate(left, 52)}`, padX, y);
-    if (right) {
-      ctx.fillStyle = SUB;
-      const rw = ctx.measureText(right).width;
-      ctx.fillText(right, contentRight - rw, y);
-    }
-    y += 28;
+  const drawDashLine = (text: string) => {
+    if (y > footerY - 40) return false;
+    ctx.fillStyle = TEXT;
+    ctx.font = '400 16px "Times"';
+    ctx.fillText('-', padX, y);
+    ctx.fillText(truncate(text, 78), padX + 16, y);
+    y += 20;
     return true;
   };
 
@@ -184,60 +191,61 @@ export async function generateCvImage(data: CvImageData): Promise<Buffer> {
 
   // ---------- Pendidikan ----------
   drawSectionTitle('Pendidikan');
-  const jenjang = data.prodi ? `S1 ${data.prodi}` : 'S1';
-  const tahunPendidikan = data.angkatan ? `${data.angkatan} – Sekarang` : 'Sekarang';
-  drawTwoLineItem(jenjang, 'Universitas Andalas, Padang', tahunPendidikan);
-  y += 12;
+  const degree = data.prodi ? `S1 ${data.prodi}` : 'S1';
+  const eduDate = data.angkatan ? `${data.angkatan} - Sekarang` : 'Sekarang';
+  drawEntryHeader(`Universitas Andalas - ${degree}`, 'Padang', eduDate);
+  y += 8;
 
-  // ---------- Pengalaman Organisasi ----------
-  drawSectionTitle('Pengalaman Organisasi');
+  // ---------- Pengalaman Organisasi (Civitor: experience) ----------
   const orgItems = findKategoriEntries(riwayat, ['organisasi', 'ukm', 'kepanitiaan']);
-  if (orgItems.length === 0) {
-    drawEmpty('Belum ada pengalaman organisasi.');
-  } else {
+  if (orgItems.length > 0) {
+    drawSectionTitle('Pengalaman Organisasi');
     for (const item of orgItems) {
-      const jabatan = item.peran || item.kegiatan || '-';
-      const organisasi = item.kegiatan && item.kegiatan !== jabatan
-        ? item.kegiatan
-        : (item.skala || item.kategori || '');
-      const tahun = yearFromDate(item.tanggal) || '-';
-      if (!drawTwoLineItem(jabatan, organisasi, tahun)) break;
+      const title = item.peran && item.kegiatan && item.peran !== item.kegiatan
+        ? `${item.peran} - ${item.kegiatan}`
+        : (item.peran || item.kegiatan || '-');
+      const metaText = item.skala || item.kategori || '';
+      const date = yearFromDate(item.tanggal);
+      if (!drawEntryHeader(title, metaText, date)) break;
+      y += 6;
     }
+    y += 4;
   }
-  y += 12;
 
-  // ---------- Sertifikasi & Pelatihan ----------
-  drawSectionTitle('Sertifikasi & Pelatihan');
+  // ---------- Sertifikasi (Civitor: name | issuer (date)) ----------
   const semItems = findKategoriEntries(riwayat, ['seminar', 'pelatihan', 'workshop', 'sertifikasi']);
-  if (semItems.length === 0) {
-    drawEmpty('Belum ada sertifikasi/pelatihan.');
-  } else {
+  if (semItems.length > 0) {
+    drawSectionTitle('Sertifikasi & Pelatihan');
     for (const item of semItems) {
-      if (!drawBulletRow(item.kegiatan || '-', yearFromDate(item.tanggal) || '-')) break;
+      if (y > footerY - 40) break;
+      const line = joinMeta([item.kegiatan, item.skala]) + (yearFromDate(item.tanggal) ? ` (${yearFromDate(item.tanggal)})` : '');
+      ctx.fillStyle = TEXT;
+      ctx.font = '400 17px "Times"';
+      ctx.fillText(truncate(line, 88), padX, y);
+      y += 20;
     }
+    y += 8;
   }
-  y += 12;
 
-  // ---------- Prestasi & Penghargaan ----------
-  drawSectionTitle('Prestasi & Penghargaan');
+  // ---------- Prestasi ----------
   const prestItems = findKategoriEntries(riwayat, ['prestasi', 'lomba', 'kompetisi', 'penghargaan']);
-  if (prestItems.length === 0) {
-    drawEmpty('Belum ada prestasi.');
-  } else {
+  if (prestItems.length > 0) {
+    drawSectionTitle('Prestasi & Penghargaan');
     for (const item of prestItems) {
-      const pemberi = item.skala || item.kategori || '-';
-      const tahun = yearFromDate(item.tanggal) || '-';
-      if (!drawTwoLineItem(item.kegiatan || '-', pemberi, tahun)) break;
+      const date = yearFromDate(item.tanggal);
+      if (!drawEntryHeader(item.kegiatan || '-', item.skala || item.kategori || '', date)) break;
+      if (item.totalPoin) {
+        drawDashLine(`${item.totalPoin} poin`);
+      }
+      y += 6;
     }
   }
 
-  // ---------- Footer ----------
-  drawHLine(ctx, padX, contentRight, footerY - 28, RULE_LIGHT, 1);
+  // ---------- Footer SAPS ----------
   ctx.fillStyle = FOOTER;
-  ctx.font = '400 16px "Times"';
+  ctx.font = '400 14px "Times"';
   const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  const footer = `Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas — ${tanggal}`;
-  drawCentered(ctx, footer, footerY);
+  drawCentered(ctx, `Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas — ${tanggal}`, footerY);
 
   return canvas.toBuffer('image/png');
 }
