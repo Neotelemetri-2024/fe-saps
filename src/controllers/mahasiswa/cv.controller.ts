@@ -240,9 +240,11 @@ export const getPublicCvImage = async (req: Request, res: Response): Promise<voi
       nim: cvData.mahasiswa.nim,
       prodi: cvData.mahasiswa.prodi,
       fakultas: cvData.mahasiswa.fakultas,
+      email: cvData.mahasiswa.email,
+      phone: cvData.mahasiswa.phone,
+      angkatan: cvData.mahasiswa.angkatan,
       totalPoin: cvData.ringkasan.totalPoin,
       totalKegiatan: cvData.ringkasan.totalKegiatan,
-      capaianProgress: cvData.capaianProgress,
       riwayatPerKategori: cvData.riwayatPerKategori,
     });
 
@@ -260,7 +262,7 @@ export const fetchPortofolioData = async (mahasiswaId: bigint) => {
   const mahasiswa = await prisma.mahasiswa.findUnique({
     where: { userId: mahasiswaId },
     include: {
-      user: { select: { nama: true, email: true } },
+      user: { select: { nama: true, email: true, nomorTelepon: true } },
       prodi: { include: { fakultas: true } },
     },
   });
@@ -319,6 +321,7 @@ export const fetchPortofolioData = async (mahasiswaId: bigint) => {
       nim: mahasiswa.nim,
       nama: mahasiswa.user.nama,
       email: mahasiswa.user.email,
+      phone: mahasiswa.user.nomorTelepon || '-',
       prodi: mahasiswa.prodi.nama,
       fakultas: mahasiswa.prodi.fakultas.nama,
       angkatan: mahasiswa.angkatan,

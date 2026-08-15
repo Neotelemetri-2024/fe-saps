@@ -146,9 +146,11 @@ export const shareCvToLinkedIn = async (req: Request, res: Response): Promise<vo
       nim: cvData.mahasiswa.nim,
       prodi: cvData.mahasiswa.prodi,
       fakultas: cvData.mahasiswa.fakultas,
+      email: cvData.mahasiswa.email,
+      phone: cvData.mahasiswa.phone,
+      angkatan: cvData.mahasiswa.angkatan,
       totalPoin: cvData.ringkasan.totalPoin,
       totalKegiatan: cvData.ringkasan.totalKegiatan,
-      capaianProgress: cvData.capaianProgress,
       riwayatPerKategori: cvData.riwayatPerKategori,
     });
 
