@@ -38,77 +38,100 @@ function CvPublic() {
 
   const { mahasiswa, ringkasan, capaianProgress = [], riwayatPerKategori = {} } = data
 
+  const yearFrom = (val) => {
+    if (!val) return ''
+    try {
+      return String(new Date(val).getFullYear())
+    } catch {
+      return ''
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f6f8] px-4 py-10 sm:px-6">
       <div
-        className="mx-auto w-full max-w-[210mm] bg-white p-8 shadow-lg ring-1 ring-[#e5e7eb] sm:p-12"
-        style={{ fontFamily: "'Times New Roman', Times, serif" }}
+        className="mx-auto w-full max-w-[210mm] bg-white px-11 py-8 shadow-lg ring-1 ring-[#e5e7eb]"
+        style={{ fontFamily: "'Times New Roman', Times, serif", color: '#111827' }}
       >
-        {/* Header */}
-        <div className="mb-6 flex flex-col items-center gap-2 border-b-2 border-[#1a1a1a] pb-4 text-center">
-          <img src={logoUnand} alt="Unand" className="h-10 w-10" />
-          <h1 className="text-[26px] font-bold uppercase tracking-wide text-[#1a1a1a]">
-            {mahasiswa.nama}
-          </h1>
-          <p className="text-[14px] text-[#333]">
-            {mahasiswa.prodi} — Universitas Andalas
+        <div className="mb-2 text-center">
+          <h1 className="text-[18px] font-bold tracking-wide">{mahasiswa.nama}</h1>
+          {mahasiswa.prodi && (
+            <p className="mt-0.5 text-[13.5px] font-bold text-[#374151]">{mahasiswa.prodi}</p>
+          )}
+          <p className="mt-0.5 text-[12.5px] text-[#374151]">
+            {[mahasiswa.fakultas ? `${mahasiswa.fakultas}, Padang` : 'Padang', mahasiswa.email].filter(Boolean).join(' | ')}
           </p>
-          <p className="text-[12.5px] text-[#333]">
-            {mahasiswa.nim} &nbsp;|&nbsp; {mahasiswa.email} &nbsp;|&nbsp; {mahasiswa.fakultas}
+          <p className="mt-0.5 text-[12.5px] text-[#374151]">
+            {[mahasiswa.nim ? `NIM: ${mahasiswa.nim}` : '', 'Universitas Andalas'].filter(Boolean).join(' | ')}
           </p>
         </div>
 
-        {/* Ringkasan Poin */}
-        <section className="mb-5">
-          <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
-            Ringkasan Capaian
+        <section className="mt-[14px]">
+          <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
+            Pendidikan
           </h2>
-          <p className="text-[12.5px] text-[#333]">
-            Total Poin: <span className="font-bold">{ringkasan?.totalPoin ?? 0}</span>
-            &nbsp;|&nbsp; Total Kegiatan: <span className="font-bold">{ringkasan?.totalKegiatan ?? 0}</span>
-          </p>
+          <div className="flex items-baseline justify-between gap-2 text-[13px] leading-[1.35]">
+            <p className="min-w-0 flex-1">
+              <span className="font-bold">Universitas Andalas{mahasiswa.prodi ? ` - S1 ${mahasiswa.prodi}` : ''}</span>
+              <span> | Padang</span>
+            </p>
+            <p className="shrink-0 whitespace-nowrap">
+              {mahasiswa.angkatan ? `${mahasiswa.angkatan} - Sekarang` : 'Sekarang'}
+            </p>
+          </div>
         </section>
 
-        {/* Progress Capaian */}
+        {ringkasan && (
+          <section className="mt-[14px]">
+            <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
+              Ringkasan Capaian
+            </h2>
+            <p className="text-[13px] leading-[1.35]">
+              Total Poin: <span className="font-bold">{ringkasan.totalPoin ?? 0}</span>
+              {' | '}
+              Total Kegiatan: <span className="font-bold">{ringkasan.totalKegiatan ?? 0}</span>
+            </p>
+          </section>
+        )}
+
         {capaianProgress.length > 0 && (
-          <section className="mb-5">
-            <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+          <section className="mt-[14px]">
+            <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
               Progres Capaian Kurikulum
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-[4px] text-[13px] leading-[1.35]">
               {capaianProgress.map((c) => (
-                <div key={c.capaianId} className="flex items-center justify-between gap-3 text-[12.5px] text-[#333]">
-                  <span>{c.nama}</span>
-                  <span className="shrink-0 font-semibold text-[#1a1a1a]">
-                    {c.diperoleh}/{c.target} ({c.persentase}%)
-                  </span>
-                </div>
+                <p key={c.capaianId}>
+                  <span className="font-bold">{c.nama}: </span>
+                  {c.diperoleh}/{c.target} ({c.persentase}%)
+                </p>
               ))}
             </div>
           </section>
         )}
 
-        {/* Riwayat per Kategori */}
         {Object.entries(riwayatPerKategori).map(([kategori, items]) => (
-          <section className="mb-5" key={kategori}>
-            <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+          <section className="mt-[14px]" key={kategori}>
+            <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
               {kategori}
             </h2>
-            <ul className="space-y-1 pl-5">
+            <div className="space-y-[10px]">
               {(items || []).map((item, i) => (
-                <li key={i} className="list-disc text-[12.5px] text-[#1a1a1a] marker:text-[#1a1a1a]">
-                  <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
-                    <span>{item.kegiatan}</span>
-                    <span className="shrink-0 text-[#333] sm:ml-4">{item.skala} — {item.totalPoin} poin</span>
+                <div key={i} className="flex items-baseline justify-between gap-2 text-[13px] leading-[1.35]">
+                  <p className="min-w-0 flex-1">
+                    <span className="font-bold">{item.kegiatan}</span>
+                    {item.skala && <span> | {item.skala}</span>}
+                  </p>
+                  <span className="shrink-0 whitespace-nowrap">
+                    {[yearFrom(item.tanggal), item.totalPoin != null ? `${item.totalPoin} poin` : ''].filter(Boolean).join(' · ')}
                   </span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         ))}
 
-        <hr className="mb-3 border-[#ccc]" />
-        <p className="text-center text-[10.5px] text-[#888]">
+        <p className="mt-8 text-center text-[10px] text-[#6b7280]">
           Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas — Sistem SAPS
         </p>
       </div>

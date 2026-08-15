@@ -225,44 +225,45 @@ function GenerateCV() {
               </button>
             </div>
 
-            {/* Dokumen CV — layout ATS-friendly: satu kolom, hierarki jelas, tanpa elemen dekoratif */}
+            {/* Dokumen CV — layout Civitor ATS: padat, Times, header Title | meta + tanggal kanan */}
             <div
               id="cv-print-area"
-              className="mx-auto w-full max-w-[210mm] bg-white p-8 shadow-lg ring-1 ring-[#e5e7eb] sm:p-12"
-              style={{ fontFamily: "'Times New Roman', Times, serif" }}
+              className="mx-auto w-full max-w-[210mm] bg-white px-11 py-8 shadow-lg ring-1 ring-[#e5e7eb]"
+              style={{ fontFamily: "'Times New Roman', Times, serif", color: '#111827' }}
             >
-              {/* Header CV */}
-              <div className="mb-6 border-b-2 border-[#1a1a1a] pb-4 text-center">
-                <h1 className="text-[26px] font-bold uppercase tracking-wide text-[#1a1a1a]">
+              <div className="mb-2 text-center">
+                <h1 className="text-[18px] font-bold tracking-wide">
                   {displayUser.name}
                 </h1>
-                <p className="mt-1 text-[14px] text-[#333]">
-                  {displayUser.prodi} — {displayUser.universitas}
+                {displayUser.prodi && displayUser.prodi !== '-' && (
+                  <p className="mt-0.5 text-[13.5px] font-bold text-[#374151]">
+                    {displayUser.prodi}
+                  </p>
+                )}
+                <p className="mt-0.5 text-[12.5px] text-[#374151]">
+                  {[displayUser.address, displayUser.phone, displayUser.email].filter((p) => p && p !== '-').join(' | ')}
                 </p>
-                <p className="mt-2 text-[12.5px] text-[#333]">
-                  {displayUser.nim} &nbsp;|&nbsp; {displayUser.email} &nbsp;|&nbsp; {displayUser.phone} &nbsp;|&nbsp; {displayUser.address}
+                <p className="mt-0.5 text-[12.5px] text-[#374151]">
+                  {[displayUser.nim !== '-' ? `NIM: ${displayUser.nim}` : '', displayUser.universitas].filter(Boolean).join(' | ')}
                 </p>
               </div>
 
               {/* Pendidikan */}
-              <section className="mb-5">
-                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
+              <section className="mt-[14px]">
+                <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
                   Pendidikan
                 </h2>
-                {pendidikanData.length === 0 ? (
-                  <p className="text-[12.5px] text-[#666]">Belum ada data pendidikan.</p>
-                ) : (
-                  <div className="space-y-2">
+                {pendidikanData.length === 0 ? null : (
+                  <div className="space-y-[10px]">
                     {pendidikanData.map((item, i) => (
-                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
-                        <div>
-                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.jenjang}</p>
-                          <p className="text-[12.5px] text-[#333]">{item.institusi}</p>
-                        </div>
-                        <div className="shrink-0 text-left text-[12.5px] text-[#333] sm:ml-4 sm:text-right">
-                          <p>{item.tahunMulai} – {item.tahunSelesai}</p>
-                          {item.ipk && <p>IPK: {item.ipk}</p>}
-                        </div>
+                      <div key={i} className="flex items-baseline justify-between gap-2 text-[13px] leading-[1.35]">
+                        <p className="min-w-0 flex-1">
+                          <span className="font-bold">{item.institusi}{item.jenjang ? ` - ${item.jenjang}` : ''}</span>
+                          <span> | Padang</span>
+                        </p>
+                        <p className="shrink-0 whitespace-nowrap">
+                          {item.tahunMulai && item.tahunSelesai ? `${item.tahunMulai} - ${item.tahunSelesai}` : item.tahunSelesai}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -270,77 +271,68 @@ function GenerateCV() {
               </section>
 
               {/* Pengalaman Organisasi */}
-              <section className="mb-5">
-                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
-                  Pengalaman Organisasi
-                </h2>
-                {organisasiData.length === 0 ? (
-                  <p className="text-[12.5px] text-[#666]">Belum ada pengalaman organisasi.</p>
-                ) : (
-                  <div className="space-y-2.5">
+              {organisasiData.length > 0 && (
+                <section className="mt-[14px]">
+                  <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
+                    Pengalaman Organisasi
+                  </h2>
+                  <div className="space-y-[10px]">
                     {organisasiData.map((item, i) => (
-                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
-                        <div>
-                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.jabatan}</p>
-                          <p className="text-[12.5px] text-[#333]">{item.organisasi}</p>
-                        </div>
-                        <div className="shrink-0 text-left text-[12.5px] text-[#333] sm:ml-4 sm:text-right">
+                      <div key={i} className="flex items-baseline justify-between gap-2 text-[13px] leading-[1.35]">
+                        <p className="min-w-0 flex-1">
+                          <span className="font-bold">{item.jabatan}</span>
+                          {item.organisasi && item.organisasi !== item.jabatan && (
+                            <span> | {item.organisasi}</span>
+                          )}
+                        </p>
+                        <p className="shrink-0 whitespace-nowrap">
                           {item.tahunMulai && item.tahunSelesai
-                            ? `${item.tahunMulai} – ${item.tahunSelesai}`
+                            ? `${item.tahunMulai} - ${item.tahunSelesai}`
                             : item.tahunSelesai}
-                        </div>
+                        </p>
                       </div>
                     ))}
                   </div>
-                )}
-              </section>
+                </section>
+              )}
 
               {/* Sertifikasi & Pelatihan */}
-              <section className="mb-5">
-                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
-                  Sertifikasi &amp; Pelatihan
-                </h2>
-                {sertifikasiData.length === 0 ? (
-                  <p className="text-[12.5px] text-[#666]">Belum ada sertifikasi/pelatihan.</p>
-                ) : (
-                  <ul className="space-y-1 pl-5">
+              {sertifikasiData.length > 0 && (
+                <section className="mt-[14px]">
+                  <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
+                    Sertifikasi &amp; Pelatihan
+                  </h2>
+                  <div className="space-y-[4px] text-[13px] leading-[1.35]">
                     {sertifikasiData.map((item, i) => (
-                      <li key={i} className="list-disc text-[12.5px] text-[#1a1a1a] marker:text-[#1a1a1a]">
-                        <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
-                          <span>{item.nama}</span>
-                          <span className="shrink-0 text-[#333] sm:ml-4">{item.tahun}</span>
-                        </span>
-                      </li>
+                      <p key={i}>
+                        {item.nama}{item.tahun ? ` (${item.tahun})` : ''}
+                      </p>
                     ))}
-                  </ul>
-                )}
-              </section>
+                  </div>
+                </section>
+              )}
 
               {/* Prestasi & Penghargaan */}
-              <section className="mb-5">
-                <h2 className="mb-2 border-b border-[#1a1a1a] pb-1 text-[13px] font-bold uppercase tracking-wider text-[#1a1a1a]">
-                  Prestasi &amp; Penghargaan
-                </h2>
-                {prestasiData.length === 0 ? (
-                  <p className="text-[12.5px] text-[#666]">Belum ada prestasi.</p>
-                ) : (
-                  <div className="space-y-2">
+              {prestasiData.length > 0 && (
+                <section className="mt-[14px]">
+                  <h2 className="mb-[6px] border-b border-[#1f2937] pb-[2px] text-[13px] font-bold uppercase tracking-wide">
+                    Prestasi &amp; Penghargaan
+                  </h2>
+                  <div className="space-y-[10px]">
                     {prestasiData.map((item, i) => (
-                      <div key={i} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
-                        <div>
-                          <p className="text-[13.5px] font-bold text-[#1a1a1a]">{item.nama}</p>
-                          <p className="text-[12.5px] text-[#333]">{item.pemberi}</p>
-                        </div>
-                        <span className="shrink-0 text-[12.5px] text-[#333] sm:ml-4">{item.tahun}</span>
+                      <div key={i} className="flex items-baseline justify-between gap-2 text-[13px] leading-[1.35]">
+                        <p className="min-w-0 flex-1">
+                          <span className="font-bold">{item.nama}</span>
+                          {item.pemberi && <span> | {item.pemberi}</span>}
+                        </p>
+                        <span className="shrink-0 whitespace-nowrap">{item.tahun}</span>
                       </div>
                     ))}
                   </div>
-                )}
-              </section>
+                </section>
+              )}
 
-              {/* Footer CV */}
-              <hr className="mb-3 border-[#ccc]" />
-              <p className="text-center text-[10.5px] text-[#888]">
+              <p className="mt-8 text-center text-[10px] text-[#6b7280]">
                 Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas —{' '}
                 {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
