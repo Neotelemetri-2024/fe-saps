@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { generateCvImage, CV_IMAGE_WIDTH, CV_IMAGE_HEIGHT } from '../../lib/cvImage';
 
 // URL publik CV (halaman SPA interaktif, untuk manusia)
-function buildPublicCvUrl(token: string): string {
+export function buildPublicCvUrl(token: string): string {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   return `${baseUrl}/cv/public/${token}`;
 }
@@ -23,7 +23,7 @@ function buildCvImageUrl(token: string): string {
 }
 
 // Pesan default yang otomatis terisi di composer LinkedIn saat mahasiswa klik "Share ke LinkedIn".
-function buildDefaultShareMessage(nama: string): string {
+export function buildDefaultShareMessage(nama: string): string {
   return `🎓 Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS (Sistem Akademik Poin Sistem) Universitas Andalas.`;
 }
 
@@ -256,7 +256,7 @@ export const getPublicCvImage = async (req: Request, res: Response): Promise<voi
 };
 
 // Helper function untuk mengambil data (Logika sama dengan Portofolio API)
-const fetchPortofolioData = async (mahasiswaId: bigint) => {
+export const fetchPortofolioData = async (mahasiswaId: bigint) => {
   const mahasiswa = await prisma.mahasiswa.findUnique({
     where: { userId: mahasiswaId },
     include: {

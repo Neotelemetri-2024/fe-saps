@@ -23,6 +23,7 @@ import organisasiRoutes from './routes/organisasi.routes';
 import organisasiFakultasRoutes from './routes/organisasi_fakultas.routes';
 import pesertaRoutes from './routes/peserta.routes';
 import { getPublicCvOgPage, getPublicCvImage } from './controllers/mahasiswa/cv.controller';
+import { linkedinCallback } from './controllers/mahasiswa/linkedin.controller';
 import { initializeFirebase } from './lib/fcm';
 
 dotenv.config();
@@ -84,6 +85,9 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/cv/public/:token', getPublicCvOgPage);
 // Gambar kartu ringkasan CV (og:image) yang dirujuk dari halaman og-page di atas.
 app.get('/cv/public/:token/image.png', getPublicCvImage);
+
+// OAuth callback LinkedIn — publik, karena LinkedIn redirect browser tidak membawa JWT.
+app.get('/api/mahasiswa/linkedin/callback', linkedinCallback);
 
 // ==================== SWAGGER API DOCS ====================
 const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));

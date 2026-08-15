@@ -15,6 +15,7 @@ import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } f
 import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal } from '../controllers/mahasiswa/dashboard.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import { getPrivateCv, generatePublicCvToken } from '../controllers/mahasiswa/cv.controller';
+import { connectLinkedIn, shareCvToLinkedIn } from '../controllers/mahasiswa/linkedin.controller';
 
 const router = Router();
 
@@ -73,5 +74,9 @@ router.get('/klaim-eksternal', getRiwayatKlaimEksternal);
 // CV & Portofolio
 router.get('/cv', getPrivateCv);
 router.post('/cv/generate-link', generatePublicCvToken);
+
+// Share native ke LinkedIn (OAuth + Posts API)
+router.get('/linkedin/connect', connectLinkedIn);
+router.post('/linkedin/share', shareCvToLinkedIn);
 
 export default router;

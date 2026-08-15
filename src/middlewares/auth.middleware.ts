@@ -26,16 +26,22 @@ declare global {
  */
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
+  const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  // OAuth start (GET /linkedin/connect) memakai full-page redirect, jadi JWT
+  // tidak bisa dikirim via Authorization header — izinkan ?token= hanya di rute itu.
+  const queryToken =
+    req.path.includes('linkedin/connect') && typeof req.query.token === 'string'
+      ? req.query.token
+      : null;
+  const token = headerToken || queryToken;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     res.status(401).json({
       success: false,
       message: 'Akses ditolak. Token tidak ditemukan. Silakan login terlebih dahulu.',
     });
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthPayload;

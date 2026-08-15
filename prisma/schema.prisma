@@ -210,6 +210,10 @@ model Mahasiswa {
 
   publicCvToken String? @unique @map("public_cv_token") @db.VarChar(50)
 
+  linkedinMemberId       String?   @map("linkedin_member_id") @db.VarChar(100)
+  linkedinAccessToken    String?   @map("linkedin_access_token") @db.Text
+  linkedinTokenExpiresAt DateTime? @map("linkedin_token_expires_at")
+
   @@map("mahasiswa")
 }
 
