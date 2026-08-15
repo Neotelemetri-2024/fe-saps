@@ -39,7 +39,7 @@ function findKategoriEntries(riwayatPerKategori = {}, keys) {
 const CAPTION_STORAGE_KEY = 'saps_linkedin_caption'
 
 function defaultShareCaption(nama) {
-  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS (Sistem Akademik Poin Sistem) Universitas Andalas.`
+  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS — Sistem Akademik Poin Sistem, Universitas Andalas.`
 }
 
 function GenerateCV() {
@@ -186,12 +186,10 @@ function GenerateCV() {
     sessionStorage.setItem(CAPTION_STORAGE_KEY, caption)
     setSharingLinkedIn(true)
     try {
-      const result = await shareCvToLinkedIn(caption)
+      await shareCvToLinkedIn(caption)
       sessionStorage.removeItem(CAPTION_STORAGE_KEY)
       setShareModalOpen(false)
-      toast.success('Berhasil diposting ke LinkedIn', {
-        description: result?.data?.commentary || caption,
-      })
+      toast.success('Berhasil diposting ke LinkedIn')
     } catch (err) {
       if (err?.status === 428 && err?.body?.needsConnect) {
         window.location.href = getLinkedInConnectUrl()
