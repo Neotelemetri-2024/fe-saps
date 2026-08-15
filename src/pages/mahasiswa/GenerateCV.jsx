@@ -186,10 +186,12 @@ function GenerateCV() {
     sessionStorage.setItem(CAPTION_STORAGE_KEY, caption)
     setSharingLinkedIn(true)
     try {
-      await shareCvToLinkedIn(caption)
+      const result = await shareCvToLinkedIn(caption)
       sessionStorage.removeItem(CAPTION_STORAGE_KEY)
       setShareModalOpen(false)
-      toast.success('Berhasil diposting ke LinkedIn')
+      toast.success('Berhasil diposting ke LinkedIn', {
+        description: result?.data?.commentary || caption,
+      })
     } catch (err) {
       if (err?.status === 428 && err?.body?.needsConnect) {
         window.location.href = getLinkedInConnectUrl()
@@ -363,10 +365,14 @@ function GenerateCV() {
         title="Share ke LinkedIn"
         size="lg"
       >
+        <label htmlFor="linkedin-caption" className="mb-1 block text-sm font-semibold text-[#111827]">
+          Teks postingan
+        </label>
         <p className="mb-3 text-sm text-[#616161]">
-          Ubah teks di bawah ini sesuai yang ingin tampil di LinkedIn. Gambar CV dilampirkan otomatis.
+          Ganti teks di bawah ini — persis ini yang akan tampil di LinkedIn, bukan pesan default. Gambar CV dilampirkan otomatis.
         </p>
         <textarea
+          id="linkedin-caption"
           value={shareCaption}
           onChange={(e) => {
             const next = e.target.value.slice(0, 3000)
