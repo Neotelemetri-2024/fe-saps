@@ -4,7 +4,7 @@ import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
-import { getCv, generateCvPublicLink } from '../../services/cvService'
+import { shareCvToLinkedIn, getLinkedInConnectUrl } from '../../services/cvService'
 
 function LinkedInIcon(props) {
   return (
@@ -44,15 +44,39 @@ function GenerateCV() {
   const [organisasiData, setOrganisasiData] = useState([])
   const [sertifikasiData, setSertifikasiData] = useState([])
   const [prestasiData, setPrestasiData] = useState([])
-  const [linkedInShareUrl, setLinkedInShareUrl] = useState(null)
   const [sharingLinkedIn, setSharingLinkedIn] = useState(false)
 
   useEffect(() => {
-    getCv()
-      .then((data) => {
-        if (data?.linkedInShareUrl) setLinkedInShareUrl(data.linkedInShareUrl)
-      })
-      .catch(() => {})
+    const params = new URLSearchParams(window.location.search)
+    const linkedinStatus = params.get('linkedin')
+    if (!linkedinStatus) return
+
+    window.history.replaceState({}, '', window.location.pathname)
+
+    if (linkedinStatus === 'connected') {
+      setGenerated(true)
+      setSharingLinkedIn(true)
+      shareCvToLinkedIn()
+        .then(() => toast.success('Berhasil diposting ke LinkedIn'))
+        .catch((err) => {
+          if (err?.status === 428 && err?.body?.needsConnect) {
+            window.location.href = getLinkedInConnectUrl()
+            return
+          }
+          toast.error('Gagal membagikan CV ke LinkedIn', { description: err.message })
+        })
+        .finally(() => setSharingLinkedIn(false))
+      return
+    }
+
+    if (linkedinStatus === 'denied') {
+      toast.error('Otorisasi LinkedIn dibatalkan')
+      return
+    }
+
+    if (linkedinStatus === 'error') {
+      toast.error('Gagal menghubungkan akun LinkedIn')
+    }
   }, [])
 
   useEffect(() => {
@@ -146,21 +170,16 @@ function GenerateCV() {
   }
 
   const handleShareLinkedIn = async () => {
-    if (linkedInShareUrl) {
-      window.open(linkedInShareUrl, '_blank', 'width=600,height=600')
-      return
-    }
     setSharingLinkedIn(true)
     try {
-      const data = await generateCvPublicLink()
-      if (data?.linkedInShareUrl) {
-        setLinkedInShareUrl(data.linkedInShareUrl)
-        window.open(data.linkedInShareUrl, '_blank', 'width=600,height=600')
-      } else {
-        toast.error('Gagal membuat link publik CV')
-      }
+      await shareCvToLinkedIn()
+      toast.success('Berhasil diposting ke LinkedIn')
     } catch (err) {
-      toast.error('Gagal membuat link publik CV', { description: err.message })
+      if (err?.status === 428 && err?.body?.needsConnect) {
+        window.location.href = getLinkedInConnectUrl()
+        return
+      }
+      toast.error('Gagal membagikan CV ke LinkedIn', { description: err.message })
     } finally {
       setSharingLinkedIn(false)
     }

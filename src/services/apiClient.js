@@ -56,7 +56,10 @@ async function handleResponse(res) {
   }
 
   if (!res.ok) {
-    throw new Error(extractErrorMessage(text, body, res.status))
+    const err = new Error(extractErrorMessage(text, body, res.status))
+    err.status = res.status
+    err.body = body
+    throw err
   }
   return body
 }
@@ -123,4 +126,8 @@ export async function postFormData(path, formData) {
 
 export function getApiBase() {
   return API_BASE
+}
+
+export function getAuthToken() {
+  return getToken()
 }

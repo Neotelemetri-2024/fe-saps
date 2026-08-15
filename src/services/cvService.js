@@ -1,4 +1,4 @@
-import { get, post } from './apiClient'
+import { get, post, getApiBase, getAuthToken } from './apiClient'
 
 export async function getCv() {
   const res = await get('/api/mahasiswa/cv')
@@ -13,4 +13,14 @@ export async function generateCvPublicLink() {
 export async function getPublicCv(token) {
   const res = await get(`/api/umum/cv/public/${token}`)
   return res?.data || res || {}
+}
+
+export async function shareCvToLinkedIn() {
+  return post('/api/mahasiswa/linkedin/share')
+}
+
+export function getLinkedInConnectUrl() {
+  const token = getAuthToken()
+  const base = `${getApiBase()}/api/mahasiswa/linkedin/connect`
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base
 }
