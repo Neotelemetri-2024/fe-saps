@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import { JWT_SECRET } from '../../middlewares/auth.middleware';
 import { generateCvImage } from '../../lib/cvImage';
@@ -12,7 +11,6 @@ import {
 } from '../../lib/linkedin';
 import {
   buildDefaultShareMessage,
-  buildPublicCvUrl,
   fetchPortofolioData,
 } from './cv.controller';
 
@@ -94,21 +92,6 @@ export const linkedinCallback = async (req: Request, res: Response): Promise<voi
   }
 };
 
-async function ensurePublicCvToken(userId: bigint): Promise<string> {
-  const existing = await prisma.mahasiswa.findUnique({
-    where: { userId },
-    select: { publicCvToken: true },
-  });
-  if (existing?.publicCvToken) return existing.publicCvToken;
-
-  const token = crypto.randomUUID();
-  await prisma.mahasiswa.update({
-    where: { userId },
-    data: { publicCvToken: token },
-  });
-  return token;
-}
-
 // POST /api/mahasiswa/linkedin/share
 export const shareCvToLinkedIn = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -138,16 +121,9 @@ export const shareCvToLinkedIn = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const publicToken = await ensurePublicCvToken(userId);
-    const publicCvUrl = buildPublicCvUrl(publicToken);
-
     const rawCaption = typeof req.body?.caption === 'string' ? req.body.caption.trim() : '';
-    const caption = rawCaption.slice(0, 3000);
-    const defaultMessage = buildDefaultShareMessage(cvData.mahasiswa.nama);
-    let commentary = caption || defaultMessage;
-    if (!commentary.includes(publicCvUrl)) {
-      commentary = `${commentary}\n\n${publicCvUrl}`.slice(0, 3000);
-    }
+    const commentary = (rawCaption || buildDefaultShareMessage(cvData.mahasiswa.nama)).slice(0, 3000);
+    console.log('[shareCvToLinkedIn] caption custom:', Boolean(rawCaption), 'panjang:', commentary.length);
 
     const imageBuffer = await generateCvImage({
       nama: cvData.mahasiswa.nama,
@@ -169,7 +145,7 @@ export const shareCvToLinkedIn = async (req: Request, res: Response): Promise<vo
       imageBuffer,
     });
 
-    res.json({ success: true, data: { postUrn } });
+    res.json({ success: true, data: { postUrn, commentary } });
   } catch (error) {
     console.error('[shareCvToLinkedIn]', error);
     const message = error instanceof Error ? error.message : 'Gagal membagikan CV ke LinkedIn';
