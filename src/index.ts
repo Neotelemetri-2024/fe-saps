@@ -22,6 +22,7 @@ import umumRoutes from './routes/umum.routes';
 import organisasiRoutes from './routes/organisasi.routes';
 import organisasiFakultasRoutes from './routes/organisasi_fakultas.routes';
 import pesertaRoutes from './routes/peserta.routes';
+import { getPublicCvOgPage, getPublicCvImage } from './controllers/mahasiswa/cv.controller';
 import { initializeFirebase } from './lib/fcm';
 
 dotenv.config();
@@ -76,6 +77,13 @@ app.get('/', (req: Request, res: Response) => {
     },
   });
 });
+
+// Halaman "og-page" CV publik — target link share LinkedIn (lihat cv.controller.ts).
+// Didaftarkan di root (bukan /api) karena URL ini yang di-crawl LinkedIn/Facebook/dll
+// dan dibagikan langsung ke pengguna. Bot dilayani HTML + meta OG; manusia di-redirect ke SPA.
+app.get('/cv/public/:token', getPublicCvOgPage);
+// Gambar kartu ringkasan CV (og:image) yang dirujuk dari halaman og-page di atas.
+app.get('/cv/public/:token/image.png', getPublicCvImage);
 
 // ==================== SWAGGER API DOCS ====================
 const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
