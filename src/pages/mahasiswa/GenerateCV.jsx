@@ -364,13 +364,19 @@ function GenerateCV() {
         size="lg"
       >
         <p className="mb-3 text-sm text-[#616161]">
-          Edit caption sebelum diposting. Gambar CV akan dilampirkan otomatis.
+          Ubah teks di bawah ini sesuai yang ingin tampil di LinkedIn. Gambar CV dilampirkan otomatis.
         </p>
         <textarea
           value={shareCaption}
-          onChange={(e) => setShareCaption(e.target.value.slice(0, 3000))}
+          onChange={(e) => {
+            const next = e.target.value.slice(0, 3000)
+            setShareCaption(next)
+            sessionStorage.setItem(CAPTION_STORAGE_KEY, next)
+          }}
+          autoFocus
           rows={6}
-          className="w-full resize-y rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#0A66C2] focus:ring-1 focus:ring-[#0A66C2]"
+          placeholder={defaultShareCaption(displayUser.name)}
+          className="w-full resize-y rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#0A66C2] focus:ring-1 focus:ring-[#0A66C2]"
         />
         <p className="mt-1 text-right text-xs text-[#9aa0a6]">{shareCaption.length}/3000</p>
         <div className="mt-5 flex justify-end gap-2">
