@@ -165,6 +165,7 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
         persentaseTotal: persen,
         tahap,
         progresTahunan,
+        progressTahun: progresTahunan,
         radarData,
         riwayatIzinPA: tabelIzinPA,
         riwayatEksternal: tabelEksternal
@@ -336,6 +337,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
         totalTarget,
         persentaseTotal,
         tahap,
+        progresTahunan: progressTahun,
         progressTahun,
         riwayat: tabelRiwayat
       }

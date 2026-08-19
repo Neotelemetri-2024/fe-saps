@@ -501,6 +501,12 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
           continue;
         }
 
+        // Jika relasi user tidak lengkap (orphan record)
+        if (!(mahasiswa as any).user) {
+          errors.push({ nim: p.nim, error: 'Data akun mahasiswa tidak lengkap (user tidak ditemukan). Hubungi admin.' });
+          continue;
+        }
+
         try {
           await tx.partisipasi.upsert({
             where: {
@@ -525,7 +531,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
           imported.push({
             nim: p.nim,
-            nama: (mahasiswa as any).user.nama,
+            nama: (mahasiswa as any)?.user?.nama || p.nama || '-',
             status: p.hadir ? 'hadir' : 'tidak_hadir'
           });
         } catch (err: any) {
