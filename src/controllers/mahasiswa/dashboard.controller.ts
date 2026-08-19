@@ -48,18 +48,35 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
     // Hitung target total dari seluruh capaian
     const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
 
+    // Total poin dihitung dari akumulasi seluruh perolehan poin sah mahasiswa
+    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
+
     // Hitung poin per capaian (tahun)
     const capaianMap: Record<number, number> = {};
     for (const p of perolehanPoin) {
-      for (const d of p.detail) {
-        const capaianId = d.subCapaian.capaianId;
-        capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
+      if (p.detail && p.detail.length > 0) {
+        let detailSum = 0;
+        for (const d of p.detail) {
+          const capaianId = d.subCapaian?.capaianId;
+          if (capaianId) {
+            capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
+            detailSum += d.poin;
+          }
+        }
+        // Jika ada selisih poin detail terhadap totalPoin (misal capaian lama)
+        const selisih = p.totalPoin - detailSum;
+        if (selisih > 0 && kurikulumAktif.capaian[0]?.id) {
+          const defaultCapaianId = kurikulumAktif.capaian[0].id;
+          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + selisih;
+        }
+      } else {
+        // Fallback jika tidak ada detail: masukkan ke capaian aktif pertama
+        const defaultCapaianId = kurikulumAktif.capaian[0]?.id;
+        if (defaultCapaianId) {
+          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + p.totalPoin;
+        }
       }
     }
-
-    // Total dijumlahkan dari rincian capaian aktif, bukan dari PerolehanPoin.totalPoin,
-    // agar angka total selalu sama dengan penjumlahan progres per tahun.
-    const totalPoin = kurikulumAktif.capaian.reduce((sum, c) => sum + (capaianMap[c.id] || 0), 0);
 
     const progresTahunan = kurikulumAktif.capaian.map(c => ({
       id: c.id,
@@ -206,19 +223,36 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       }
     });
 
+    // Total poin dihitung dari akumulasi seluruh perolehan poin sah mahasiswa
+    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
+    const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
+
     // Hitung per capaian (tahun kurikulum)
     const capaianMap: Record<number, number> = {};
     for (const p of perolehanPoin) {
-      for (const d of p.detail) {
-        const capaianId = d.subCapaian.capaianId;
-        capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
+      if (p.detail && p.detail.length > 0) {
+        let detailSum = 0;
+        for (const d of p.detail) {
+          const capaianId = d.subCapaian?.capaianId;
+          if (capaianId) {
+            capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
+            detailSum += d.poin;
+          }
+        }
+        // Jika ada selisih poin detail terhadap totalPoin (misal capaian lama)
+        const selisih = p.totalPoin - detailSum;
+        if (selisih > 0 && kurikulumAktif.capaian[0]?.id) {
+          const defaultCapaianId = kurikulumAktif.capaian[0].id;
+          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + selisih;
+        }
+      } else {
+        // Fallback jika tidak ada detail: masukkan ke capaian aktif pertama
+        const defaultCapaianId = kurikulumAktif.capaian[0]?.id;
+        if (defaultCapaianId) {
+          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + p.totalPoin;
+        }
       }
     }
-
-    // Total dijumlahkan dari rincian capaian aktif, bukan dari PerolehanPoin.totalPoin,
-    // agar angka total selalu sama dengan penjumlahan progres per tahun.
-    const totalPoin = kurikulumAktif.capaian.reduce((sum, c) => sum + (capaianMap[c.id] || 0), 0);
-    const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
 
     const progressTahun = kurikulumAktif.capaian.map(c => ({
       id: c.id,
@@ -229,7 +263,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       persentase: c.jumlahPoin > 0
         ? Math.round(((capaianMap[c.id] || 0) / c.jumlahPoin) * 100)
         : 0,
-      status: (capaianMap[c.id] || 0) >= c.jumlahPoin ? 'completed' : 'in_progress'
+      status: (capaianMap[c.id] || 0) >= c.jumlahPoin ? 'tuntas' : 'berjalan'
     }));
 
     // Filter query params
