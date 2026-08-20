@@ -15,6 +15,7 @@ const statusConfig = {
   dibatalkan: { bg: 'bg-red-50', text: 'text-red-700', label: 'Dibatalkan' },
   diteruskan: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Diteruskan' },
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
+  belum_diklaim: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Belum Diklaim' },
   menunggu: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Menunggu' },
   aktif: { bg: 'bg-green-100', text: 'text-green-800', label: 'Aktif' },
   'sudah tercatat': { bg: 'bg-green-50', text: 'text-green-800', label: 'Sudah Tercatat' },
