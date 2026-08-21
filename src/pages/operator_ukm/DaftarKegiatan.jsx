@@ -108,7 +108,8 @@ function DaftarKegiatan() {
   }
 
   const bisaPeserta = (item) => {
-    return statusLower(item) !== 'draft'
+    const s = statusLower(item)
+    return s === 'disetujui' || s === 'terpublikasi' || s === 'aktif'
   }
 
   const handleAjukan = async (id) => {

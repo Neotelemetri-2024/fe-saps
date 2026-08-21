@@ -89,11 +89,17 @@ function PimpinanUtamaDashboard() {
   ], [chartData])
 
   const rankingList = useMemo(() => {
-    return peringkatFakultas.map((item) => ({
+    const rows = peringkatFakultas.map((item) => ({
       name: item.fakultas || item.name || '-',
-      desc: item.totalPoin != null ? `Total poin: ${item.totalPoin}` : (item.desc || ''),
-      progress: item.rataRataCapaian ?? item.progress ?? 0,
+      totalPoin: Number(item.totalPoin ?? 0),
+      rataRata: item.rataRataCapaian ?? item.progress ?? 0,
       id: item.fakultasId,
+    }))
+    const maxPoin = Math.max(...rows.map((r) => r.totalPoin), 1)
+    return rows.map((r) => ({
+      ...r,
+      barValue: r.totalPoin,
+      barMax: maxPoin,
     }))
   }, [peringkatFakultas])
 
@@ -130,36 +136,65 @@ function PimpinanUtamaDashboard() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-[#222]">Ranking Fakultas</h3>
-          <p className="text-sm text-[#616161] mb-4">Daftar peringkat seluruh fakultas berdasarkan total poin semua matriks</p>
-          {loading ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat ranking…</p>
-          ) : rankingList.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data ranking fakultas.</p>
-          ) : (
-            <div className="space-y-4">
-              {rankingList.map((item, index) => (
-                <div key={item.id || index} className="flex items-center gap-4">
-                  <span className="w-6 text-lg font-bold text-brand-dark">{index + 1}.</span>
-                  <div className="flex-1">
-                    <p className="font-medium text-brand-dark">{item.name}</p>
-                    {item.desc && <p className="text-xs text-[#616161]">{item.desc}</p>}
-                    <ProgressBar value={item.progress} max={100} height={8} color="bg-brand-light" />
-                  </div>
-                  <span className="text-sm font-medium text-brand-dark">{item.progress}%</span>
-                </div>
-              ))}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-[#222]">Ranking Fakultas</h3>
+              <p className="mt-1 text-sm text-[#616161]">
+                Peringkat berdasarkan total poin seluruh matriks
+              </p>
             </div>
-          )}
-          <div className="mt-4 text-right">
             <Link
               to="/pimpinan_utama/detail-fakultas"
-              className="inline-flex items-center gap-1 rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="inline-flex items-center rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
             >
               Lihat selengkapnya →
             </Link>
           </div>
+
+          {loading ? (
+            <p className="py-10 text-center text-sm text-[#9aa0a6]">Memuat ranking…</p>
+          ) : rankingList.length === 0 ? (
+            <p className="py-10 text-center text-sm text-[#9aa0a6]">Belum ada data ranking fakultas.</p>
+          ) : (
+            <div className="divide-y divide-[#e9ebf8]">
+              {rankingList.map((item, index) => {
+                const rank = index + 1
+                const top = rank <= 3
+                return (
+                  <div
+                    key={item.id || index}
+                    className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0 sm:gap-4"
+                  >
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                        top
+                          ? 'bg-brand-dark text-white'
+                          : 'bg-[#f0f2f5] text-[#616161]'
+                      }`}
+                    >
+                      {rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                        <p className="truncate text-sm text-[#222]">{item.name}</p>
+                        <p className="shrink-0 text-sm font-semibold text-brand-dark">
+                          {item.totalPoin.toLocaleString('id-ID')}
+                          <span className="ml-1 text-xs font-normal text-[#9aa0a6]">poin</span>
+                        </p>
+                      </div>
+                      <ProgressBar
+                        value={item.barValue}
+                        max={item.barMax}
+                        height={6}
+                        color={top ? 'bg-brand-dark' : 'bg-brand-light'}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <PanduanCard

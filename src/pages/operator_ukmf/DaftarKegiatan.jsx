@@ -85,7 +85,10 @@ function DaftarKegiatan() {
   const bisaEdit = (item) => ['draft', 'perlu_revisi'].includes(statusLower(item))
   const bisaHapus = (item) => ['draft', 'perlu_revisi', 'ditolak'].includes(statusLower(item))
   const bisaAjukanUlang = (item) => statusLower(item) === 'perlu_revisi'
-  const bisaPeserta = (item) => statusLower(item) !== 'draft'
+  const bisaPeserta = (item) => {
+    const s = statusLower(item)
+    return s === 'disetujui' || s === 'terpublikasi' || s === 'aktif'
+  }
 
   const handleAjukan = async (id) => {
     setActionLoading(true)

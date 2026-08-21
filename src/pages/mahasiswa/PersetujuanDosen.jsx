@@ -20,16 +20,27 @@ import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(value) {
-  if (!value) return '-'
+  if (value == null || value === '') return '-'
+  const s = String(value).trim()
+  if (!s || s === '-') return '-'
+  if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
   try {
     const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return '-'
+    if (Number.isNaN(d.getTime())) return s
     return d.toLocaleDateString('id-ID', {
       day: '2-digit', month: 'short', year: 'numeric',
     })
   } catch {
-    return String(value)
+    return s
   }
+}
+
+function resolveSkala(item, kegiatan = {}) {
+  if (typeof kegiatan.skala === 'string' && kegiatan.skala.trim()) return kegiatan.skala
+  if (kegiatan.skala && typeof kegiatan.skala === 'object' && kegiatan.skala.nama) return kegiatan.skala.nama
+  if (typeof item.skala === 'string' && item.skala.trim()) return item.skala
+  if (item.skala && typeof item.skala === 'object' && item.skala.nama) return item.skala.nama
+  return '-'
 }
 
 function mapPengajuanSiapPA(item, i) {
@@ -86,11 +97,7 @@ function normalizeIzinPA(item, i = 0) {
     ),
     tanggalMulai: kegiatan.tanggalMulai || item.tanggal || null,
     tanggalPelaksanaan: kegiatan.tanggalMulai || item.tanggal || null,
-    skala:
-      (typeof kegiatan.skala === 'object' && kegiatan.skala?.nama) ||
-      (typeof kegiatan.skala === 'string' ? kegiatan.skala : null) ||
-      item.skala ||
-      '-',
+    skala: resolveSkala(item, kegiatan),
     deskripsi: kegiatan.deskripsi || item.deskripsi || null,
     linkWebsite: kegiatan.linkPenyelenggara || kegiatan.linkWebsite || null,
     emailPenyelenggara: kegiatan.emailPenyelenggara || null,
@@ -522,9 +529,9 @@ function PersetujuanDosen() {
                 { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
-                { key: 'skala', label: 'Skala' },
+                { key: 'skala', label: 'Skala', render: (row) => resolveSkala(row, typeof row.kegiatan === 'object' ? row.kegiatan : {}) },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggal || row.tanggalMulai || row.tanggalPelaksanaan || row.tanggalDiajukan || row.createdAt) },
                 {
                   key: 'status',
                   label: 'Status',

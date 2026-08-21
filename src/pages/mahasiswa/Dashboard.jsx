@@ -41,13 +41,16 @@ function StatusBadge({ status }) {
 }
 
 function buildProgressLabel(pct) {
-  if (pct >= 100) return `${pct}% COMPLETED`
-  if (pct >= 80) return `${pct}% ON TRACK`
-  return `${pct}% PROGRESS`
+  if (pct >= 100) return 'COMPLETED'
+  return 'PROGRESS'
 }
 
 function formatTanggal(value) {
-  if (!value) return null
+  if (value == null || value === '') return null
+  const s = String(value).trim()
+  if (!s || s === '-') return null
+  // Sudah diformat di service (mis. "19 Agu 2026") — jangan parse ulang
+  if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
   try {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return null
@@ -135,7 +138,7 @@ function MahasiswaDashboard() {
       target,
       pct,
       label: buildProgressLabel(pct),
-      onTrack: pct >= 50,
+      onTrack: pct >= 100,
     }
   })
 
@@ -170,7 +173,6 @@ function MahasiswaDashboard() {
                   <div className="h-2.5 rounded-full bg-brand-dark transition-all" style={{ width: `${Math.min(pctTotal, 100)}%` }} />
                 </div>
               </div>
-              <span className="text-xs text-[#616161]">{pctTotal}% Selesai</span>
             </div>
           </div>
 
@@ -258,7 +260,7 @@ function MahasiswaDashboard() {
                 { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || row.namaKegiatan} diajukanPada={row.tanggalPengajuan || row.dibuatPada || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggal) || '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggalPelaksanaan || row.tanggalMulai || row.tanggal) || '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
@@ -281,7 +283,7 @@ function MahasiswaDashboard() {
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggal) || '-' },
+                { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggalPelaksanaan || row.tanggalMulai || row.tanggal) || '-' },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
               ]}
               data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}

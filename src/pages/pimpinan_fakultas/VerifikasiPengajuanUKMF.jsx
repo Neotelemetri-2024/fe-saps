@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Clock, Eye, Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -144,15 +144,7 @@ function VerifikasiPengajuanUKMF() {
     { key: 'no', label: 'No', render: (_item, index) => start + index + 1 },
     {
       key: 'namaUkmf', label: 'Nama UKMF',
-      render: (item) => (
-        <div className="flex flex-col gap-0.5">
-          <p className="font-bold uppercase text-black">{item.namaUkmf}</p>
-          <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-            <Clock className="h-3.5 w-3.5 shrink-0 text-[#616161]" />
-            <span>{item.diajukanPada}</span>
-          </div>
-        </div>
-      ),
+      render: (item) => <span className="uppercase text-black">{item.namaUkmf}</span>,
     },
     { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },
     { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-black">{item.jenis}</span> },

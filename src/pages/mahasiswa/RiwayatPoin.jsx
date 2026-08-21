@@ -31,9 +31,8 @@ function mapStatus(status) {
 
 function buildProgressLabel(item) {
   const pct = item.persentase ?? 0
-  if (item.status === 'completed' || pct >= 100) return `${pct}% COMPLETED`
-  if (pct >= 80) return `${pct}% ON TRACK`
-  return `${pct}% PROGRESS`
+  if (item.status === 'completed' || pct >= 100) return 'COMPLETED'
+  return 'PROGRESS'
 }
 
 const columns = [
@@ -88,15 +87,13 @@ function RiwayatPoin() {
             const current = item.poinTerkumpul ?? item.current ?? 0
             const target = item.targetPoin ?? item.target ?? 1
             const pct = item.persentase ?? (target > 0 ? Math.round((current / target) * 100) : 0)
-            const onTrack = pct >= 50
+            const onTrack = pct >= 100
             return {
               tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
               current,
               target,
               label: buildProgressLabel({ ...item, persentase: pct }),
               onTrack,
-              remaining: pct < 100 && pct >= 80 ? `${Math.max(0, target - current)} remaining` : undefined,
-              status: pct < 50 ? 'In Progress' : undefined,
             }
           }),
         )
@@ -190,8 +187,6 @@ function RiwayatPoin() {
                   <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
                     {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
                     <span>{item.label}</span>
-                    {item.remaining && <span className="font-medium text-brand-dark">{item.remaining}</span>}
-                    {item.status && <span className="font-medium text-[#616161]">{item.status}</span>}
                   </div>
                 </div>
               ))}

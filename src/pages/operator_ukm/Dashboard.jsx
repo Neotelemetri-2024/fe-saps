@@ -12,7 +12,6 @@ import { get } from '../../services/apiClient'
 
 function formatTanggal(value) {
   if (!value) return ''
-
   try {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return String(value)
@@ -30,7 +29,12 @@ function UKMDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
 
-  const [stats, setStats] = useState(null)
+  const [statistik, setStatistik] = useState({
+    draft: 0,
+    pending: 0,
+    disetujui: 0,
+    eventAktif: 0,
+  })
   const [riwayat, setRiwayat] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -38,68 +42,33 @@ function UKMDashboard() {
     get('/api/ukm/dashboard')
       .then((res) => {
         const data = res?.data || res || {}
-
-        setStats(data)
-
+        const s = data.statistik || {}
+        setStatistik({
+          draft: s.draft ?? 0,
+          pending: s.pending ?? 0,
+          disetujui: s.disetujui ?? 0,
+          eventAktif: s.eventAktif ?? 0,
+        })
         const list =
+          data.riwayatPengajuan ||
           data.riwayatKegiatan ||
           data.kegiatan ||
           []
-
-        setRiwayat(
-          Array.isArray(list)
-            ? list.slice(0, 10)
-            : []
-        )
+        setRiwayat(Array.isArray(list) ? list.slice(0, 10) : [])
       })
       .catch(() => {
-        setStats(null)
+        setStatistik({ draft: 0, pending: 0, disetujui: 0, eventAktif: 0 })
         setRiwayat([])
       })
-      .finally(() => {
-        setLoading(false)
-      })
+      .finally(() => setLoading(false))
   }, [])
-
-  const statusLower = (item) => {
-    return String(item?.status || '').toLowerCase()
-  }
-
-  const allKegiatan =
-    stats?.riwayatKegiatan ||
-    stats?.kegiatan ||
-    []
-
-  const draftCount = allKegiatan.filter(
-    (item) => statusLower(item) === 'draft'
-  ).length
-
-  const pending = allKegiatan.filter((item) =>
-    ['diajukan', 'terverifikasi'].includes(
-      statusLower(item)
-    )
-  ).length
-
-  const disetujui = allKegiatan.filter((item) =>
-    ['disetujui', 'terpublikasi'].includes(
-      statusLower(item)
-    )
-  ).length
-
-  const aktif = allKegiatan.filter((item) =>
-    ['terpublikasi', 'berlangsung'].includes(
-      statusLower(item)
-    )
-  ).length
 
   const columns = [
     {
       key: 'no',
       label: 'No',
       render: (_row, index) => (
-        <span className="text-[#616161]">
-          {index + 1}
-        </span>
+        <span className="text-[#616161]">{index + 1}</span>
       ),
     },
     {
@@ -107,83 +76,38 @@ function UKMDashboard() {
       label: 'Kegiatan',
       render: (row) => (
         <KegiatanCell
-          nama={
-            row.nama ||
-            row.namaKegiatan ||
-            row.kegiatan ||
-            '-'
-          }
-          tanggal={formatTanggal(
-            row.diajukanPada ||
-            row.createdAt
-          )}
+          nama={row.nama || row.namaKegiatan || row.kegiatan || '-'}
+          tanggal={formatTanggal(row.diajukanPada || row.createdAt)}
         />
       ),
     },
     {
       key: 'jenis',
       label: 'Jenis',
-      render: (row) => (
-        <span className="text-[#616161]">
-          {typeof row.jenis === 'object'
-            ? row.jenis?.nama || '-'
-            : row.jenis ||
-              row.kategori?.nama ||
-              '-'}
-        </span>
-      ),
+      render: (row) => row.jenis || row.jenisKegiatan || row.kategori?.nama || '-',
     },
     {
       key: 'skala',
       label: 'Skala',
-      render: (row) => (
-        <span className="text-[#616161]">
-          {typeof row.skala === 'object'
-            ? row.skala?.nama || '-'
-            : row.skala || '-'}
-        </span>
-      ),
+      render: (row) => (typeof row.skala === 'object' ? row.skala?.nama : row.skala) || '-',
     },
     {
       key: 'tanggal',
       label: 'Tanggal',
-      render: (row) => (
-        <span className="text-[#616161]">
-          {formatTanggal(
-            row.tanggal ||
-            row.tgl ||
-            row.tanggalMulai ||
-            row.tanggalPelaksanaan
-          ) || '-'}
-        </span>
-      ),
+      render: (row) => formatTanggal(row.tanggalMulai || row.tanggal) || '-',
     },
     {
       key: 'status',
       label: 'Status',
-      render: (row) => (
-        <StatusBadge status={row.status} />
-      ),
+      render: (row) => <StatusBadge status={row.status} />,
     },
   ]
 
   const statCards = [
-    {
-      label: 'Draft',
-      value: loading ? '…' : draftCount,
-    },
-    {
-      label: 'Menunggu',
-      value: loading ? '…' : pending,
-    },
-    {
-      label: 'Disetujui',
-      value: loading ? '…' : disetujui,
-    },
-    {
-      label: 'Event Aktif',
-      value: loading ? '…' : aktif,
-    },
+    { label: 'Draft', value: loading ? '…' : statistik.draft },
+    { label: 'Menunggu', value: loading ? '…' : statistik.pending },
+    { label: 'Disetujui', value: loading ? '…' : statistik.disetujui },
+    { label: 'Event Aktif', value: loading ? '…' : statistik.eventAktif },
   ]
 
   return (
@@ -193,44 +117,33 @@ function UKMDashboard() {
       userRole="Operator UKM"
     >
       <div className="space-y-4 sm:space-y-6">
-        {/* Header halaman */}
         <div>
           <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
-            Dashboard UKM{' '}
-            {user?.namaOrganisasi || ''}
+            Dashboard UKM {user?.namaOrganisasi || ''}
           </h2>
-
           <p className="mt-1 text-sm text-[#616161]">
-            Kelola event dan verifikasi kehadiran
-            peserta.
+            Kelola event dan verifikasi kehadiran peserta.
           </p>
         </div>
 
-        {/* Statistik */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map(({ label, value }) => (
             <StatCard key={label} label={label} value={value} />
           ))}
         </div>
 
-        {/* Card putih riwayat kegiatan */}
         <TableCard
           title="Riwayat Terbaru Pengajuan Kegiatan"
           headerRight={
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  '/operator_ukm/daftar-kegiatan'
-                )
-              }
+              onClick={() => navigate('/operator_ukm/daftar-kegiatan')}
               className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
             >
               Lihat selengkapnya →
             </button>
           }
         >
-          {/* Tabel */}
           <TableFrame>
             <DataTable
               loading={loading}
@@ -241,7 +154,6 @@ function UKMDashboard() {
           </TableFrame>
         </TableCard>
 
-        {/* Panduan */}
         <PanduanCard
           className="max-w-sm"
           title="Manual Book User UKM"

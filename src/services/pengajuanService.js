@@ -15,9 +15,11 @@ export function subscribeDataUpdate(callback) {
 }
 
 function formatTanggalValue(value) {
-  if (!value) return ''
+  if (value == null || value === '') return ''
   const s = String(value)
   if (s === '-' || /invalid/i.test(s)) return s
+  // Sudah teks tanggal manusiawi
+  if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
   try {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return s

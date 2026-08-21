@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -8,19 +7,9 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
-import { getKegiatan } from '../../services/kegiatanService'
+import { get } from '../../services/apiClient'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
-
-function mapStatus(status) {
-  const s = String(status || '').toLowerCase()
-  if (['diajukan', 'pending'].includes(s)) return 'pending'
-  if (['terverifikasi', 'diteruskan'].includes(s)) return 'diteruskan'
-  if (['disetujui', 'terpublikasi', 'aktif'].includes(s)) return 'disetujui'
-  if (['ditolak'].includes(s)) return 'ditolak'
-  if (['perlu_revisi', 'revisi'].includes(s)) return 'revisi'
-  return s || 'pending'
-}
 
 function formatTanggal(value) {
   if (!value) return '-'
@@ -40,28 +29,40 @@ function formatTanggal(value) {
 function UKMFDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
+  const [statistik, setStatistik] = useState({
+    pending: 0,
+    disetujui: 0,
+    ditolak: 0,
+    eventAktif: 0,
+  })
   const [riwayat, setRiwayat] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getKegiatan()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : []
-        setRiwayat(list)
+    get('/api/ukm/dashboard')
+      .then((res) => {
+        const data = res?.data || res || {}
+        const s = data.statistik || {}
+        setStatistik({
+          pending: s.pending ?? 0,
+          disetujui: s.disetujui ?? 0,
+          ditolak: s.ditolak ?? 0,
+          eventAktif: s.eventAktif ?? 0,
+        })
+        const list =
+          data.riwayatPengajuan ||
+          data.riwayatKegiatan ||
+          data.kegiatan ||
+          []
+        setRiwayat(Array.isArray(list) ? list.slice(0, 10) : [])
       })
       .catch((err) => {
+        setStatistik({ pending: 0, disetujui: 0, ditolak: 0, eventAktif: 0 })
         setRiwayat([])
         toast.error('Gagal memuat dashboard', { description: err.message })
       })
       .finally(() => setLoading(false))
   }, [])
-
-  const pending = riwayat.filter((d) => ['diajukan', 'pending'].includes(String(d.status || '').toLowerCase())).length
-  const disetujui = riwayat.filter((d) => ['disetujui', 'terpublikasi', 'aktif'].includes(String(d.status || '').toLowerCase())).length
-  const ditolak = riwayat.filter((d) => String(d.status || '').toLowerCase() === 'ditolak').length
-  const aktif = riwayat.filter((d) => ['terpublikasi', 'aktif', 'disetujui'].includes(String(d.status || '').toLowerCase())).length
-
-  const preview = riwayat.slice(0, 10)
 
   return (
     <DashboardLayout
@@ -79,10 +80,10 @@ function UKMFDashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Pending', value: loading ? '…' : pending },
-            { label: 'Disetujui', value: loading ? '…' : disetujui },
-            { label: 'Ditolak', value: loading ? '…' : ditolak },
-            { label: 'Event Aktif', value: loading ? '…' : aktif },
+            { label: 'Pending', value: loading ? '…' : statistik.pending },
+            { label: 'Disetujui', value: loading ? '…' : statistik.disetujui },
+            { label: 'Ditolak', value: loading ? '…' : statistik.ditolak },
+            { label: 'Event Aktif', value: loading ? '…' : statistik.eventAktif },
           ].map(({ label, value }) => (
             <StatCard key={label} label={label} value={value} />
           ))}
@@ -103,18 +104,24 @@ function UKMFDashboard() {
           <TableFrame>
             <DataTable
               loading={loading}
-              data={preview}
+              data={riwayat}
               emptyText="Belum ada kegiatan."
               columns={[
                 { key: 'no', label: 'No', render: (_r, i) => i + 1 },
                 {
-                  key: 'kegiatan', label: 'Kegiatan',
-                  render: (r) => <KegiatanCell nama={r.nama || '-'} tanggal={formatTanggal(r.createdAt)} />,
+                  key: 'kegiatan',
+                  label: 'Kegiatan',
+                  render: (r) => (
+                    <KegiatanCell
+                      nama={r.nama || r.namaKegiatan || '-'}
+                      tanggal={formatTanggal(r.diajukanPada || r.createdAt)}
+                    />
+                  ),
                 },
-                { key: 'jenis', label: 'Jenis', render: (r) => r.kategori?.nama || r.jenis || '-' },
-                { key: 'skala', label: 'Skala', render: (r) => r.skala?.nama || r.skala || '-' },
+                { key: 'jenis', label: 'Jenis', render: (r) => r.jenis || r.jenisKegiatan || r.kategori?.nama || '-' },
+                { key: 'skala', label: 'Skala', render: (r) => (typeof r.skala === 'object' ? r.skala?.nama : r.skala) || '-' },
                 { key: 'tanggal', label: 'Tanggal', render: (r) => formatTanggal(r.tanggalMulai || r.tanggal) },
-                { key: 'status', label: 'Status', render: (r) => <StatusBadge status={mapStatus(r.status)} /> },
+                { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
               ]}
             />
           </TableFrame>
