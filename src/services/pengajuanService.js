@@ -35,16 +35,21 @@ function normalizePersetujuan(item, i = 0) {
   const mhsObj = part.mahasiswa || {}
   const peranObj = part.peranVerif || {}
   const tanggalMulai = formatTanggalValue(kegiatanObj?.tanggalMulai) || null
+  const skalaNama =
+    (typeof kegiatanObj?.skala === 'object' && kegiatanObj?.skala?.nama) ||
+    (typeof kegiatanObj?.skala === 'string' ? kegiatanObj.skala : null) ||
+    item.skala ||
+    '-'
   return {
     ...item,
     id,
     kegiatan: kegiatanObj?.nama || item.kegiatan || item.namaKegiatan || item.kegiatanNama || item.judul || '-',
-    diajukanPada: formatTanggalValue(item.createdAt),
+    diajukanPada: formatTanggalValue(item.tanggalDiajukan || item.createdAt),
     jenis: (typeof kegiatanObj?.kategori === 'object' ? kegiatanObj?.kategori?.nama : kegiatanObj?.kategori) || item.jenis || item.jenisKegiatan || '-',
     peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
     penyelenggara: kegiatanObj?.penyelenggara || kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
     tanggal: tanggalMulai || formatTanggalValue(item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan),
-    skala: kegiatanObj?.skala?.nama || item.skala || '-',
+    skala: skalaNama,
     mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     namaMahasiswa: mhsObj?.user?.nama || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',
     status: (item.statusIzin || item.status || 'pending').toLowerCase(),

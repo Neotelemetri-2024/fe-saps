@@ -81,10 +81,16 @@ function normalizeIzinPA(item, i = 0) {
     jenis: kegiatan.kategori || item.jenis || '-',
     peran: item.peran || '-',
     penyelenggara: kegiatan.penyelenggara || item.penyelenggara || '-',
-    tanggal: formatTanggal(kegiatan.tanggalMulai || item.tanggalDiajukan || item.tanggal),
-    tanggalMulai: kegiatan.tanggalMulai || null,
-    tanggalPelaksanaan: kegiatan.tanggalMulai || null,
-    skala: kegiatan.skala?.nama || (typeof kegiatan.skala === 'string' ? kegiatan.skala : null) || item.skala || '-',
+    tanggal: formatTanggal(
+      kegiatan.tanggalMulai || item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan || item.createdAt
+    ),
+    tanggalMulai: kegiatan.tanggalMulai || item.tanggal || null,
+    tanggalPelaksanaan: kegiatan.tanggalMulai || item.tanggal || null,
+    skala:
+      (typeof kegiatan.skala === 'object' && kegiatan.skala?.nama) ||
+      (typeof kegiatan.skala === 'string' ? kegiatan.skala : null) ||
+      item.skala ||
+      '-',
     deskripsi: kegiatan.deskripsi || item.deskripsi || null,
     linkWebsite: kegiatan.linkPenyelenggara || kegiatan.linkWebsite || null,
     emailPenyelenggara: kegiatan.emailPenyelenggara || null,
