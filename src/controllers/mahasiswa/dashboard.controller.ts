@@ -456,6 +456,27 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       perolehanFallback.map((p) => [p.kegiatanId, p.totalPoin]),
     );
 
+    // Estimasi poin dari matriks untuk peserta yang sudah punya peran (belum tentu sudah cair)
+    const estimasiEntries = await Promise.all(
+      partisipasi
+        .filter((p) => p.peranVerifId)
+        .map(async (p) => {
+          const matriks = await prisma.matriksPoin.findFirst({
+            where: {
+              kurikulumId: p.kegiatan.kurikulumId,
+              kategoriId: p.kegiatan.kategoriId,
+              skalaId: p.kegiatan.skalaId,
+              peranId: p.peranVerifId!,
+            },
+            select: { poin: true },
+          });
+          return matriks ? ([p.id.toString(), matriks.poin] as const) : null;
+        }),
+    );
+    const estimasiByPartisipasi = new Map(
+      estimasiEntries.filter(Boolean) as [string, number][],
+    );
+
     const riwayat = partisipasi.map((p, i) => {
       let statusKehadiran = 'Belum Tercatat';
       if (p.kehadiran === true) statusKehadiran = 'Hadir';
@@ -477,16 +498,8 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
           ? p.klaimPoin.perolehanPoin.totalPoin
           : null;
       const poinDariKegiatan = poinByKegiatan.get(p.kegiatanId);
-      // Poin hanya ditampilkan setelah Dosen PA menyetujui
-      const poin =
-        statusPa === 'sudah_disetujui'
-          ? (poinDariKlaim ?? poinDariKegiatan ?? '-')
-          : '-';
-
-      const bisaMintaPa =
-        p.kehadiran === true &&
-        !!p.peranVerifId &&
-        statusPa === 'belum_disetujui';
+      const poinEstimasi = estimasiByPartisipasi.get(p.id.toString());
+      const poin = poinDariKlaim ?? poinDariKegiatan ?? poinEstimasi ?? '-';
 
       const izin = p.izinPA?.[0];
       let statusIzin = 'Belum Diajukan';
@@ -502,7 +515,6 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       const isPeranAda = Boolean(p.peranVerifId);
       const isPoinTerklaim = Boolean(p.klaimPoin?.perolehanPoin && p.klaimPoin.perolehanPoin.status === 'sah');
 
-      // Status pencairan poin
       let statusPoin = 'Menunggu Syarat';
       if (isPoinTerklaim) {
         statusPoin = 'Terklaim';
@@ -513,6 +525,8 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       } else if (!isPeranAda) {
         statusPoin = 'Menunggu Peran';
       }
+
+      const canMintaIzinPA = !izin || izin.status === 'revisi' || izin.status === 'ditolak';
 
       return {
         no: i + 1,
@@ -536,7 +550,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         statusPaLabel,
         status: statusPa,
         izinPaId: izinTerbaru?.id?.toString() || null,
-        bisaMintaPa,
+        bisaMintaPa: canMintaIzinPA,
         statusKegiatan: p.kegiatan.status,
         izinPA: izin ? {
           id: izin.id.toString(),
@@ -546,7 +560,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
           decidedAt: izin.decidedAt
         } : null,
         statusIzinPA: statusIzin,
-        canMintaIzinPA: bisaMintaPa,
+        canMintaIzinPA,
         statusPoin
       };
     });

@@ -75,18 +75,7 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
           message: 'Anda belum terdaftar sebagai peserta kegiatan ini',
         });
       }
-      if (targetPartisipasi.kehadiran !== true) {
-        return res.status(400).json({
-          success: false,
-          message: 'Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.',
-        });
-      }
-      if (!targetPartisipasi.peranVerifId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Peran Anda belum ditetapkan oleh penyelenggara kegiatan.',
-        });
-      }
+      // Kehadiran & peran boleh belum diisi — auto-claim menunggu keduanya + izin PA
     }
 
     const result = await prisma.$transaction(async (tx: any) => {
@@ -213,8 +202,6 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
       'Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA',
       'Harap pilih peran',
       'Anda belum terdaftar sebagai peserta kegiatan ini',
-      'Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.',
-      'Peran Anda belum ditetapkan oleh penyelenggara kegiatan.',
       'Izin PA untuk kegiatan ini sudah disetujui',
       'Izin PA untuk kegiatan ini sudah diajukan dan sedang menunggu keputusan Dosen PA',
     ];
@@ -330,7 +317,9 @@ export const getCatatanPA = async (req: Request, res: Response, next: NextFuncti
     const formattedCatatan = catatan.map((c: any) => ({
       id: c.id.toString(),
       isi: c.isi,
-      dosenPaId: c.dosenPaId.toString()
+      dosenPaId: c.dosenPaId.toString(),
+      createdAt: c.createdAt,
+      tanggal: c.createdAt,
     }));
 
     res.status(200).json({
