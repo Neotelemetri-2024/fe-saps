@@ -392,16 +392,39 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         },
         peranVerif: { select: { nama: true } },
         klaimPoin: {
-          include: { perolehanPoin: { select: { totalPoin: true } } }
+          include: { perolehanPoin: { select: { totalPoin: true, status: true } } }
         }
       },
       orderBy: { kegiatan: { tanggalMulai: 'desc' } }
     });
 
+    // Fallback: kadang perolehan ada via (mahasiswaId, kegiatanId) walau relasi klaim belum lengkap
+    const kegiatanIds = [...new Set(partisipasi.map((p) => p.kegiatanId))];
+    const perolehanFallback = kegiatanIds.length
+      ? await prisma.perolehanPoin.findMany({
+          where: {
+            mahasiswaId: BigInt(userId),
+            kegiatanId: { in: kegiatanIds },
+            status: 'sah',
+          },
+          select: { kegiatanId: true, totalPoin: true },
+        })
+      : [];
+    const poinByKegiatan = new Map(
+      perolehanFallback.map((p) => [p.kegiatanId, p.totalPoin]),
+    );
+
     const riwayat = partisipasi.map((p, i) => {
       let statusKehadiran = 'Belum Tercatat';
       if (p.kehadiran === true) statusKehadiran = 'Hadir';
       else if (p.kehadiran === false) statusKehadiran = 'Tidak Hadir';
+
+      const poinDariKlaim = p.klaimPoin?.perolehanPoin?.totalPoin;
+      const poinDariKegiatan = poinByKegiatan.get(p.kegiatanId);
+      const poin =
+        poinDariKlaim ??
+        poinDariKegiatan ??
+        (p.klaimPoin?.status === 'disetujui' ? 0 : '-');
 
       return {
         no: i + 1,
@@ -416,7 +439,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         tanggalDiajukan: p.createdAt,
         kehadiran: statusKehadiran,
         peran: p.peranVerif?.nama || '-',
-        poin: p.klaimPoin?.perolehanPoin?.totalPoin ?? (p.klaimPoin?.status === 'disetujui' ? 0 : '-'),
+        poin,
         statusKegiatan: p.kegiatan.status
       };
     });
