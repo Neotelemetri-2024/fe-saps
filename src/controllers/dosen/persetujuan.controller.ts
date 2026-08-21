@@ -3,6 +3,7 @@ import prisma from '../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../lib/auditLog';
 import { NotifikasiService } from '../../services/notifikasi.service';
+import { cairkanPoinPartisipasi } from '../../services/poin.service';
 
 // ==================== VALIDASI ====================
 const izinDecisionSchema = z.object({
@@ -141,6 +142,15 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
       aktorId: dosenPaId,
     });
 
+    // Auto-Claim: Cek apakah syarat poin lengkap (hadir + peran + izin PA)
+    for (const izin of izinList) {
+      try {
+        await cairkanPoinPartisipasi(izin.partisipasiId);
+      } catch (err) {
+        console.error(`[putuskanIzinPABulk] Gagal auto-claim partisipasi ${izin.partisipasiId}:`, err);
+      }
+    }
+
     res.json({ success: true, message: `${ids.length} izin berhasil disetujui.` });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -215,6 +225,15 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
       statusBaru: body.status,
       aktorId: dosenPaId,
     });
+
+    // Auto-Claim jika status disetujui dan syarat lengkap
+    if (body.status === 'disetujui') {
+      try {
+        await cairkanPoinPartisipasi(izin.partisipasiId);
+      } catch (err) {
+        console.error(`[putuskanIzinPA] Gagal auto-claim partisipasi ${izin.partisipasiId}:`, err);
+      }
+    }
 
     res.json({ success: true, data: { ...updatedIzin, id: updatedIzin.id.toString(), partisipasiId: updatedIzin.partisipasiId.toString(), dosenPaId: updatedIzin.dosenPaId.toString() } });
   } catch (error) {
