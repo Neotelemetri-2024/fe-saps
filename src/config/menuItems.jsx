@@ -13,6 +13,7 @@ import {
   Search,
   UserCog,
   History,
+  ScrollText,
 } from 'lucide-react'
 
 /* ── MAHASISWA ── */
@@ -31,6 +32,7 @@ export const mahasiswaMenu = [
   { path: '/mahasiswa/riwayat-kegiatan-internal', label: 'Kegiatan Internal', icon: <History className="h-4 w-4" /> },
   { path: '/mahasiswa/riwayat-poin', label: 'Riwayat Poin', icon: <Award className="h-4 w-4" /> },
   { path: '/mahasiswa/generate-cv', label: 'Generate CV', icon: <FileText className="h-4 w-4" /> },
+  { path: '/mahasiswa/generate-sertifikat', label: 'Generate Sertifikat', icon: <ScrollText className="h-4 w-4" /> },
 ]
 
 /* ── DOSEN PA ── */

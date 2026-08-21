@@ -7,6 +7,7 @@ import MahasiswaDashboard from './pages/mahasiswa/Dashboard'
 import AjukanKegiatanEksternal from './pages/mahasiswa/AjukanKegiatanEksternal'
 import AjukanKegiatanForm from './pages/mahasiswa/AjukanKegiatanForm'
 import GenerateCV from './pages/mahasiswa/GenerateCV'
+import GenerateSertifikat from './pages/mahasiswa/GenerateSertifikat'
 import PersetujuanDosen from './pages/mahasiswa/PersetujuanDosen'
 import KlaimPoinCapaian from './pages/mahasiswa/KlaimPoinCapaian'
 import RiwayatPoin from './pages/mahasiswa/RiwayatPoin'
@@ -88,6 +89,7 @@ function App() {
           <Route path="kegiatan-eksternal/ajukan" element={<AjukanKegiatanForm />} />
           <Route path="kegiatan-eksternal/:id" element={<DetailPengajuanMahasiswa />} />
           <Route path="generate-cv" element={<GenerateCV />} />
+          <Route path="generate-sertifikat" element={<GenerateSertifikat />} />
           <Route path="persetujuan-dosen" element={<PersetujuanDosen />} />
           <Route path="persetujuan-dosen/:id" element={<DetailIzinPAMahasiswa />} />
           <Route path="klaim-poin" element={<KlaimPoinCapaian />} />
