@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma';
+import { cairkanPoinPartisipasi } from '../../services/poin.service';
 
 // Helper: dapatkan organisasiId operator yang sedang login
 async function getOrganisasiOperator(userId: bigint) {
@@ -397,8 +398,17 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       return null;
     };
 
-    const peserta: { nim: string; nama: string; hadir: boolean; peranId: number | null }[] = [];
+    const peserta: { nim: string; nama: string; hadir: boolean | null; peranId: number | null }[] = [];
     let isExcelParsed = false;
+
+    const parseHadir = (raw: any): boolean | null => {
+      if (raw === undefined || raw === null) return null;
+      const str = String(raw).trim().toLowerCase();
+      if (!str) return null;
+      if (['true', '1', 'ya', 'yes', 'hadir', 'h'].includes(str)) return true;
+      if (['false', '0', 'tidak', 'no', 'tidak hadir', 'alpa', 'th'].includes(str)) return false;
+      return null;
+    };
 
     // Coba parse sebagai file Excel (.xlsx)
     try {
@@ -426,9 +436,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
           if (!nim || nim.startsWith('#') || nim.toLowerCase() === 'nim') return;
 
           const nama = String(cellNama.text || cellNama.value || '').trim();
-          const hadirStr = String(cellHadir.text || cellHadir.value || '').trim().toLowerCase();
-          const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes' || hadirStr === 'hadir';
-
+          const hadir = parseHadir(cellHadir.text || cellHadir.value);
           const peranVal = cellPeran.text || cellPeran.value;
           const peranId = findPeranId(peranVal);
 
@@ -460,9 +468,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
         if (!nim || nim.toLowerCase() === 'nim') continue;
 
         const nama = (cols[1] ?? '').trim().replace(/^"/, '').replace(/"$/, '');
-        const hadirStr = (cols[2] ?? '').trim().toLowerCase().replace(/^"/, '').replace(/"$/, '');
-        const hadir = hadirStr === 'true' || hadirStr === '1' || hadirStr === 'ya' || hadirStr === 'yes' || hadirStr === 'hadir';
-
+        const hadir = parseHadir((cols[2] ?? '').replace(/^"/, '').replace(/"$/, ''));
         const peranRaw = (cols[3] ?? '').trim().replace(/^"/, '').replace(/"$/, '');
         const peranId = findPeranId(peranRaw);
 
@@ -487,8 +493,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
     const nimToMahasiswa = new Map(mahasiswaList.map(m => [m.nim, m]));
     const imported: any[] = [];
     const errors: any[] = [];
-
-    const autoCreated: any[] = [];
+    const autoClaimedIds: bigint[] = [];
 
     await prisma.$transaction(async (tx) => {
       for (const p of peserta) {
@@ -507,7 +512,11 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
         }
 
         try {
-          await tx.partisipasi.upsert({
+          let statusPartisipasi: any = 'terdaftar';
+          if (p.hadir === true) statusPartisipasi = 'hadir';
+          else if (p.hadir === false) statusPartisipasi = 'tidak_hadir';
+
+          const part = await tx.partisipasi.upsert({
             where: {
               kegiatanId_mahasiswaId: {
                 kegiatanId,
@@ -517,21 +526,25 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
             update: {
               kehadiran: p.hadir,
               peranVerifId: p.peranId ?? null,
-              status: p.hadir ? 'hadir' : 'tidak_hadir'
+              status: statusPartisipasi
             },
             create: {
               kegiatanId,
               mahasiswaId: mahasiswa!.userId,
               kehadiran: p.hadir,
               peranVerifId: p.peranId ?? null,
-              status: p.hadir ? 'hadir' : 'tidak_hadir'
+              status: statusPartisipasi
             }
           });
+
+          if (p.hadir === true && p.peranId) {
+            autoClaimedIds.push(part.id);
+          }
 
           imported.push({
             nim: p.nim,
             nama: (mahasiswa as any)?.user?.nama || p.nama || '-',
-            status: p.hadir ? 'hadir' : 'tidak_hadir'
+            status: p.hadir === true ? 'hadir' : (p.hadir === false ? 'tidak_hadir' : 'terdaftar')
           });
         } catch (err: any) {
           errors.push({ nim: p.nim, error: `Gagal menyimpan: ${err.message}` });
@@ -539,12 +552,20 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       }
     });
 
+    // Auto-claim di luar transaksi jika syarat terpenuhi
+    for (const partId of autoClaimedIds) {
+      try {
+        await cairkanPoinPartisipasi(partId);
+      } catch (err) {
+        console.error(`[importPesertaUKM] Auto-claim gagal untuk partisipasi ${partId}:`, err);
+      }
+    }
+
     res.status(200).json({
       success: true,
-      message: `Berhasil mengimport ${imported.length} dari ${peserta.length} peserta.${autoCreated.length > 0 ? ` (${autoCreated.length} akun baru dibuat otomatis)` : ''}`,
+      message: `Berhasil mengimport ${imported.length} dari ${peserta.length} peserta.`,
       data: {
         imported,
-        autoCreated: autoCreated.length > 0 ? autoCreated : undefined,
         errors: errors.length > 0 ? errors : undefined
       }
     });
@@ -744,18 +765,38 @@ export const updatePesertaUKM = async (req: Request, res: Response, next: NextFu
       return res.status(400).json({ success: false, message: 'Data peserta tidak boleh kosong.' });
     }
 
+    const autoClaimIds: bigint[] = [];
+
     await prisma.$transaction(async (tx) => {
       for (const p of peserta) {
+        const pid = BigInt(p.partisipasiId);
+        let statusPart: any = 'terdaftar';
+        if (p.hadir === true) statusPart = 'hadir';
+        else if (p.hadir === false) statusPart = 'tidak_hadir';
+
         await tx.partisipasi.update({
-          where: { id: BigInt(p.partisipasiId) },
+          where: { id: pid },
           data: {
-            kehadiran: p.hadir,
-            peranVerifId: p.peranId ?? null,
-            status: p.hadir ? 'hadir' : 'tidak_hadir'
+            kehadiran: p.hadir !== undefined ? p.hadir : null,
+            peranVerifId: p.peranId ? Number(p.peranId) : null,
+            status: statusPart
           }
         });
+
+        if (p.hadir === true && p.peranId) {
+          autoClaimIds.push(pid);
+        }
       }
     });
+
+    // Auto-claim jika syarat terpenuhi
+    for (const pid of autoClaimIds) {
+      try {
+        await cairkanPoinPartisipasi(pid);
+      } catch (err) {
+        console.error(`[updatePesertaUKM] Auto-claim gagal untuk ${pid}:`, err);
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -1111,16 +1152,39 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
       return res.status(404).json({ success: false, message: 'Mahasiswa tidak ditemukan di sistem SAPS.' });
     }
 
-    await prisma.partisipasi.upsert({
+    const { peranId, hadir, peranVerifId } = req.body;
+    let parsedHadir: boolean | null = null;
+    if (hadir !== undefined && hadir !== null && hadir !== '') {
+      parsedHadir = hadir === true || hadir === 'true' || hadir === 1 || hadir === '1';
+    }
+    const finalPeranId = peranVerifId ? parseInt(peranVerifId) : (peranId ? parseInt(peranId) : null);
+
+    let statusPartisipasi: any = 'terdaftar';
+    if (parsedHadir === true) statusPartisipasi = 'hadir';
+    else if (parsedHadir === false) statusPartisipasi = 'tidak_hadir';
+
+    const part = await prisma.partisipasi.upsert({
       where: { kegiatanId_mahasiswaId: { kegiatanId, mahasiswaId } },
-      update: {},
+      update: {
+        ...(parsedHadir !== null ? { kehadiran: parsedHadir, status: statusPartisipasi } : {}),
+        ...(finalPeranId !== null ? { peranVerifId: finalPeranId } : {})
+      },
       create: {
         kegiatanId,
         mahasiswaId,
-        kehadiran: true,
-        status: 'hadir'
+        kehadiran: parsedHadir,
+        peranVerifId: finalPeranId,
+        status: statusPartisipasi
       }
     });
+
+    if (parsedHadir === true && finalPeranId) {
+      try {
+        await cairkanPoinPartisipasi(part.id);
+      } catch (err) {
+        console.error('[tambahPesertaManual] Auto-claim gagal:', err);
+      }
+    }
 
     res.status(201).json({
       success: true,

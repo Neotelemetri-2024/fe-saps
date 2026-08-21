@@ -3,124 +3,7 @@ import prisma from '../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../lib/auditLog';
 import { NotifikasiService } from '../../services/notifikasi.service';
-import { bagiPoin } from '../../lib/distribusiPoin';
-
-const ASAL_INTERNAL = ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] as const;
-
-function isAsalInternal(asal: string | null | undefined) {
-  return !!asal && (ASAL_INTERNAL as readonly string[]).includes(asal);
-}
-
-/**
- * Setelah Dosen PA menyetujui izin kegiatan internal:
- * buat/update PerolehanPoin + Detail dari matriks, dan finalize KlaimPoin.
- */
-async function cetakPoinInternalSetelahPA(tx: any, partisipasiId: bigint) {
-  const partisipasi = await tx.partisipasi.findUnique({
-    where: { id: partisipasiId },
-    include: {
-      kegiatan: { include: { kegiatanCapaian: true, organisasi: { select: { nama: true } } } },
-      klaimPoin: { include: { perolehanPoin: true } },
-    },
-  });
-
-  if (!partisipasi?.kegiatan) return;
-  if (!isAsalInternal(partisipasi.kegiatan.asal)) return;
-
-  const kegiatan = partisipasi.kegiatan;
-  const peranId = partisipasi.peranVerifId ?? partisipasi.klaimPoin?.peranUsulanId;
-  if (!peranId) {
-    throw new Error('Peran peserta tidak ditemukan untuk mencetak poin internal');
-  }
-
-  if (!kegiatan.kegiatanCapaian?.length) {
-    throw new Error(`Alokasi capaian kegiatan "${kegiatan.nama}" belum diatur`);
-  }
-
-  const matriks = await tx.matriksPoin.findFirst({
-    where: {
-      kurikulumId: kegiatan.kurikulumId,
-      kategoriId: kegiatan.kategoriId,
-      skalaId: kegiatan.skalaId,
-      peranId,
-    },
-  });
-
-  if (!matriks) {
-    throw new Error(`Matriks poin tidak ditemukan untuk kegiatan "${kegiatan.nama}"`);
-  }
-
-  const detailRows = bagiPoin<number>(
-    matriks.poin,
-    kegiatan.kegiatanCapaian.map((kc: any) => ({
-      ref: kc.subCapaianId as number,
-      bobot: Number(kc.alokasiPersen),
-    })),
-  ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-
-  let klaim = partisipasi.klaimPoin;
-  if (!klaim) {
-    klaim = await tx.klaimPoin.create({
-      data: {
-        partisipasiId: partisipasi.id,
-        peranUsulanId: peranId,
-        status: 'disetujui',
-        alasan: 'Disetujui Dosen PA — poin internal dicetak otomatis',
-      },
-      include: { perolehanPoin: true },
-    });
-  } else {
-    klaim = await tx.klaimPoin.update({
-      where: { id: klaim.id },
-      data: {
-        peranUsulanId: peranId,
-        status: 'disetujui',
-        alasan: 'Disetujui Dosen PA — poin internal dicetak otomatis',
-      },
-      include: { perolehanPoin: true },
-    });
-  }
-
-  let perolehanId: bigint;
-  const existing = klaim.perolehanPoin;
-
-  if (existing) {
-    await tx.perolehanPoin.update({
-      where: { id: existing.id },
-      data: { totalPoin: matriks.poin, status: 'sah' },
-    });
-    await tx.perolehanDetail.deleteMany({ where: { perolehanPoinId: existing.id } });
-    perolehanId = existing.id;
-  } else {
-    const dibuat = await tx.perolehanPoin.create({
-      data: {
-        klaimPoinId: klaim.id,
-        mahasiswaId: partisipasi.mahasiswaId,
-        kegiatanId: kegiatan.id,
-        totalPoin: matriks.poin,
-        status: 'sah',
-      },
-    });
-    perolehanId = dibuat.id;
-  }
-
-  if (detailRows.length > 0) {
-    await tx.perolehanDetail.createMany({
-      data: detailRows.map((d) => ({ ...d, perolehanPoinId: perolehanId })),
-    });
-  }
-
-  const penyelenggaraNama = kegiatan.organisasi?.nama || kegiatan.nama;
-  await tx.notifikasi.create({
-    data: {
-      userId: partisipasi.mahasiswaId,
-      judul: 'Poin Kegiatan Diperoleh',
-      isi: `Dosen PA menyetujui kegiatan "${kegiatan.nama}". Anda memperoleh ${matriks.poin} poin dari ${penyelenggaraNama}.`,
-      refType: 'perolehan_poin',
-      refId: perolehanId,
-    },
-  });
-}
+import { cairkanPoinPartisipasi } from '../../services/poin.service';
 
 // ==================== VALIDASI ====================
 const izinDecisionSchema = z.object({
@@ -238,7 +121,6 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
         data: { status: 'disetujui_pa' as any },
       });
       for (const izin of izinList) {
-        await cetakPoinInternalSetelahPA(tx, izin.partisipasiId);
         await tx.notifikasi.create({
           data: {
             userId: izin.partisipasi.mahasiswaId,
@@ -260,17 +142,19 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
       aktorId: dosenPaId,
     });
 
+    // Auto-claim poin internal jika hadir + peran + izin PA sudah lengkap
+    for (const izin of izinList) {
+      try {
+        await cairkanPoinPartisipasi(izin.partisipasiId);
+      } catch (err) {
+        console.error(`[putuskanIzinPABulk] Gagal auto-claim partisipasi ${izin.partisipasiId}:`, err);
+      }
+    }
+
     res.json({ success: true, message: `${ids.length} izin berhasil disetujui.` });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
-    }
-    if (typeof error?.message === 'string' && (
-      error.message.includes('Matriks poin') ||
-      error.message.includes('Alokasi capaian') ||
-      error.message.includes('Peran peserta')
-    )) {
-      return res.status(400).json({ success: false, message: error.message });
     }
     next(error);
   }
@@ -319,10 +203,6 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
         data: { status: statusPartisipasi as any },
       });
 
-      if (body.status === 'disetujui') {
-        await cetakPoinInternalSetelahPA(tx, izin.partisipasiId);
-      }
-
       return updated;
     });
 
@@ -348,17 +228,19 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
       aktorId: dosenPaId,
     });
 
+    // Auto-claim poin internal jika status disetujui dan syarat lengkap
+    if (body.status === 'disetujui') {
+      try {
+        await cairkanPoinPartisipasi(izin.partisipasiId);
+      } catch (err) {
+        console.error(`[putuskanIzinPA] Gagal auto-claim partisipasi ${izin.partisipasiId}:`, err);
+      }
+    }
+
     res.json({ success: true, data: { ...updatedIzin, id: updatedIzin.id.toString(), partisipasiId: updatedIzin.partisipasiId.toString(), dosenPaId: updatedIzin.dosenPaId.toString() } });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
-    }
-    if (typeof error?.message === 'string' && (
-      error.message.includes('Matriks poin') ||
-      error.message.includes('Alokasi capaian') ||
-      error.message.includes('Peran peserta')
-    )) {
-      return res.status(400).json({ success: false, message: error.message });
     }
     next(error);
   }

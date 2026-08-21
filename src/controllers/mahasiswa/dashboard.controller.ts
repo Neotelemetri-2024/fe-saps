@@ -434,7 +434,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         izinPA: {
           orderBy: { createdAt: 'desc' },
           take: 1,
-          select: { id: true, status: true }
+          select: { id: true, status: true, alasan: true, decidedAt: true }
         }
       },
       orderBy: { kegiatan: { tanggalMulai: 'desc' } }
@@ -488,9 +488,36 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         !!p.peranVerifId &&
         statusPa === 'belum_disetujui';
 
+      const izin = p.izinPA?.[0];
+      let statusIzin = 'Belum Diajukan';
+      if (izin) {
+        if (izin.status === 'diajukan') statusIzin = 'Menunggu Dosen PA';
+        else if (izin.status === 'disetujui') statusIzin = 'Disetujui';
+        else if (izin.status === 'ditolak') statusIzin = 'Ditolak';
+        else if (izin.status === 'revisi') statusIzin = 'Perlu Revisi';
+      }
+
+      const isIzinDisetujui = izin?.status === 'disetujui';
+      const isHadir = p.kehadiran === true;
+      const isPeranAda = Boolean(p.peranVerifId);
+      const isPoinTerklaim = Boolean(p.klaimPoin?.perolehanPoin && p.klaimPoin.perolehanPoin.status === 'sah');
+
+      // Status pencairan poin
+      let statusPoin = 'Menunggu Syarat';
+      if (isPoinTerklaim) {
+        statusPoin = 'Terklaim';
+      } else if (!isIzinDisetujui) {
+        statusPoin = 'Menunggu Izin PA';
+      } else if (!isHadir) {
+        statusPoin = 'Menunggu Kehadiran';
+      } else if (!isPeranAda) {
+        statusPoin = 'Menunggu Peran';
+      }
+
       return {
         no: i + 1,
         id: p.id.toString(),
+        partisipasiId: p.id.toString(),
         kegiatanId: p.kegiatanId,
         namaKegiatan: p.kegiatan.nama,
         jenisKegiatan: p.kegiatan.kategori?.nama || '-',
@@ -501,6 +528,7 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         tanggalSelesai: p.kegiatan.tanggalSelesai,
         tanggalDiajukan: p.createdAt,
         kehadiran: statusKehadiran,
+        isHadir: p.kehadiran,
         peran: p.peranVerif?.nama || '-',
         peranId: p.peranVerifId ?? p.peranVerif?.id ?? null,
         poin,
@@ -509,7 +537,17 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         status: statusPa,
         izinPaId: izinTerbaru?.id?.toString() || null,
         bisaMintaPa,
-        statusKegiatan: p.kegiatan.status
+        statusKegiatan: p.kegiatan.status,
+        izinPA: izin ? {
+          id: izin.id.toString(),
+          status: izin.status,
+          statusLabel: statusIzin,
+          alasan: izin.alasan,
+          decidedAt: izin.decidedAt
+        } : null,
+        statusIzinPA: statusIzin,
+        canMintaIzinPA: bisaMintaPa,
+        statusPoin
       };
     });
 

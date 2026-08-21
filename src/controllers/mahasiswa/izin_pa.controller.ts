@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
+import { NotifikasiService } from '../../services/notifikasi.service';
 
 const ASAL_INTERNAL = ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] as const;
 
@@ -7,7 +8,7 @@ function isAsalInternal(asal: string | null | undefined) {
   return !!asal && (ASAL_INTERNAL as readonly string[]).includes(asal);
 }
 
-// 1. Mengajukan Izin PA
+// 1. Mengajukan Izin PA (dari Riwayat Kegiatan Internal maupun Katalog)
 export const ajukanIzinPA = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -15,57 +16,83 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { kegiatanId, peranId, kategoriId, penyelenggara, tanggalPelaksanaan } = req.body;
+    const { partisipasiId, kegiatanId, peranId } = req.body;
 
-    if (!kegiatanId) {
-      return res.status(400).json({ success: false, message: 'Harap pilih kegiatan' });
+    if (!partisipasiId && !kegiatanId) {
+      return res.status(400).json({ success: false, message: 'Harap sertakan ID partisipasi atau ID kegiatan' });
     }
 
-    // Cek Mahasiswa dan Dosen PA
     const mahasiswa = await prisma.mahasiswa.findUnique({
       where: { userId: BigInt(userId) },
+      include: {
+        user: { select: { nama: true } }
+      }
     });
 
     if (!mahasiswa || !mahasiswa.dosenPaId) {
       return res.status(400).json({ success: false, message: 'Anda belum memiliki Dosen PA' });
     }
 
-    const usedKegiatanId = parseInt(kegiatanId);
+    let targetPartisipasi: any = null;
+    let targetKegiatan: any = null;
 
-    const result = await prisma.$transaction(async (tx: any) => {
-      const existingKegiatan = await tx.kegiatan.findUnique({ where: { id: usedKegiatanId } });
-      if (!existingKegiatan) {
-        throw new Error('Kegiatan yang dipilih tidak ditemukan');
+    if (partisipasiId) {
+      targetPartisipasi = await prisma.partisipasi.findUnique({
+        where: { id: BigInt(partisipasiId) },
+        include: { kegiatan: true }
+      });
+      if (!targetPartisipasi || targetPartisipasi.mahasiswaId !== BigInt(userId)) {
+        return res.status(404).json({ success: false, message: 'Partisipasi kegiatan tidak ditemukan.' });
       }
-
-      const internal = isAsalInternal(existingKegiatan.asal);
-
-      if (!internal) {
-        if (existingKegiatan.status !== 'disetujui' && existingKegiatan.status !== 'terpublikasi') {
-          throw new Error('Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA');
-        }
-        if (!peranId) {
-          throw new Error('Harap pilih peran');
-        }
+      targetKegiatan = targetPartisipasi.kegiatan;
+    } else {
+      const usedKegiatanId = parseInt(kegiatanId);
+      targetKegiatan = await prisma.kegiatan.findUnique({ where: { id: usedKegiatanId } });
+      if (!targetKegiatan) {
+        return res.status(404).json({ success: false, message: 'Kegiatan yang dipilih tidak ditemukan.' });
       }
-
-      let partisipasi = await tx.partisipasi.findUnique({
+      targetPartisipasi = await prisma.partisipasi.findUnique({
         where: { kegiatanId_mahasiswaId: { kegiatanId: usedKegiatanId, mahasiswaId: BigInt(userId) } }
       });
+    }
 
-      let usedPeranId: number;
+    const internal = isAsalInternal(targetKegiatan.asal);
+
+    if (!internal) {
+      if (targetKegiatan.status !== 'disetujui' && targetKegiatan.status !== 'terpublikasi') {
+        return res.status(400).json({
+          success: false,
+          message: 'Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA.',
+        });
+      }
+      if (!peranId && !targetPartisipasi?.peranVerifId) {
+        return res.status(400).json({ success: false, message: 'Harap pilih peran' });
+      }
+    } else {
+      if (!targetPartisipasi) {
+        return res.status(400).json({
+          success: false,
+          message: 'Anda belum terdaftar sebagai peserta kegiatan ini',
+        });
+      }
+      if (targetPartisipasi.kehadiran !== true) {
+        return res.status(400).json({
+          success: false,
+          message: 'Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.',
+        });
+      }
+      if (!targetPartisipasi.peranVerifId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Peran Anda belum ditetapkan oleh penyelenggara kegiatan.',
+        });
+      }
+    }
+
+    const result = await prisma.$transaction(async (tx: any) => {
+      let partisipasi = targetPartisipasi;
 
       if (internal) {
-        if (!partisipasi) {
-          throw new Error('Anda belum terdaftar sebagai peserta kegiatan ini');
-        }
-        if (partisipasi.kehadiran !== true) {
-          throw new Error('Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.');
-        }
-        if (!partisipasi.peranVerifId) {
-          throw new Error('Peran Anda belum ditetapkan oleh penyelenggara kegiatan.');
-        }
-
         const izinDisetujui = await tx.izinPA.findFirst({
           where: { partisipasiId: partisipasi.id, status: 'disetujui' },
           orderBy: { createdAt: 'desc' },
@@ -82,55 +109,53 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
           throw new Error('Izin PA untuk kegiatan ini sudah diajukan dan sedang menunggu keputusan Dosen PA');
         }
 
-        usedPeranId = partisipasi.peranVerifId;
         partisipasi = await tx.partisipasi.update({
           where: { id: partisipasi.id },
           data: { status: 'menunggu_izin_pa' }
         });
+      } else if (!partisipasi) {
+        partisipasi = await tx.partisipasi.create({
+          data: {
+            kegiatanId: targetKegiatan.id,
+            mahasiswaId: BigInt(userId),
+            status: 'menunggu_izin_pa'
+          }
+        });
       } else {
-        usedPeranId = parseInt(peranId);
+        partisipasi = await tx.partisipasi.update({
+          where: { id: partisipasi.id },
+          data: { status: 'menunggu_izin_pa' }
+        });
+      }
 
-        if (!partisipasi) {
-          partisipasi = await tx.partisipasi.create({
+      const usedPeranId = internal
+        ? partisipasi.peranVerifId
+        : (peranId ? parseInt(peranId) : partisipasi.peranVerifId);
+
+      if (usedPeranId) {
+        let klaim = await tx.klaimPoin.findFirst({
+          where: { partisipasiId: partisipasi.id }
+        });
+
+        if (!klaim) {
+          await tx.klaimPoin.create({
             data: {
-              kegiatanId: usedKegiatanId,
-              mahasiswaId: BigInt(userId),
-              status: 'menunggu_izin_pa'
+              partisipasiId: partisipasi.id,
+              peranUsulanId: usedPeranId,
+              status: 'draft'
             }
           });
         } else {
-          partisipasi = await tx.partisipasi.update({
-            where: { id: partisipasi.id },
-            data: { status: 'menunggu_izin_pa' }
+          await tx.klaimPoin.update({
+            where: { id: klaim.id },
+            data: {
+              peranUsulanId: usedPeranId,
+              ...(klaim.status === 'disetujui' ? {} : { status: 'draft' as const }),
+            }
           });
         }
       }
 
-      // Simpan atau Update Peran di Klaim Poin (Draft)
-      let klaim = await tx.klaimPoin.findFirst({
-        where: { partisipasiId: partisipasi.id }
-      });
-
-      if (!klaim) {
-        await tx.klaimPoin.create({
-          data: {
-            partisipasiId: partisipasi.id,
-            peranUsulanId: usedPeranId,
-            status: 'draft'
-          }
-        });
-      } else {
-        await tx.klaimPoin.update({
-          where: { id: klaim.id },
-          data: {
-            peranUsulanId: usedPeranId,
-            // Jaga draft sampai gate berikutnya (PA / klaim admin) kecuali sudah final
-            ...(klaim.status === 'disetujui' ? {} : { status: 'draft' as const }),
-          }
-        });
-      }
-
-      // Buat atau Update Izin PA (mencegah duplikasi aktif)
       let izin = await tx.izinPA.findFirst({
         where: { partisipasiId: partisipasi.id },
         orderBy: { createdAt: 'desc' },
@@ -146,11 +171,7 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
             decidedAt: null,
           }
         });
-      } else if (!izin || izin.status === 'disetujui') {
-        // Belum ada, atau yang lama sudah disetujui → buat baru (pengajuan ulang tidak relevan jika sudah disetujui)
-        if (izin?.status === 'disetujui') {
-          throw new Error('Izin PA untuk kegiatan ini sudah disetujui');
-        }
+      } else if (!izin) {
         izin = await tx.izinPA.create({
           data: {
             partisipasiId: partisipasi.id,
@@ -158,17 +179,31 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
             status: 'diajukan'
           }
         });
+      } else if (izin.status === 'disetujui') {
+        throw new Error('Izin PA untuk kegiatan ini sudah disetujui');
       }
 
-      return izin;
+      return { izin, kegiatanNama: targetKegiatan.nama };
     });
+
+    try {
+      await NotifikasiService.kirim({
+        userId: mahasiswa.dosenPaId,
+        judul: 'Permohonan Izin Kegiatan Mahasiswa',
+        isi: `${mahasiswa.user.nama} mengajukan permohonan izin untuk mengikuti kegiatan "${result.kegiatanNama}".`,
+        refType: 'izin_pa',
+        refId: result.izin.id,
+      });
+    } catch (err) {
+      console.error('[ajukanIzinPA] Gagal kirim notifikasi Dosen PA:', err);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Izin berhasil diajukan ke Dosen PA',
       data: {
-        izinPaId: result.id.toString(),
-        partisipasiId: result.partisipasiId.toString()
+        izinPaId: result.izin.id.toString(),
+        partisipasiId: result.izin.partisipasiId.toString()
       }
     });
 
@@ -198,7 +233,7 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { status } = req.query; // opsi filter: diajukan, disetujui, ditolak
+    const { status } = req.query;
 
     const whereClause: any = {
       partisipasi: {
@@ -234,13 +269,11 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
       }
     });
 
-    // Formatting response agar mudah dipakai Frontend
     const formattedData = riwayat
       .filter((item: any) => item.partisipasi && item.partisipasi.kegiatan)
       .map((item: any) => {
         const kg = item.partisipasi.kegiatan;
         const klaim = item.partisipasi.klaimPoin;
-        // Sudah diklaim jika KlaimPoin sudah ada bukti (bukan hanya draft)
         const sudahDiklaim = klaim ? (klaim.status !== 'draft') : false;
         return {
           id: item.id.toString(),
@@ -290,11 +323,10 @@ export const getCatatanPA = async (req: Request, res: Response, next: NextFuncti
         mahasiswaId: BigInt(userId)
       },
       orderBy: {
-        id: 'desc' // terbaru di atas
+        id: 'desc'
       }
     });
 
-    // Convert BigInt to String
     const formattedCatatan = catatan.map((c: any) => ({
       id: c.id.toString(),
       isi: c.isi,
