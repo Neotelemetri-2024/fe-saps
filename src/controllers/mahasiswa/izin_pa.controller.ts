@@ -267,13 +267,19 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
           partisipasiId: item.partisipasi.id.toString(),
           statusIzin: item.status,
           alasanDitolak: item.alasan,
-          tanggalDiajukan: item.createdAt,
-          createdAt: item.createdAt,
+          tanggalDiajukan: item.createdAt
+            ? new Date(item.createdAt).toISOString()
+            : null,
+          createdAt: item.createdAt
+            ? new Date(item.createdAt).toISOString()
+            : null,
           sudahDiklaim,
           skala: kg.skala?.nama || null,
-          tanggal: kg.tanggalMulai || null,
+          tanggal: kg.tanggalMulai
+            ? new Date(kg.tanggalMulai).toISOString()
+            : null,
           kegiatan: {
-            id: kg.id,
+            id: kg.id?.toString?.() ?? kg.id,
             nama: kg.nama,
             kategori: kg.kategori?.nama,
             kategoriId: kg.kategoriId,
@@ -281,8 +287,12 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
             skala: kg.skala?.nama || null,
             asal: kg.asal,
             penyelenggara: kg.penyelenggaraExt,
-            tanggalMulai: kg.tanggalMulai,
-            tanggalSelesai: kg.tanggalSelesai,
+            tanggalMulai: kg.tanggalMulai
+              ? new Date(kg.tanggalMulai).toISOString()
+              : null,
+            tanggalSelesai: kg.tanggalSelesai
+              ? new Date(kg.tanggalSelesai).toISOString()
+              : null,
             deskripsi: kg.deskripsi,
             linkPenyelenggara: kg.linkPenyelenggara,
             emailPenyelenggara: kg.emailPenyelenggara,

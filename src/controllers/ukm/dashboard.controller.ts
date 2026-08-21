@@ -23,7 +23,13 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
     const organisasiId = operator.organisasiId;
     const namaOrganisasi = operator.organisasi.nama;
 
-    // Hitung statistik kegiatan untuk UKM ini
+    const draftCount = await prisma.kegiatan.count({
+      where: {
+        organisasiId,
+        status: 'draft'
+      }
+    });
+
     const pendingCount = await prisma.kegiatan.count({
       where: {
         organisasiId,
@@ -34,7 +40,7 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
     const disetujuiCount = await prisma.kegiatan.count({
       where: {
         organisasiId,
-        status: 'disetujui'
+        status: { in: ['disetujui', 'terpublikasi'] }
       }
     });
 
@@ -66,21 +72,19 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
     });
 
     const tabelRiwayat = riwayatTerbaru.map((k, i) => {
-      let statusStr = 'Pending';
-      if (['disetujui', 'terpublikasi'].includes(k.status)) statusStr = 'Disetujui';
-      else if (k.status === 'ditolak') statusStr = 'Ditolak';
-      else if (k.status === 'perlu_revisi') statusStr = 'Revisi';
-      else if (k.status === 'draft') statusStr = 'Draft';
-
       return {
         no: i + 1,
+        id: k.id,
+        nama: k.nama,
         namaKegiatan: k.nama,
+        jenis: k.kategori?.nama || '-',
         jenisKegiatan: k.kategori?.nama || '-',
         skala: k.skala?.nama || '-',
         tanggalMulai: k.tanggalMulai,
         tanggalSelesai: k.tanggalSelesai,
         diajukanPada: k.createdAt,
-        status: statusStr
+        createdAt: k.createdAt,
+        status: k.status,
       };
     });
 
@@ -92,12 +96,16 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
           nama: namaOrganisasi
         },
         statistik: {
+          draft: draftCount,
           pending: pendingCount,
           disetujui: disetujuiCount,
           ditolak: ditolakCount,
           eventAktif: eventAktifCount
         },
-        riwayatPengajuan: tabelRiwayat
+        riwayatPengajuan: tabelRiwayat,
+        // alias supaya FE lama tetap bisa baca
+        riwayatKegiatan: tabelRiwayat,
+        kegiatan: tabelRiwayat,
       }
     });
 
