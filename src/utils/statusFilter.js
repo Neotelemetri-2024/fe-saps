@@ -28,6 +28,8 @@ const STATUS_LABELS = {
   aktif: 'Aktif',
   'sudah tercatat': 'Sudah Tercatat',
   'belum tercatat': 'Belum Tercatat',
+  belum_disetujui: 'Belum Disetujui',
+  sudah_disetujui: 'Sudah Disetujui',
 }
 
 const STATUS_ORDER = [
@@ -53,6 +55,8 @@ const STATUS_ORDER = [
   'dibatalkan',
   'sudah tercatat',
   'belum tercatat',
+  'belum_disetujui',
+  'sudah_disetujui',
 ]
 
 export function labelStatus(status) {

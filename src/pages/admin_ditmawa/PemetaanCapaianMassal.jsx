@@ -415,9 +415,10 @@ function PemetaanCapaianMassal() {
                     ) : (
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                     )}
-                    <span className={`text-xs font-medium ${getBobotStatus(active) === 'pas' ? 'text-emerald-600' : getBobotStatus(active) === 'lebih' ? 'text-red-500' : 'text-[#616161]'}`}>
+                    <span className={`text-xs font-medium ${getBobotStatus(active) === 'pas' ? 'text-emerald-600' : 'text-red-500'}`}>
                       <span className="font-semibold">Total bobot: {totalBobot(active)}%</span>
-                      {getBobotStatus(active) !== 'pas' && <span className="ml-1">(belum 100%)</span>}
+                      {getBobotStatus(active) === 'kurang' && <span className="ml-1">(kurang dari 100%)</span>}
+                      {getBobotStatus(active) === 'lebih' && <span className="ml-1">(lebih dari 100%)</span>}
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import StatCard from "../../components/dashboard/StatCard";
@@ -35,6 +36,7 @@ function formatTanggal(start, end) {
 }
 
 function AdminDitmawaDashboard() {
+  const navigate = useNavigate();
   const user = getCurrentUser();
   const [stats, setStats] = useState([
     { label: "DISETUJUI", value: 0 },
@@ -151,7 +153,18 @@ function AdminDitmawaDashboard() {
           ))}
         </div>
 
-        <TableCard title="Kegiatan terbaru">
+        <TableCard
+          title="Kegiatan terbaru"
+          headerRight={
+            <button
+              type="button"
+              onClick={() => navigate("/admin_ditmawa/verifikasi-pengajuan-internal")}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+            >
+              Lihat selengkapnya →
+            </button>
+          }
+        >
           <TableFrame>
             <DataTable
               columns={kegiatanColumns}

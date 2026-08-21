@@ -527,8 +527,10 @@ function DetailVerifikasiPengajuanEksternal() {
                         )
                       })}
                     </div>
-                    <p className={`mt-2 text-xs font-medium ${totalBobot === 100 ? 'text-emerald-600' : 'text-[#616161]'}`}>
-                      Total bobot: {totalBobot}%{totalBobot !== 100 && <span className="ml-1">(belum 100%)</span>}
+                    <p className={`mt-2 text-xs font-medium ${totalBobot === 100 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      Total bobot: {totalBobot}%
+                      {totalBobot < 100 && <span className="ml-1">(kurang dari 100%)</span>}
+                      {totalBobot > 100 && <span className="ml-1">(lebih dari 100%)</span>}
                     </p>
                   </div>
                 )}

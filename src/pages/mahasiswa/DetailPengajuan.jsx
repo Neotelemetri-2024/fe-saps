@@ -6,9 +6,18 @@ import { getCurrentUser } from '../../services/authService'
 import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
-  if (!val) return '-'
-  try { const d = new Date(val); if (Number.isNaN(d.getTime())) return '-'; return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
-  catch { return String(val) }
+  if (val == null || val === '') return '-'
+  const s = String(val).trim()
+  if (!s || s === '-') return '-'
+  // Sudah diformat di list (mis. "21 Agu 2026") — jangan parse ulang
+  if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return s
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return s
+  }
 }
 
 function DetailPengajuanMahasiswa() {
@@ -28,6 +37,12 @@ function DetailPengajuanMahasiswa() {
   const statusRaw = row.statusRaw || row.status || ''
   const isRevisi = statusRaw === 'revisi' || statusRaw === 'perlu_revisi'
   const isDitolak = statusRaw === 'ditolak'
+  const tanggalPelaksanaan = formatTanggal(
+    row.tanggalPelaksanaan || row.tanggalMulai || row.tanggal
+  )
+  const tanggalPengajuan = formatTanggal(
+    row.tanggalPengajuan || row.tanggalDiajukan || row.createdAt || row.dibuatPada || row.diajukanPada
+  )
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -59,8 +74,8 @@ function DetailPengajuanMahasiswa() {
           <InfoRow label="Jenis / Kategori" value={row.jenisKegiatan || row.jenis} />
           <InfoRow label="Skala" value={row.skala} />
           <InfoRow label="Penyelenggara" value={row.penyelenggara} />
-          <InfoRow label="Tanggal Pelaksanaan" value={formatTanggal(row.tanggalPelaksanaan || row.tanggal)} />
-          <InfoRow label="Tanggal Pengajuan" value={formatTanggal(row.tanggalPengajuan || row.dibuatPada)} />
+          <InfoRow label="Tanggal Pelaksanaan" value={tanggalPelaksanaan} />
+          <InfoRow label="Tanggal Pengajuan" value={tanggalPengajuan} />
           {row.linkWebsite && row.linkWebsite !== '-' && (
             <InfoRow label="Link Website" value={row.linkWebsite} href={row.linkWebsite} />
           )}

@@ -211,9 +211,10 @@ function DosenPADashboard() {
                 <button
                   type="button"
                   onClick={() => navigate('/dosen/permintaan-persetujuan')}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-dark hover:underline"
+                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
                 >
-                  Lihat Detail</button>
+                  Lihat selengkapnya →
+                </button>
               </div>
             </div>
           </div>
@@ -233,7 +234,18 @@ function DosenPADashboard() {
         </div>
 
         {/* Progres Capaian Tahunan */}
-        <TableCard title="Progres Capaian Tahunan">
+        <TableCard
+          title="Progres Capaian Tahunan"
+          headerRight={
+            <button
+              type="button"
+              onClick={() => navigate('/dosen/mahasiswa-bimbingan')}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+            >
+              Lihat selengkapnya →
+            </button>
+          }
+        >
           <TableFrame>
           <DataTable
             columns={[

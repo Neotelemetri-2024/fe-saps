@@ -17,6 +17,9 @@ import TambahPesertaModal from '../../components/ui/TambahPesertaModal'
 
 function mapPesertaRow(p, i) {
   const peranId = p.peran?.id ?? p.peranVerifId ?? p.peranId ?? ''
+  let hadir = null
+  if (p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true) hadir = true
+  else if (p.kehadiran === false || p.kehadiran === 'Tidak Hadir' || p.hadir === false) hadir = false
   return {
     ...p,
     no: i + 1,
@@ -25,7 +28,7 @@ function mapPesertaRow(p, i) {
     nama: p.namaMahasiswa || p.nama || '-',
     prodi: p.programStudi || p.prodi || '-',
     fakultas: p.fakultas || '-',
-    hadir: p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true,
+    hadir,
     peranVerifId: peranId !== '' && peranId != null ? String(peranId) : '',
   }
 }
@@ -127,14 +130,15 @@ function ManajemenPesertaEvent() {
       (p.prodi || '').toLowerCase().includes(search.toLowerCase())
     const matchFilter =
       filterKehadiran === 'semua' ||
-      (filterKehadiran === 'hadir' && p.hadir) ||
-      (filterKehadiran === 'tidak hadir' && !p.hadir)
+      (filterKehadiran === 'hadir' && p.hadir === true) ||
+      (filterKehadiran === 'tidak hadir' && p.hadir === false)
     return matchSearch && matchFilter
   })
 
-  function toggleHadir(pid) {
+  function setHadir(pid, value) {
     if (!isEditing) return
-    setPesertaList((prev) => prev.map((p) => (p.id === pid ? { ...p, hadir: !p.hadir } : p)))
+    const hadir = value === '' ? null : value === 'true'
+    setPesertaList((prev) => prev.map((p) => (p.id === pid ? { ...p, hadir } : p)))
   }
 
   function setPilihPeran(pid, peranVerifId) {
@@ -147,7 +151,7 @@ function ManajemenPesertaEvent() {
     try {
       const payload = pesertaList.map((p) => ({
         partisipasiId: p.partisipasiId ?? p.id,
-        hadir: !!p.hadir,
+        hadir: p.hadir === true ? true : p.hadir === false ? false : null,
         ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
       }))
       await updatePesertaKegiatan(id, payload)
@@ -166,14 +170,14 @@ function ManajemenPesertaEvent() {
     try {
       const payload = pesertaList.map((p) => ({
         partisipasiId: p.partisipasiId ?? p.id,
-        hadir: !!p.hadir,
+        hadir: p.hadir === true ? true : p.hadir === false ? false : null,
         ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
       }))
       await updatePesertaKegiatan(id, payload)
       await submitPoinPeserta(id)
       setIsEditing(false)
       setSubmitted(true)
-      toast.success('Data peserta berhasil disubmit! Poin akan diklaim otomatis.')
+      toast.success('Data peserta berhasil disubmit! Poin cair otomatis setelah izin PA + kehadiran + peran lengkap.')
     } catch (err) {
       toast.error('Gagal submit', { description: err.message })
     } finally {
@@ -325,16 +329,16 @@ function ManajemenPesertaEvent() {
                     <td className="px-4 py-3.5 text-[#616161]">{p.fakultas}</td>
                     <td className="px-4 py-3.5 text-[#616161]">{p.prodi}</td>
                     <td className="px-4 py-3.5">
-                      <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={!!p.hadir}
-                          onChange={() => toggleHadir(p.id)}
-                          disabled={!isEditing}
-                          className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-default"
-                        />
-                        <span className="text-xs text-[#616161]">hadir</span>
-                      </label>
+                      <select
+                        value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
+                        onChange={(e) => setHadir(p.id, e.target.value)}
+                        disabled={!isEditing}
+                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                      >
+                        <option value="">Belum</option>
+                        <option value="true">Hadir</option>
+                        <option value="false">Tidak Hadir</option>
+                      </select>
                     </td>
                     <td className="px-4 py-3.5">
                       <select

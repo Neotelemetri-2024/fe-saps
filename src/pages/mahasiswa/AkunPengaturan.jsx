@@ -8,6 +8,7 @@ import { getFakultas, getProdi } from '../../services/matriksService'
 
 function AkunPengaturan() {
   const user = getCurrentUser()
+  const [displayName, setDisplayName] = useState(user?.nama || 'Mahasiswa')
   const [fakultasList, setFakultasList] = useState([])
   const [prodiList, setProdiList] = useState([])
   const [form, setForm] = useState({
@@ -35,20 +36,21 @@ function AkunPengaturan() {
       .then((list) => setFakultasList(Array.isArray(list) ? list : []))
       .catch(() => {})
 
-    // Prefill dari /api/auth/me bila tersedia
     get('/api/auth/me')
       .then((res) => {
         const d = res?.data || res || {}
-        const mhs = d.mahasiswa || d
+        const mhs = d.mahasiswa || {}
+        const prodi = mhs.prodi || {}
         setForm((p) => ({
           ...p,
           namaLengkap: d.nama || p.namaLengkap,
           nim: mhs.nim || '',
-          fakultasId: mhs.prodi?.fakultasId || mhs.fakultasId || '',
-          programStudiId: mhs.prodiId || mhs.prodi?.id || '',
+          fakultasId: String(prodi.fakultasId || prodi.fakultas?.id || mhs.fakultasId || ''),
+          programStudiId: String(mhs.prodiId || prodi.id || ''),
           nomorTelepon: d.nomorTelepon || p.nomorTelepon,
           alamat: d.alamat || p.alamat,
         }))
+        if (d.nama) setDisplayName(d.nama)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -65,13 +67,20 @@ function AkunPengaturan() {
   }, [form.fakultasId])
 
   const handleSimpanPerubahan = async () => {
+    if (!form.namaLengkap.trim()) {
+      toast.error('Nama lengkap wajib diisi.')
+      return
+    }
     setSaving(true)
     try {
-      await updateProfil({
-        nama: form.namaLengkap,
+      const payload = {
+        nama: form.namaLengkap.trim(),
         nomorTelepon: form.nomorTelepon || null,
         alamat: form.alamat || null,
-      })
+      }
+      if (form.programStudiId) payload.prodiId = Number(form.programStudiId)
+      const updated = await updateProfil(payload)
+      if (updated?.nama) setDisplayName(updated.nama)
       toast.success('Berhasil Disimpan!', {
         description: 'Perubahan pada informasi pribadi Anda telah disimpan.',
       })
@@ -113,7 +122,7 @@ function AkunPengaturan() {
   }
 
   return (
-    <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
+    <DashboardLayout role="mahasiswa" userName={displayName || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Profil dan Pengaturan</h2>
 

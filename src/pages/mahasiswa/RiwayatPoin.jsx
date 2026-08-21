@@ -64,7 +64,7 @@ function RiwayatPoin() {
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
   const [totalPoin, setTotalPoin] = useState(0)
-  const [totalTarget, setTotalTarget] = useState(550)
+  const [totalTarget, setTotalTarget] = useState(0)
   const [progressData, setProgressData] = useState([])
   const [riwayat, setRiwayat] = useState([])
   const [search, setSearch] = useState('')
@@ -80,7 +80,7 @@ function RiwayatPoin() {
       .then((res) => {
         const data = res?.data || res || {}
         setTotalPoin(data.totalPoin ?? 0)
-        setTotalTarget(data.totalTarget ?? 550)
+        setTotalTarget(data.totalTarget ?? 0)
 
         const progress = Array.isArray(data.progressTahun) ? data.progressTahun : []
         setProgressData(
@@ -166,7 +166,7 @@ function RiwayatPoin() {
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress per Tahun Kurikulum</h3>
+            <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin</h3>
             <div className="flex items-center gap-2 text-sm font-medium text-brand-dark">
               Total Capaian: <span className="font-bold">{loading ? '…' : totalPoin}</span> / {totalTarget} poin
             </div>

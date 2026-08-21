@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
@@ -37,6 +38,7 @@ function formatTanggal(start, end) {
 }
 
 function Dashboard() {
+  const navigate = useNavigate()
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
   const [namaFakultas, setNamaFakultas] = useState('')
@@ -123,7 +125,18 @@ function Dashboard() {
           ))}
         </div>
 
-        <TableCard title="Riwayat Terbaru Pengajuan kegiatan dari UKMF">
+        <TableCard
+          title="Riwayat Terbaru Pengajuan kegiatan dari UKMF"
+          headerRight={
+            <button
+              type="button"
+              onClick={() => navigate('/admin_fakultas/verifikasi-pengajuan-ukmf')}
+              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+            >
+              Lihat selengkapnya →
+            </button>
+          }
+        >
           <TableFrame>
             <DataTable
               columns={columns}

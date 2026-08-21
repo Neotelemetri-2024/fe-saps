@@ -38,13 +38,20 @@ function mapPengajuanSiapPA(item, i) {
     kegiatanId: item.id,
     rowKind: 'siap_pa',
     kegiatan: item.namaKegiatan || item.kegiatan || '-',
+    namaKegiatan: item.namaKegiatan || item.kegiatan || '-',
     diajukanPada: formatTanggal(item.tanggalPengajuan || item.tanggalDiajukan || item.dibuatPada || item.createdAt),
     jenis: item.jenisKegiatan || item.jenis || '-',
+    jenisKegiatan: item.jenisKegiatan || item.jenis || '-',
     peran: item.peran || '-',
     penyelenggara: item.penyelenggara || '-',
     tanggal: formatTanggal(item.tanggalPelaksanaan || item.tanggal),
+    tanggalPelaksanaan: item.tanggalPelaksanaan || item.tanggal || null,
+    tanggalPengajuan: item.tanggalPengajuan || item.createdAt || item.dibuatPada || null,
     skala: item.skala || '-',
     kategoriId: item.kategoriId || null,
+    deskripsi: item.deskripsi || null,
+    linkWebsite: item.linkWebsite || null,
+    emailPenyelenggara: item.emailPenyelenggara || null,
     status: 'pending',
     alasan: null,
     isUlang: false,
@@ -67,13 +74,20 @@ function normalizeIzinPA(item, i = 0) {
     rowKind: 'izin_pa',
     kategoriId: kegiatan.kategoriId || null,
     peranId: item.peranId || null,
-    kegiatan: kegiatan.nama || item.namaKegiatan || item.kegiatan || '-',
+    kegiatan: kegiatan.nama || item.namaKegiatan || (typeof item.kegiatan === 'string' ? item.kegiatan : '-') || '-',
     diajukanPada: formatTanggal(item.tanggalDiajukan || item.createdAt || item.dibuatPada),
+    tanggalDiajukan: item.tanggalDiajukan || item.createdAt || null,
+    createdAt: item.createdAt || item.tanggalDiajukan || null,
     jenis: kegiatan.kategori || item.jenis || '-',
     peran: item.peran || '-',
     penyelenggara: kegiatan.penyelenggara || item.penyelenggara || '-',
     tanggal: formatTanggal(kegiatan.tanggalMulai || item.tanggalDiajukan || item.tanggal),
-    skala: kegiatan.skala?.nama || item.skala || '-',
+    tanggalMulai: kegiatan.tanggalMulai || null,
+    tanggalPelaksanaan: kegiatan.tanggalMulai || null,
+    skala: kegiatan.skala?.nama || (typeof kegiatan.skala === 'string' ? kegiatan.skala : null) || item.skala || '-',
+    deskripsi: kegiatan.deskripsi || item.deskripsi || null,
+    linkWebsite: kegiatan.linkPenyelenggara || kegiatan.linkWebsite || null,
+    emailPenyelenggara: kegiatan.emailPenyelenggara || null,
     status: statusUI,
     alasan: item.alasanDitolak || item.alasan || null,
     isUlang: false,
@@ -290,6 +304,12 @@ function PersetujuanDosen() {
       )
     })
   }, [data, search, filterStatus, filterSkala])
+
+  const handleSelectAll = () => {
+    const ids = filtered.filter((r) => r.rowKind === 'siap_pa').map((r) => r.id)
+    const allOn = ids.length > 0 && ids.every((id) => selected.has(id))
+    setSelected(allOn ? new Set() : new Set(ids))
+  }
 
   const statusOptions = useMemo(
     () => statusOptionsFromRows(data, 'status'),
@@ -557,6 +577,7 @@ function PersetujuanDosen() {
               selectable={pilihanMode}
               selected={selected}
               onSelect={toggleSelect}
+              onSelectAll={handleSelectAll}
               isSelectable={(row) => row.rowKind === 'siap_pa'}
               onRowClick={pilihanMode ? (row) => toggleSelect(row.id) : undefined}
             />

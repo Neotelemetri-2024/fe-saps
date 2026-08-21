@@ -676,10 +676,10 @@ function ManajemenKurikulum() {
                                 />
                               </div>
                             </td>
-                            <td className="px-5 py-3 text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
+                            <td className="px-5 py-3 text-center text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
                             <td className="px-5 py-3 text-[#9aa0a6] italic">Belum ada sub capaian</td>
                             <td className="px-5 py-3">-</td>
-                            <td className="px-5 py-3">-</td>
+                            <td className="px-5 py-3 text-center">-</td>
                           </tr>
                         ) : (
                           cap.subCapaian.map((sc, idx) => (
@@ -709,7 +709,7 @@ function ManajemenKurikulum() {
                                       />
                                     </div>
                                   </td>
-                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top text-[#616161]">
+                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top text-center text-[#616161]">
                                     {cap.jumlahPoin ?? '-'}
                                   </td>
                                 </>
@@ -717,23 +717,25 @@ function ManajemenKurikulum() {
                               <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
                               <td className="px-5 py-3 text-center text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
                               <td className="px-5 py-3">
-                                <ActionMenu
-                                  align="right"
-                                  items={[
-                                    {
-                                      label: 'Edit Sub Capaian',
-                                      icon: <Pencil className="h-3.5 w-3.5" />,
-                                      color: 'text-brand-dark',
-                                      onClick: () => setEditSubCapaian({ ...sc }),
-                                    },
-                                    {
-                                      label: 'Hapus Sub Capaian',
-                                      icon: <Trash2 className="h-3.5 w-3.5" />,
-                                      color: 'text-red-500',
-                                      onClick: () => handleHapusSubCapaian(sc),
-                                    },
-                                  ]}
-                                />
+                                <div className="flex justify-center">
+                                  <ActionMenu
+                                    align="right"
+                                    items={[
+                                      {
+                                        label: 'Edit Sub Capaian',
+                                        icon: <Pencil className="h-3.5 w-3.5" />,
+                                        color: 'text-brand-dark',
+                                        onClick: () => setEditSubCapaian({ ...sc }),
+                                      },
+                                      {
+                                        label: 'Hapus Sub Capaian',
+                                        icon: <Trash2 className="h-3.5 w-3.5" />,
+                                        color: 'text-red-500',
+                                        onClick: () => handleHapusSubCapaian(sc),
+                                      },
+                                    ]}
+                                  />
+                                </div>
                               </td>
                             </tr>
                           ))

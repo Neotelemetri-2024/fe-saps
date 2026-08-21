@@ -14,8 +14,28 @@ const KATEGORI = [
   { key: 'prestasi', color: '#eab308', label: 'Prestasi' },
 ]
 
-const SKALA_COLORS = ['#9B5DE5', '#1D3557', '#FF9F1C', '#1A3A2B', '#42B883']
-const MHS_COLORS = ['#B34F00', '#DE350B', '#42B883', '#0052CC', '#FFAB00']
+const SKALA_COLORS = [
+  '#9B5DE5', // ungu
+  '#1D3557', // navy
+  '#FF9F1C', // oranye
+  '#1A3A2B', // hijau tua
+  '#42B883', // hijau
+  '#E63946', // merah
+  '#457B9D', // biru abu
+  '#F4A261', // peach
+  '#2A9D8F', // teal
+  '#8338EC', // violet
+]
+const MHS_COLORS = [
+  '#B34F00',
+  '#DE350B',
+  '#42B883',
+  '#0052CC',
+  '#FFAB00',
+  '#6554C0',
+  '#00B8D9',
+  '#FF5630',
+]
 
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {
@@ -58,19 +78,25 @@ function HorizontalStackedBar({ data, maxVal }) {
               </span>
               <div className="h-7 flex-1 rounded-md border border-[#e9ebf8] bg-[#f9fafb]">
                 <div className="flex h-full overflow-hidden rounded-md" style={{ width: `${lebarBar}%` }}>
-                  {KATEGORI.map((k) => (
-                    <div
-                      key={k.key}
-                      style={{
-                        width: `${((d[k.key] || 0) / totalKategori) * 100}%`,
-                        backgroundColor: k.color,
-                      }}
-                      title={`${k.label}: ${d[k.key] || 0}`}
-                    />
-                  ))}
+                  {KATEGORI.map((k) => {
+                    const val = d[k.key] || 0
+                    return (
+                      <div
+                        key={k.key}
+                        className="relative h-full min-w-0 cursor-default transition hover:brightness-110"
+                        style={{
+                          width: `${(val / totalKategori) * 100}%`,
+                          backgroundColor: k.color,
+                        }}
+                        title={`${d.prodi} — ${k.label}: ${val}`}
+                      />
+                    )
+                  })}
                 </div>
               </div>
-              <span className="w-12 shrink-0 text-left text-xs font-bold text-brand-dark">{d.poin}</span>
+              <span className="w-12 shrink-0 text-left text-xs font-bold text-brand-dark" title={`Total: ${d.poin}`}>
+                {d.poin}
+              </span>
             </div>
           )
         })}
@@ -89,15 +115,21 @@ function HorizontalStackedBar({ data, maxVal }) {
 }
 
 function SvgDoughnut({ centerTitle = 'Total', centerValue, centerLabel, sections, size = 'h-44 w-44' }) {
+  const [hover, setHover] = useState(null)
   let offsetBerjalan = 0
 
   return (
-    <div className={`relative ${size} flex items-center justify-center`}>
+    <div className={`relative ${size} mb-8 flex items-center justify-center`}>
       <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 42 42">
         <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#eef0f7" strokeWidth="4.5" />
         {sections.map((cur, i) => {
           const dashOffset = 100 - offsetBerjalan
           offsetBerjalan += cur.percentage
+          const pct = Math.round(cur.percentage * 10) / 10
+          const tip =
+            cur.value != null
+              ? `${cur.label || '-'}: ${cur.value} (${pct}%)`
+              : `${cur.label || '-'}: ${pct}%`
           return (
             <circle
               key={i}
@@ -106,18 +138,27 @@ function SvgDoughnut({ centerTitle = 'Total', centerValue, centerLabel, sections
               r="15.915"
               fill="transparent"
               stroke={cur.color}
-              strokeWidth="4.5"
+              strokeWidth={hover?.index === i ? 5.5 : 4.5}
               strokeDasharray={`${cur.percentage} ${100 - cur.percentage}`}
               strokeDashoffset={dashOffset}
+              className="cursor-pointer transition-[stroke-width]"
+              style={{ pointerEvents: cur.percentage > 0 ? 'stroke' : 'none' }}
+              onMouseEnter={() => setHover({ index: i, text: tip })}
+              onMouseLeave={() => setHover(null)}
             />
           )
         })}
       </svg>
-      <div className="absolute text-center">
+      <div className="pointer-events-none absolute text-center">
         <p className="text-[10px] font-semibold uppercase leading-none tracking-wider text-[#9aa0a6]">{centerTitle}</p>
         <p className="my-0.5 text-2xl font-extrabold text-brand-dark">{centerValue}</p>
         <p className="text-[10px] font-medium leading-none text-[#616161]">{centerLabel}</p>
       </div>
+      {hover && (
+        <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 max-w-[90%] -translate-x-1/2 translate-y-full rounded-lg bg-[#222] px-2.5 py-1.5 text-center text-[11px] font-semibold text-white shadow-lg">
+          {hover.text}
+        </div>
+      )}
     </div>
   )
 }
@@ -193,12 +234,14 @@ function DetailFakultasProdi() {
     percentage: (p.mahasiswa / (totalMahasiswa || 1)) * 100,
     color: MHS_COLORS[idx % MHS_COLORS.length],
     label: p.prodi,
+    value: p.mahasiswa,
   }))
 
   const skalaKegiatan = poinBerdasarkanSkala.map((s, i) => ({
     label: s.skala || '-',
     percentage: s.persentaseDariTotal ?? 0,
     color: SKALA_COLORS[i % SKALA_COLORS.length],
+    value: s.totalPoin ?? s.poin ?? null,
   }))
 
   const kurikulumLabel =

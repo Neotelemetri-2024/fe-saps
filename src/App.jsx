@@ -12,6 +12,7 @@ import PersetujuanDosen from './pages/mahasiswa/PersetujuanDosen'
 import KlaimPoinCapaian from './pages/mahasiswa/KlaimPoinCapaian'
 import RiwayatPoin from './pages/mahasiswa/RiwayatPoin'
 import RiwayatKegiatanInternal from './pages/mahasiswa/RiwayatKegiatanInternal'
+import PesanDosenPA from './pages/mahasiswa/PesanDosenPA'
 import AkunPengaturan from './pages/mahasiswa/AkunPengaturan'
 import DetailPengajuanMahasiswa from './pages/mahasiswa/DetailPengajuan'
 import DetailIzinPAMahasiswa from './pages/mahasiswa/DetailIzinPA'
@@ -95,6 +96,7 @@ function App() {
           <Route path="klaim-poin" element={<KlaimPoinCapaian />} />
           <Route path="riwayat-poin" element={<RiwayatPoin />} />
           <Route path="riwayat-kegiatan-internal" element={<RiwayatKegiatanInternal />} />
+          <Route path="pesan-dosen-pa" element={<PesanDosenPA />} />
           <Route path="pengaturan" element={<AkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
         </Route>

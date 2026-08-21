@@ -309,6 +309,25 @@ export async function mintaPersetujuanDosenEksternal(kegiatanId, peranId) {
 }
 
 /**
+ * Minta persetujuan Dosen PA untuk kegiatan internal.
+ * Prefer partisipasiId (kontrak BE baru); fallback kegiatanId.
+ * POST /api/mahasiswa/izin-pa { partisipasiId } | { kegiatanId, peranId? }
+ */
+export async function mintaPersetujuanDosenInternal({ partisipasiId, kegiatanId, peranId } = {}) {
+  const body = {}
+  if (partisipasiId) body.partisipasiId = String(partisipasiId)
+  else if (kegiatanId) {
+    body.kegiatanId = Number(kegiatanId)
+    if (peranId) body.peranId = Number(peranId)
+  } else {
+    throw new Error('partisipasiId atau kegiatanId diperlukan.')
+  }
+  const res = await post('/api/mahasiswa/izin-pa', body)
+  emitUpdate('persetujuan')
+  return res?.data || res
+}
+
+/**
  * POST /api/mahasiswa/izin-pa
  * Body: { kegiatanId, peranId, kategoriId?, penyelenggara?, tanggalPelaksanaan? }
  */

@@ -27,9 +27,9 @@ function KategoriBar({ organisasi, seminar, prestasi }) {
   const pPre = (prestasi / total) * 100
   return (
     <div className="flex h-3 w-full max-w-[160px] overflow-hidden rounded-sm">
-      <div style={{ width: `${pOrg}%`, background: '#16a34a' }} />
-      <div style={{ width: `${pSem}%`, background: '#3b82f6' }} />
-      <div style={{ width: `${pPre}%`, background: '#eab308' }} />
+      <div style={{ width: `${pOrg}%`, background: '#16a34a' }} title={`Organisasi: ${organisasi}`} />
+      <div style={{ width: `${pSem}%`, background: '#3b82f6' }} title={`Seminar: ${seminar}`} />
+      <div style={{ width: `${pPre}%`, background: '#eab308' }} title={`Prestasi: ${prestasi}`} />
     </div>
   )
 }

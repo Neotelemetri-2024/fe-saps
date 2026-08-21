@@ -33,6 +33,43 @@ ChartJS.register(
 const BRAND_DARK = '#1a5c38'
 const BRAND_LIGHT = '#48a757'
 
+function tooltipValue(ctx) {
+  if (ctx.parsed == null) return ctx.raw
+  if (typeof ctx.parsed === 'number') return ctx.parsed
+  if (ctx.parsed.r != null) return ctx.parsed.r
+  if (ctx.parsed.y != null) return ctx.parsed.y
+  if (ctx.parsed.x != null) return ctx.parsed.x
+  return ctx.raw
+}
+
+/** Tooltip bersama untuk bar chart vertikal / stacked / grouped */
+const barTooltip = {
+  enabled: true,
+  mode: 'nearest',
+  intersect: true,
+  callbacks: {
+    label(ctx) {
+      const name = ctx.dataset.label || ctx.label || ''
+      const val = tooltipValue(ctx)
+      return name ? `${name}: ${val}` : String(val)
+    },
+  },
+}
+
+/** Tooltip untuk bar horizontal (nilai di parsed.x) */
+const horizontalBarTooltip = {
+  enabled: true,
+  mode: 'nearest',
+  intersect: true,
+  callbacks: {
+    label(ctx) {
+      const name = ctx.label || ctx.dataset.label || ''
+      const val = ctx.parsed?.x ?? ctx.raw
+      return name ? `${name}: ${val}` : String(val)
+    },
+  },
+}
+
 // ─── Stacked Bar Chart ──────────────────────────────────────────────────────
 /**
  * labels: string[]
@@ -53,12 +90,28 @@ export function StackedBarChart({ labels, datasets, height = 300 }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
         position: 'bottom',
         labels: { boxWidth: 12, font: { size: 11 } },
       },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label(ctx) {
+            const name = ctx.dataset.label || ctx.label || ''
+            const val = tooltipValue(ctx)
+            return name ? `${name}: ${val}` : String(val)
+          },
+          footer(items) {
+            const sum = items.reduce((s, i) => s + (Number(i.parsed?.y) || 0), 0)
+            return `Total: ${sum}`
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -99,12 +152,17 @@ export function GroupedBarChart({ labels, datasets, height = 280 }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'nearest', intersect: true },
     plugins: {
       legend: {
         position: 'bottom',
         labels: { boxWidth: 12, font: { size: 11 } },
       },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: {
+        ...barTooltip,
+        mode: 'index',
+        intersect: false,
+      },
     },
     scales: {
       x: {
@@ -136,6 +194,7 @@ export function VerticalBarChart({ labels, values, color = BRAND_LIGHT, colors, 
     labels,
     datasets: [
       {
+        label: 'Nilai',
         data: values,
         backgroundColor: colors ?? color,
         borderRadius: 4,
@@ -146,9 +205,20 @@ export function VerticalBarChart({ labels, values, color = BRAND_LIGHT, colors, 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'nearest', intersect: true },
     plugins: {
       legend: { display: false },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: {
+        ...barTooltip,
+        callbacks: {
+          title(items) {
+            return items[0]?.label || ''
+          },
+          label(ctx) {
+            return String(tooltipValue(ctx))
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -182,6 +252,7 @@ export function HorizontalBarChart({ labels, values, max = 100, color = BRAND_LI
     labels,
     datasets: [
       {
+        label: 'Nilai',
         data: values,
         backgroundColor: color,
         borderRadius: 4,
@@ -194,9 +265,10 @@ export function HorizontalBarChart({ labels, values, max = 100, color = BRAND_LI
     indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'nearest', intersect: true },
     plugins: {
       legend: { display: false },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: horizontalBarTooltip,
     },
     scales: {
       x: {
@@ -241,12 +313,14 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
     labels,
     datasets: [
       {
+        label: 'Poin',
         data: displayValues,
         backgroundColor: darkBg ? 'rgba(255,255,255,0.2)' : `${color}33`,
         borderColor: darkBg ? 'rgba(255,255,255,0.9)' : color,
         borderWidth: 2,
         pointBackgroundColor: darkBg ? 'white' : color,
         pointRadius: 4,
+        pointHoverRadius: 6,
         fill: true,
       },
     ],
@@ -257,7 +331,25 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
     layout: {
       padding: 4,
     },
-    plugins: { legend: { display: false } },
+    interaction: { mode: 'nearest', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        enabled: true,
+        backgroundColor: darkBg ? 'rgba(0,0,0,0.85)' : 'rgba(33,33,33,0.9)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        callbacks: {
+          title(items) {
+            return items[0]?.label || ''
+          },
+          label(ctx) {
+            const asli = values[ctx.dataIndex]
+            return String(asli ?? ctx.raw)
+          },
+        },
+      },
+    },
     scales: {
       r: {
         min: 0,
@@ -267,6 +359,8 @@ export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = fal
         ticks: {
           display: false,
           stepSize: scaleMax / 4,
+          // warna tick disiapkan jika display diaktifkan nanti
+          color: tickColor,
         },
         pointLabels: {
           color: pointLabelColor,

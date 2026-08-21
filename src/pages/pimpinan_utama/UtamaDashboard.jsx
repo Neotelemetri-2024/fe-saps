@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -154,8 +153,11 @@ function PimpinanUtamaDashboard() {
             </div>
           )}
           <div className="mt-4 text-right">
-            <Link to="/pimpinan_utama/detail-fakultas" className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark">
-              Lihat Detail <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/pimpinan_utama/detail-fakultas"
+              className="inline-flex items-center gap-1 rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+            >
+              Lihat selengkapnya →
             </Link>
           </div>
         </div>

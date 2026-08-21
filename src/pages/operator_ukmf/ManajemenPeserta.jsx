@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { ArrowLeft, Info, ChevronLeft, ChevronRight, Search, Download, UploadCloud, UserPlus } from 'lucide-react'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatanById,
   getPesertaKegiatanFull,
   updatePesertaKegiatan,
-  downloadTemplatePeserta,
   importPesertaCSV,
+  downloadTemplatePeserta,
   submitPoinPeserta,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
@@ -30,6 +30,9 @@ function formatTanggal(val) {
 
 function mapPesertaRow(p, i) {
   const peranId = p.peran?.id ?? p.peranVerifId ?? p.peranId ?? ''
+  let hadir = null
+  if (p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true) hadir = true
+  else if (p.kehadiran === false || p.kehadiran === 'Tidak Hadir' || p.hadir === false) hadir = false
   return {
     ...p,
     no: i + 1,
@@ -39,7 +42,7 @@ function mapPesertaRow(p, i) {
     nim: p.nim || p.mahasiswa?.nim || '-',
     prodi: p.programStudi || p.prodi || p.mahasiswa?.prodi?.nama || '-',
     fakultas: p.fakultas || p.mahasiswa?.prodi?.fakultas?.nama || '-',
-    hadir: p.kehadiran === true || p.kehadiran === 'Hadir' || p.hadir === true,
+    hadir,
     peranVerifId: peranId !== '' && peranId != null ? String(peranId) : '',
   }
 }
@@ -69,7 +72,7 @@ function ManajemenPeserta() {
       .then(async (keg) => {
         if (keg) {
           setKegiatan({
-            nama: keg.nama || keg.kegiatan || 'Kegiatan',
+            nama: keg.nama || keg.judul || 'Kegiatan',
             tanggal: formatTanggal(keg.tanggalMulai || keg.tanggal || keg.tgl || ''),
             lokasi: keg.lokasi || '',
           })
@@ -94,10 +97,11 @@ function ManajemenPeserta() {
 
   useEffect(() => { loadData() }, [id])
 
-  const handleKehadiranChange = (pesertaId, checked) => {
+  const handleKehadiranChange = (pesertaId, value) => {
     if (!isEditing) return
+    const hadir = value === '' ? null : value === 'true'
     setPesertaData((prev) =>
-      prev.map((p) => (p.id === pesertaId || p.partisipasiId === pesertaId ? { ...p, hadir: checked } : p)),
+      prev.map((p) => (p.id === pesertaId || p.partisipasiId === pesertaId ? { ...p, hadir } : p)),
     )
   }
 
@@ -115,7 +119,7 @@ function ManajemenPeserta() {
   const buildPayload = () =>
     pesertaData.map((p) => ({
       partisipasiId: p.partisipasiId ?? p.id,
-      hadir: !!p.hadir,
+      hadir: p.hadir === true ? true : p.hadir === false ? false : null,
       ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
     }))
 
@@ -154,7 +158,10 @@ function ManajemenPeserta() {
       const errors = body.errors ?? []
       if (errors.length > 0) {
         const msg = errors.slice(0, 3).map((e) => `NIM ${e.nim}: ${e.error}`).join('\n')
-        toast.warning(`${importedCount} peserta berhasil, ${errors.length} gagal`, { description: msg })
+        toast.warning(
+          `${importedCount} peserta berhasil, ${errors.length} gagal`,
+          { description: msg },
+        )
       } else {
         toast.success(`Import berhasil: ${importedCount} peserta`)
       }
@@ -172,14 +179,15 @@ function ManajemenPeserta() {
       (p.nim || '').toLowerCase().includes(search.toLowerCase())
     const matchFilter =
       filterKehadiran === 'semua' ||
-      (filterKehadiran === 'hadir' && p.hadir) ||
-      (filterKehadiran === 'tidak' && !p.hadir)
+      (filterKehadiran === 'hadir' && p.hadir === true) ||
+      (filterKehadiran === 'tidak' && p.hadir === false) ||
+      (filterKehadiran === 'belum' && p.hadir == null)
     return matchSearch && matchFilter
   })
 
   const total = pesertaData.length
-  const hadir = pesertaData.filter((p) => p.hadir).length
-  const tidakHadir = total - hadir
+  const hadir = pesertaData.filter((p) => p.hadir === true).length
+  const tidakHadir = pesertaData.filter((p) => p.hadir === false).length
 
   const PAGE_SIZE = 10
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -195,7 +203,7 @@ function ManajemenPeserta() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Dan Verifikasi Kegiatan</h2>
+          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Peserta</h2>
           <p className="mt-1 text-sm text-[#616161]">
             {kegiatan.nama}
             {kegiatan.tanggal && ` · ${kegiatan.tanggal}`}
@@ -212,8 +220,8 @@ function ManajemenPeserta() {
         <div className="flex items-start gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
           <Info className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
-            Centang kehadiran dan pilih peran, lalu klik <strong>Submit Poin Peserta</strong>.
-            Peserta yang sudah pernah di-submit sebelumnya tidak akan di-submit ulang.
+            Centang/pilih kehadiran dan peran boleh dikosongkan dulu. Poin cair otomatis setelah
+            Dosen PA menyetujui izin serta kehadiran & peran terverifikasi. Klik <strong>Submit Poin Peserta</strong> untuk menyimpan perubahan.
           </p>
         </div>
 
@@ -231,13 +239,13 @@ function ManajemenPeserta() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {['semua', 'hadir', 'tidak'].map((f) => (
+                {['semua', 'hadir', 'tidak', 'belum'].map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilterKehadiran(f)}
                     className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
                   >
-                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : f === 'tidak' ? 'Tidak Hadir' : 'Belum'}
                   </button>
                 ))}
                 {(search || filterKehadiran !== 'semua') && (
@@ -285,58 +293,58 @@ function ManajemenPeserta() {
           />
 
           <TableFrame>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead>
-                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="w-16 px-4 py-3 text-center">No</th>
-                  <th className="px-4 py-3 text-center">NIM</th>
-                  <th className="px-4 py-3 text-center">Nama Mahasiswa</th>
-                  <th className="px-4 py-3 text-center">Fakultas</th>
-                  <th className="px-4 py-3 text-center">Program Studi</th>
-                  <th className="px-4 py-3 text-center">Kehadiran</th>
-                  <th className="px-4 py-3 text-center">Peran</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
-                ) : pageItems.map((p) => (
-                  <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                    <td className="w-16 px-4 py-3 text-center text-black">{p.no}</td>
-                    <td className="px-4 py-3 font-medium text-black">{p.nim || '-'}</td>
-                    <td className="px-4 py-3 text-black">{p.nama}</td>
-                    <td className="px-4 py-3 text-black">{p.fakultas}</td>
-                    <td className="px-4 py-3 text-black">{p.prodi}</td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={!!p.hadir}
-                        onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.checked)}
-                        disabled={!isEditing}
-                        className="h-4 w-4 cursor-pointer accent-brand-dark disabled:cursor-default"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={p.peranVerifId || ''}
-                        onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
-                        disabled={!isEditing}
-                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
-                      >
-                        <option value="">Pilih Peran</option>
-                        {peranOptions.map((opt) => (
-                          <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
-                        ))}
-                      </select>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left text-sm">
+                <thead>
+                  <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="w-16 px-4 py-3 text-center">No</th>
+                    <th className="px-4 py-3 text-center">NIM</th>
+                    <th className="px-4 py-3 text-center">Nama</th>
+                    <th className="px-4 py-3 text-center">Prodi</th>
+                    <th className="px-4 py-3 text-center">Hadir</th>
+                    <th className="px-4 py-3 text-center">Peran</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
+                ) : pageItems.map((p) => (
+                    <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                      <td className="w-16 px-4 py-3 text-center text-black">{p.no}</td>
+                      <td className="px-4 py-3 font-medium text-black">{p.nim || '-'}</td>
+                      <td className="px-4 py-3 text-black">{p.nama}</td>
+                      <td className="px-4 py-3 text-black">{p.prodi}</td>
+                      <td className="px-4 py-3 text-center">
+                        <select
+                          value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
+                          onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.value)}
+                          disabled={!isEditing}
+                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                        >
+                          <option value="">Belum</option>
+                          <option value="true">Hadir</option>
+                          <option value="false">Tidak Hadir</option>
+                        </select>
+                      </td>                      <td className="px-4 py-3">
+                        <select
+                          value={p.peranVerifId || ''}
+                          onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
+                          disabled={!isEditing}
+                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                        >
+                          <option value="">Pilih Peran</option>
+                          {peranOptions.map((opt) => (
+                            <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
           {!loading && (
             <div className="flex items-center justify-between border-t border-[#e9ebf8] px-6 py-3">

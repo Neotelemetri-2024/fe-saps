@@ -119,7 +119,9 @@ function SvgDoughnut({ sections, centerValue }) {
             stroke={sec.color} strokeWidth="5"
             strokeDasharray={`${sec.length} ${circumference - sec.length}`}
             strokeDashoffset={-sec.offset} strokeLinecap="butt"
-          />
+          >
+            <title>{`${sec.label || '-'}: ${sec.value}`}</title>
+          </circle>
         ))}
       </svg>
       <div className="absolute text-center">

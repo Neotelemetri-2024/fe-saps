@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Lock, User, UserCircle, Eye, EyeOff } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
@@ -16,6 +16,12 @@ const ROLE_LABELS = {
   operator_ukm: 'Operator UKM',
   operator_ukmf: 'Operator UKMF',
   mahasiswa: 'Mahasiswa',
+  staff: 'Staf',
+}
+
+function labelJabatanStaff(jabatan) {
+  if (!jabatan) return null
+  return ROLE_LABELS[jabatan] || String(jabatan).replace(/_/g, ' ')
 }
 
 function AkunPengaturan({ role: roleProp } = {}) {
@@ -25,12 +31,14 @@ function AkunPengaturan({ role: roleProp } = {}) {
 
   const [form, setForm] = useState({
     namaLengkap: storedUser?.nama || '',
-    nip: '',
+    identitas: '',
+    identitasLabel: 'Identitas',
     jabatan: roleLabel,
     email: storedUser?.email || '',
     nomorTelepon: '',
+    alamat: '',
   })
-
+  const [loading, setLoading] = useState(true)
   const [pwdForm, setPwdForm] = useState({
     passwordLama: '',
     passwordBaru: '',
@@ -41,24 +49,48 @@ function AkunPengaturan({ role: roleProp } = {}) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [changingPwd, setChangingPwd] = useState(false)
+  const [displayName, setDisplayName] = useState(storedUser?.nama || 'Pengguna')
 
   useEffect(() => {
+    setLoading(true)
     get('/api/auth/me')
       .then((res) => {
         const me = res?.data || res || {}
-        setForm((prev) => ({
-          ...prev,
-          namaLengkap: me.nama || me.user?.nama || prev.namaLengkap,
-          email: me.email || me.user?.email || prev.email,
-          nip: me.nip || me.nim || me.staff?.nip || prev.nip,
-          nomorTelepon: me.nomorTelepon || me.phone || prev.nomorTelepon,
-          jabatan: ROLE_LABELS[role] || me.jabatan || me.peran || prev.jabatan,
-        }))
+        const nidn = me.dosen?.nidn || ''
+        const nim = me.mahasiswa?.nim || ''
+        let identitas = ''
+        let identitasLabel = 'Identitas'
+        if (nidn) {
+          identitas = nidn
+          identitasLabel = 'NIDN'
+        } else if (nim) {
+          identitas = nim
+          identitasLabel = 'NIM'
+        }
+
+        const jabatan =
+          labelJabatanStaff(me.staff?.jabatan) ||
+          ROLE_LABELS[role] ||
+          ROLE_LABELS[me.peran] ||
+          me.organisasiOperator?.organisasi?.nama ||
+          roleLabel
+
+        setForm({
+          namaLengkap: me.nama || '',
+          identitas,
+          identitasLabel,
+          jabatan,
+          email: me.email || '',
+          nomorTelepon: me.nomorTelepon || '',
+          alamat: me.alamat || '',
+        })
+        setDisplayName(me.nama || 'Pengguna')
       })
       .catch(() => {
         // fallback: tetap pakai data lokal
       })
-  }, [role])
+      .finally(() => setLoading(false))
+  }, [role, roleLabel])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -71,14 +103,20 @@ function AkunPengaturan({ role: roleProp } = {}) {
   }
 
   const handleSimpan = async () => {
+    if (!form.namaLengkap.trim()) {
+      toast.error('Nama lengkap wajib diisi.')
+      return
+    }
     setSaving(true)
     try {
       const payload = {
-        nama: form.namaLengkap,
+        nama: form.namaLengkap.trim(),
         nomorTelepon: form.nomorTelepon || null,
+        alamat: form.alamat || null,
       }
-      if (form.email) payload.email = form.email
-      await updateProfil(payload)
+      if (form.email) payload.email = form.email.trim()
+      const updated = await updateProfil(payload)
+      setDisplayName(updated?.nama || form.namaLengkap)
       toast.success('Berhasil Disimpan!', {
         description: 'Perubahan informasi akun telah disimpan.',
       })
@@ -114,97 +152,110 @@ function AkunPengaturan({ role: roleProp } = {}) {
     }
   }
 
+  const identitasHint = useMemo(() => form.identitasLabel, [form.identitasLabel])
+
   return (
-    <DashboardLayout role={role} userName={form.namaLengkap || 'Pengguna'} userRole={roleLabel}>
+    <DashboardLayout role={role} userName={displayName || 'Pengguna'} userRole={roleLabel}>
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
 
-        {/* Header Profil */}
         <div className="mx-auto max-w-md rounded-xl border border-[#e9ebf8] bg-white px-6 py-6 shadow-sm">
           <div className="flex flex-col items-center text-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f0f4f0]">
               <UserCircle className="h-12 w-12 text-brand-dark" />
             </span>
             <h3 className="mt-3 text-lg font-bold text-[#222]">{form.namaLengkap || '—'}</h3>
-            <p className="mt-0.5 text-sm text-[#616161]">NIP: {form.nip || '—'}</p>
+            <p className="mt-0.5 text-sm text-[#616161]">
+              {identitasHint}: {form.identitas || '—'}
+            </p>
             <p className="text-sm text-[#616161]">{form.jabatan}</p>
           </div>
         </div>
 
-        {/* Informasi Akun + Ganti Password — berdampingan */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Informasi Akun */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
               <User className="h-5 w-5 text-brand-dark" />
               <h3 className="text-lg font-bold text-[#222]">Informasi Akun</h3>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-black">Nama Lengkap</label>
-                <input
-                  type="text"
-                  name="namaLengkap"
-                  value={form.namaLengkap}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
-                />
+            {loading ? (
+              <p className="text-sm text-[#9aa0a6]">Memuat data…</p>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Nama Lengkap</label>
+                  <input
+                    type="text"
+                    name="namaLengkap"
+                    value={form.namaLengkap}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">{form.identitasLabel}</label>
+                  <input
+                    type="text"
+                    value={form.identitas}
+                    readOnly
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] bg-[#f9f9f9] p-3 text-sm text-[#333] shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Jabatan</label>
+                  <input
+                    type="text"
+                    value={form.jabatan}
+                    readOnly
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] bg-[#f9f9f9] p-3 text-sm text-[#333] shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Nomor Telepon</label>
+                  <input
+                    type="text"
+                    name="nomorTelepon"
+                    value={form.nomorTelepon}
+                    onChange={handleChange}
+                    placeholder="Masukkan nomor telepon"
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Alamat</label>
+                  <textarea
+                    name="alamat"
+                    rows={3}
+                    value={form.alamat}
+                    onChange={handleChange}
+                    placeholder="Masukkan alamat"
+                    className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSimpan}
+                    disabled={saving}
+                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-black">NIP</label>
-                <input
-                  type="text"
-                  name="nip"
-                  value={form.nip}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black">Jabatan</label>
-                <input
-                  type="text"
-                  name="jabatan"
-                  value={form.jabatan}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black">Nomor Telepon</label>
-                <input
-                  type="text"
-                  name="nomorTelepon"
-                  value={form.nomorTelepon}
-                  onChange={handleChange}
-                  placeholder="Masukkan nomor telepon"
-                  className="mt-1 w-full rounded-lg border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleSimpan}
-                  disabled={saving}
-                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
-                </button>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Ganti Password */}
           <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
               <Lock className="h-5 w-5 text-brand-dark" />
@@ -273,7 +324,6 @@ function AkunPengaturan({ role: roleProp } = {}) {
           </div>
         </div>
 
-        {/* KEAMANAN */}
         <div className="max-w-sm rounded-xl bg-gradient-to-r from-brand-dark to-brand-light p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/20">

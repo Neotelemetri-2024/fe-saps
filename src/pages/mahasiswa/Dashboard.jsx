@@ -1,15 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquareText } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { RadarChartCJ } from '../../components/charts'
+import ProgressBar from '../../components/dashboard/ProgressBar'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 import { getPersetujuanMahasiswa } from '../../services/pengajuanService'
 import { getPengajuan } from '../../services/pengajuanService'
 import { getKlaim } from '../../services/poinService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+
+function LihatSelengkapnyaButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+    >
+      Lihat selengkapnya →
+    </button>
+  )
+}
 
 function StatusBadge({ status }) {
   const s = String(status || '').toLowerCase()
@@ -27,9 +40,10 @@ function StatusBadge({ status }) {
   )
 }
 
-function TahunBadge({ status }) {
-  const map = { TUNTAS: 'bg-emerald-50 text-emerald-700', BERJALAN: 'bg-amber-100 text-amber-700', BELUM: 'bg-gray-100 text-gray-400' }
-  return <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${map[status] || 'bg-gray-100 text-gray-400'}`}>{status}</span>
+function buildProgressLabel(pct) {
+  if (pct >= 100) return `${pct}% COMPLETED`
+  if (pct >= 80) return `${pct}% ON TRACK`
+  return `${pct}% PROGRESS`
 }
 
 function formatTanggal(value) {
@@ -38,6 +52,19 @@ function formatTanggal(value) {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return null
     return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return null
+  }
+}
+
+function formatTanggalJam(value) {
+  if (!value) return null
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return null
+    const tanggal = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    const jam = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${tanggal}, ${jam}`
   } catch {
     return null
   }
@@ -97,16 +124,23 @@ function MahasiswaDashboard() {
     }).finally(() => setLoadingTables(false))
   }, [])
 
-  const rawProgres = dashData?.progresTahunan || []
-  const tahunanProgress = [
-    { no: '01', label: 'Tahun 1: Dasar', target: 100, poin: rawProgres[0]?.poinTerkumpul ?? 0 },
-    { no: '02', label: 'Tahun 2: Menengah', target: 150, poin: rawProgres[1]?.poinTerkumpul ?? 0 },
-    { no: '03', label: 'Tahun 3: Mahir', target: 200, poin: rawProgres[2]?.poinTerkumpul ?? 0 },
-    { no: '04', label: 'Tahun 4: Akhir', target: 100, poin: rawProgres[3]?.poinTerkumpul ?? 0 },
-  ].map((t) => ({ ...t, status: t.poin >= t.target ? 'TUNTAS' : t.poin > 0 ? 'BERJALAN' : 'BELUM' }))
+  const rawProgres = dashData?.progresTahunan || dashData?.progressTahun || []
+  const progressData = (Array.isArray(rawProgres) ? rawProgres : []).map((item) => {
+    const current = item.poinTerkumpul ?? item.current ?? 0
+    const target = item.targetPoin ?? item.target ?? 1
+    const pct = item.persentase ?? (target > 0 ? Math.round((current / target) * 100) : 0)
+    return {
+      tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
+      current,
+      target,
+      pct,
+      label: buildProgressLabel(pct),
+      onTrack: pct >= 50,
+    }
+  })
 
-  const totalPoin = tahunanProgress.reduce((sum, t) => sum + (t.poin || 0), 0)
-  const maxPoin = 550
+  const totalPoin = dashData?.totalPoin ?? progressData.reduce((sum, t) => sum + (t.current || 0), 0)
+  const maxPoin = dashData?.totalTarget ?? 0
   const pctTotal = maxPoin > 0 ? Math.round((totalPoin / maxPoin) * 100) : 0
 
   const radarRaw = dashData?.radarData || dashData?.radar || dashData?.capaian || FALLBACK_RADAR
@@ -148,36 +182,48 @@ function MahasiswaDashboard() {
           </div>
         </div>
 
-        {/* Progres Tahunan */}
-        <div>
-          <h3 className="text-lg font-bold text-[#222]">Progres Capaian Tahunan</h3>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {tahunanProgress.map((t, i) => {
-              const pct = t.target > 0 ? Math.round(((t.poin || 0) / t.target) * 100) : 0
-              const inactive = (t.status || 'BELUM') === 'BELUM'
-              return (
-                <div key={i} className="rounded-xl p-5 shadow-sm bg-white">
-                  <div className="flex items-start justify-between">
-                    <span className={`text-2xl font-extrabold ${inactive ? 'text-gray-300' : 'text-brand-dark'}`}>{t.no || String(i+1).padStart(2,'0')}</span>
-                    <TahunBadge status={t.status || 'BELUM'} />
-                  </div>
-                  <p className={`mt-3 text-sm font-bold ${inactive ? 'text-gray-400' : 'text-brand-dark'}`}>{t.label}</p>
-                  <p className="text-xs text-[#9aa0a6]">Target: {t.target} Poin</p>
-                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
-                    <div className={`h-2 rounded-full ${inactive ? 'bg-gray-300' : 'bg-brand-dark'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                  </div>
-                  <p className="mt-2 text-right text-xs font-semibold text-[#616161]">{t.poin || 0} / {t.target}</p>
-                </div>
-              )
-            })}
+        {/* Progress per Tahun Kurikulum */}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin</h3>
+              <p className="mt-0.5 text-sm font-medium text-brand-dark">
+                Total Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoin}</span> / {maxPoin} poin
+              </p>
+            </div>
+            <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/riwayat-poin')} />
           </div>
+          {loadingDash ? (
+            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat progress…</p>
+          ) : progressData.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data progress kurikulum.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {progressData.map((item, index) => (
+                <div key={index} className="rounded-lg border border-[#e9ebf8] p-4 text-center">
+                  <p className="text-xs font-semibold text-[#616161]">{item.tahun}</p>
+                  <p className="mt-1 text-2xl font-bold text-brand-dark">
+                    {item.current}
+                    <span className="text-sm font-normal text-[#616161]">/{item.target} poin</span>
+                  </p>
+                  <div className="mt-2 flex justify-center">
+                    <ProgressBar value={item.current} max={item.target || 1} height={6} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
+                    {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
+                    <span>{item.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Pesan dari Dosen PA */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <MessageSquareText className="h-5 w-5 text-brand-dark" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-lg font-bold text-[#222]">Pesan dari Dosen PA</h3>
+            <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/pesan-dosen-pa')} />
           </div>
           {loadingSaran ? (
             <p className="py-6 text-center text-sm text-[#9aa0a6]">Memuat pesan…</p>
@@ -185,20 +231,26 @@ function MahasiswaDashboard() {
             <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada pesan dari Dosen PA.</p>
           ) : (
             <div className="mt-4 space-y-4">
-              {saranPa.slice(0, 3).map((s) => (
-                <div key={s.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-                  <p className="text-sm leading-relaxed text-[#333]">{s.isi}</p>
-                  <p className="mt-1 text-xs text-[#888]">
-                    {formatTanggal(s.createdAt || s.tanggal)} &nbsp;Dosen PA
-                  </p>
-                </div>
-              ))}
+              {saranPa.slice(0, 3).map((s) => {
+                const waktu = formatTanggalJam(s.createdAt || s.tanggal)
+                return (
+                  <div key={s.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
+                    <p className="text-sm leading-relaxed text-[#333]">{s.isi}</p>
+                    <p className="mt-1 text-xs text-[#888]">
+                      {waktu ? `${waktu} · ` : ''}Dosen PA
+                    </p>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
 
         {/* Tabel Pengajuan Eksternal */}
-        <TableCard title="Riwayat Pengajuan Kegiatan Eksternal">
+        <TableCard
+          title="Riwayat Pengajuan Kegiatan Eksternal"
+          headerRight={<LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/kegiatan-eksternal')} />}
+        >
           <TableFrame>
             <DataTable
               columns={[
@@ -217,7 +269,10 @@ function MahasiswaDashboard() {
         </TableCard>
 
         {/* Tabel Persetujuan Dosen */}
-        <TableCard title="Riwayat Persetujuan Dosen PA">
+        <TableCard
+          title="Riwayat Persetujuan Dosen PA"
+          headerRight={<LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/persetujuan-dosen')} />}
+        >
           <TableFrame>
             <DataTable
               columns={[
@@ -237,7 +292,10 @@ function MahasiswaDashboard() {
         </TableCard>
 
         {/* Tabel Klaim Poin */}
-        <TableCard title="Riwayat Klaim Poin">
+        <TableCard
+          title="Riwayat Klaim Poin"
+          headerRight={<LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/klaim-poin')} />}
+        >
           <TableFrame>
             <DataTable
               columns={[

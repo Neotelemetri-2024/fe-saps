@@ -114,40 +114,37 @@ function DetailPersetujuanDosen() {
         </SectionCard>
 
         {isActionable && (
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-[#222]">Keputusan</h3>
-            {!actionType ? (
+          !actionType ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
+              </button>
+              <button type="button" onClick={handleSetuju} disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-[#333]">
+                Alasan Penolakan<span className="text-red-500">*</span>
+              </p>
+              <textarea rows={4} value={alasan} onChange={(e) => setAlasan(e.target.value)}
+                placeholder="Tuliskan alasan penolakan..."
+                maxLength={500}
+                className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
+              <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
+                <button type="button" onClick={handleKirimAlasan} disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
+                  {loading ? 'Mengirim...' : 'Kirim'}
                 </button>
-                <button type="button" onClick={handleSetuju} disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
+                <button type="button" onClick={() => { setActionType(null); setAlasan('') }}
+                  className="rounded-xl border border-[#d9dce7] px-5 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#f5f6f8]">
+                  Batal
                 </button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-[#333]">
-                  Alasan Penolakan<span className="text-red-500">*</span>
-                </p>
-                <textarea rows={4} value={alasan} onChange={(e) => setAlasan(e.target.value)}
-                  placeholder="Tuliskan alasan penolakan..."
-                  maxLength={500}
-                  className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
-                <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                  <button type="button" onClick={handleKirimAlasan} disabled={loading}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
-                    {loading ? 'Mengirim...' : 'Kirim'}
-                  </button>
-                  <button type="button" onClick={() => { setActionType(null); setAlasan('') }}
-                    className="rounded-xl border border-[#d9dce7] px-5 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#f5f6f8]">
-                    Batal
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )
         )}
       </div>
     </DashboardLayout>

@@ -133,10 +133,29 @@ export function isAuthenticated() {
   return u !== null && !!u.role
 }
 
-/** PUT /api/auth/profil — perbarui profil (nama, email, nomorTelepon, alamat) */
+/** PUT /api/auth/profil — perbarui profil (nama, email, nomorTelepon, alamat, prodiId?) */
 export async function updateProfil(payload) {
   const res = await put('/api/auth/profil', payload)
-  return res?.data || res
+  const data = res?.data || res
+
+  // Sinkronkan nama/email di localStorage agar header/sidebar ikut berubah
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY)
+    if (raw && data) {
+      const current = JSON.parse(raw)
+      const next = {
+        ...current,
+        ...(data.nama != null ? { nama: data.nama } : {}),
+        ...(data.email != null ? { email: data.email } : {}),
+      }
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(next))
+      window.dispatchEvent(new Event('saps-user-updated'))
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return data
 }
 
 /** PUT /api/auth/ganti-password — ganti password sendiri */

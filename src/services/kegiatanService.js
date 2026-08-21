@@ -136,14 +136,24 @@ export async function getPesertaKegiatanFull(kegiatanId, params = {}) {
 
 /**
  * Update kehadiran & peran peserta massal.
- * BE expects: [{ partisipasiId, hadir, peranId? }]
+ * BE expects: [{ partisipasiId, hadir (true|false|null), peranId? }]
  * FE may pass peranVerifId — mapped to peranId.
+ * Kehadiran & peran boleh kosong (null) — auto-claim menunggu keduanya + izin PA.
  */
 export async function updatePesertaKegiatan(kegiatanId, peserta) {
   const normalized = (peserta || []).map((p) => {
+    let hadir = null
+    if (p.hadir === true || p.hadir === 'Hadir' || p.kehadiran === true || p.kehadiran === 'Hadir') {
+      hadir = true
+    } else if (p.hadir === false || p.hadir === 'Tidak Hadir' || p.kehadiran === false || p.kehadiran === 'Tidak Hadir') {
+      hadir = false
+    } else if (p.hadir === null || p.kehadiran === null) {
+      hadir = null
+    }
+
     const item = {
       partisipasiId: Number(p.partisipasiId ?? p.id),
-      hadir: p.hadir === true || p.hadir === 'Hadir' || p.kehadiran === true || p.kehadiran === 'Hadir',
+      hadir,
     }
     const peranId = p.peranId ?? p.peranVerifId
     if (peranId != null && peranId !== '') {

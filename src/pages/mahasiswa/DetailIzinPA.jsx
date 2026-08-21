@@ -6,9 +6,18 @@ import { getCurrentUser } from '../../services/authService'
 import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
-  if (!val) return '-'
-  try { const d = new Date(val); if (Number.isNaN(d.getTime())) return '-'; return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
-  catch { return String(val) }
+  if (val == null || val === '') return '-'
+  const s = String(val).trim()
+  if (!s || s === '-') return '-'
+  // Sudah diformat di list (mis. "21 Agu 2026") — jangan parse ulang
+  if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return s
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return s
+  }
 }
 
 function DetailIzinPAMahasiswa() {
@@ -25,10 +34,17 @@ function DetailIzinPAMahasiswa() {
     )
   }
 
-  const kg = row.partisipasi?.kegiatan || {}
+  const kg = row.partisipasi?.kegiatan || (typeof row.kegiatan === 'object' && row.kegiatan ? row.kegiatan : {}) || {}
   const isRevisi = row.status === 'revisi'
   const isDitolak = row.status === 'ditolak'
-  const tanggalKegiatan = kg.tanggalMulai ? formatTanggal(kg.tanggalMulai) : row.tanggal || '-'
+  const tanggalKegiatan = formatTanggal(
+    kg.tanggalMulai || row.tanggalMulai || row.tanggalPelaksanaan || row.tanggal
+  )
+  const tanggalDiajukan = formatTanggal(
+    row.tanggalDiajukan || row.createdAt || row.diajukanPada
+  )
+  const namaKegiatan = typeof row.kegiatan === 'string' ? row.kegiatan : (kg.nama || '-')
+  const skala = kg.skala?.nama || (typeof kg.skala === 'string' ? kg.skala : null) || row.skala || '-'
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -62,20 +78,20 @@ function DetailIzinPAMahasiswa() {
         )}
 
         <SectionCard title="Detail Kegiatan">
-          <InfoRow label="Nama Kegiatan" value={row.kegiatan} />
+          <InfoRow label="Nama Kegiatan" value={namaKegiatan} />
           <InfoRow label="Jenis / Kategori" value={row.jenis} />
-          <InfoRow label="Skala" value={kg.skala?.nama || '-'} />
+          <InfoRow label="Skala" value={skala} />
           <InfoRow label="Peran / Pencapaian" value={row.peran} />
           <InfoRow label="Penyelenggara" value={row.penyelenggara} />
           <InfoRow label="Tanggal Pelaksanaan" value={tanggalKegiatan} />
-          <InfoRow label="Tanggal Diajukan ke PA" value={formatTanggal(row.tanggalDiajukan || row.createdAt)} />
-          {(kg.linkPenyelenggara || kg.linkWebsite) && (
-            <InfoRow label="Link Website" value={kg.linkPenyelenggara || kg.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite} />
+          <InfoRow label="Tanggal Diajukan ke PA" value={tanggalDiajukan} />
+          {(kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite) && (
+            <InfoRow label="Link Website" value={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} />
           )}
-          {kg.emailPenyelenggara && (
-            <InfoRow label="Email Penyelenggara" value={kg.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara}`} />
+          {(kg.emailPenyelenggara || row.emailPenyelenggara) && (
+            <InfoRow label="Email Penyelenggara" value={kg.emailPenyelenggara || row.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara || row.emailPenyelenggara}`} />
           )}
-          {kg.deskripsi && <InfoRow label="Deskripsi" value={kg.deskripsi} multiline />}
+          {(kg.deskripsi || row.deskripsi) && <InfoRow label="Deskripsi" value={kg.deskripsi || row.deskripsi} multiline />}
         </SectionCard>
       </div>
     </DashboardLayout>
