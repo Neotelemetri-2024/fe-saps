@@ -450,6 +450,32 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       perolehanFallback.map((p) => [p.kegiatanId, p.totalPoin]),
     );
 
+    // Fallback kedua: jika belum ada perolehan di DB (belum submit poin),
+    // tampilkan poin dari matriks agar kolom POIN tidak kosong di UI.
+    const butuhMatriks = partisipasi.filter((p) => {
+      const dariKlaim = p.klaimPoin?.perolehanPoin?.totalPoin;
+      const dariKegiatan = poinByKegiatan.get(p.kegiatanId);
+      return dariKlaim == null && dariKegiatan == null && !!p.peranVerifId;
+    });
+
+    const poinByPartisipasi = new Map<string, number>();
+    if (butuhMatriks.length > 0) {
+      await Promise.all(
+        butuhMatriks.map(async (p) => {
+          const matriks = await prisma.matriksPoin.findFirst({
+            where: {
+              kurikulumId: p.kegiatan.kurikulumId,
+              kategoriId: p.kegiatan.kategoriId,
+              skalaId: p.kegiatan.skalaId,
+              peranId: p.peranVerifId!,
+            },
+            select: { poin: true },
+          });
+          if (matriks) poinByPartisipasi.set(p.id.toString(), matriks.poin);
+        }),
+      );
+    }
+
     const riwayat = partisipasi.map((p, i) => {
       let statusKehadiran = 'Belum Tercatat';
       if (p.kehadiran === true) statusKehadiran = 'Hadir';
@@ -457,9 +483,11 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
 
       const poinDariKlaim = p.klaimPoin?.perolehanPoin?.totalPoin;
       const poinDariKegiatan = poinByKegiatan.get(p.kegiatanId);
+      const poinDariMatriks = poinByPartisipasi.get(p.id.toString());
       const poin =
         poinDariKlaim ??
         poinDariKegiatan ??
+        poinDariMatriks ??
         (p.klaimPoin?.status === 'disetujui' ? 0 : '-');
 
       return {
