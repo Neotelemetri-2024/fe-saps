@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
 
+const ASAL_INTERNAL = ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] as const;
+
+function isAsalInternal(asal: string | null | undefined) {
+  return !!asal && (ASAL_INTERNAL as readonly string[]).includes(asal);
+}
+
 // 1. Mengajukan Izin PA
 export const ajukanIzinPA = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -11,8 +17,8 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
 
     const { kegiatanId, peranId, kategoriId, penyelenggara, tanggalPelaksanaan } = req.body;
 
-    if (!kegiatanId || !peranId) {
-      return res.status(400).json({ success: false, message: 'Harap pilih kegiatan dan peran' });
+    if (!kegiatanId) {
+      return res.status(400).json({ success: false, message: 'Harap pilih kegiatan' });
     }
 
     // Cek Mahasiswa dan Dosen PA
@@ -27,37 +33,80 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
     const usedKegiatanId = parseInt(kegiatanId);
 
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Cek jika kegiatanId ada dan sudah disetujui
       const existingKegiatan = await tx.kegiatan.findUnique({ where: { id: usedKegiatanId } });
       if (!existingKegiatan) {
         throw new Error('Kegiatan yang dipilih tidak ditemukan');
       }
 
-      if (existingKegiatan.status !== 'disetujui' && existingKegiatan.status !== 'terpublikasi') {
-         throw new Error('Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA');
+      const internal = isAsalInternal(existingKegiatan.asal);
+
+      if (!internal) {
+        if (existingKegiatan.status !== 'disetujui' && existingKegiatan.status !== 'terpublikasi') {
+          throw new Error('Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA');
+        }
+        if (!peranId) {
+          throw new Error('Harap pilih peran');
+        }
       }
 
-      // 2. Buat atau Update Partisipasi
       let partisipasi = await tx.partisipasi.findUnique({
         where: { kegiatanId_mahasiswaId: { kegiatanId: usedKegiatanId, mahasiswaId: BigInt(userId) } }
       });
 
-      if (!partisipasi) {
-        partisipasi = await tx.partisipasi.create({
-          data: {
-            kegiatanId: usedKegiatanId,
-            mahasiswaId: BigInt(userId),
-            status: 'menunggu_izin_pa'
-          }
+      let usedPeranId: number;
+
+      if (internal) {
+        if (!partisipasi) {
+          throw new Error('Anda belum terdaftar sebagai peserta kegiatan ini');
+        }
+        if (partisipasi.kehadiran !== true) {
+          throw new Error('Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.');
+        }
+        if (!partisipasi.peranVerifId) {
+          throw new Error('Peran Anda belum ditetapkan oleh penyelenggara kegiatan.');
+        }
+
+        const izinDisetujui = await tx.izinPA.findFirst({
+          where: { partisipasiId: partisipasi.id, status: 'disetujui' },
+          orderBy: { createdAt: 'desc' },
         });
-      } else {
+        if (izinDisetujui) {
+          throw new Error('Izin PA untuk kegiatan ini sudah disetujui');
+        }
+
+        const izinDiajukan = await tx.izinPA.findFirst({
+          where: { partisipasiId: partisipasi.id, status: 'diajukan' },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (izinDiajukan) {
+          throw new Error('Izin PA untuk kegiatan ini sudah diajukan dan sedang menunggu keputusan Dosen PA');
+        }
+
+        usedPeranId = partisipasi.peranVerifId;
         partisipasi = await tx.partisipasi.update({
           where: { id: partisipasi.id },
           data: { status: 'menunggu_izin_pa' }
         });
+      } else {
+        usedPeranId = parseInt(peranId);
+
+        if (!partisipasi) {
+          partisipasi = await tx.partisipasi.create({
+            data: {
+              kegiatanId: usedKegiatanId,
+              mahasiswaId: BigInt(userId),
+              status: 'menunggu_izin_pa'
+            }
+          });
+        } else {
+          partisipasi = await tx.partisipasi.update({
+            where: { id: partisipasi.id },
+            data: { status: 'menunggu_izin_pa' }
+          });
+        }
       }
 
-      // 3. Simpan atau Update Peran di Klaim Poin (Draft)
+      // Simpan atau Update Peran di Klaim Poin (Draft)
       let klaim = await tx.klaimPoin.findFirst({
         where: { partisipasiId: partisipasi.id }
       });
@@ -66,32 +115,42 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
         await tx.klaimPoin.create({
           data: {
             partisipasiId: partisipasi.id,
-            peranUsulanId: parseInt(peranId),
+            peranUsulanId: usedPeranId,
             status: 'draft'
           }
         });
       } else {
         await tx.klaimPoin.update({
           where: { id: klaim.id },
-          data: { peranUsulanId: parseInt(peranId) }
+          data: {
+            peranUsulanId: usedPeranId,
+            // Jaga draft sampai gate berikutnya (PA / klaim admin) kecuali sudah final
+            ...(klaim.status === 'disetujui' ? {} : { status: 'draft' as const }),
+          }
         });
       }
 
-      // 4. Buat atau Update Izin PA (mencegah duplikasi)
+      // Buat atau Update Izin PA (mencegah duplikasi aktif)
       let izin = await tx.izinPA.findFirst({
-        where: { partisipasiId: partisipasi.id }
+        where: { partisipasiId: partisipasi.id },
+        orderBy: { createdAt: 'desc' },
       });
 
-      if (izin) {
+      if (izin && izin.status !== 'disetujui') {
         izin = await tx.izinPA.update({
           where: { id: izin.id },
           data: {
             status: 'diajukan',
             dosenPaId: mahasiswa.dosenPaId,
-            alasan: null // Hapus alasan revisi sebelumnya
+            alasan: null,
+            decidedAt: null,
           }
         });
-      } else {
+      } else if (!izin || izin.status === 'disetujui') {
+        // Belum ada, atau yang lama sudah disetujui → buat baru (pengajuan ulang tidak relevan jika sudah disetujui)
+        if (izin?.status === 'disetujui') {
+          throw new Error('Izin PA untuk kegiatan ini sudah disetujui');
+        }
         izin = await tx.izinPA.create({
           data: {
             partisipasiId: partisipasi.id,
@@ -114,7 +173,17 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
     });
 
   } catch (error: any) {
-    if (error.message === 'Kegiatan yang dipilih tidak ditemukan' || error.message === 'Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA') {
+    const known = [
+      'Kegiatan yang dipilih tidak ditemukan',
+      'Hanya kegiatan yang telah disetujui yang dapat diajukan izin PA',
+      'Harap pilih peran',
+      'Anda belum terdaftar sebagai peserta kegiatan ini',
+      'Kehadiran Anda belum tercatat. Hubungi penyelenggara kegiatan.',
+      'Peran Anda belum ditetapkan oleh penyelenggara kegiatan.',
+      'Izin PA untuk kegiatan ini sudah disetujui',
+      'Izin PA untuk kegiatan ini sudah diajukan dan sedang menunggu keputusan Dosen PA',
+    ];
+    if (known.includes(error.message)) {
       return res.status(400).json({ success: false, message: error.message });
     }
     next(error);
@@ -186,6 +255,7 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
             kategori: kg.kategori?.nama,
             kategoriId: kg.kategoriId,
             skalaId: kg.skalaId,
+            asal: kg.asal,
             penyelenggara: kg.penyelenggaraExt,
             tanggalMulai: kg.tanggalMulai,
             deskripsi: kg.deskripsi,

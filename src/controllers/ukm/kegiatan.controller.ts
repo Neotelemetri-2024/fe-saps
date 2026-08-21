@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import ExcelJS from 'exceljs';
 import prisma from '../../lib/prisma';
-import { bagiPoin } from '../../lib/distribusiPoin';
 
 // Helper: dapatkan organisasiId operator yang sedang login
 async function getOrganisasiOperator(userId: bigint) {
@@ -849,17 +848,12 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     let tetap = 0;
     let dibatalkan = 0;
 
-    const detailUntuk = (totalPoin: number): { subCapaianId: number; poin: number }[] =>
-      bagiPoin<number>(
-        totalPoin,
-        kegiatan.kegiatanCapaian.map((kc: any) => ({ ref: kc.subCapaianId as number, bobot: Number(kc.alokasiPersen) }))
-      ).map(b => ({ subCapaianId: b.ref, poin: b.poin }));
-
+    // Poin sah hanya setelah Dosen PA menyetujui — di sini hanya siapkan KlaimPoin (draft).
     await prisma.$transaction(async (tx) => {
       for (const partisipasi of pesertaHadir) {
         const peranId = partisipasi.peranVerifId!;
 
-        // Lookup matriks poin
+        // Validasi matriks tetap dicek agar mahasiswa tidak minta PA untuk peran tanpa poin
         const matriks = await tx.matriksPoin.findFirst({
           where: {
             kurikulumId: kegiatan.kurikulumId,
@@ -879,15 +873,12 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
           include: { perolehanPoin: true }
         });
 
-        // Submit ulang bersifat idempoten: peserta yang datanya tidak berubah
-        // dilewati agar poinnya tidak tercatat dua kali.
         if (existingKlaim) {
-          const perolehan = existingKlaim.perolehanPoin;
           const samaPeran = existingKlaim.peranUsulanId === peranId;
-          const samaPoin = perolehan?.totalPoin === matriks.poin;
-          const masihSah = perolehan?.status === 'sah';
+          const sudahAdaPoinSah = existingKlaim.perolehanPoin?.status === 'sah';
 
-          if (samaPeran && samaPoin && masihSah) {
+          // Sudah siap / sudah pernah disetujui PA dengan peran sama → anggap tanpa perubahan
+          if (samaPeran && (existingKlaim.status === 'draft' || sudahAdaPoinSah)) {
             tetap++;
             continue;
           }
@@ -896,44 +887,20 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
             where: { id: existingKlaim.id },
             data: {
               peranUsulanId: peranId,
-              status: 'disetujui',
+              // Jangan finalize di sini — tunggu Dosen PA
+              status: sudahAdaPoinSah ? existingKlaim.status : 'draft',
               validatorId: aktorId,
-              alasan: 'Diperbarui oleh penyelenggara kegiatan setelah perubahan peran/bobot'
+              alasan: 'Peran disiapkan oleh penyelenggara; menunggu persetujuan Dosen PA'
             }
-          });
-
-          let perolehanId: bigint;
-          if (perolehan) {
-            await tx.perolehanPoin.update({
-              where: { id: perolehan.id },
-              data: { totalPoin: matriks.poin, status: 'sah' }
-            });
-            await tx.perolehanDetail.deleteMany({ where: { perolehanPoinId: perolehan.id } });
-            perolehanId = perolehan.id;
-          } else {
-            const dibuatBaru = await tx.perolehanPoin.create({
-              data: {
-                klaimPoinId: existingKlaim.id,
-                mahasiswaId: partisipasi.mahasiswaId,
-                kegiatanId,
-                totalPoin: matriks.poin,
-                status: 'sah'
-              }
-            });
-            perolehanId = dibuatBaru.id;
-          }
-
-          await tx.perolehanDetail.createMany({
-            data: detailUntuk(matriks.poin).map(d => ({ ...d, perolehanPoinId: perolehanId }))
           });
 
           await tx.notifikasi.create({
             data: {
               userId: partisipasi.mahasiswaId,
-              judul: 'Poin Kegiatan Diperbarui',
-              isi: `Poin Anda untuk kegiatan "${kegiatan.nama}" diperbarui menjadi ${matriks.poin} poin oleh ${penyelenggaraNama}.`,
-              refType: 'perolehan_poin',
-              refId: perolehanId
+              judul: 'Siap Minta Persetujuan Dosen PA',
+              isi: `Peran Anda pada kegiatan "${kegiatan.nama}" telah diperbarui oleh ${penyelenggaraNama}. Ajukan persetujuan Dosen PA di Riwayat Kegiatan Internal agar poin dapat dicatat.`,
+              refType: 'klaim_poin',
+              refId: existingKlaim.id
             }
           });
 
@@ -941,44 +908,30 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
           continue;
         }
 
-        // 1. Buat KlaimPoin (langsung disetujui - auto internal)
         const klaim = await tx.klaimPoin.create({
           data: {
             partisipasiId: partisipasi.id,
             peranUsulanId: peranId,
-            status: 'disetujui',
+            status: 'draft',
             validatorId: aktorId,
-            alasan: 'Auto-generated: Poin diberikan oleh penyelenggara kegiatan UKM'
+            alasan: 'Siap diajukan: menunggu persetujuan Dosen PA'
           }
         });
 
-        // 2. Buat PerolehanPoin + Detail per sub capaian
-        const perolehan = await tx.perolehanPoin.create({
-          data: {
-            klaimPoinId: klaim.id,
-            mahasiswaId: partisipasi.mahasiswaId,
-            kegiatanId,
-            totalPoin: matriks.poin,
-            status: 'sah',
-            detail: { create: detailUntuk(matriks.poin) }
-          }
-        });
-
-        // 3. Notifikasi ke mahasiswa
         await tx.notifikasi.create({
           data: {
             userId: partisipasi.mahasiswaId,
-            judul: 'Poin Kegiatan Diperoleh! 🎉',
-            isi: `Selamat! Anda mendapatkan ${matriks.poin} poin dari kegiatan "${kegiatan.nama}" yang diselenggarakan oleh ${penyelenggaraNama}.`,
-            refType: 'perolehan_poin',
-            refId: perolehan.id
+            judul: 'Siap Minta Persetujuan Dosen PA',
+            isi: `Kehadiran dan peran Anda pada kegiatan "${kegiatan.nama}" telah dicatat oleh ${penyelenggaraNama}. Ajukan persetujuan Dosen PA di Riwayat Kegiatan Internal agar poin dapat dicatat.`,
+            refType: 'klaim_poin',
+            refId: klaim.id
           }
         });
 
         dibuat++;
       }
 
-      // Peserta yang kehadiran/perannya dicabut tidak boleh menyisakan poin aktif
+      // Peserta yang kehadiran/perannya dicabut: batalkan perolehan aktif (jika ada dari data lama)
       const idPesertaAktif = pesertaHadir.map(p => p.id);
       const klaimTidakAktif = await tx.klaimPoin.findMany({
         where: {
@@ -1003,7 +956,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     });
 
     const ringkasan = [
-      dibuat > 0 ? `${dibuat} peserta baru dicetak` : null,
+      dibuat > 0 ? `${dibuat} peserta siap minta PA` : null,
       diperbarui > 0 ? `${diperbarui} peserta diperbarui` : null,
       tetap > 0 ? `${tetap} peserta tanpa perubahan` : null,
       dibatalkan > 0 ? `${dibatalkan} poin dibatalkan` : null,
@@ -1012,7 +965,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
 
     res.status(200).json({
       success: true,
-      message: `Submit poin selesai: ${ringkasan}.`,
+      message: `Submit selesai: ${ringkasan}. Poin akan tercatat setelah Dosen PA menyetujui.`,
       data: {
         totalDibuat: dibuat,
         totalDiperbarui: diperbarui,

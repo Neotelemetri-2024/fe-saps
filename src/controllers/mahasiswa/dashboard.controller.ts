@@ -348,6 +348,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
           namaKegiatan: k.partisipasi.kegiatan.nama,
           jenisKegiatan: k.partisipasi.kegiatan.kategori?.nama,
           peran: k.peranUsulan?.nama || '-',
+          skala: k.partisipasi.kegiatan.skala?.nama || '-',
           penyelenggara: k.partisipasi.kegiatan.organisasi?.nama || k.partisipasi.kegiatan.penyelenggaraExt || 'Ditmawa/Universitas',
           tanggal: k.partisipasi.kegiatan.tanggalMulai,
           tanggalKlaim: k.createdAt,
@@ -426,15 +427,20 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
             organisasi: { select: { nama: true, tipe: true } }
           }
         },
-        peranVerif: { select: { nama: true } },
+        peranVerif: { select: { id: true, nama: true } },
         klaimPoin: {
           include: { perolehanPoin: { select: { totalPoin: true, status: true } } }
+        },
+        izinPA: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { id: true, status: true }
         }
       },
       orderBy: { kegiatan: { tanggalMulai: 'desc' } }
     });
 
-    // Fallback: kadang perolehan ada via (mahasiswaId, kegiatanId) walau relasi klaim belum lengkap
+    // Fallback: perolehan sah via (mahasiswaId, kegiatanId) bila relasi klaim belum lengkap
     const kegiatanIds = [...new Set(partisipasi.map((p) => p.kegiatanId))];
     const perolehanFallback = kegiatanIds.length
       ? await prisma.perolehanPoin.findMany({
@@ -450,49 +456,42 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       perolehanFallback.map((p) => [p.kegiatanId, p.totalPoin]),
     );
 
-    // Fallback kedua: jika belum ada perolehan di DB (belum submit poin),
-    // tampilkan poin dari matriks agar kolom POIN tidak kosong di UI.
-    const butuhMatriks = partisipasi.filter((p) => {
-      const dariKlaim = p.klaimPoin?.perolehanPoin?.totalPoin;
-      const dariKegiatan = poinByKegiatan.get(p.kegiatanId);
-      return dariKlaim == null && dariKegiatan == null && !!p.peranVerifId;
-    });
-
-    const poinByPartisipasi = new Map<string, number>();
-    if (butuhMatriks.length > 0) {
-      await Promise.all(
-        butuhMatriks.map(async (p) => {
-          const matriks = await prisma.matriksPoin.findFirst({
-            where: {
-              kurikulumId: p.kegiatan.kurikulumId,
-              kategoriId: p.kegiatan.kategoriId,
-              skalaId: p.kegiatan.skalaId,
-              peranId: p.peranVerifId!,
-            },
-            select: { poin: true },
-          });
-          if (matriks) poinByPartisipasi.set(p.id.toString(), matriks.poin);
-        }),
-      );
-    }
-
     const riwayat = partisipasi.map((p, i) => {
       let statusKehadiran = 'Belum Tercatat';
       if (p.kehadiran === true) statusKehadiran = 'Hadir';
       else if (p.kehadiran === false) statusKehadiran = 'Tidak Hadir';
 
-      const poinDariKlaim = p.klaimPoin?.perolehanPoin?.totalPoin;
+      const izinTerbaru = p.izinPA?.[0] || null;
+      let statusPa: 'belum_disetujui' | 'diteruskan' | 'sudah_disetujui' = 'belum_disetujui';
+      let statusPaLabel = 'Belum Disetujui';
+      if (izinTerbaru?.status === 'disetujui') {
+        statusPa = 'sudah_disetujui';
+        statusPaLabel = 'Sudah Disetujui';
+      } else if (izinTerbaru?.status === 'diajukan') {
+        statusPa = 'diteruskan';
+        statusPaLabel = 'Diteruskan';
+      }
+
+      const poinDariKlaim =
+        p.klaimPoin?.perolehanPoin?.status === 'sah'
+          ? p.klaimPoin.perolehanPoin.totalPoin
+          : null;
       const poinDariKegiatan = poinByKegiatan.get(p.kegiatanId);
-      const poinDariMatriks = poinByPartisipasi.get(p.id.toString());
+      // Poin hanya ditampilkan setelah Dosen PA menyetujui
       const poin =
-        poinDariKlaim ??
-        poinDariKegiatan ??
-        poinDariMatriks ??
-        (p.klaimPoin?.status === 'disetujui' ? 0 : '-');
+        statusPa === 'sudah_disetujui'
+          ? (poinDariKlaim ?? poinDariKegiatan ?? '-')
+          : '-';
+
+      const bisaMintaPa =
+        p.kehadiran === true &&
+        !!p.peranVerifId &&
+        statusPa === 'belum_disetujui';
 
       return {
         no: i + 1,
         id: p.id.toString(),
+        kegiatanId: p.kegiatanId,
         namaKegiatan: p.kegiatan.nama,
         jenisKegiatan: p.kegiatan.kategori?.nama || '-',
         skala: p.kegiatan.skala?.nama || '-',
@@ -503,7 +502,13 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         tanggalDiajukan: p.createdAt,
         kehadiran: statusKehadiran,
         peran: p.peranVerif?.nama || '-',
+        peranId: p.peranVerifId ?? p.peranVerif?.id ?? null,
         poin,
+        statusPa,
+        statusPaLabel,
+        status: statusPa,
+        izinPaId: izinTerbaru?.id?.toString() || null,
+        bisaMintaPa,
         statusKegiatan: p.kegiatan.status
       };
     });

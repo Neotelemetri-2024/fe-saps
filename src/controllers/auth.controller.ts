@@ -167,8 +167,14 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
           select: {
             nim: true,
             angkatan: true,
+            prodiId: true,
             prodi: {
-              select: { nama: true, fakultas: { select: { nama: true } } },
+              select: {
+                id: true,
+                nama: true,
+                fakultasId: true,
+                fakultas: { select: { id: true, nama: true } },
+              },
             },
             dosenPA: { select: { user: { select: { nama: true } } } },
           },
@@ -176,13 +182,13 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
         dosen: {
           select: {
             nidn: true,
-            fakultas: { select: { nama: true } },
+            fakultas: { select: { id: true, nama: true } },
           },
         },
         staff: {
           select: {
             jabatan: true,
-            fakultas: { select: { nama: true } },
+            fakultas: { select: { id: true, nama: true } },
           },
         },
         organisasiOperator: {
@@ -235,14 +241,15 @@ const updateProfilSchema = z.object({
     .max(255, "Alamat maksimal 255 karakter")
     .nullable()
     .optional(),
+  prodiId: z.coerce.number().int().positive().optional(),
 });
 
 /**
  * PUT /api/auth/profil
  *
  * Memperbarui profil user yang sedang login:
- * - nama, email (tabel users)
- * - nomorTelepon, alamat (tabel users — kolom baru)
+ * - nama, email, nomorTelepon, alamat (tabel users)
+ * - prodiId (tabel mahasiswa, hanya peran mahasiswa)
  *
  * Membutuhkan token JWT yang valid.
  */
@@ -281,6 +288,34 @@ export const updateProfil = async (
       }
     }
 
+    if (data.prodiId !== undefined) {
+      const current = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { peran: true, mahasiswa: { select: { userId: true } } },
+      });
+      if (current?.peran !== "mahasiswa" || !current.mahasiswa) {
+        res.status(400).json({
+          success: false,
+          message: "Hanya mahasiswa yang dapat mengubah program studi.",
+        });
+        return;
+      }
+      const prodi = await prisma.programStudi.findUnique({
+        where: { id: data.prodiId },
+      });
+      if (!prodi) {
+        res.status(400).json({
+          success: false,
+          message: "Program studi tidak ditemukan.",
+        });
+        return;
+      }
+      await prisma.mahasiswa.update({
+        where: { userId },
+        data: { prodiId: data.prodiId },
+      });
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -298,13 +333,30 @@ export const updateProfil = async (
         peran: true,
         nomorTelepon: true,
         alamat: true,
+        mahasiswa: {
+          select: {
+            nim: true,
+            prodiId: true,
+            prodi: {
+              select: {
+                id: true,
+                nama: true,
+                fakultasId: true,
+                fakultas: { select: { id: true, nama: true } },
+              },
+            },
+          },
+        },
       },
     });
 
     res.json({
       success: true,
       message: "Profil berhasil diperbarui.",
-      data: user,
+      data: {
+        ...user,
+        id: user.id.toString(),
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
