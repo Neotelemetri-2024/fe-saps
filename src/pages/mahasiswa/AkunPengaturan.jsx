@@ -6,6 +6,7 @@ import { getCurrentUser, updateProfil, gantiPassword } from '../../services/auth
 import { get } from '../../services/apiClient'
 import { getFakultas, getProdi } from '../../services/matriksService'
 import { getLinkedInStatus, disconnectLinkedIn, getLinkedInConnectUrl } from '../../services/cvService'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 function LinkedInIcon(props) {
   return (
@@ -53,6 +54,7 @@ function AkunPengaturan() {
   const [linkedinStatus, setLinkedinStatus] = useState({ connected: false, expiresAt: null, memberIdMasked: null })
   const [linkedinLoading, setLinkedinLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false)
 
   const loadLinkedInStatus = () => {
     setLinkedinLoading(true)
@@ -117,11 +119,11 @@ function AkunPengaturan() {
   }, [form.fakultasId])
 
   const handleDisconnectLinkedIn = async () => {
-    if (!window.confirm('Putuskan koneksi LinkedIn? Anda bisa menghubungkan akun lain kapan saja.')) return
     setDisconnecting(true)
     try {
       await disconnectLinkedIn()
       setLinkedinStatus({ connected: false, expiresAt: null, memberIdMasked: null })
+      setShowDisconnectModal(false)
       toast.success('Koneksi LinkedIn diputuskan')
     } catch (err) {
       toast.error(err?.message || 'Gagal memutuskan koneksi LinkedIn')
@@ -186,6 +188,15 @@ function AkunPengaturan() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={displayName || 'Mahasiswa'} userRole="Mahasiswa">
+      <ConfirmModal
+        isOpen={showDisconnectModal}
+        title="Putuskan Koneksi LinkedIn?"
+        message="Anda bisa menghubungkan akun LinkedIn lain kapan saja setelah koneksi ini diputuskan."
+        confirmText={disconnecting ? 'Memutuskan…' : 'Ya, putuskan'}
+        cancelText="Batal"
+        onConfirm={handleDisconnectLinkedIn}
+        onCancel={() => !disconnecting && setShowDisconnectModal(false)}
+      />
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Profil dan Pengaturan</h2>
 
@@ -401,7 +412,7 @@ function AkunPengaturan() {
                   <>
                     <button
                       type="button"
-                      onClick={handleDisconnectLinkedIn}
+                      onClick={() => setShowDisconnectModal(true)}
                       disabled={disconnecting}
                       className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                     >

@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import Modal from '../../components/ui/Modal'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
 import { shareCvToLinkedIn, getLinkedInConnectUrl, getLinkedInStatus, disconnectLinkedIn } from '../../services/cvService'
@@ -57,6 +58,7 @@ function GenerateCV() {
   const [linkedinConnected, setLinkedinConnected] = useState(false)
   const [linkedinExpiresAt, setLinkedinExpiresAt] = useState(null)
   const [disconnectingLinkedIn, setDisconnectingLinkedIn] = useState(false)
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false)
 
   const loadLinkedInStatus = () => {
     getLinkedInStatus()
@@ -223,12 +225,12 @@ function GenerateCV() {
   }
 
   const handleDisconnectLinkedIn = async () => {
-    if (!window.confirm('Putuskan koneksi LinkedIn? Anda bisa menghubungkan akun lain kapan saja.')) return
     setDisconnectingLinkedIn(true)
     try {
       await disconnectLinkedIn()
       setLinkedinConnected(false)
       setLinkedinExpiresAt(null)
+      setShowDisconnectModal(false)
       toast.success('Koneksi LinkedIn diputuskan')
     } catch (err) {
       toast.error(err?.message || 'Gagal memutuskan koneksi LinkedIn')
@@ -250,6 +252,15 @@ function GenerateCV() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
+      <ConfirmModal
+        isOpen={showDisconnectModal}
+        title="Putuskan Koneksi LinkedIn?"
+        message="Anda bisa menghubungkan akun LinkedIn lain kapan saja setelah koneksi ini diputuskan."
+        confirmText={disconnectingLinkedIn ? 'Memutuskan…' : 'Ya, putuskan'}
+        cancelText="Batal"
+        onConfirm={handleDisconnectLinkedIn}
+        onCancel={() => !disconnectingLinkedIn && setShowDisconnectModal(false)}
+      />
       <div className="space-y-6">
        
 
@@ -303,7 +314,7 @@ function GenerateCV() {
                     </button>
                     <button
                       type="button"
-                      onClick={handleDisconnectLinkedIn}
+                      onClick={() => setShowDisconnectModal(true)}
                       disabled={disconnectingLinkedIn}
                       className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                     >
