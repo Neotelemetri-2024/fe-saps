@@ -29,6 +29,7 @@ export const getIzinForDosen = async (req: Request, res: Response, next: NextFun
               include: {
                 kategori: true,
                 skala: true,
+                organisasi: { select: { nama: true } },
               },
             },
             peranVerif: true,

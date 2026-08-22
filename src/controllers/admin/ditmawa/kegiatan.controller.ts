@@ -34,6 +34,32 @@ const approvalSchema = z.object({
   })).optional(),
 });
 
+const PENYELENGGARA_ADMIN_DITMAWA = 'Direktorat Kemahasiswaan UNAND';
+
+async function resolvePenyelenggaraAdmin(
+  effectiveRole: string,
+  userId: bigint,
+  organisasiId: number | null,
+  explicit?: string | null,
+): Promise<string | undefined> {
+  if (explicit?.trim()) return explicit.trim();
+  if (organisasiId) return undefined;
+
+  if (effectiveRole === 'admin_ditmawa') {
+    return PENYELENGGARA_ADMIN_DITMAWA;
+  }
+
+  if (effectiveRole === 'admin_fakultas') {
+    const staff = await prisma.staff.findUnique({
+      where: { userId },
+      include: { fakultas: { select: { nama: true } } },
+    });
+    return staff?.fakultas?.nama || 'Admin Fakultas';
+  }
+
+  return undefined;
+}
+
 // ==================== KEGIATAN CRUD ====================
 
 // GET /api/kegiatan â€” Daftar kegiatan (filter: status, asal, kategoriId)
@@ -223,6 +249,13 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const resolvedPenyelenggaraExt = await resolvePenyelenggaraAdmin(
+      effectiveRole,
+      dibuatOleh,
+      resolvedOrganisasiId,
+      body.penyelenggaraExt,
+    );
+
     // Selalu simpan sebagai draft — kirim lewat PUT /:id/ajukan
     const kegiatan = await prisma.kegiatan.create({
       data: {
@@ -236,7 +269,7 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
         lokasi: body.lokasi,
         kuota: body.kuota,
         organisasiId: resolvedOrganisasiId ?? undefined,
-        penyelenggaraExt: body.penyelenggaraExt,
+        penyelenggaraExt: resolvedPenyelenggaraExt,
         kurikulumId: kurikulumAktif.id,
         dibuatOleh,
         status: 'draft',
@@ -280,6 +313,8 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
     const body = createKegiatanSchema.parse(req.body);
     const userId = BigInt(req.user!.id);
     const userPeran = req.user!.peran;
+    const userJabatan = req.user!.jabatan;
+    const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
 
     const existing = await prisma.kegiatan.findUnique({
       where: { id: Number(id) }
@@ -321,6 +356,14 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
         ? (existing.asal === 'kurikuler_ukmf' ? 'kurikuler_ukmf' : 'kurikuler_ukm')
         : body.asal;
 
+    const resolvedPenyelenggaraExt =
+      (await resolvePenyelenggaraAdmin(
+        effectiveRole,
+        userId,
+        existing.organisasiId,
+        body.penyelenggaraExt ?? existing.penyelenggaraExt,
+      )) ?? existing.penyelenggaraExt ?? undefined;
+
     await prisma.$transaction(async (tx) => {
       await tx.kegiatan.update({
         where: { id: Number(id) },
@@ -334,7 +377,7 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
           tanggalSelesai: new Date(body.tanggalSelesai),
           lokasi: body.lokasi,
           kuota: body.kuota,
-          penyelenggaraExt: body.penyelenggaraExt,
+          penyelenggaraExt: resolvedPenyelenggaraExt,
         }
       });
 

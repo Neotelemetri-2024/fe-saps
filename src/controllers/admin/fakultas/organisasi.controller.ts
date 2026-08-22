@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 // ==================== VALIDASI ====================
 const createAkunLengkapSchema = z.object({
   namaUkm: z.string().min(3),
-  username: z.string().min(3),
+  email: z.string().email(),
   password: z.string().min(6),
   status: z.boolean(), // true = Aktif, false = Non Aktif
 });
@@ -52,7 +52,7 @@ export const getAkunUKMF = async (req: Request, res: Response): Promise<void> =>
       userId: d.user.id.toString(),
       organisasiId: d.organisasiId,
       namaUkm: d.organisasi.nama,
-      username: d.user.email.split('@')[0], // Mengambil bagian depan email sebagai username
+      email: d.user.email,
       status: d.user.aktif,
     }));
 
@@ -76,14 +76,14 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
     }
 
     const body = createAkunLengkapSchema.parse(req.body);
-    const emailFormat = body.username;
+    const email = body.email.trim().toLowerCase();
 
     const checkExistingUser = await prisma.user.findFirst({
-      where: { email: emailFormat }
+      where: { email }
     });
 
     if (checkExistingUser) {
-      res.status(400).json({ success: false, message: 'Username sudah digunakan' });
+      res.status(400).json({ success: false, message: 'Email sudah digunakan' });
       return;
     }
 
@@ -103,7 +103,7 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
       const user = await tx.user.create({
         data: {
           nama: `Operator ${body.namaUkm}`,
-          email: emailFormat, 
+          email,
           passwordHash,
           peran: 'operator_org', // Role umum untuk semua organisasi
           aktif: body.status,
