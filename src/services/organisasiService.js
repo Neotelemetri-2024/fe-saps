@@ -9,7 +9,7 @@ function normalizeAkun(item, i = 0) {
     userId: item.userId ?? item.id,
     nama: item.namaUkm || item.nama || '-',
     namaUkm: item.namaUkm || item.nama || '-',
-    username: item.username || '-',
+    email: item.email || '-',
     status: aktif ? 'aktif' : 'nonaktif',
     aktif,
   }
@@ -24,12 +24,12 @@ export async function getAkunUKM() {
 
 /**
  * POST /api/organisasi/akun
- * @param {{ namaUkm: string, username: string, password: string, status: boolean }} data
+ * @param {{ namaUkm: string, email: string, password: string, status: boolean }} data
  */
 export async function createAkunUKM(data) {
   const res = await post('/api/organisasi/akun', {
     namaUkm: data.namaUkm,
-    username: data.username,
+    email: data.email,
     password: data.password,
     status: data.status === true || data.status === 'aktif',
   })
@@ -65,7 +65,7 @@ export async function getAkunUKMF() {
 export async function createAkunUKMF(data) {
   const res = await post('/api/organisasi-fakultas/akun', {
     namaUkm: data.namaUkm || data.nama,
-    username: data.username || (data.email ? String(data.email).split('@')[0] : ''),
+    email: data.email,
     password: data.password,
     status: data.status === true || data.status === 'aktif' || data.status === 'Aktif',
   })

@@ -15,11 +15,13 @@ import {
   toggleStatusAkunUKM,
 } from '../../services/organisasiService'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function TambahAkunModal({ onClose, onSave }) {
   const [showPwd, setShowPwd] = useState(false)
   const [showConfirmPwd, setShowConfirmPwd] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ namaUkm: '', username: '', password: '', konfirmasiPassword: '', status: 'aktif' })
+  const [form, setForm] = useState({ namaUkm: '', email: '', password: '', konfirmasiPassword: '', status: 'aktif' })
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -27,8 +29,13 @@ function TambahAkunModal({ onClose, onSave }) {
   }
 
   const handleSubmit = async () => {
-    if (!form.namaUkm || !form.username || !form.password) {
+    const email = form.email.trim()
+    if (!form.namaUkm || !email || !form.password) {
       toast.error('Lengkapi semua field wajib.')
+      return
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      toast.error('Format email tidak valid.')
       return
     }
     if (form.password !== form.konfirmasiPassword) {
@@ -58,9 +65,10 @@ function TambahAkunModal({ onClose, onSave }) {
               className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Username <span className="text-red-600">*</span></label>
-            <input type="text" name="username" value={form.username} onChange={handleChange}
-              placeholder="neotelemetri123"
+            <label className="block text-sm text-[#212121]">Email <span className="text-red-600">*</span></label>
+            <input type="email" name="email" value={form.email} onChange={handleChange}
+              placeholder="operator@unand.ac.id"
+              autoComplete="off"
               className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
           </div>
           <div>
@@ -187,19 +195,19 @@ function ManajemenAkunUKM() {
 
   const filtered = data.filter((d) =>
     (d.nama || '').toLowerCase().includes(search.toLowerCase()) ||
-    (d.username || '').toLowerCase().includes(search.toLowerCase()),
+    (d.email || '').toLowerCase().includes(search.toLowerCase()),
   )
 
   const handleSave = async (form) => {
     try {
       await createAkunUKM({
         namaUkm: form.namaUkm,
-        username: form.username,
+        email: form.email.trim(),
         password: form.password,
         status: form.status === 'aktif',
       })
       setShowTambah(false)
-      toast.success('Akun UKM berhasil dibuat!', { description: `${form.namaUkm} (${form.username})` })
+      toast.success('Akun UKM berhasil dibuat!', { description: `${form.namaUkm} (${form.email.trim()})` })
       loadData()
     } catch (err) {
       toast.error('Gagal membuat akun', { description: err.message })
@@ -241,7 +249,7 @@ function ManajemenAkunUKM() {
   const columns = useMemo(() => [
     { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{i + 1}</span> },
     { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-black">{row.nama}</span> },
-    { key: 'username', label: 'Username', render: (row) => <span className="text-black">{row.username}</span> },
+    { key: 'email', label: 'Email', render: (row) => <span className="text-black">{row.email}</span> },
     { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
       <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
         <StatusBadge status={row.status} />

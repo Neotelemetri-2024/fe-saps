@@ -6,6 +6,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanFakultas } from '../../services/dashboardService'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 
 const DOUGHNUT_COLORS = ['#92400e', '#dc2626', '#15803d', '#3b82f6', '#eab308', '#7c3aed']
 
@@ -317,6 +318,12 @@ function PimpinanFakultasDashboard() {
             </div>
           </div>
         </div>
+
+        <PanduanCard
+          className="max-w-lg"
+          title="Manual Book User Pimpinan Fakultas"
+          description="Panduan Penggunaan Website SAPS untuk Pimpinan Fakultas"
+        />
       </div>
     </DashboardLayout>
   )

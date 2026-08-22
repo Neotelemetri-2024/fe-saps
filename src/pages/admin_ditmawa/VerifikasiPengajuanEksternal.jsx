@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import MahasiswaIdentityCell from '../../components/dashboard/MahasiswaIdentityCell'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { getKegiatanVerifikasi } from '../../services/kegiatanService'
@@ -169,11 +170,7 @@ function VerifikasiPengajuanEksternal() {
   const columns = useMemo(() => [
     { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
-      <div className="flex flex-col gap-0.5">
-        <p className="font-bold uppercase text-black">{row.namaMahasiswa || '-'}</p>
-        <p className="text-sm font-medium text-orange-500">{row.nim || '-'}</p>
-        <p className="text-sm text-sky-500">{row.prodi || '-'}</p>
-      </div>
+      <MahasiswaIdentityCell nama={row.namaMahasiswa} nim={row.nim} prodi={row.prodi} />
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan || '-'} tanggal={row.diajukanPada} /> },
     { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori || '-'}</span> },

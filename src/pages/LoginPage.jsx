@@ -121,7 +121,7 @@ function LoginPage() {
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-black">Email</label>
+                <label className="block text-sm font-medium text-black">Email or username</label>
                 <div className="mt-1 flex h-11 items-center gap-3 rounded-xl border border-[#0e3b1e] px-3 lg:h-12 lg:px-4">
                   <User className="h-4 w-4 shrink-0 text-[#969696]" />
                   <input

@@ -16,6 +16,16 @@ import {
 import { getPeranKegiatan } from '../../services/matriksService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import TambahPesertaModal from '../../components/ui/TambahPesertaModal'
+import {
+  kehadiranFilterBtnClass,
+  pesertaResetFilterBtnClass,
+  pesertaDownloadBtnClass,
+  pesertaImportBtnClass,
+  pesertaTambahBtnClass,
+  pesertaEditBtnClass,
+  pesertaBatalBtnClass,
+  pesertaSubmitBtnClass,
+} from '../../components/dashboard/pesertaToolbarStyles'
 
 function formatTanggal(val) {
   if (!val) return ''
@@ -149,6 +159,11 @@ function ManajemenPeserta() {
     }
   }
 
+  const handleBatalEdit = () => {
+    setIsEditing(false)
+    loadData()
+  }
+
   const handleImport = async (file) => {
     setImporting(true)
     try {
@@ -238,12 +253,13 @@ function ManajemenPeserta() {
                   className="w-full rounded-lg border border-[#d9dce7] bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {['semua', 'hadir', 'tidak', 'belum'].map((f) => (
                   <button
                     key={f}
+                    type="button"
                     onClick={() => setFilterKehadiran(f)}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterKehadiran === f ? 'bg-brand-dark text-white' : 'bg-[#e9ebf8] text-[#616161]'}`}
+                    className={kehadiranFilterBtnClass(filterKehadiran === f)}
                   >
                     {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : f === 'tidak' ? 'Tidak Hadir' : 'Belum'}
                   </button>
@@ -252,24 +268,26 @@ function ManajemenPeserta() {
                   <button
                     type="button"
                     onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
-                    className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                    className={pesertaResetFilterBtnClass}
                   >
                     Reset Filter
                   </button>
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
+                type="button"
                 onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0]"
-              ><Download className="h-4 w-4" /> Template CSV
+                className={pesertaDownloadBtnClass}
+              ><Download className="h-4 w-4" /> Unduh Template
               </button>
               <button
+                type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={importing}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#e9ebf8] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#d4d9f0] disabled:opacity-60"
-              >{importing ? 'Mengimpor…' : <><UploadCloud className="h-4 w-4" /> Import CSV</>}
+                className={pesertaImportBtnClass}
+              >{importing ? 'Mengimpor…' : <><UploadCloud className="h-4 w-4" /> Import File</>}
               </button>
               <input
                 ref={fileRef}
@@ -379,25 +397,37 @@ function ManajemenPeserta() {
                   <button
                     type="button"
                     onClick={() => setShowTambahModal(true)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-brand-dark bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-[#f0faf0]"
+                    className={pesertaTambahBtnClass}
                   ><UserPlus className="h-4 w-4" /> Tambah Peserta
                   </button>
                   {!isEditing && (
                     <button
+                      type="button"
                       onClick={() => setIsEditing(true)}
-                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+                      className={pesertaEditBtnClass}
                     >
                       Edit
                     </button>
                   )}
                   {isEditing && (
-                    <button
-                      onClick={handleSubmitPoin}
-                      disabled={submitLoading}
-                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                    >
-                      {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleBatalEdit}
+                        disabled={submitLoading}
+                        className={`${pesertaBatalBtnClass} disabled:opacity-60`}
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSubmitPoin}
+                        disabled={submitLoading}
+                        className={pesertaSubmitBtnClass}
+                      >
+                        {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

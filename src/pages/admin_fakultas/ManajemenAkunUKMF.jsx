@@ -16,6 +16,8 @@ import {
   toggleStatusAkunUKMF,
 } from '../../services/organisasiService'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function TambahAkunModal({ onClose, onSave }) {
   const [showPwd, setShowPwd] = useState(false)
   const [showConfirmPwd, setShowConfirmPwd] = useState(false)
@@ -23,7 +25,7 @@ function TambahAkunModal({ onClose, onSave }) {
 
   const [form, setForm] = useState({
     namaUkm: '',
-    username: '',
+    email: '',
     password: '',
     konfirmasiPassword: '',
     status: 'aktif',
@@ -39,12 +41,18 @@ function TambahAkunModal({ onClose, onSave }) {
   }
 
   const handleSubmit = async () => {
+    const email = form.email.trim()
     if (
       !form.namaUkm.trim() ||
-      !form.username.trim() ||
+      !email ||
       !form.password
     ) {
       toast.error('Lengkapi semua field wajib.')
+      return
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+      toast.error('Format email tidak valid.')
       return
     }
 
@@ -102,19 +110,19 @@ function TambahAkunModal({ onClose, onSave }) {
 
           <div>
             <label
-              htmlFor="username"
+              htmlFor="email"
               className="block text-sm text-[#212121]"
             >
-              Username <span className="text-red-600">*</span>
+              Email <span className="text-red-600">*</span>
             </label>
 
             <input
-              id="username"
-              type="text"
-              name="username"
-              value={form.username}
+              id="email"
+              type="email"
+              name="email"
+              value={form.email}
               onChange={handleChange}
-              placeholder="himaft123"
+              placeholder="operator@unand.ac.id"
               autoComplete="off"
               className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
@@ -408,11 +416,11 @@ function ManajemenAkunUKMF() {
 
     return data.filter((item) => {
       const nama = String(item.nama || '').toLowerCase()
-      const username = String(item.username || '').toLowerCase()
+      const email = String(item.email || '').toLowerCase()
 
       return (
         nama.includes(keyword) ||
-        username.includes(keyword)
+        email.includes(keyword)
       )
     })
   }, [data, search])
@@ -421,7 +429,7 @@ function ManajemenAkunUKMF() {
     try {
       await createAkunUKMF({
         namaUkm: form.namaUkm.trim(),
-        username: form.username.trim(),
+        email: form.email.trim(),
         password: form.password,
         status: form.status === 'aktif',
       })
@@ -429,7 +437,7 @@ function ManajemenAkunUKMF() {
       setShowTambah(false)
 
       toast.success('Akun UKMF berhasil dibuat!', {
-        description: `${form.namaUkm} (${form.username})`,
+        description: `${form.namaUkm} (${form.email.trim()})`,
       })
 
       loadData()
@@ -512,8 +520,11 @@ function ManajemenAkunUKMF() {
         label: 'Nama UKMF',
       },
       {
-        key: 'username',
-        label: 'Username',
+        key: 'email',
+        label: 'Email',
+        render: (row) => (
+          <span className="text-black">{row.email}</span>
+        ),
       },
       {
         key: 'status',
@@ -622,7 +633,7 @@ function ManajemenAkunUKMF() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Cari nama UKMF atau username..."
+                placeholder="Cari nama UKMF atau email..."
                 className="w-full rounded-lg border border-[#e9ebf8] bg-white py-2.5 pl-9 pr-3 text-sm text-[#333] outline-none transition placeholder:text-[#9aa0a6] focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>

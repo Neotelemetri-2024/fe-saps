@@ -164,8 +164,8 @@ function MahasiswaBimbingan() {
                     label: 'Mahasiswa',
                     render: (m) => (
                       <div>
-                        <p className="font-bold uppercase text-[#222]">{m.nama}</p>
-                        <p className="text-xs font-medium text-sky-600">{m.prodi}</p>
+                        <p className="font-bold uppercase text-black">{m.nama}</p>
+                        <p className="text-xs font-normal text-black">{m.prodi}</p>
                         {m.tanggalInput && m.tanggalInput !== '-' && (
                           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#9aa0a6]">
                             <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}

@@ -1,7 +1,7 @@
-import { FileText, Download, Eye } from 'lucide-react'
+import { Download, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
-function PanduanCard({ title, description, fileLabel = 'PDF', fileUrl, className = '' }) {
+function PanduanCard({ title, description, fileUrl, className = '' }) {
   const handleDownload = () => {
     if (fileUrl) {
       const link = document.createElement('a')
@@ -23,16 +23,7 @@ function PanduanCard({ title, description, fileLabel = 'PDF', fileUrl, className
 
   return (
     <div className={`rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm ${className}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#eaf5ec] text-brand-dark">
-          <FileText className="h-5 w-5" />
-        </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-          {fileLabel}
-        </span>
-      </div>
-
-      <h3 className="mt-4 text-base font-bold text-[#1f2937]">{title}</h3>
+      <h3 className="text-base font-bold text-[#1f2937]">{title}</h3>
       {description && <p className="mt-1 text-sm text-[#616161]">{description}</p>}
 
       <div className="mt-4 flex items-center gap-2">

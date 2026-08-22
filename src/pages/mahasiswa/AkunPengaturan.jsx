@@ -198,15 +198,17 @@ function AkunPengaturan() {
         onCancel={() => !disconnecting && setShowDisconnectModal(false)}
       />
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Profil dan Pengaturan</h2>
+        <div className="flex flex-col gap-10">
+          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Profil dan Pengaturan</h2>
 
-        <div className="mx-auto max-w-md rounded-xl border border-[#e9ebf8] bg-white px-6 py-6 shadow-sm">
-          <div className="flex flex-col items-center text-center">
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f0f4f0]">
-              <UserCircle className="h-12 w-12 text-brand-dark" />
-            </span>
-            <h3 className="mt-3 text-xl font-bold text-[#222] uppercase">{form.namaLengkap || '—'}</h3>
-            <p className="mt-0.5 text-sm text-[#616161]">{form.nim || '—'}</p>
+          <div className="mx-auto w-full max-w-md rounded-xl border border-[#e9ebf8] bg-white px-6 py-6 shadow-sm">
+            <div className="flex flex-col items-center text-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f0f4f0]">
+                <UserCircle className="h-12 w-12 text-brand-dark" />
+              </span>
+              <h3 className="mt-3 text-xl font-bold text-[#222] uppercase">{form.namaLengkap || '—'}</h3>
+              <p className="mt-0.5 text-sm text-[#616161]">{form.nim || '—'}</p>
+            </div>
           </div>
         </div>
 

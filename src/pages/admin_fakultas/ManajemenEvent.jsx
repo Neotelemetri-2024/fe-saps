@@ -386,6 +386,7 @@ function ManajemenEvent() {
       {
         key: 'peserta',
         label: 'PESERTA',
+        center: true,
         render: (row) => (
           <span className="text-black">
             {row.peserta}

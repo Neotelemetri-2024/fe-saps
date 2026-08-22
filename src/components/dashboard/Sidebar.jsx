@@ -1,7 +1,20 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronDown, Menu, X, ChevronRight } from 'lucide-react'
 import logoUnand from '../../assets/logo_unand.png'
+
+const menuParentBtnClass = (isExpanded) =>
+  `flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
+    isExpanded
+      ? 'bg-[#f0f4f0] font-semibold text-[#111]'
+      : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
+  }`
+
+function menuHasActiveChild(item, pathname) {
+  return item.children?.some(
+    (child) => child.path !== '#' && (pathname === child.path || pathname.startsWith(`${child.path}/`)),
+  )
+}
 
 function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
   const [openMenus, setOpenMenus] = useState({})
@@ -50,7 +63,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
           {menuItems.map((item) => {
             const isHash = item.path === '#'
             const hasChildren = item.children?.length > 0
-            const isOpen = openMenus[item.label]
+            const isMenuExpanded = openMenus[item.label]
 
             if (hasChildren) {
               return (
@@ -59,17 +72,17 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
                     type="button"
                     onClick={() => !collapsed && toggleMenu(item.label)}
                     title={collapsed ? item.label : undefined}
-                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white"
+                    className={menuParentBtnClass(isMenuExpanded && !collapsed)}
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
                     {!collapsed && (
                       <>
-                        <span className="flex-1 truncate text-left leading-snug">{item.label}</span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <span className="min-w-0 flex-1 truncate text-left leading-snug">{item.label}</span>
+                        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isMenuExpanded ? 'rotate-180' : ''}`} />
                       </>
                     )}
                   </button>
-                  {!collapsed && isOpen && (
+                  {!collapsed && isMenuExpanded && (
                     <ul className="mt-1 space-y-1 pl-8">
                       {item.children.map((child) => {
                         if (child.path === '#') {
@@ -110,7 +123,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
                 <li key={item.label}>
                   <button
                     title={collapsed ? item.label : undefined}
-                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white"
+                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white"
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
                     {!collapsed && <span className="flex-1 truncate text-left leading-snug">{item.label}</span>}
@@ -129,7 +142,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
                     `flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
                       isActive
                         ? 'bg-gradient-to-r from-brand-dark to-brand-light font-semibold text-white shadow-md'
-                        : 'text-[#333] hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white'
+                        : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
                     }`
                   }
                 >
@@ -148,11 +161,25 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
 
 /* Mobile overlay sidebar */
 function MobileSidebar({ menuItems, isOpen, onClose }) {
+  const location = useLocation()
   const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (label) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
   }
+
+  useEffect(() => {
+    if (!isOpen) return
+    setOpenMenus((prev) => {
+      const next = { ...prev }
+      menuItems.forEach((item) => {
+        if (menuHasActiveChild(item, location.pathname)) {
+          next[item.label] = true
+        }
+      })
+      return next
+    })
+  }, [isOpen, location.pathname, menuItems])
 
   if (!isOpen) return null
 
@@ -183,21 +210,21 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
             {menuItems.map((item) => {
               const isHash = item.path === '#'
               const hasChildren = item.children?.length > 0
-              const isOpen = openMenus[item.label]
+              const isMenuExpanded = openMenus[item.label]
 
               if (hasChildren) {
                 return (
-                  <li key={item.label}>
+                  <li key={item.label} className={isMenuExpanded ? 'sticky top-0 z-10 bg-white pb-1' : ''}>
                     <button
                       type="button"
                       onClick={() => toggleMenu(item.label)}
-                      className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white"
+                      className={menuParentBtnClass(isMenuExpanded)}
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                      <span className="flex-1 text-left leading-snug">{item.label}</span>
-                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      <span className="min-w-0 flex-1 text-left leading-snug">{item.label}</span>
+                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isMenuExpanded ? 'rotate-180' : ''}`} />
                     </button>
-                    {isOpen && (
+                    {isMenuExpanded && (
                       <ul className="mt-1 space-y-1 pl-8">
                         {item.children.map((child) => {
                           if (child.path === '#') {
@@ -234,7 +261,7 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
               if (isHash) {
                 return (
                   <li key={item.label}>
-                    <button className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white">
+                    <button className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
                       <span className="flex-1 text-left leading-snug">{item.label}</span>
                     </button>
@@ -252,7 +279,7 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
                       `flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
                         isActive
                           ? 'bg-gradient-to-r from-brand-dark to-brand-light font-semibold text-white shadow-md'
-                          : 'text-[#333] hover:bg-gradient-to-r hover:from-brand-dark hover:to-brand-light hover:text-white'
+                          : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
                       }`
                     }
                   >

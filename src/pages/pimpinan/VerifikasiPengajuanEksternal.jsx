@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import MahasiswaIdentityCell from '../../components/dashboard/MahasiswaIdentityCell'
 import { getPengajuanPimpinanDitmawa, subscribeDataUpdate } from '../../services/pengajuanService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
@@ -51,9 +52,7 @@ function VerifikasiPengajuanEksternalPimpinan() {
                   key: 'mahasiswa', label: 'Mahasiswa',
                   render: (item) => (
                     <div className="flex flex-col gap-0.5">
-                      <p className="font-bold uppercase text-black">{item.namaMahasiswa || '-'}</p>
-                      <p className="text-sm font-medium text-orange-500">{item.nim || '-'}</p>
-                      <p className="text-sm text-sky-500">{item.prodi || '-'}</p>
+                      <MahasiswaIdentityCell nama={item.namaMahasiswa} nim={item.nim} prodi={item.prodi} />
                       <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
                         <Clock className="h-3.5 w-3.5 shrink-0" />
                         <span>{item.diajukanPada || '-'}</span>

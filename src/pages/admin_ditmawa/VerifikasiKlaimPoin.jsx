@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import MahasiswaIdentityCell from '../../components/dashboard/MahasiswaIdentityCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
 import InfoTooltip from '../../components/ui/InfoTooltip'
@@ -180,17 +181,13 @@ function VerifikasiKlaimPoin() {
   const columns = useMemo(() => [
     { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
-      <div>
-        <p className="font-semibold text-brand-dark">{row.mahasiswa}</p>
-        <p className="text-[11px] text-orange-500">{row.nim}</p>
-        <p className="text-[11px] text-sky-500">{row.prodi}</p>
-      </div>
+      <MahasiswaIdentityCell nama={row.mahasiswa} nim={row.nim} prodi={row.prodi} />
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada || ''} /> },
     { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
     { key: 'peran', label: 'Peran', render: (row) => <span className="text-black">{row.peran}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
-    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-xs text-black">{row.info}</span> },
+    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-black">{row.info}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu

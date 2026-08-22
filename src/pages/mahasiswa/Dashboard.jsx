@@ -11,6 +11,7 @@ import { getPersetujuanMahasiswa } from '../../services/pengajuanService'
 import { getPengajuan } from '../../services/pengajuanService'
 import { getKlaim } from '../../services/poinService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import PanduanCard from '../../components/dashboard/PanduanCard'
 
 function LihatSelengkapnyaButton({ onClick }) {
   return (
@@ -314,6 +315,12 @@ function MahasiswaDashboard() {
             />
           </TableFrame>
         </TableCard>
+
+        <PanduanCard
+          className="max-w-lg"
+          title="Manual Book User Mahasiswa"
+          description="Panduan Penggunaan Website SAPS untuk Mahasiswa"
+        />
       </div>
     </DashboardLayout>
   )

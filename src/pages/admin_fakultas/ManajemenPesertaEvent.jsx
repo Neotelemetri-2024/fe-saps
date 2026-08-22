@@ -14,6 +14,16 @@ import {
 import { getPeranKegiatan } from '../../services/matriksService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import TambahPesertaModal from '../../components/ui/TambahPesertaModal'
+import {
+  kehadiranFilterBtnClass,
+  pesertaResetFilterBtnClass,
+  pesertaDownloadBtnClass,
+  pesertaImportBtnClass,
+  pesertaTambahBtnClass,
+  pesertaEditBtnClass,
+  pesertaBatalBtnClass,
+  pesertaSubmitBtnClass,
+} from '../../components/dashboard/pesertaToolbarStyles'
 
 function mapPesertaRow(p, i) {
   const peranId = p.peran?.id ?? p.peranVerifId ?? p.peranId ?? ''
@@ -146,38 +156,35 @@ function ManajemenPesertaEvent() {
     setPesertaList((prev) => prev.map((p) => (p.id === pid ? { ...p, peranVerifId } : p)))
   }
 
-  async function handleSimpanEdit() {
-    setSaving(true)
-    try {
-      const payload = pesertaList.map((p) => ({
-        partisipasiId: p.partisipasiId ?? p.id,
-        hadir: p.hadir === true ? true : p.hadir === false ? false : null,
-        ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
-      }))
-      await updatePesertaKegiatan(id, payload)
-      toast.success('Perubahan berhasil disimpan')
-      setIsEditing(false)
-    } catch (err) {
-      toast.error('Gagal menyimpan', { description: err.message })
-    } finally {
-      setSaving(false)
-    }
+  const buildPayload = () =>
+    pesertaList.map((p) => ({
+      partisipasiId: p.partisipasiId ?? p.id,
+      hadir: p.hadir === true ? true : p.hadir === false ? false : null,
+      ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
+    }))
+
+  function handleBatalEdit() {
+    setIsEditing(false)
+    loadData()
   }
 
   async function handleSubmitConfirm() {
     setShowSubmitModal(false)
     setSaving(true)
     try {
-      const payload = pesertaList.map((p) => ({
-        partisipasiId: p.partisipasiId ?? p.id,
-        hadir: p.hadir === true ? true : p.hadir === false ? false : null,
-        ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
-      }))
-      await updatePesertaKegiatan(id, payload)
-      await submitPoinPeserta(id)
+      await updatePesertaKegiatan(id, buildPayload())
+      const res = await submitPoinPeserta(id)
+      const gagal = res?.data?.errors
+      if (gagal?.length) {
+        toast.warning(res?.message || 'Sebagian peserta gagal diproses', {
+          description: gagal.join(' | '),
+        })
+      } else {
+        toast.success(res?.message || 'Poin peserta berhasil diproses otomatis!')
+      }
       setIsEditing(false)
       setSubmitted(true)
-      toast.success('Data peserta berhasil disubmit! Poin cair otomatis setelah izin PA + kehadiran + peran lengkap.')
+      loadData()
     } catch (err) {
       toast.error('Gagal submit', { description: err.message })
     } finally {
@@ -258,11 +265,7 @@ function ManajemenPesertaEvent() {
                     key={f}
                     type="button"
                     onClick={() => setFilterKehadiran(f)}
-                    className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize transition ${
-                      filterKehadiran === f
-                        ? 'bg-gradient-to-r from-brand-dark to-brand-light text-white'
-                        : 'border border-[#d9dce7] bg-white text-[#444] hover:bg-[#f5f5f5]'
-                    }`}
+                    className={kehadiranFilterBtnClass(filterKehadiran === f)}
                   >
                     {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
                   </button>
@@ -271,7 +274,7 @@ function ManajemenPesertaEvent() {
                   <button
                     type="button"
                     onClick={handleResetFilter}
-                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                    className={pesertaResetFilterBtnClass}
                   >
                     Reset Filter
                   </button>
@@ -282,13 +285,13 @@ function ManajemenPesertaEvent() {
               <button
                 type="button"
                 onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
-                className="flex items-center gap-1.5 rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-xs font-semibold text-[#444] hover:bg-[#f5f5f5]"
+                className={pesertaDownloadBtnClass}
               ><Download className="h-4 w-4" /> Unduh Template
               </button>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-xs font-semibold text-white hover:opacity-90"
+                className={pesertaImportBtnClass}
               ><UploadCloud className="h-4 w-4" /> Import File
               </button>
               <input
@@ -398,14 +401,14 @@ function ManajemenPesertaEvent() {
               <button
                 type="button"
                 onClick={() => setShowTambahModal(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-brand-dark bg-white px-4 py-2 text-xs font-semibold text-brand-dark hover:bg-[#f0faf0]"
+                className={pesertaTambahBtnClass}
               ><UserPlus className="h-4 w-4" /> Tambah Peserta
               </button>
               {!submitted && !isEditing && !belumDisetujui && (
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
+                  className={pesertaEditBtnClass}
                 >
                   Edit
                 </button>
@@ -414,19 +417,19 @@ function ManajemenPesertaEvent() {
                 <>
                   <button
                     type="button"
-                    onClick={handleSimpanEdit}
+                    onClick={handleBatalEdit}
                     disabled={saving}
-                    className="rounded-lg border border-brand-dark px-4 py-2 text-xs font-semibold text-brand-dark hover:bg-green-50 disabled:opacity-60"
+                    className={`${pesertaBatalBtnClass} disabled:opacity-60`}
                   >
-                    {saving ? 'Menyimpan…' : 'Simpan'}
+                    Batal
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowSubmitModal(true)}
                     disabled={saving}
-                    className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                    className={pesertaSubmitBtnClass}
                   >
-                    Submit untuk Klaim Poin Peserta
+                    {saving ? 'Memproses…' : 'Submit Poin Peserta'}
                   </button>
                 </>
               )}

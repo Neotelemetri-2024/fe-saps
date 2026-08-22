@@ -85,10 +85,12 @@ h2 {
 .text-brand-dark {
   color: #111 !important;
 }
-/* Pastikan hover:text-white bisa override .text-brand-dark */
-.hover\:text-white:hover,
-.hover\:\!text-white:hover {
-  color: #ffffff !important;
+/* Pastikan hover:text-white bisa override .text-brand-dark (hanya perangkat dengan hover) */
+@media (hover: hover) {
+  .hover\:text-white:hover,
+  .hover\:\!text-white:hover {
+    color: #ffffff !important;
+  }
 }
 .border-brand-dark {
   border-color: var(--brand-dark);

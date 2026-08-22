@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import MahasiswaIdentityCell from '../../components/dashboard/MahasiswaIdentityCell'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -271,11 +272,7 @@ function VerifikasiPengajuanEksternal() {
             {
               key: 'mahasiswa', label: 'Mahasiswa',
               render: (item) => (
-                <div className="flex flex-col gap-0.5">
-                  <p className="font-bold uppercase text-black">{item.namaMahasiswa}</p>
-                  <p className="text-sm font-medium text-orange-500">{item.nim}</p>
-                  <p className="text-sm text-sky-500">{item.prodi}</p>
-                </div>
+                <MahasiswaIdentityCell nama={item.namaMahasiswa} nim={item.nim} prodi={item.prodi} />
               ),
             },
             { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },

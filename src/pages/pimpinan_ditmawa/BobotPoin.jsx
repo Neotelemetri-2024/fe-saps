@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { History, X, Trash2 } from 'lucide-react'
+import { History, X, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -319,7 +319,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
                 onConfirm: addRow,
               })}
               className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
-            >Baris
+            ><Plus className="h-3.5 w-3.5" /> Tambah Baris
             </button>
             <button
               type="button"
@@ -331,7 +331,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
                 onConfirm: addCol,
               })}
               className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
-            >Kolom
+            ><Plus className="h-3.5 w-3.5" /> Tambah Kolom
             </button>
           </div>
         </div>

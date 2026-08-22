@@ -255,8 +255,8 @@ function DosenPADashboard() {
                 label: 'Mahasiswa',
                 render: (row) => (
                   <div>
-                    <p className="font-semibold text-[#222]">{row.nama}</p>
-                    <p className="text-xs text-sky-600">{row.prodi}</p>
+                    <p className="font-bold uppercase text-black">{row.nama}</p>
+                    <p className="text-xs font-normal text-black">{row.prodi}</p>
                   </div>
                 ),
               },

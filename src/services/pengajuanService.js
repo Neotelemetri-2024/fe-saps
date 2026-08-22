@@ -29,6 +29,18 @@ function formatTanggalValue(value) {
   }
 }
 
+function resolvePenyelenggaraKegiatan(kegiatanObj, item = {}) {
+  const fromDb =
+    kegiatanObj?.organisasi?.nama ||
+    kegiatanObj?.penyelenggaraExt ||
+    kegiatanObj?.penyelenggara ||
+    item.penyelenggara
+  if (fromDb) return fromDb
+  if (kegiatanObj?.asal === 'universitas') return 'Direktorat Kemahasiswaan UNAND'
+  if (kegiatanObj?.asal === 'kurikuler_ukmf' && !kegiatanObj?.organisasiId) return 'Admin Fakultas'
+  return '-'
+}
+
 function normalizePersetujuan(item, i = 0) {
   const id = item.id ?? item.partisipasiId ?? item.izinId ?? i
   // BE getIzinForDosen kembalikan struktur nested: item.partisipasi.kegiatan, dll.
@@ -49,7 +61,7 @@ function normalizePersetujuan(item, i = 0) {
     diajukanPada: formatTanggalValue(item.tanggalDiajukan || item.createdAt),
     jenis: (typeof kegiatanObj?.kategori === 'object' ? kegiatanObj?.kategori?.nama : kegiatanObj?.kategori) || item.jenis || item.jenisKegiatan || '-',
     peran: peranObj?.nama || item.peran || item.peranPencapaian || '-',
-    penyelenggara: kegiatanObj?.penyelenggara || kegiatanObj?.penyelenggaraExt || item.penyelenggara || '-',
+    penyelenggara: resolvePenyelenggaraKegiatan(kegiatanObj, item),
     tanggal: tanggalMulai || formatTanggalValue(item.tanggal || item.tanggalPelaksanaan || item.tanggalDiajukan),
     skala: skalaNama,
     mahasiswa: mhsObj?.user?.nama || item.mahasiswa || item.namaMahasiswa || item.mahasiswaNama || 'Mahasiswa',

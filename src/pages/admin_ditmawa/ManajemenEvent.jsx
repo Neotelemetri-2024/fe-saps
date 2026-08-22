@@ -116,7 +116,6 @@ function normalizeEvent(item) {
     skala: item.skala?.nama || item.skala || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
     peserta: pesertaCount || item.kuota || '-',
-    poin: item.poin ?? '-',
     status: mapStatus(item.status),
     rawStatus,
     dibuatPada: formatDate(item.createdAt),
@@ -228,8 +227,7 @@ function ManajemenEvent() {
     { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-black">{row.jenis}</span> },
     { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
-    { key: 'peserta', label: 'Peserta', render: (row) => <span className="text-black">{row.peserta}</span> },
-    { key: 'poin', label: 'Poin', render: (row) => <span className="text-black">{row.poin}</span> },
+    { key: 'peserta', label: 'Peserta', center: true, render: (row) => <span className="text-black">{row.peserta}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -317,7 +315,7 @@ function ManajemenEvent() {
             onClick={goToCreate}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
-            <Plus className="h-4 w-4" /> Tambah Event
+            <Plus className="h-4 w-4" /> Buat Event
           </button>
         </div>
 
