@@ -34,6 +34,9 @@ initializeFirebase();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Di balik proxy/ngrok, header X-Forwarded-For dipakai rate-limit untuk IP client
+app.set('trust proxy', 1);
+
 // ==================== SECURITY MIDDLEWARES ====================
 app.use(helmet());
 
@@ -47,7 +50,9 @@ app.use(cors({
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 200 : 2000,
-  message: 'Too many requests from this IP, please try again after 15 minutes'
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 

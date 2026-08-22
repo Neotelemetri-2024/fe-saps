@@ -311,6 +311,17 @@ export async function main() {
       angkatan: 2021,
     },
   })
+  await ensureUser({
+    email: 'siti.mahasiswa@unand.ac.id',
+    nama: 'Siti Mahasiswa',
+    peran: 'mahasiswa',
+    mahasiswa: {
+      nim: '2111522002',
+      prodiId: prodiSI.id,
+      dosenPaId: dosen.id,
+      angkatan: 2021,
+    },
+  })
 
   console.log('🌟 [3/6] Organisasi UKM / UKMF + operator...')
   async function ensureOrg(nama: string, tipe: 'UKM' | 'UKMF', fakultasId: number | null) {
