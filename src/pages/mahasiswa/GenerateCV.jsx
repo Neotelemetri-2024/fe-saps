@@ -5,7 +5,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import Modal from '../../components/ui/Modal'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
-import { shareCvToLinkedIn, getLinkedInConnectUrl } from '../../services/cvService'
+import { shareCvToLinkedIn, getLinkedInConnectUrl, getLinkedInStatus, disconnectLinkedIn } from '../../services/cvService'
 
 function LinkedInIcon(props) {
   return (
@@ -54,6 +54,21 @@ function GenerateCV() {
   const [sharingLinkedIn, setSharingLinkedIn] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [shareCaption, setShareCaption] = useState('')
+  const [linkedinConnected, setLinkedinConnected] = useState(false)
+  const [linkedinExpiresAt, setLinkedinExpiresAt] = useState(null)
+  const [disconnectingLinkedIn, setDisconnectingLinkedIn] = useState(false)
+
+  const loadLinkedInStatus = () => {
+    getLinkedInStatus()
+      .then((data) => {
+        setLinkedinConnected(Boolean(data?.connected))
+        setLinkedinExpiresAt(data?.expiresAt || null)
+      })
+      .catch(() => {
+        setLinkedinConnected(false)
+        setLinkedinExpiresAt(null)
+      })
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -64,6 +79,8 @@ function GenerateCV() {
 
     if (linkedinStatus === 'connected') {
       setGenerated(true)
+      setLinkedinConnected(true)
+      loadLinkedInStatus()
       const saved = sessionStorage.getItem(CAPTION_STORAGE_KEY)
       setShareCaption(saved || defaultShareCaption(user?.nama || 'Mahasiswa'))
       setShareModalOpen(true)
@@ -80,6 +97,10 @@ function GenerateCV() {
       toast.error('Gagal menghubungkan akun LinkedIn')
     }
   }, [user?.nama])
+
+  useEffect(() => {
+    loadLinkedInStatus()
+  }, [])
 
   useEffect(() => {
     const userId = user?.id
@@ -192,7 +213,7 @@ function GenerateCV() {
       toast.success('Berhasil diposting ke LinkedIn')
     } catch (err) {
       if (err?.status === 428 && err?.body?.needsConnect) {
-        window.location.href = getLinkedInConnectUrl()
+        window.location.href = getLinkedInConnectUrl('generate-cv')
         return
       }
       toast.error('Gagal membagikan CV ke LinkedIn', { description: err.message })
@@ -200,6 +221,32 @@ function GenerateCV() {
       setSharingLinkedIn(false)
     }
   }
+
+  const handleDisconnectLinkedIn = async () => {
+    if (!window.confirm('Putuskan koneksi LinkedIn? Anda bisa menghubungkan akun lain kapan saja.')) return
+    setDisconnectingLinkedIn(true)
+    try {
+      await disconnectLinkedIn()
+      setLinkedinConnected(false)
+      setLinkedinExpiresAt(null)
+      toast.success('Koneksi LinkedIn diputuskan')
+    } catch (err) {
+      toast.error(err?.message || 'Gagal memutuskan koneksi LinkedIn')
+    } finally {
+      setDisconnectingLinkedIn(false)
+    }
+  }
+
+  const expiresLabel = (() => {
+    if (!linkedinExpiresAt) return null
+    try {
+      const d = new Date(linkedinExpiresAt)
+      if (Number.isNaN(d.getTime())) return null
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    } catch {
+      return null
+    }
+  })()
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -223,22 +270,61 @@ function GenerateCV() {
         {generated && (
           <div className="space-y-4">
             {/* Tombol Download & Bagikan */}
-            <div className="flex flex-wrap justify-end gap-3 print:hidden">
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              >
-                <Download className="h-4 w-4" /> Download PDF
-              </button>
-              <button
-                type="button"
-                onClick={openShareModal}
-                disabled={sharingLinkedIn}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#004182] disabled:opacity-60"
-              >
-                <LinkedInIcon /> {sharingLinkedIn ? 'Memproses…' : 'Share ke LinkedIn'}
-              </button>
+            <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div className="text-sm text-[#616161]">
+                {linkedinConnected ? (
+                  <span>
+                    LinkedIn: <span className="font-semibold text-green-700">Terhubung</span>
+                    {expiresLabel ? <span className="text-[#888]"> · berlaku hingga {expiresLabel}</span> : null}
+                  </span>
+                ) : (
+                  <span>
+                    LinkedIn: <span className="font-semibold text-[#888]">Belum terhubung</span>
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                >
+                  <Download className="h-4 w-4" /> Download PDF
+                </button>
+                {linkedinConnected ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={openShareModal}
+                      disabled={sharingLinkedIn}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#004182] disabled:opacity-60"
+                    >
+                      <LinkedInIcon /> {sharingLinkedIn ? 'Memproses…' : 'Share ke LinkedIn'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectLinkedIn}
+                      disabled={disconnectingLinkedIn}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {disconnectingLinkedIn ? 'Memutuskan…' : 'Putuskan'}
+                    </button>
+                    <a
+                      href={getLinkedInConnectUrl('generate-cv')}
+                      className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] px-4 py-2 text-sm font-semibold text-[#0A66C2] transition hover:bg-[#eef5fb]"
+                    >
+                      Ganti akun
+                    </a>
+                  </>
+                ) : (
+                  <a
+                    href={getLinkedInConnectUrl('generate-cv')}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#004182]"
+                  >
+                    <LinkedInIcon /> Hubungkan LinkedIn
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Dokumen CV — layout Civitor ATS: padat, Times, header Title | meta + tanggal kanan */}

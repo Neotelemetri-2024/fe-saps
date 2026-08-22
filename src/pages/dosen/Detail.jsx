@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { RadarChartCJ, HorizontalBarChart } from '../../components/charts'
@@ -54,11 +54,166 @@ function formatTanggal(val) {
   }
 }
 
-function statusDotColor(status) {
+function formatTanggalJam(val = new Date()) {
+  try {
+    const d = val instanceof Date ? val : new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return '-'
+  }
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function statusBadgeClass(status) {
   const s = String(status || '').toLowerCase()
-  if (s.includes('tolak')) return 'bg-red-500'
-  if (s.includes('pending') || s.includes('menunggu')) return 'bg-yellow-400'
-  return 'bg-green-500'
+  if (s.includes('tolak')) return 'border-red-200 bg-red-50 text-red-700'
+  if (s.includes('pending') || s.includes('menunggu')) return 'border-amber-200 bg-amber-50 text-amber-700'
+  if (s.includes('universitas')) return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  return 'border-green-200 bg-green-50 text-green-700'
+}
+
+const TIMELINE_PREVIEW = 4
+
+function buildCatatanPdfHtml({ mahasiswa, dosenNama, catatan }) {
+  const m = mahasiswa || {}
+  const totalCatatan = (catatan || []).length
+  const rows = (catatan || []).map((c, i) => `
+    <tr>
+      <td class="no">${i + 1}</td>
+      <td class="isi">${escapeHtml(c.message || '-')}</td>
+      <td class="tgl">${escapeHtml(c.date || '-')}</td>
+    </tr>
+  `).join('')
+
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <style>
+    @page { size: A4; margin: 0; }
+    body {
+      margin: 0;
+      padding: 16mm 14mm;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .kop { text-align: center; margin-bottom: 10px; }
+    .kop .univ { font-size: 13px; font-weight: 700; text-transform: uppercase; }
+    .kop .sistem { font-size: 11px; margin-top: 2px; }
+    .kop .judul { margin-top: 8px; font-size: 14px; font-weight: 700; text-decoration: underline; }
+    .meta-line { margin-top: 6px; font-size: 10px; color: #333; }
+    hr.thick { border: none; border-top: 2px solid #111; margin: 10px 0 12px; }
+    .box { margin-bottom: 14px; }
+    .box-title {
+      padding: 0 0 6px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .box-body { padding: 0; }
+    table.identitas { width: 100%; border-collapse: collapse; }
+    table.identitas td { padding: 3px 4px; vertical-align: top; font-size: 11px; }
+    table.identitas td.k { width: 120px; }
+    table.identitas td.s { width: 10px; }
+    table.identitas td.half-k { width: 70px; }
+    table.catatan { width: 100%; border-collapse: collapse; }
+    table.catatan th,
+    table.catatan td {
+      border: 1px solid #333;
+      padding: 7px 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.catatan th { background: #efefef; font-size: 10px; font-weight: 700; text-align: center; }
+    table.catatan td.no { width: 36px; text-align: center; }
+    table.catatan td.tgl { width: 130px; white-space: nowrap; }
+    table.catatan td.isi { white-space: pre-wrap; }
+    .empty { padding: 16px 8px; text-align: center; color: #555; font-style: italic; }
+    .bawah {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin-top: 22px;
+    }
+    .bawah .kiri { font-size: 10px; color: #333; max-width: 55%; }
+    .ttd { width: 220px; text-align: center; font-size: 11px; }
+    .ttd .space { height: 52px; }
+    .ttd .nama { font-weight: 700; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="kop">
+    <div class="judul">RIWAYAT CATATAN BIMBINGAN AKADEMIK</div>
+    <div class="meta-line">Dosen PA: ${escapeHtml(dosenNama || '-')} &nbsp;|&nbsp; Dicetak: ${escapeHtml(formatTanggalJam())}</div>
+  </div>
+  <hr class="thick" />
+
+  <div class="box">
+    <div class="box-title">Identitas Mahasiswa</div>
+    <div class="box-body">
+      <table class="identitas">
+        <tr>
+          <td class="k">Nama</td><td class="s">:</td><td>${escapeHtml(m.nama || '-')}</td>
+          <td class="half-k">NIM</td><td class="s">:</td><td>${escapeHtml(m.nim || '-')}</td>
+        </tr>
+        <tr>
+          <td class="k">Program Studi</td><td class="s">:</td><td>${escapeHtml(m.prodi || '-')}</td>
+          <td class="half-k">Angkatan</td><td class="s">:</td><td>${escapeHtml(m.angkatan || '-')}</td>
+        </tr>
+        <tr>
+          <td class="k">IPK</td><td class="s">:</td><td>${escapeHtml(m.ipk ?? '-')}</td>
+          <td class="half-k">Poin</td><td class="s">:</td><td>${escapeHtml(m.poin ?? 0)} / ${escapeHtml(m.targetPoin ?? 550)}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="box-title">Daftar Catatan</div>
+    ${totalCatatan ? `
+      <table class="catatan">
+        <thead>
+          <tr>
+            <th style="width:36px;">No</th>
+            <th>Isi Catatan</th>
+            <th style="width:130px;">Tanggal</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    ` : '<div class="empty">Belum ada catatan bimbingan.</div>'}
+  </div>
+
+  <div class="bawah">
+    <div class="kiri">
+      Dokumen ini berisi rekap catatan bimbingan akademik mahasiswa di atas.
+      Harap disimpan sebagai arsip bimbingan dosen PA.
+    </div>
+    <div class="ttd">
+      <div>Dosen Pembimbing Akademik</div>
+      <div class="space"></div>
+      <div class="nama">${escapeHtml(dosenNama || '-')}</div>
+    </div>
+  </div>
+</body>
+</html>`
 }
 
 function DosenPADetail() {
@@ -83,6 +238,7 @@ function DosenPADetail() {
   const [riwayatCatatan, setRiwayatCatatan] = useState([])
   const [pesan, setPesan] = useState('')
   const [showAllCatatan, setShowAllCatatan] = useState(false)
+  const [showAllTimeline, setShowAllTimeline] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sendingPesan, setSendingPesan] = useState(false)
 
@@ -172,7 +328,6 @@ function DosenPADetail() {
               date: formatTanggal(act.tanggal || act.date),
               kategori: act.jenisKegiatan || act.kategori || '-',
               status: act.status || 'Pending',
-              dotColor: statusDotColor(act.status),
             })),
           )
         }
@@ -198,6 +353,9 @@ function DosenPADetail() {
     ?? []
   const pctTarget = Math.round((m.poin / (m.targetPoin ?? 550)) * 100)
   const displayedCatatan = showAllCatatan ? riwayatCatatan : riwayatCatatan.slice(0, 2)
+  const displayedTimeline = showAllTimeline
+    ? timelineAktivitas
+    : timelineAktivitas.slice(0, TIMELINE_PREVIEW)
 
   const handleKirimPesan = async () => {
     if (!pesan.trim()) {
@@ -229,6 +387,52 @@ function DosenPADetail() {
     } finally {
       setSendingPesan(false)
     }
+  }
+
+  const handleDownloadCatatanPdf = () => {
+    if (riwayatCatatan.length === 0) {
+      toast.error('Belum ada catatan', { description: 'Tidak ada riwayat catatan untuk diunduh.' })
+      return
+    }
+
+    const html = buildCatatanPdfHtml({
+      mahasiswa: m,
+      dosenNama: user?.nama || 'Dosen Pembimbing',
+      catatan: riwayatCatatan,
+    })
+
+    const existing = document.getElementById('catatan-pdf-print-frame')
+    if (existing) existing.remove()
+
+    const iframe = document.createElement('iframe')
+    iframe.id = 'catatan-pdf-print-frame'
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;'
+    document.body.appendChild(iframe)
+
+    const prevTitle = document.title
+    document.title = ''
+
+    const cleanup = () => {
+      document.title = prevTitle
+      setTimeout(() => {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
+      }, 1000)
+    }
+
+    iframe.onload = () => {
+      try {
+        if (iframe.contentDocument) iframe.contentDocument.title = ''
+        iframe.contentWindow?.focus()
+        iframe.contentWindow?.print()
+      } catch {
+        toast.error('Gagal membuka dialog cetak')
+      } finally {
+        cleanup()
+      }
+    }
+
+    iframe.srcdoc = html
   }
 
   return (
@@ -336,41 +540,55 @@ function DosenPADetail() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-5 text-base font-bold text-[#222]">Timeline Aktivitas</h3>
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold text-[#222]">Timeline Aktivitas</h3>
+              <p className="mt-0.5 text-xs text-[#888]">Riwayat kegiatan mahasiswa yang sedang dibimbing</p>
+            </div>
+            {timelineAktivitas.length > 0 && (
+              <span className="text-xs text-[#9aa0a6]">{timelineAktivitas.length} aktivitas</span>
+            )}
+          </div>
+
           {timelineAktivitas.length === 0 ? (
             <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada timeline aktivitas.</p>
           ) : (
-            <div className="space-y-5">
-              {timelineAktivitas.map((act, i) => (
-                <div key={i} className="flex items-start gap-4">
-                  <div className="flex flex-col items-center pt-1">
-                    <span className={`h-3 w-3 shrink-0 rounded-full ${act.dotColor}`}></span>
-                    {i < timelineAktivitas.length - 1 && (
-                      <div className="mt-1 h-8 w-px bg-[#e0e0e0]" />
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-[#222]">{act.event}</p>
-                      <p className="text-xs text-[#888]">
-                        {act.date} &nbsp;•&nbsp; <span className="text-[#555]">{act.kategori}</span>
-                      </p>
+            <ul className="space-y-3">
+              {displayedTimeline.map((act, i) => (
+                <li key={`${act.event}-${act.date}-${i}`} className="rounded-lg border border-[#eef0f6] bg-[#fafbfc] px-3.5 py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-snug text-[#222]">{act.event}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#888]">
+                        <span>{act.date}</span>
+                        {act.kategori && act.kategori !== '-' && (
+                          <>
+                            <span className="text-[#d0d4dc]">•</span>
+                            <span className="rounded bg-[#eef2ee] px-1.5 py-0.5 text-[11px] font-medium text-[#3d5c45]">
+                              {act.kategori}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <span className={`shrink-0 rounded-full border px-3 py-0.5 text-xs font-semibold ${
-                      String(act.status).toLowerCase().includes('pending')
-                        ? 'border-yellow-300 bg-yellow-50 text-yellow-600'
-                        : 'border-green-300 bg-green-50 text-green-700'
-                    }`}>
+                    <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusBadgeClass(act.status)}`}>
                       {act.status}
                     </span>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-          {timelineAktivitas.length > 0 && (
-            <button type="button" className="mt-4 text-xs text-[#888] hover:underline">
-              menampilkan semua Timeline Aktivitas
+
+          {timelineAktivitas.length > TIMELINE_PREVIEW && (
+            <button
+              type="button"
+              onClick={() => setShowAllTimeline((v) => !v)}
+              className="mt-4 text-xs font-semibold text-brand-dark hover:underline"
+            >
+              {showAllTimeline
+                ? 'Sembunyikan timeline'
+                : `Lihat semua timeline (${timelineAktivitas.length}) ›`}
             </button>
           )}
         </div>
@@ -395,7 +613,18 @@ function DosenPADetail() {
         </div>
 
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-[#222]">Riwayat Catatan</h3>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-base font-bold text-[#222]">Riwayat Catatan</h3>
+            <button
+              type="button"
+              onClick={handleDownloadCatatanPdf}
+              disabled={riwayatCatatan.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download PDF
+            </button>
+          </div>
           {riwayatCatatan.length === 0 ? (
             <p className="py-4 text-center text-sm text-[#9aa0a6]">Belum ada catatan.</p>
           ) : (

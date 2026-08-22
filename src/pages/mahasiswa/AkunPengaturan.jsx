@@ -5,6 +5,26 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser, updateProfil, gantiPassword } from '../../services/authService'
 import { get } from '../../services/apiClient'
 import { getFakultas, getProdi } from '../../services/matriksService'
+import { getLinkedInStatus, disconnectLinkedIn, getLinkedInConnectUrl } from '../../services/cvService'
+
+function LinkedInIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" {...props}>
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.56V9h3.554v11.452z" />
+    </svg>
+  )
+}
+
+function formatExpiresAt(iso) {
+  if (!iso) return null
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return null
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return null
+  }
+}
 
 function AkunPengaturan() {
   const user = getCurrentUser()
@@ -30,8 +50,36 @@ function AkunPengaturan() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [changingPwd, setChangingPwd] = useState(false)
+  const [linkedinStatus, setLinkedinStatus] = useState({ connected: false, expiresAt: null, memberIdMasked: null })
+  const [linkedinLoading, setLinkedinLoading] = useState(true)
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  const loadLinkedInStatus = () => {
+    setLinkedinLoading(true)
+    getLinkedInStatus()
+      .then((data) => {
+        setLinkedinStatus({
+          connected: Boolean(data?.connected),
+          expiresAt: data?.expiresAt || null,
+          memberIdMasked: data?.memberIdMasked || null,
+        })
+      })
+      .catch(() => {
+        setLinkedinStatus({ connected: false, expiresAt: null, memberIdMasked: null })
+      })
+      .finally(() => setLinkedinLoading(false))
+  }
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const linkedin = params.get('linkedin')
+    if (linkedin) {
+      window.history.replaceState({}, '', window.location.pathname)
+      if (linkedin === 'connected') toast.success('Akun LinkedIn berhasil dihubungkan')
+      else if (linkedin === 'denied') toast.error('Otorisasi LinkedIn dibatalkan')
+      else if (linkedin === 'error') toast.error('Gagal menghubungkan akun LinkedIn')
+    }
+
     getFakultas()
       .then((list) => setFakultasList(Array.isArray(list) ? list : []))
       .catch(() => {})
@@ -54,6 +102,8 @@ function AkunPengaturan() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+
+    loadLinkedInStatus()
   }, [])
 
   useEffect(() => {
@@ -66,6 +116,19 @@ function AkunPengaturan() {
       .catch(() => setProdiList([]))
   }, [form.fakultasId])
 
+  const handleDisconnectLinkedIn = async () => {
+    if (!window.confirm('Putuskan koneksi LinkedIn? Anda bisa menghubungkan akun lain kapan saja.')) return
+    setDisconnecting(true)
+    try {
+      await disconnectLinkedIn()
+      setLinkedinStatus({ connected: false, expiresAt: null, memberIdMasked: null })
+      toast.success('Koneksi LinkedIn diputuskan')
+    } catch (err) {
+      toast.error(err?.message || 'Gagal memutuskan koneksi LinkedIn')
+    } finally {
+      setDisconnecting(false)
+    }
+  }
   const handleSimpanPerubahan = async () => {
     if (!form.namaLengkap.trim()) {
       toast.error('Nama lengkap wajib diisi.')
@@ -295,6 +358,73 @@ function AkunPengaturan() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Koneksi LinkedIn */}
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2]/10 text-[#0A66C2]">
+              <LinkedInIcon />
+            </span>
+            <div>
+              <h3 className="text-lg font-bold text-[#222]">Koneksi LinkedIn</h3>
+              <p className="text-xs text-[#888]">Untuk membagikan CV ke LinkedIn. Token biasanya berlaku sekitar 60 hari.</p>
+            </div>
+          </div>
+
+          {linkedinLoading ? (
+            <p className="text-sm text-[#9aa0a6]">Memuat status…</p>
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                {linkedinStatus.connected ? (
+                  <>
+                    <p className="text-sm font-semibold text-green-700">Terhubung</p>
+                    {linkedinStatus.memberIdMasked && (
+                      <p className="mt-0.5 text-xs text-[#616161]">ID: {linkedinStatus.memberIdMasked}</p>
+                    )}
+                    {formatExpiresAt(linkedinStatus.expiresAt) && (
+                      <p className="mt-0.5 text-xs text-[#888]">
+                        Berlaku hingga {formatExpiresAt(linkedinStatus.expiresAt)}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-[#616161]">Belum terhubung</p>
+                    <p className="mt-0.5 text-xs text-[#888]">Hubungkan akun untuk share CV ke LinkedIn.</p>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {linkedinStatus.connected ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectLinkedIn}
+                      disabled={disconnecting}
+                      className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {disconnecting ? 'Memutuskan…' : 'Putuskan'}
+                    </button>
+                    <a
+                      href={getLinkedInConnectUrl('pengaturan')}
+                      className="inline-flex items-center justify-center rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#004182]"
+                    >
+                      Ganti akun
+                    </a>
+                  </>
+                ) : (
+                  <a
+                    href={getLinkedInConnectUrl('pengaturan')}
+                    className="inline-flex items-center justify-center rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#004182]"
+                  >
+                    Hubungkan LinkedIn
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* KEAMANAN */}

@@ -40,25 +40,6 @@ function KehadiranBadge({ status }) {
   )
 }
 
-function StatusIzinBadge({ label }) {
-  const s = String(label || '').toLowerCase()
-  const cfg =
-    s.includes('disetujui') && !s.includes('belum')
-      ? { bg: 'bg-green-100', text: 'text-green-800' }
-      : s.includes('tolak')
-        ? { bg: 'bg-red-100', text: 'text-red-800' }
-        : s.includes('revisi')
-          ? { bg: 'bg-amber-100', text: 'text-amber-800' }
-          : s.includes('menunggu')
-            ? { bg: 'bg-blue-100', text: 'text-blue-800' }
-            : { bg: 'bg-yellow-100', text: 'text-yellow-800' }
-  return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
-      {label || 'Belum Diajukan'}
-    </span>
-  )
-}
-
 function StatusPoinBadge({ label }) {
   const s = String(label || '').toLowerCase()
   const cfg =
@@ -76,7 +57,12 @@ function StatusPoinBadge({ label }) {
   )
 }
 
+function isSudahDiklaim(row) {
+  return String(row.statusPoin || '').toLowerCase().includes('terklaim')
+}
+
 function canMintaIzin(row) {
+  if (isSudahDiklaim(row)) return false
   if (typeof row.canMintaIzinPA === 'boolean') return row.canMintaIzinPA
   return !!row.bisaMintaPa
 }
@@ -89,14 +75,12 @@ function RiwayatKegiatanInternal() {
   const [filterJenis, setFilterJenis] = useState('')
   const [filterKehadiran, setFilterKehadiran] = useState('')
   const [filterPenyelenggara, setFilterPenyelenggara] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
   const [filterSkala, setFilterSkala] = useState('')
   const [filterStatusPoin, setFilterStatusPoin] = useState('')
 
   const [pilihanMode, setPilihanMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [submittingIzin, setSubmittingIzin] = useState(false)
-  const [submittingRowId, setSubmittingRowId] = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -129,10 +113,6 @@ function RiwayatKegiatanInternal() {
     () => [...new Set(riwayat.map((r) => r.skala).filter((s) => s && s !== '-'))].sort(),
     [riwayat],
   )
-  const statusIzinOptions = useMemo(() => {
-    const labels = riwayat.map((r) => r.statusIzinPA || r.statusPaLabel).filter(Boolean)
-    return [...new Set(labels)].sort()
-  }, [riwayat])
   const statusPoinOptions = useMemo(
     () => [...new Set(riwayat.map((r) => r.statusPoin).filter(Boolean))].sort(),
     [riwayat],
@@ -151,10 +131,6 @@ function RiwayatKegiatanInternal() {
         if (filterJenis && r.jenisKegiatan !== filterJenis) return false
         if (filterKehadiran && r.kehadiran !== filterKehadiran) return false
         if (filterPenyelenggara && r.penyelenggara !== filterPenyelenggara) return false
-        if (filterStatus) {
-          const label = r.statusIzinPA || r.statusPaLabel || ''
-          if (label !== filterStatus) return false
-        }
         if (filterStatusPoin && r.statusPoin !== filterStatusPoin) return false
         if (filterSkala && r.skala !== filterSkala) return false
         return true
@@ -164,14 +140,13 @@ function RiwayatKegiatanInternal() {
         no: i + 1,
         diajukanPada: formatTanggal(r.tanggalDiajukan || r.createdAt || r.dibuatPada),
       }))
-  }, [riwayat, search, filterJenis, filterKehadiran, filterPenyelenggara, filterStatus, filterStatusPoin, filterSkala])
+  }, [riwayat, search, filterJenis, filterKehadiran, filterPenyelenggara, filterStatusPoin, filterSkala])
 
   const resetFilter = () => {
     setSearch('')
     setFilterJenis('')
     setFilterKehadiran('')
     setFilterPenyelenggara('')
-    setFilterStatus('')
     setFilterStatusPoin('')
     setFilterSkala('')
   }
@@ -186,19 +161,6 @@ function RiwayatKegiatanInternal() {
       kegiatanId: row.kegiatanId,
       peranId: row.peranId,
     })
-  }
-
-  const handleMintaSatu = async (row) => {
-    setSubmittingRowId(row.id)
-    try {
-      await ajukanIzin(row)
-      toast.success('Permintaan izin PA terkirim!')
-      load()
-    } catch (err) {
-      toast.error('Gagal mengajukan izin PA', { description: err?.message })
-    } finally {
-      setSubmittingRowId(null)
-    }
   }
 
   const toggleSelect = (id) => {
@@ -273,26 +235,6 @@ function RiwayatKegiatanInternal() {
       ),
     },
     {
-      key: 'izinPa',
-      label: 'IZIN DOSEN PA',
-      render: (row) => (
-        <div className="flex w-full justify-center" onClick={(e) => e.stopPropagation()}>
-          {canMintaIzin(row) ? (
-            <button
-              type="button"
-              disabled={submittingRowId === row.id || submittingIzin}
-              onClick={() => handleMintaSatu(row)}
-              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submittingRowId === row.id ? 'Mengirim…' : 'Minta Izin PA'}
-            </button>
-          ) : (
-            <StatusIzinBadge label={row.statusIzinPA || row.statusPaLabel || 'Belum Diajukan'} />
-          )}
-        </div>
-      ),
-    },
-    {
       key: 'statusPoin',
       label: 'STATUS POIN',
       render: (row) => (
@@ -306,7 +248,7 @@ function RiwayatKegiatanInternal() {
       label: 'POIN',
       center: true,
       render: (row) => (
-        <span className="font-semibold text-brand-dark">
+        <span className="text-brand-dark">
           {row.poin === null || row.poin === undefined || row.poin === '' ? '-' : row.poin}
         </span>
       ),
@@ -347,10 +289,6 @@ function RiwayatKegiatanInternal() {
                 <option value="Tidak Hadir">Tidak Hadir</option>
                 <option value="Belum Tercatat">Belum Tercatat</option>
               </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
-                <option value="">Semua Status Izin PA</option>
-                {statusIzinOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
               <select value={filterStatusPoin} onChange={(e) => setFilterStatusPoin(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
                 <option value="">Semua Status Poin</option>
                 {statusPoinOptions.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -363,7 +301,7 @@ function RiwayatKegiatanInternal() {
                 <option value="">Semua Penyelenggara</option>
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
-              {(search || filterJenis || filterKehadiran || filterStatus || filterStatusPoin || filterSkala || filterPenyelenggara) && (
+              {(search || filterJenis || filterKehadiran || filterStatusPoin || filterSkala || filterPenyelenggara) && (
                 <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
               )}
             </div>
@@ -384,7 +322,7 @@ function RiwayatKegiatanInternal() {
             />
           </TableFrame>
 
-          {!loading && bisaMintaCount > 0 && (
+          {!loading && filtered.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
               {pilihanMode ? (
                 <>
@@ -411,10 +349,11 @@ function RiwayatKegiatanInternal() {
               ) : (
                 <button
                   type="button"
+                  disabled={bisaMintaCount === 0}
                   onClick={() => setPilihanMode(true)}
-                  className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Minta Izin PA (Pilih Banyak)
+                  Minta Izin PA
                 </button>
               )}
             </div>
