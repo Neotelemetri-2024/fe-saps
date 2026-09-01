@@ -13,6 +13,13 @@ async function getOrganisasiOperator(userId: bigint) {
   return operator;
 }
 
+// Helper: cek apakah user adalah staf admin / super admin
+function isAdminStaff(user?: { peran: string; jabatan?: string }): boolean {
+  if (!user) return false;
+  const role = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
+  return role === 'admin_ditmawa' || role === 'admin_fakultas' || role === 'pimpinan_ditmawa' || role === 'pimpinan_utama';
+}
+
 // ==================== DAFTAR KEGIATAN UKM ====================
 
 // GET /api/ukm/kegiatan
@@ -170,8 +177,8 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
     const { search, filter, page = '1', limit = '10' } = req.query;
 
-    // Admin Ditmawa/Fakultas boleh mengelola peserta event miliknya (tanpa organisasi)
-    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+    // Admin Ditmawa/Fakultas/Super Admin boleh mengelola peserta event miliknya (tanpa organisasi)
+    const isAdmin = isAdminStaff(req.user);
 
     let kegiatan: any;
     if (isAdmin) {
@@ -326,9 +333,9 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       return res.status(400).json({ success: false, message: 'File CSV wajib diupload.' });
     }
 
-    // Cek kegiatan — untuk admin, tidak perlu cek operator
+    // Cek kegiatan — untuk admin/super admin, tidak perlu cek operator
     let kegiatan: any;
-    if (req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas') {
+    if (isAdminStaff(req.user)) {
       kegiatan = await prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
       if (!kegiatan) {
         return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
@@ -589,7 +596,7 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
     let namaKegiatan = 'Kegiatan';
     let kategoriId: number | null = null;
 
-    if (req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas') {
+    if (isAdminStaff(req.user)) {
       const kegiatan = await prisma.kegiatan.findUnique({
         where: { id: kegiatanId },
         select: { nama: true, kategoriId: true }
@@ -728,7 +735,7 @@ export const updatePesertaUKM = async (req: Request, res: Response, next: NextFu
 
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+    const isAdmin = isAdminStaff(req.user);
 
     let kegiatan: any;
     if (isAdmin) {
@@ -820,7 +827,7 @@ export const submitPoinPesertaUKM = async (req: Request, res: Response, next: Ne
     const aktorId = BigInt(userId);
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+    const isAdmin = isAdminStaff(req.user);
 
     let kegiatan: any;
     if (isAdmin) {
@@ -1039,7 +1046,7 @@ export const cariMahasiswaPeserta = async (req: Request, res: Response, next: Ne
       return res.status(200).json({ success: true, data: [] });
     }
 
-    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+    const isAdmin = isAdminStaff(req.user);
 
     let kegiatan: any;
     if (isAdmin) {
@@ -1111,7 +1118,7 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
       return res.status(400).json({ success: false, message: 'ID mahasiswa tidak valid.' });
     }
 
-    const isAdmin = req.user?.jabatan === 'admin_ditmawa' || req.user?.jabatan === 'admin_fakultas';
+    const isAdmin = isAdminStaff(req.user);
 
     let kegiatan: any;
     if (isAdmin) {

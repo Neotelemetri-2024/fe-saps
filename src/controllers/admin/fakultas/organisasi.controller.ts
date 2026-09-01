@@ -10,36 +10,52 @@ const createAkunLengkapSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   status: z.boolean(), // true = Aktif, false = Non Aktif
+  fakultasId: z.number().int().positive().optional(), // Opsional jika dibuat oleh Super Admin Ditmawa
 });
 
 const resetPasswordSchema = z.object({
   passwordBaru: z.string().min(6),
 });
 
-// ==================== OPERATOR UKMF CRUD (ADMIN FAKULTAS) ====================
+function checkSuperAdmin(user?: { peran: string; jabatan?: string }): boolean {
+  if (!user) return false;
+  const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
+  return effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama' || effectiveRole === 'admin_ditmawa';
+}
 
-// GET /api/organisasi-fakultas/akun â€” Daftar akun operator UKMF di fakultasnya
+// ==================== OPERATOR UKMF CRUD (ADMIN FAKULTAS & SUPER ADMIN) ====================
+
+// GET /api/organisasi-fakultas/akun — Daftar akun operator UKMF di fakultasnya (atau seluruh fakultas jika Super Admin)
 export const getAkunUKMF = async (req: Request, res: Response): Promise<void> => {
   try {
     const aktorId = BigInt(req.user!.id);
+    const isSuperAdmin = checkSuperAdmin(req.user);
     const staff = await prisma.staff.findUnique({ where: { userId: aktorId } });
-    const fakultasId = staff?.fakultasId;
+    
+    let effectiveFakultasId = staff?.fakultasId;
+    if (isSuperAdmin && req.query.fakultasId) {
+      effectiveFakultasId = Number(req.query.fakultasId);
+    }
 
-    if (!fakultasId) {
+    if (!effectiveFakultasId && !isSuperAdmin) {
       res.status(403).json({ success: false, message: 'Admin tidak memiliki fakultas' });
       return;
     }
 
+    const whereClause: any = {
+      tipe: 'UKMF',
+    };
+    if (effectiveFakultasId) {
+      whereClause.fakultasId = effectiveFakultasId;
+    }
+
     const data = await prisma.organisasiOperator.findMany({
       where: {
-        organisasi: {
-          tipe: 'UKMF',
-          fakultasId,
-        },
+        organisasi: whereClause,
       },
       include: {
         user: { select: { id: true, nama: true, email: true, aktif: true } },
-        organisasi: { select: { id: true, nama: true, tipe: true } },
+        organisasi: { select: { id: true, nama: true, tipe: true, fakultasId: true } },
       },
       orderBy: {
         organisasi: { nama: 'asc' },
@@ -52,6 +68,7 @@ export const getAkunUKMF = async (req: Request, res: Response): Promise<void> =>
       userId: d.user.id.toString(),
       organisasiId: d.organisasiId,
       namaUkm: d.organisasi.nama,
+      fakultasId: d.organisasi.fakultasId,
       email: d.user.email,
       status: d.user.aktif,
     }));
@@ -63,19 +80,21 @@ export const getAkunUKMF = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// POST /api/organisasi-fakultas/akun â€” Buat Organisasi (UKMF) sekaligus User Operatornya
+// POST /api/organisasi-fakultas/akun — Buat Organisasi (UKMF) sekaligus User Operatornya
 export const createAkunUKMF = async (req: Request, res: Response): Promise<void> => {
   try {
     const aktorId = BigInt(req.user!.id);
+    const isSuperAdmin = checkSuperAdmin(req.user);
     const staff = await prisma.staff.findUnique({ where: { userId: aktorId } });
-    const fakultasId = staff?.fakultasId;
+    const body = createAkunLengkapSchema.parse(req.body);
 
-    if (!fakultasId) {
-      res.status(403).json({ success: false, message: 'Admin tidak memiliki akses fakultas' });
+    const targetFakultasId = staff?.fakultasId || body.fakultasId;
+
+    if (!targetFakultasId) {
+      res.status(400).json({ success: false, message: 'Fakultas ID wajib diisi untuk membuat UKMF' });
       return;
     }
 
-    const body = createAkunLengkapSchema.parse(req.body);
     const email = body.email.trim().toLowerCase();
 
     const checkExistingUser = await prisma.user.findFirst({
@@ -95,7 +114,7 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
         data: {
           nama: body.namaUkm,
           tipe: 'UKMF',
-          fakultasId, // Sesuai fakultas admin
+          fakultasId: targetFakultasId, // Sesuai fakultas admin atau pilihan super admin
         },
       });
 
@@ -143,11 +162,12 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// PUT /api/organisasi-fakultas/akun/:userId/toggle-status â€” Aktifkan/Nonaktifkan akun UKMF
+// PUT /api/organisasi-fakultas/akun/:userId/toggle-status — Aktifkan/Nonaktifkan akun UKMF
 export const toggleStatusAkunUKMF = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const aktorId = BigInt(req.user!.id);
+    const isSuperAdmin = checkSuperAdmin(req.user);
     const staff = await prisma.staff.findUnique({ where: { userId: aktorId } });
     const fakultasId = staff?.fakultasId;
     
@@ -161,7 +181,7 @@ export const toggleStatusAkunUKMF = async (req: Request, res: Response): Promise
       return;
     }
 
-    if (operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF') {
+    if (!isSuperAdmin && (operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF')) {
       res.status(403).json({ success: false, message: 'Akses ditolak. Anda hanya dapat mengatur UKMF di fakultas Anda.' });
       return;
     }
@@ -192,11 +212,12 @@ export const toggleStatusAkunUKMF = async (req: Request, res: Response): Promise
   }
 };
 
-// PUT /api/organisasi-fakultas/akun/:userId/reset-password â€” Reset password akun UKMF
+// PUT /api/organisasi-fakultas/akun/:userId/reset-password — Reset password akun UKMF
 export const resetPasswordUKMF = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const aktorId = BigInt(req.user!.id);
+    const isSuperAdmin = checkSuperAdmin(req.user);
     const staff = await prisma.staff.findUnique({ where: { userId: aktorId } });
     const fakultasId = staff?.fakultasId;
     
@@ -207,7 +228,7 @@ export const resetPasswordUKMF = async (req: Request, res: Response): Promise<vo
       include: { organisasi: true },
     });
 
-    if (!operator || operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF') {
+    if (!operator || (!isSuperAdmin && (operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF'))) {
       res.status(403).json({ success: false, message: 'Akses ditolak atau akun tidak ditemukan.' });
       return;
     }
@@ -230,11 +251,12 @@ export const resetPasswordUKMF = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/organisasi-fakultas/akun/:userId â€” Hapus Akun & UKMF
+// DELETE /api/organisasi-fakultas/akun/:userId — Hapus Akun & UKMF
 export const hapusAkunUKMF = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const aktorId = BigInt(req.user!.id);
+    const isSuperAdmin = checkSuperAdmin(req.user);
     const staff = await prisma.staff.findUnique({ where: { userId: aktorId } });
     const fakultasId = staff?.fakultasId;
 
@@ -243,7 +265,7 @@ export const hapusAkunUKMF = async (req: Request, res: Response): Promise<void> 
       include: { organisasi: true },
     });
 
-    if (!operator || operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF') {
+    if (!operator || (!isSuperAdmin && (operator.organisasi.fakultasId !== fakultasId || operator.organisasi.tipe !== 'UKMF'))) {
       res.status(403).json({ success: false, message: 'Akses ditolak atau akun tidak ditemukan.' });
       return;
     }

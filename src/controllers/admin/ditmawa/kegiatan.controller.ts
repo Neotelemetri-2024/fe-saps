@@ -45,7 +45,7 @@ async function resolvePenyelenggaraAdmin(
   if (explicit?.trim()) return explicit.trim();
   if (organisasiId) return undefined;
 
-  if (effectiveRole === 'admin_ditmawa') {
+  if (effectiveRole === 'admin_ditmawa' || effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama') {
     return PENYELENGGARA_ADMIN_DITMAWA;
   }
 

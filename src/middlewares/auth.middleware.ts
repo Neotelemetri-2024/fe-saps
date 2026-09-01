@@ -84,7 +84,25 @@ export const authorizeRole = (...allowedRoles: string[]) => {
       ? req.user.jabatan
       : req.user.peran;
 
-    if (!allowedRoles.includes(effectiveRole)) {
+    // 🔥 SUPER ADMIN & LEADERSHIP INHERITANCE:
+    // 1. Pimpinan Ditmawa (Super Admin) mewarisi hak admin_ditmawa, admin_fakultas, operator_org, pimpinan_fakultas
+    const isPimpinanDitmawa = effectiveRole === 'pimpinan_ditmawa';
+    const isPimpinanUtama = effectiveRole === 'pimpinan_utama';
+
+    const hasPermission =
+      allowedRoles.includes(effectiveRole) ||
+      (isPimpinanDitmawa && (
+        allowedRoles.includes('admin_ditmawa') ||
+        allowedRoles.includes('admin_fakultas') ||
+        allowedRoles.includes('operator_org') ||
+        allowedRoles.includes('pimpinan_fakultas')
+      )) ||
+      (isPimpinanUtama && (
+        allowedRoles.includes('pimpinan_ditmawa') ||
+        allowedRoles.includes('pimpinan_fakultas')
+      ));
+
+    if (!hasPermission) {
       res.status(403).json({
         success: false,
         message: `Akses ditolak. Role Anda (${effectiveRole}) tidak memiliki izin untuk mengakses fitur ini.`,
