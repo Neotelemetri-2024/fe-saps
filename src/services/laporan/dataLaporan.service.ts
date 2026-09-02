@@ -119,17 +119,24 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       throw new Error('Akun Anda tidak terikat dengan fakultas manapun.');
     }
     effectiveFakultasId = staff.fakultasId;
-    scopeNama = `Fakultas ${staff.fakultas?.nama || ''}`;
+    scopeNama = staff.fakultas?.nama || 'Fakultas Terkait';
   } else if (role === 'pimpinan_ditmawa' || role === 'admin_ditmawa') {
     scope = 'ditmawa';
     scopeNama = 'Direktorat Kemahasiswaan (Ditmawa) - Universitas Andalas';
     if (effectiveFakultasId) {
       const fak = await prisma.fakultas.findUnique({ where: { id: effectiveFakultasId } });
-      if (fak) scopeNama += ` (Filter: Fakultas ${fak.nama})`;
+      if (fak) scopeNama += ` (Filter: ${fak.nama})`;
+    }
+  } else if (role === 'pimpinan_utama') {
+    scope = 'universitas';
+    scopeNama = 'Pimpinan Utama (Rektorat) - Universitas Andalas';
+    if (effectiveFakultasId) {
+      const fak = await prisma.fakultas.findUnique({ where: { id: effectiveFakultasId } });
+      if (fak) scopeNama += ` (Filter: ${fak.nama})`;
     }
   } else if (effectiveFakultasId) {
     const fak = await prisma.fakultas.findUnique({ where: { id: effectiveFakultasId } });
-    if (fak) scopeNama = `Fakultas ${fak.nama} - Universitas Andalas`;
+    if (fak) scopeNama = `${fak.nama} - Universitas Andalas`;
   }
 
   // 2. Ambil Kurikulum Aktif & Capaiannya

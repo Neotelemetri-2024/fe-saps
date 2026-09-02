@@ -14,10 +14,11 @@ export const getPreviewLaporan = async (req: Request, res: Response, next: NextF
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
     const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
 
     const data = await getLaporanData({
-      role: user.peran,
+      role: effectiveRole,
       userId: BigInt(user.id),
       fakultasId: fakultasId ? Number(fakultasId) : undefined,
       prodiId: prodiId ? Number(prodiId) : undefined,
@@ -47,10 +48,11 @@ export const downloadExcelLaporan = async (req: Request, res: Response, next: Ne
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
     const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
 
     const data = await getLaporanData({
-      role: user.peran,
+      role: effectiveRole,
       userId: BigInt(user.id),
       fakultasId: fakultasId ? Number(fakultasId) : undefined,
       prodiId: prodiId ? Number(prodiId) : undefined,
@@ -86,10 +88,11 @@ export const downloadPdfLaporan = async (req: Request, res: Response, next: Next
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
     const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
 
     const data = await getLaporanData({
-      role: user.peran,
+      role: effectiveRole,
       userId: BigInt(user.id),
       fakultasId: fakultasId ? Number(fakultasId) : undefined,
       prodiId: prodiId ? Number(prodiId) : undefined,
