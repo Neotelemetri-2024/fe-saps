@@ -18,7 +18,7 @@ const createCapaianSchema = z.object({
 
 const createSubCapaianSchema = z.object({
   nama: z.string().min(3),
-  bobotPersen: z.number().min(0.01).max(100),
+  bobotPersen: z.number().int().min(1).max(100),
 });
 
 const updateCapaianSchema = z.object({
@@ -29,7 +29,7 @@ const updateCapaianSchema = z.object({
 
 const updateSubCapaianSchema = z.object({
   nama: z.string().min(3).optional(),
-  bobotPersen: z.number().min(0.01).max(100).optional(),
+  bobotPersen: z.number().int().min(1).max(100).optional(),
 });
 
 // ==================== KURIKULUM CRUD ====================
@@ -59,7 +59,7 @@ export const getAllKurikulum = async (req: Request, res: Response) => {
 // GET /api/kurikulum/aktif â€” Kurikulum yang sedang aktif
 export const getKurikulumAktif = async (req: Request, res: Response) => {
   try {
-    const data = await prisma.kurikulum.findFirst({
+    const data = await prisma.kurikulum.findMany({
       where: { status: 'aktif' },
       include: {
         capaian: {
@@ -67,8 +67,9 @@ export const getKurikulumAktif = async (req: Request, res: Response) => {
           orderBy: { urutan: 'asc' },
         },
       },
+      orderBy: { id: 'asc' },
     });
-    if (!data) {
+    if (!data || data.length === 0) {
       res.status(404).json({ success: false, message: 'Belum ada kurikulum aktif' });
       return;
     }
@@ -155,15 +156,7 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const statusLama = kurikulum.status;
-
-    // Arsipkan kurikulum aktif saat ini (jika ada) [BR-001]
-    await prisma.kurikulum.updateMany({
-      where: { status: 'aktif' },
-      data: { status: 'arsip' },
-    });
-
-    // Aktifkan kurikulum baru
+    // Aktifkan kurikulum
     const updated = await prisma.kurikulum.update({
       where: { id: Number(id) },
       data: { status: 'aktif', activatedAt: new Date() },
@@ -173,7 +166,7 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
       entitas: 'kurikulum',
       entitasId: updated.id,
       aksi: 'aktivasi',
-      statusLama,
+      statusLama: kurikulum.status,
       statusBaru: 'aktif',
       aktorId,
     });

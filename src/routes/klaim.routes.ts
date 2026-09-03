@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticateJWT);
 
 // Literal paths BEFORE /:id
-router.get('/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), getKlaimForValidasi);
+router.get('/validasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), getKlaimForValidasi);
 router.get('/verifikasi-eksternal', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getKlaimEksternalForVerifikasi);
 router.put('/validasi-bulk', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), validasiKlaimBulk);
 

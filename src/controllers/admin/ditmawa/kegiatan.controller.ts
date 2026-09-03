@@ -45,7 +45,7 @@ async function resolvePenyelenggaraAdmin(
   if (explicit?.trim()) return explicit.trim();
   if (organisasiId) return undefined;
 
-  if (effectiveRole === 'admin_ditmawa' || effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama') {
+  if (effectiveRole === 'admin_ditmawa') {
     return PENYELENGGARA_ADMIN_DITMAWA;
   }
 
@@ -210,14 +210,30 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Validasi total alokasi = 100% [BR-032]
-    const totalAlokasi = body.alokasi.reduce((sum, a) => sum + a.alokasiPersen, 0);
-    if (Math.abs(totalAlokasi - 100) > 0.01) {
-      res.status(400).json({
-        success: false,
-        message: `Total alokasi harus tepat 100%. Saat ini: ${totalAlokasi}%`,
-      });
-      return;
+    // Validasi alokasi: setiap kurikulum yang terlibat harus tepat 100% [BR-032]
+    const subCapaians = await prisma.subCapaian.findMany({
+      where: { id: { in: body.alokasi.map(a => a.subCapaianId) } },
+      include: { capaian: { select: { kurikulumId: true, kurikulum: { select: { nama: true } } } } },
+    });
+
+    const alokasiByKurikulum = new Map<number, { sum: number; nama: string }>();
+    for (const a of body.alokasi) {
+      const sc = subCapaians.find(s => s.id === a.subCapaianId);
+      const kId = sc?.capaian?.kurikulumId || kurikulumAktif.id;
+      const kNama = sc?.capaian?.kurikulum?.nama || 'Kurikulum';
+      const curr = alokasiByKurikulum.get(kId) || { sum: 0, nama: kNama };
+      curr.sum += a.alokasiPersen;
+      alokasiByKurikulum.set(kId, curr);
+    }
+
+    for (const [_, info] of alokasiByKurikulum.entries()) {
+      if (Math.abs(info.sum - 100) > 0.01) {
+        res.status(400).json({
+          success: false,
+          message: `Total alokasi untuk ${info.nama} harus tepat 100%. Saat ini: ${info.sum}%.`,
+        });
+        return;
+      }
     }
 
     const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
@@ -342,13 +358,30 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const totalAlokasi = body.alokasi.reduce((sum, a) => sum + a.alokasiPersen, 0);
-    if (Math.abs(totalAlokasi - 100) > 0.01) {
-      res.status(400).json({
-        success: false,
-        message: `Total alokasi harus tepat 100%. Saat ini: ${totalAlokasi}%`,
-      });
-      return;
+    // Validasi alokasi: setiap kurikulum yang terlibat harus tepat 100% [BR-032]
+    const subCapaians = await prisma.subCapaian.findMany({
+      where: { id: { in: body.alokasi.map(a => a.subCapaianId) } },
+      include: { capaian: { select: { kurikulumId: true, kurikulum: { select: { nama: true } } } } },
+    });
+
+    const alokasiByKurikulum = new Map<number, { sum: number; nama: string }>();
+    for (const a of body.alokasi) {
+      const sc = subCapaians.find(s => s.id === a.subCapaianId);
+      const kId = sc?.capaian?.kurikulumId || existing.kurikulumId;
+      const kNama = sc?.capaian?.kurikulum?.nama || 'Kurikulum';
+      const curr = alokasiByKurikulum.get(kId) || { sum: 0, nama: kNama };
+      curr.sum += a.alokasiPersen;
+      alokasiByKurikulum.set(kId, curr);
+    }
+
+    for (const [_, info] of alokasiByKurikulum.entries()) {
+      if (Math.abs(info.sum - 100) > 0.01) {
+        res.status(400).json({
+          success: false,
+          message: `Total alokasi untuk ${info.nama} harus tepat 100%. Saat ini: ${info.sum}%.`,
+        });
+        return;
+      }
     }
 
     const resolvedAsal =

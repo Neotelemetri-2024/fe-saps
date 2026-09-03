@@ -61,7 +61,7 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       // Mahasiswa dengan Perolehan Poin untuk menghitung persentase kelulusan target
       prisma.mahasiswa.findMany({
         select: {
-          id: true,
+          userId: true,
           perolehanPoin: {
             where: { status: 'sah' },
             select: {
@@ -243,12 +243,12 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
 
     const formattedKlaimPending = klaimPendingList.map((kp) => ({
       id: kp.id.toString(),
-      nim: kp.partisipasi.mahasiswa.nim,
-      namaMahasiswa: kp.partisipasi.mahasiswa.user.nama,
-      prodi: kp.partisipasi.mahasiswa.prodi.nama,
-      namaKegiatan: kp.partisipasi.kegiatan.nama,
-      kategori: kp.partisipasi.kegiatan.kategori?.nama || '-',
-      skala: kp.partisipasi.kegiatan.skala?.nama || '-',
+      nim: kp.partisipasi?.mahasiswa?.nim || '-',
+      namaMahasiswa: kp.partisipasi?.mahasiswa?.user?.nama || '-',
+      prodi: kp.partisipasi?.mahasiswa?.prodi?.nama || '-',
+      namaKegiatan: kp.partisipasi?.kegiatan?.nama || '-',
+      kategori: kp.partisipasi?.kegiatan?.kategori?.nama || '-',
+      skala: kp.partisipasi?.kegiatan?.skala?.nama || '-',
       peran: kp.peranUsulan?.nama || '-',
       status: kp.status,
       diajukanPada: kp.createdAt,

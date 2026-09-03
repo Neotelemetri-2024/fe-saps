@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 router.use(authenticateJWT);
-router.use(authorizeRole('admin_fakultas'));
+router.use(authorizeRole('admin_fakultas', 'pimpinan_ditmawa'));
 
 router.get('/akun', getAkunUKMF);
 router.post('/akun', createAkunUKMF);

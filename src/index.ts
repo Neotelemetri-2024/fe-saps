@@ -120,7 +120,6 @@ app.use('/api/organisasi-fakultas', organisasiFakultasRoutes);
 import mahasiswaRoutes from './routes/mahasiswa.routes';
 import dosenRoutes from './routes/dosen.routes';
 import ukmRoutes from './routes/ukm.routes';
-import laporanRoutes from './routes/laporan.routes';
 
 // Klaim Poin & Perolehan (Mahasiswa, Validator, Admin)
 app.use('/api/klaim', klaimRoutes);
@@ -134,12 +133,12 @@ app.use('/api/dosen', dosenRoutes);
 // Khusus Operator UKM
 app.use('/api/ukm', ukmRoutes);
 
-// Khusus Laporan Evaluasi & Riset Pimpinan
-app.use('/api/pimpinan/laporan', laporanRoutes);
-app.use('/api/laporan', laporanRoutes);
-
 // Umum: Notifikasi, Audit Log, Dashboard, Portofolio
 app.use('/api/umum', umumRoutes);
+
+// Laporan & Evaluasi Pimpinan (Excel, PDF, Preview)
+import laporanRoutes from './routes/laporan.routes';
+app.use('/api/pimpinan/laporan', laporanRoutes);
 
 // ==================== GLOBAL ERROR HANDLER ====================
 app.use((err: any, req: Request, res: Response, next: any) => {

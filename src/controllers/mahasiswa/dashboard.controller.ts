@@ -3,6 +3,172 @@ import prisma from '../../lib/prisma';
 
 // ==================== DASHBOARD MAHASISWA ====================
 
+// Helper untuk mencari kurikulum aktif yang paling sesuai bagi mahasiswa
+export function cariKurikulumMahasiswa(allKurikulumAktif: any[], mahasiswa: any, perolehanPoin: any[]) {
+  if (!allKurikulumAktif || allKurikulumAktif.length === 0) return null;
+
+  // 1. Cek apakah ada poin yang tercatat dengan kurikulumId aktif tertentu
+  const kurikulumIdDariPoin = perolehanPoin.find(p =>
+    p.detail?.some((d: any) => d.subCapaian?.capaian?.kurikulumId)
+  )?.detail?.find((d: any) => d.subCapaian?.capaian?.kurikulumId)?.subCapaian?.capaian?.kurikulumId;
+
+  let match = allKurikulumAktif.find(k => k.id === kurikulumIdDariPoin);
+  if (match) return match;
+
+  // 2. Cocokkan berdasarkan angkatan mahasiswa
+  if (mahasiswa.angkatan) {
+    match = allKurikulumAktif.find(k =>
+      k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
+    );
+    if (match) return match;
+  }
+
+  // 3. Fallback ke kurikulum aktif pertama
+  return allKurikulumAktif[0];
+}
+
+// Helper untuk menghitung progres kurikulum mahasiswa dengan capping poin
+export function hitungProgresKurikulumMahasiswa(kurikulum: any, perolehanPoin: any[]) {
+  const capaianMapById: Record<number, number> = {};
+  const capaianMapByName: Record<string, number> = {};
+  const subCapaianMapById: Record<number, number> = {};
+  const subCapaianMapByName: Record<string, number> = {};
+
+  for (const p of perolehanPoin) {
+    if (p.detail && p.detail.length > 0) {
+      let detailSum = 0;
+      for (const d of p.detail) {
+        const scId = d.subCapaianId;
+        const scNama = d.subCapaian?.nama?.toLowerCase().trim();
+        const capaianId = d.subCapaian?.capaianId;
+        const capaianNama = d.subCapaian?.capaian?.nama?.toLowerCase().trim();
+
+        if (scId) {
+          subCapaianMapById[scId] = (subCapaianMapById[scId] || 0) + d.poin;
+        }
+        if (scNama) {
+          subCapaianMapByName[scNama] = (subCapaianMapByName[scNama] || 0) + d.poin;
+        }
+        if (capaianId) {
+          capaianMapById[capaianId] = (capaianMapById[capaianId] || 0) + d.poin;
+        }
+        if (capaianNama) {
+          capaianMapByName[capaianNama] = (capaianMapByName[capaianNama] || 0) + d.poin;
+        }
+        detailSum += d.poin;
+      }
+      const selisih = p.totalPoin - detailSum;
+      if (selisih > 0 && kurikulum.capaian[0]?.id) {
+        const defaultId = kurikulum.capaian[0].id;
+        capaianMapById[defaultId] = (capaianMapById[defaultId] || 0) + selisih;
+      }
+    } else {
+      const defaultId = kurikulum.capaian[0]?.id;
+      if (defaultId) {
+        capaianMapById[defaultId] = (capaianMapById[defaultId] || 0) + p.totalPoin;
+      }
+    }
+  }
+
+  // Hitung progres per capaian (dengan capping agar kelebihan tidak masuk ke progres)
+  const progresTahunan = kurikulum.capaian.map((c: any) => {
+    const targetPoin = c.jumlahPoin;
+    const cNama = c.nama?.toLowerCase().trim();
+    const poinAktual = capaianMapById[c.id] ?? (capaianMapByName[cNama] || 0);
+
+    let sumSubProgres = 0;
+    const hasSub = Array.isArray(c.subCapaian) && c.subCapaian.length > 0;
+    let hasSubWithBobot = false;
+
+    const subCapaianProgres = hasSub
+      ? c.subCapaian.map((sc: any) => {
+          const bobot = Number(sc.bobotPersen || 0);
+          const targetSub = bobot > 0 ? Math.round((bobot / 100) * targetPoin) : 0;
+          if (targetSub > 0) hasSubWithBobot = true;
+          const scNama = sc.nama?.toLowerCase().trim();
+          const poinSubAktual = subCapaianMapById[sc.id] ?? (subCapaianMapByName[scNama] || 0);
+          const poinSubProgres = targetSub > 0 ? Math.min(poinSubAktual, targetSub) : poinSubAktual;
+          sumSubProgres += poinSubProgres;
+          return {
+            id: sc.id,
+            nama: sc.nama,
+            bobotPersen: bobot,
+            targetPoin: targetSub,
+            poinTerkumpul: poinSubAktual,
+            poinProgres: poinSubProgres,
+            poinLebih: targetSub > 0 ? Math.max(0, poinSubAktual - targetSub) : 0,
+            isTuntas: targetSub > 0 && poinSubAktual >= targetSub,
+          };
+        })
+      : [];
+
+    // Poin yang masuk ke progres:
+    // Jika ada sub capaian berbobot dan terisi, gunakan sumSubProgres
+    // Jika tidak, gunakan poinAktual (dibatasi targetPoin)
+    const poinProgres = (hasSubWithBobot && sumSubProgres > 0)
+      ? Math.min(sumSubProgres, targetPoin)
+      : Math.min(poinAktual, targetPoin);
+
+    const persentase = targetPoin > 0
+      ? Math.min(100, Math.round((poinProgres / targetPoin) * 100))
+      : 0;
+
+    const poinLebih = Math.max(0, poinAktual - targetPoin);
+
+    return {
+      id: c.id,
+      nama: c.nama,
+      urutan: c.urutan,
+      targetPoin,
+      poinTerkumpul: poinAktual,       // Poin riil aktual di capaian ini
+      poinProgres,                     // Poin yang masuk ke progres (maksimal targetPoin)
+      poinLebih,                        // Kelebihan poin di capaian ini (tidak masuk progres)
+      persentase,                      // Persentase progres (0 - 100%)
+      status: poinProgres >= targetPoin ? 'tuntas' : 'berjalan',
+      subCapaian: subCapaianProgres,
+    };
+  });
+
+  // Total poin riil (seluruh perolehan poin sah mahasiswa)
+  const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
+
+  // Total target kurikulum
+  const totalTarget = kurikulum.capaian.reduce((sum: number, c: any) => sum + c.jumlahPoin, 0);
+
+  // Total poin yang masuk ke progres (akumulasi poinProgres yang di-cap)
+  const totalPoinProgres = progresTahunan.reduce((sum: number, item: any) => sum + item.poinProgres, 0);
+
+  // Persentase total progres kurikulum (maksimal 100%)
+  const persentaseTotal = totalTarget > 0
+    ? Math.min(100, Math.round((totalPoinProgres / totalTarget) * 100))
+    : 0;
+
+  // Radar chart: persentase per capaian (0-100%)
+  const radarData = kurikulum.capaian.map((c: any) => {
+    const prog = progresTahunan.find((p: any) => p.id === c.id);
+    return {
+      label: c.nama,
+      value: prog ? prog.persentase : 0,
+    };
+  });
+
+  // Status kelulusan: HANYA jika seluruh capaian target kurikulum terpenuhi (totalPoinProgres >= totalTarget)
+  const isLulus = totalTarget > 0 && totalPoinProgres >= totalTarget && progresTahunan.every((c: any) => c.poinProgres >= c.targetPoin);
+  const statusKelulusan = isLulus ? 'Memenuhi Syarat Kelulusan' : 'Belum Memenuhi Syarat Kelulusan';
+
+  return {
+    kurikulumNama: kurikulum.nama,
+    totalPoin,            // Total riil mahasiswa (untuk riwayat)
+    totalPoinProgres,     // Poin masuk progres target kelulusan (capped)
+    totalTarget,          // Target kurikulum untuk kelulusan
+    persentaseTotal,      // Persentase progres (0 - 100%)
+    isLulus,
+    statusKelulusan,
+    progresTahunan,
+    radarData,
+  };
+}
+
 export const getDashboard = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -20,8 +186,8 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ success: false, message: 'Profil mahasiswa tidak ditemukan' });
     }
 
-    // Ambil Kurikulum Aktif + Capaian (tahun)
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
+    // Ambil Kurikulum Aktif (dukung multiple aktif, utamakan sesuai angkatan jika cocok)
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
       where: { status: 'aktif' },
       include: {
         capaian: {
@@ -31,8 +197,16 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       }
     });
 
-    if (!kurikulumAktif) {
+    if (allKurikulumAktif.length === 0) {
       return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+    }
+
+    let kurikulumAktif = allKurikulumAktif[0];
+    if (mahasiswa.angkatan) {
+      const match = allKurikulumAktif.find(k =>
+        k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
+      );
+      if (match) kurikulumAktif = match;
     }
 
     // Ambil perolehan poin mahasiswa ini
@@ -45,58 +219,7 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       }
     });
 
-    // Hitung target total dari seluruh capaian
-    const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
-
-    // Total poin dihitung dari akumulasi seluruh perolehan poin sah mahasiswa
-    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-
-    // Hitung poin per capaian (tahun)
-    const capaianMap: Record<number, number> = {};
-    for (const p of perolehanPoin) {
-      if (p.detail && p.detail.length > 0) {
-        let detailSum = 0;
-        for (const d of p.detail) {
-          const capaianId = d.subCapaian?.capaianId;
-          if (capaianId) {
-            capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
-            detailSum += d.poin;
-          }
-        }
-        // Jika ada selisih poin detail terhadap totalPoin (misal capaian lama)
-        const selisih = p.totalPoin - detailSum;
-        if (selisih > 0 && kurikulumAktif.capaian[0]?.id) {
-          const defaultCapaianId = kurikulumAktif.capaian[0].id;
-          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + selisih;
-        }
-      } else {
-        // Fallback jika tidak ada detail: masukkan ke capaian aktif pertama
-        const defaultCapaianId = kurikulumAktif.capaian[0]?.id;
-        if (defaultCapaianId) {
-          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + p.totalPoin;
-        }
-      }
-    }
-
-    const progresTahunan = kurikulumAktif.capaian.map(c => ({
-      id: c.id,
-      nama: c.nama,
-      urutan: c.urutan,
-      targetPoin: c.jumlahPoin,
-      poinTerkumpul: capaianMap[c.id] || 0,
-      persentase: c.jumlahPoin > 0
-        ? Math.round(((capaianMap[c.id] || 0) / c.jumlahPoin) * 100)
-        : 0,
-      status: (capaianMap[c.id] || 0) >= c.jumlahPoin ? 'tuntas' : 'berjalan'
-    }));
-
-    // Radar Chart: poin per capaian dinormalisasi ke persen
-    const radarData = kurikulumAktif.capaian.map(c => ({
-      label: c.nama,
-      value: c.jumlahPoin > 0
-        ? Math.round(((capaianMap[c.id] || 0) / c.jumlahPoin) * 100)
-        : 0
-    }));
+    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
 
     // Riwayat Kegiatan Persetujuan Dosen PA (5 terbaru)
     const riwayatIzinPA = await prisma.izinPA.findMany({
@@ -163,12 +286,12 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       };
     });
 
-    // Tentukan tahap berdasarkan poin
+    // Hitung persentase dan tahap
+    const persentaseTotal = progresResult.persentaseTotal;
     let tahap = 'Tahap I: Dasar';
-    const persen = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
-    if (persen >= 75) tahap = 'Tahap IV: Akhir';
-    else if (persen >= 50) tahap = 'Tahap III: Mahir';
-    else if (persen >= 25) tahap = 'Tahap II: Menengah';
+    if (persentaseTotal >= 75) tahap = 'Tahap IV: Akhir';
+    else if (persentaseTotal >= 50) tahap = 'Tahap III: Mahir';
+    else if (persentaseTotal >= 25) tahap = 'Tahap II: Menengah';
 
     res.status(200).json({
       success: true,
@@ -177,13 +300,17 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
         prodi: mahasiswa.prodi.nama,
         nim: mahasiswa.nim,
         angkatan: mahasiswa.angkatan,
-        totalPoin,
-        totalTarget,
-        persentaseTotal: persen,
+        kurikulumNama: progresResult.kurikulumNama,
+        totalPoin: progresResult.totalPoin,                   // Total riil mahasiswa (untuk riwayat)
+        totalPoinProgres: progresResult.totalPoinProgres,     // Poin masuk progres (capped)
+        totalTarget: progresResult.totalTarget,
+        persentaseTotal,
+        isLulus: progresResult.isLulus,
+        statusKelulusan: progresResult.statusKelulusan,
         tahap,
-        progresTahunan,
-        progressTahun: progresTahunan,
-        radarData,
+        progresTahunan: progresResult.progresTahunan,
+        progressTahun: progresResult.progresTahunan,
+        radarData: progresResult.radarData,
         riwayatIzinPA: tabelIzinPA,
         riwayatEksternal: tabelEksternal
       }
@@ -201,16 +328,32 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    // Ambil Kurikulum Aktif + Capaian
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
+    const mahasiswa = await prisma.mahasiswa.findUnique({
+      where: { userId: BigInt(userId) },
+      select: { angkatan: true }
+    });
+
+    // Ambil Kurikulum Aktif
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
       where: { status: 'aktif' },
       include: {
-        capaian: { orderBy: { urutan: 'asc' } }
+        capaian: {
+          orderBy: { urutan: 'asc' },
+          include: { subCapaian: true }
+        }
       }
     });
 
-    if (!kurikulumAktif) {
+    if (allKurikulumAktif.length === 0) {
       return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+    }
+
+    let kurikulumAktif = allKurikulumAktif[0];
+    if (mahasiswa?.angkatan) {
+      const match = allKurikulumAktif.find(k =>
+        k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
+      );
+      if (match) kurikulumAktif = match;
     }
 
     // Ambil semua perolehan poin mahasiswa
@@ -223,48 +366,7 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       }
     });
 
-    // Total poin dihitung dari akumulasi seluruh perolehan poin sah mahasiswa
-    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-    const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
-
-    // Hitung per capaian (tahun kurikulum)
-    const capaianMap: Record<number, number> = {};
-    for (const p of perolehanPoin) {
-      if (p.detail && p.detail.length > 0) {
-        let detailSum = 0;
-        for (const d of p.detail) {
-          const capaianId = d.subCapaian?.capaianId;
-          if (capaianId) {
-            capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
-            detailSum += d.poin;
-          }
-        }
-        // Jika ada selisih poin detail terhadap totalPoin (misal capaian lama)
-        const selisih = p.totalPoin - detailSum;
-        if (selisih > 0 && kurikulumAktif.capaian[0]?.id) {
-          const defaultCapaianId = kurikulumAktif.capaian[0].id;
-          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + selisih;
-        }
-      } else {
-        // Fallback jika tidak ada detail: masukkan ke capaian aktif pertama
-        const defaultCapaianId = kurikulumAktif.capaian[0]?.id;
-        if (defaultCapaianId) {
-          capaianMap[defaultCapaianId] = (capaianMap[defaultCapaianId] || 0) + p.totalPoin;
-        }
-      }
-    }
-
-    const progressTahun = kurikulumAktif.capaian.map(c => ({
-      id: c.id,
-      nama: c.nama,
-      urutan: c.urutan,
-      targetPoin: c.jumlahPoin,
-      poinTerkumpul: capaianMap[c.id] || 0,
-      persentase: c.jumlahPoin > 0
-        ? Math.round(((capaianMap[c.id] || 0) / c.jumlahPoin) * 100)
-        : 0,
-      status: (capaianMap[c.id] || 0) >= c.jumlahPoin ? 'tuntas' : 'berjalan'
-    }));
+    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
 
     // Filter query params
     const { kategoriId, peranId, status, penyelenggara, tahun, search } = req.query;
@@ -358,8 +460,8 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
         };
       });
 
-    // Hitung persentase dan tahap (sama persis dengan getDashboard)
-    const persentaseTotal = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
+    // Hitung persentase dan tahap
+    const persentaseTotal = progresResult.persentaseTotal;
     let tahap = 'Tahap I: Dasar';
     if (persentaseTotal >= 75) tahap = 'Tahap IV: Akhir';
     else if (persentaseTotal >= 50) tahap = 'Tahap III: Mahir';
@@ -368,12 +470,16 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
     res.status(200).json({
       success: true,
       data: {
-        totalPoin,
-        totalTarget,
+        kurikulumNama: progresResult.kurikulumNama,
+        totalPoin: progresResult.totalPoin,                   // Total riil mahasiswa (untuk riwayat)
+        totalPoinProgres: progresResult.totalPoinProgres,     // Poin masuk progres (capped)
+        totalTarget: progresResult.totalTarget,
         persentaseTotal,
+        isLulus: progresResult.isLulus,
+        statusKelulusan: progresResult.statusKelulusan,
         tahap,
-        progresTahunan: progressTahun,
-        progressTahun,
+        progresTahunan: progresResult.progresTahunan,
+        progressTahun: progresResult.progresTahunan,
         riwayat: tabelRiwayat
       }
     });

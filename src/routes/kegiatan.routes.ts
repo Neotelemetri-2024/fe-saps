@@ -34,16 +34,16 @@ router.put('/approval-bulk', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakulta
 router.get('/:id', getKegiatanById);
 
 // ─── BUAT / EDIT ──────────────────────────────────────────────────────────────
-router.post('/', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), createKegiatan);
-router.put('/:id', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), editKegiatan);
-router.put('/:id/ajukan', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), ajukanKegiatan);
+router.post('/', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), createKegiatan);
+router.put('/:id', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), editKegiatan);
+router.put('/:id/ajukan', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), ajukanKegiatan);
 
 // ─── VERIFIKASI / APPROVAL PER-ID ─────────────────────────────────────────────
 router.put('/:id/verifikasi', authorizeRole('admin_ditmawa', 'admin_fakultas'), verifikasiKegiatan);
 router.put('/:id/approval', authorizeRole('pimpinan_ditmawa', 'pimpinan_fakultas'), approvalKegiatan);
 
 // ─── PUBLIKASI & HAPUS ────────────────────────────────────────────────────────
-router.put('/:id/publikasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'), publikasiKegiatan);
-router.delete('/:id', authorizeRole('admin_ditmawa', 'admin_fakultas'), hapusKegiatan);
+router.put('/:id/publikasi', authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), publikasiKegiatan);
+router.delete('/:id', authorizeRole('admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'), hapusKegiatan);
 
 export default router;

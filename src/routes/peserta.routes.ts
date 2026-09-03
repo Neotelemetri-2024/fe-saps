@@ -20,35 +20,35 @@ router.use(authenticateJWT);
 // GET /api/kegiatan/:id/peserta — Daftar peserta kegiatan
 router.get(
   '/:id/peserta',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   getPesertaKegiatan
 );
 
 // GET /api/kegiatan/:id/peserta/search — Cari mahasiswa yang belum terdaftar
 router.get(
   '/:id/peserta/search',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   cariMahasiswaPeserta
 );
 
 // POST /api/kegiatan/:id/peserta — Tambah peserta manual
 router.post(
   '/:id/peserta',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   tambahPesertaManual
 );
 
 // GET /api/kegiatan/:id/peserta/template — Download CSV template
 router.get(
   '/:id/peserta/template',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   downloadTemplatePeserta
 );
 
 // POST /api/kegiatan/:id/peserta/import — Import peserta dari Excel (.xlsx)
 router.post(
   '/:id/peserta/import',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   uploadXlsx.single('file'),
   importPeserta
 );
@@ -56,14 +56,14 @@ router.post(
 // POST /api/kegiatan/:id/peserta/submit-poin — Submit & cetak poin otomatis
 router.post(
   '/:id/peserta/submit-poin',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   submitPoinPeserta
 );
 
 // PUT /api/kegiatan/:id/peserta/update — Update kehadiran & peran peserta
 router.put(
   '/:id/peserta/update',
-  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas'),
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa'),
   updatePeserta
 );
 

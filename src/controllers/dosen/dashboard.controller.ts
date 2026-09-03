@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
+import { cariKurikulumMahasiswa, hitungProgresKurikulumMahasiswa } from '../mahasiswa/dashboard.controller';
 
 // ==================== DASHBOARD DOSEN PA ====================
 
@@ -21,6 +22,17 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
       return res.status(404).json({ success: false, message: 'Profil dosen tidak ditemukan' });
     }
 
+    // Ambil semua kurikulum aktif dengan capaian dan sub capaian
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
+      where: { status: 'aktif' },
+      include: {
+        capaian: {
+          orderBy: { urutan: 'asc' },
+          include: { subCapaian: true }
+        }
+      }
+    });
+
     // Total Mahasiswa Bimbingan
     const mahasiswaBimbingan = await prisma.mahasiswa.findMany({
       where: { dosenPaId: BigInt(dosenUserId) },
@@ -29,7 +41,11 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
         prodi: { select: { nama: true } },
         perolehanPoin: {
           where: { status: 'sah' },
-          select: { totalPoin: true }
+          include: {
+            detail: {
+              include: { subCapaian: { include: { capaian: true } } }
+            }
+          }
         }
       }
     });
@@ -69,31 +85,23 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
       tanggal: izin.createdAt
     }));
 
-    // Kurikulum aktif untuk menghitung capaian
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: {
-        capaian: { orderBy: { urutan: 'asc' } }
-      }
-    });
-
-    const totalTarget = kurikulumAktif
-      ? kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0)
-      : 550;
-
-    // Progres Capaian Tahunan per mahasiswa + identifikasi "perlu perhatian"
+    // Progres Capaian per mahasiswa berbasis kurikulum & identifikasi "perlu perhatian"
     const progresMahasiswa = [];
     let totalPoinSemua = 0;
     let perluPerhatianCount = 0;
     const kategoriPoinMap: Record<string, number> = {};
 
     for (const mhs of mahasiswaBimbingan) {
-      const totalPoin = mhs.perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-      totalPoinSemua += totalPoin;
-      const persentase = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
+      const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
+      const prog = kurikulumMhs
+        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
+        : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
 
-      // Perlu perhatian: capaian < 50%
-      const perluPerhatian = persentase < 50;
+      totalPoinSemua += prog.totalPoin;
+      const persentase = prog.persentaseTotal;
+
+      // Perlu perhatian: belum lulus dan capaian target < 50%
+      const perluPerhatian = !prog.isLulus && persentase < 50;
       if (perluPerhatian) perluPerhatianCount++;
 
       progresMahasiswa.push({
@@ -104,8 +112,12 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
         angkatan: mhs.angkatan,
         ipk: '-', // IPK tidak ada di schema, placeholder
         capaianPersen: persentase,
-        totalPoin,
-        status: perluPerhatian ? 'perlu_perhatian' : 'on_track'
+        totalPoin: prog.totalPoin,                   // Total riil
+        totalPoinProgres: prog.totalPoinProgres,     // Poin masuk progres (capped)
+        totalTarget: prog.totalTarget,
+        isLulus: prog.isLulus,
+        statusKelulusan: prog.statusKelulusan,
+        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'on_track'
       });
     }
 
@@ -177,6 +189,16 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
       ];
     }
 
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
+      where: { status: 'aktif' },
+      include: {
+        capaian: {
+          orderBy: { urutan: 'asc' },
+          include: { subCapaian: true }
+        }
+      }
+    });
+
     const mahasiswaBimbingan = await prisma.mahasiswa.findMany({
       where: whereClause,
       include: {
@@ -184,23 +206,23 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
         prodi: { select: { nama: true } },
         perolehanPoin: {
           where: { status: 'sah' },
-          select: { totalPoin: true }
+          include: {
+            detail: {
+              include: { subCapaian: { include: { capaian: true } } }
+            }
+          }
         }
       }
     });
 
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: { capaian: true }
-    });
-
-    const totalTarget = kurikulumAktif
-      ? kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0)
-      : 550;
-
     const result = mahasiswaBimbingan.map(mhs => {
-      const totalPoin = mhs.perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-      const persentase = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
+      const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
+      const prog = kurikulumMhs
+        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
+        : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
+
+      const persentase = prog.persentaseTotal;
+      const perluPerhatian = !prog.isLulus && persentase < 50;
       
       return {
         mahasiswaId: mhs.userId.toString(),
@@ -210,8 +232,12 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
         angkatan: mhs.angkatan,
         ipk: '-', // IPK not in schema
         capaianPersen: persentase,
-        totalPoin,
-        status: persentase < 50 ? 'perlu_perhatian' : 'on_track'
+        totalPoin: prog.totalPoin,                   // Total riil
+        totalPoinProgres: prog.totalPoinProgres,     // Poin target kelulusan (capped)
+        totalTarget: prog.totalTarget,
+        isLulus: prog.isLulus,
+        statusKelulusan: prog.statusKelulusan,
+        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'on_track'
       };
     });
 
@@ -248,8 +274,8 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
       return res.status(403).json({ success: false, message: 'Bukan mahasiswa bimbingan Anda' });
     }
 
-    // Kurikulum aktif + capaian
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
+    // Ambil semua kurikulum aktif
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
       where: { status: 'aktif' },
       include: {
         capaian: {
@@ -259,11 +285,11 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
       }
     });
 
-    if (!kurikulumAktif) {
+    if (allKurikulumAktif.length === 0) {
       return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
     }
 
-    // Perolehan poin mahasiswa
+    // Perolehan poin mahasiswa dengan detail sub capaian & capaian
     const perolehanPoin = await prisma.perolehanPoin.findMany({
       where: { mahasiswaId, status: 'sah' },
       include: {
@@ -275,41 +301,8 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
       }
     });
 
-    const totalPoin = perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-    const totalTarget = kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0);
-
-    // Poin per capaian (horizontal bar chart)
-    const capaianMap: Record<number, number> = {};
-    const subCapaianMap: Record<number, number> = {};
-    for (const p of perolehanPoin) {
-      for (const d of p.detail) {
-        const capaianId = d.subCapaian.capaianId;
-        capaianMap[capaianId] = (capaianMap[capaianId] || 0) + d.poin;
-        subCapaianMap[d.subCapaianId] = (subCapaianMap[d.subCapaianId] || 0) + d.poin;
-      }
-    }
-
-    const totalPoinPerCapaian = kurikulumAktif.capaian.map(c => ({
-      id: c.id,
-      nama: c.nama,
-      targetPoin: c.jumlahPoin,
-      poinTerkumpul: capaianMap[c.id] || 0,
-      persentase: c.jumlahPoin > 0
-        ? Math.round(((capaianMap[c.id] || 0) / c.jumlahPoin) * 100)
-        : 0
-    }));
-
-    // Sub capaian detail (radar chart data)
-    const subCapaianData = kurikulumAktif.capaian.map(c => ({
-      capaianId: c.id,
-      capaianNama: c.nama,
-      subCapaian: c.subCapaian.map(sc => ({
-        id: sc.id,
-        nama: sc.nama,
-        bobotPersen: sc.bobotPersen,
-        poinTerkumpul: subCapaianMap[sc.id] || 0
-      }))
-    }));
+    const kurikulumAktif = cariKurikulumMahasiswa(allKurikulumAktif, mahasiswa, perolehanPoin) || allKurikulumAktif[0];
+    const prog = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
 
     // Timeline Aktivitas (partisipasi + izin PA terbaru)
     const aktivitas = await prisma.partisipasi.findMany({
@@ -362,11 +355,38 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
           angkatan: mahasiswa.angkatan,
           ipk: '-'
         },
-        totalPoin,
-        totalTarget,
-        persentaseTotal: totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0,
-        totalPoinPerCapaian,
-        subCapaianData,
+        kurikulumNama: prog.kurikulumNama,
+        totalPoin: prog.totalPoin,                   // Total riil mahasiswa (termasuk kelebihan)
+        totalPoinProgres: prog.totalPoinProgres,     // Poin target kelulusan (capped)
+        totalTarget: prog.totalTarget,
+        persentaseTotal: prog.persentaseTotal,
+        isLulus: prog.isLulus,
+        statusKelulusan: prog.statusKelulusan,
+        totalPoinPerCapaian: prog.progresTahunan.map((c: any) => ({
+          id: c.id,
+          nama: c.nama,
+          targetPoin: c.targetPoin,
+          poinTerkumpul: c.poinTerkumpul,
+          poinProgres: c.poinProgres,
+          poinLebih: c.poinLebih,
+          persentase: c.persentase,
+          status: c.status
+        })),
+        subCapaianData: prog.progresTahunan.map((c: any) => ({
+          capaianId: c.id,
+          capaianNama: c.nama,
+          subCapaian: (c.subCapaian || []).map((sc: any) => ({
+            id: sc.id,
+            nama: sc.nama,
+            bobotPersen: sc.bobotPersen,
+            targetPoin: sc.targetPoin,
+            poinTerkumpul: sc.poinTerkumpul,
+            poinProgres: sc.poinProgres,
+            poinLebih: sc.poinLebih,
+            isTuntas: sc.isTuntas
+          }))
+        })),
+        radarData: prog.radarData,
         timeline,
         riwayatCatatan: riwayatCatatan.map(s => ({
           id: s.id.toString(),
@@ -388,6 +408,16 @@ export const getMahasiswaPerluPerhatian = async (req: Request, res: Response, ne
     const dosenUserId = req.user?.id;
     if (!dosenUserId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
+    const allKurikulumAktif = await prisma.kurikulum.findMany({
+      where: { status: 'aktif' },
+      include: {
+        capaian: {
+          orderBy: { urutan: 'asc' },
+          include: { subCapaian: true }
+        }
+      }
+    });
+
     const mahasiswaBimbingan = await prisma.mahasiswa.findMany({
       where: { dosenPaId: BigInt(dosenUserId) },
       include: {
@@ -395,37 +425,40 @@ export const getMahasiswaPerluPerhatian = async (req: Request, res: Response, ne
         prodi: { select: { nama: true } },
         perolehanPoin: {
           where: { status: 'sah' },
-          select: { totalPoin: true }
+          include: {
+            detail: {
+              include: { subCapaian: { include: { capaian: true } } }
+            }
+          }
         }
       }
     });
 
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: { capaian: true }
-    });
-
-    const totalTarget = kurikulumAktif
-      ? kurikulumAktif.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0)
-      : 550;
-
-    // Filter hanya yang capaian < 50%
+    // Filter hanya mahasiswa yang belum lulus dan capaian target < 50%
     const result = mahasiswaBimbingan
       .map(mhs => {
-        const totalPoin = mhs.perolehanPoin.reduce((sum, p) => sum + p.totalPoin, 0);
-        const persentase = totalTarget > 0 ? Math.round((totalPoin / totalTarget) * 100) : 0;
+        const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
+        const prog = kurikulumMhs
+          ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
+          : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
+
         return {
           mahasiswaId: mhs.userId.toString(),
           nama: mhs.user.nama,
           nim: mhs.nim,
           prodi: mhs.prodi.nama,
+          angkatan: mhs.angkatan,
           ipk: '-',
-          capaianPersen: persentase,
-          totalPoin,
+          capaianPersen: prog.persentaseTotal,
+          totalPoin: prog.totalPoin,                   // Total riil
+          totalPoinProgres: prog.totalPoinProgres,     // Poin target kelulusan (capped)
+          totalTarget: prog.totalTarget,
+          isLulus: prog.isLulus,
+          statusKelulusan: prog.statusKelulusan,
           status: 'perlu_perhatian'
         };
       })
-      .filter(m => m.capaianPersen < 50);
+      .filter(m => !m.isLulus && m.capaianPersen < 50);
 
     res.status(200).json({
       success: true,
