@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
+import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
 import { getCurrentUser } from '../../services/authService'
 import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
 
@@ -68,14 +69,14 @@ function DetailVerifikasiPengajuanEksternal() {
   const [showActionModal, setShowActionModal] = useState(false)
   const [actionType, setActionType] = useState(null)
   const [alasan, setAlasan] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [userName, setUserName] = useState('Admin Ditmawa')
 
   // Form pemetaan capaian
   const [showCapaianForm, setShowCapaianForm] = useState(false)
-  const [kurikulum, setKurikulum] = useState(null)
+  const [selectedKurikulumIds, setSelectedKurikulumIds] = useState([])
+  const [kurikulumList, setKurikulumList] = useState([])
   const [loadingKur, setLoadingKur] = useState(false)
-  const [selectedCapaianIds, setSelectedCapaianIds] = useState([])
+  const [submitting, setSubmitting] = useState(false)
   const [alokasi, setAlokasi] = useState([])
   const [capaianOpen, setCapaianOpen] = useState(false)
   const capaianRef = useRef(null)
@@ -90,6 +91,7 @@ function DetailVerifikasiPengajuanEksternal() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Load kegiatan
   useEffect(() => {
     const u = getCurrentUser()
     if (u?.nama) setUserName(u.nama)
@@ -102,55 +104,37 @@ function DetailVerifikasiPengajuanEksternal() {
 
   // Load kurikulum saat form pemetaan muncul
   useEffect(() => {
-    if (!showCapaianForm || kurikulum) return
+    if (!showCapaianForm || kurikulumList.length > 0) return
     setLoadingKur(true)
     getKurikulumAktif()
-      .then((kur) => setKurikulum(kur))
+      .then((kur) => {
+        const list = Array.isArray(kur) ? kur : (kur ? [kur] : [])
+        setKurikulumList(list)
+        setSelectedKurikulumIds(list.map((k) => k.id))
+      })
       .catch(() => toast.error('Gagal memuat kurikulum'))
       .finally(() => setLoadingKur(false))
-  }, [showCapaianForm])
+  }, [showCapaianForm, kurikulumList.length])
 
   const backToList = () => navigate('/admin_ditmawa/verifikasi-pengajuan-eksternal')
 
-  const allCapaian = kurikulum?.capaian || []
-  const visibleSubCapaian = allCapaian
-    .filter((c) => selectedCapaianIds.includes(c.id))
-    .flatMap((c) => (c.subCapaian || []).map((sc) => ({ ...sc, namaCapaian: c.nama })))
-  const totalBobot = alokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-
-  const toggleCapaian = (cid) => {
-    setSelectedCapaianIds((prev) => {
-      const next = prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid]
-      const validSubIds = allCapaian
-        .filter((c) => next.includes(c.id))
-        .flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-      setAlokasi((a) => a.filter((x) => validSubIds.includes(x.subCapaianId)))
-      return next
-    })
-  }
-
-  const toggleSub = (scId) => {
-    setAlokasi((prev) => {
-      const exists = prev.find((a) => a.subCapaianId === scId)
-      if (exists) return prev.filter((a) => a.subCapaianId !== scId)
-      return [...prev, { subCapaianId: scId, alokasiPersen: 100 }]
-    })
-  }
-
-  const setAlokasiPersen = (scId, persen) => {
-    setAlokasi((prev) =>
-      prev.map((a) => (a.subCapaianId === scId ? { ...a, alokasiPersen: Number(persen) } : a))
-    )
-  }
-
   const handleSubmitSetuju = async () => {
-    if (alokasi.length === 0) {
-      toast.error('Pilih minimal satu sub-capaian')
+    if (kurikulumList.length === 0) {
+      toast.error('Tidak ada kurikulum aktif.')
       return
     }
-    if (Math.abs(totalBobot - 100) > 0.01) {
-      toast.error(`Total bobot harus tepat 100%. Saat ini: ${totalBobot}%`)
-      return
+    for (const kur of kurikulumList) {
+      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+      const kurAlokasi = alokasi.filter((a) => kurSubIds.includes(a.subCapaianId))
+      if (kurAlokasi.length === 0) {
+        toast.error(`Pilih minimal satu sub-capaian untuk ${kur.nama}`)
+        return
+      }
+      const sum = kurAlokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
+      if (Math.abs(sum - 100) > 0.01) {
+        toast.error(`Total bobot untuk ${kur.nama} harus tepat 100%. Saat ini: ${sum}%`)
+        return
+      }
     }
     setSubmitting(true)
     try {
@@ -403,138 +387,18 @@ function DetailVerifikasiPengajuanEksternal() {
 
             {loadingKur ? (
               <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
-            ) : !kurikulum ? (
+            ) : kurikulumList.length === 0 ? (
               <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Super Admin.</p>
             ) : (
-              <div className="space-y-5">
-                {/* Dropdown Capaian */}
-                <div>
-                  <label className="block text-sm font-medium text-black">
-                    Capaian<span className="text-red-500">*</span>{' '}
-                    <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
-                  </label>
-                  <div className="relative mt-1" ref={capaianRef}>
-                    <button
-                      type="button"
-                      onClick={() => setCapaianOpen((o) => !o)}
-                      className="flex w-full items-center justify-between rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark bg-white"
-                    >
-                      <span className={selectedCapaianIds.length === 0 ? 'text-[#9aa0a6]' : ''}>
-                        {selectedCapaianIds.length === 0 ? 'Pilih capaian' : `${selectedCapaianIds.length} capaian dipilih`}
-                      </span></button>
-                    {capaianOpen && (
-                      <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
-                        {allCapaian.map((c) => (
-                          <label
-                            key={c.id}
-                            className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-[#f5f5f5]"
-                          >
-                            <input
-                              type="checkbox"
-                              className="accent-brand-dark"
-                              checked={selectedCapaianIds.includes(c.id)}
-                              onChange={() => toggleCapaian(c.id)}
-                            />
-                            {c.nama}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Tag capaian terpilih */}
-                  {selectedCapaianIds.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {allCapaian
-                        .filter((c) => selectedCapaianIds.includes(c.id))
-                        .map((c) => (
-                          <span
-                            key={c.id}
-                            className="inline-flex items-center gap-1 rounded-full border border-brand-dark/30 bg-brand-dark/5 px-3 py-1 text-xs font-medium text-brand-dark"
-                          >
-                            {c.nama}
-                            <button type="button" onClick={() => toggleCapaian(c.id)}>
-                              <X className="h-3 w-3 text-red-600" />
-                            </button>
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Sub Capaian */}
-                {visibleSubCapaian.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-black">
-                      Sub Capaian<span className="text-red-500">*</span>{' '}
-                      <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
-                    </label>
-                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {visibleSubCapaian.map((sc) => {
-                        const checked = !!alokasi.find((a) => a.subCapaianId === sc.id)
-                        return (
-                          <label
-                            key={sc.id}
-                            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${
-                              checked
-                                ? 'border-brand-dark bg-brand-dark/5 font-medium text-brand-dark'
-                                : 'border-[#e9ebf8] text-[#444] hover:border-brand-dark/40'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              className="accent-brand-dark shrink-0"
-                              checked={checked}
-                              onChange={() => toggleSub(sc.id)}
-                            />
-                            <span className="min-w-0">
-                              <span className="block truncate">{sc.nama}</span>
-                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
-                            </span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bobot Persentase */}
-                {alokasi.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-black">
-                      Bobot Persentase Sub Capaian<span className="text-red-500">*</span>
-                    </label>
-                    <div className="mt-2 space-y-2">
-                      {alokasi.map((alok) => {
-                        const sc = visibleSubCapaian.find((s) => s.id === alok.subCapaianId)
-                        if (!sc) return null
-                        return (
-                          <div key={alok.subCapaianId} className="flex items-center gap-3">
-                            <span className="flex-1 text-sm text-[#444]">
-                              <span className="block truncate">{sc.nama}</span>
-                              <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
-                            </span>
-                            <input
-                              type="number"
-                              min={1}
-                              max={100}
-                              value={alok.alokasiPersen}
-                              onChange={(e) => setAlokasiPersen(alok.subCapaianId, e.target.value)}
-                              className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark"
-                            />
-                            <span className="text-sm text-[#9aa0a6]">%</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <p className={`mt-2 text-xs font-medium ${totalBobot === 100 ? 'text-emerald-600' : 'text-red-500'}`}>
-                      Total bobot: {totalBobot}%
-                      {totalBobot < 100 && <span className="ml-1">(kurang dari 100%)</span>}
-                      {totalBobot > 100 && <span className="ml-1">(lebih dari 100%)</span>}
-                    </p>
-                  </div>
-                )}
-              </div>
+              <PemetaanCapaianKurikulumSection
+                kurikulumList={kurikulumList}
+                selectedKurikulumIds={selectedKurikulumIds}
+                setSelectedKurikulumIds={setSelectedKurikulumIds}
+                selectedCapaianIds={selectedCapaianIds}
+                setSelectedCapaianIds={setSelectedCapaianIds}
+                alokasi={alokasi}
+                setAlokasi={setAlokasi}
+              />
             )}
 
             {/* Tombol submit */}

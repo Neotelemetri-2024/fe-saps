@@ -28,12 +28,19 @@ function CapaianBar({ pct, status }) {
   )
 }
 
-function StatusPill({ status }) {
-  const isBaik = status === 'baik'
+function StatusPill({ status, isLulus }) {
+  if (isLulus || status === 'lulus') {
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Lulus
+      </span>
+    )
+  }
+  const isBaik = status === 'baik' || status === 'on_track'
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-        isBaik ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+        isBaik ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
       }`}
     >
       {isBaik ? 'Baik' : 'Perlu Perhatian'}
@@ -138,7 +145,12 @@ function DosenPADashboard() {
             nim: row.nim || '-',
             ipk: row.ipk ?? '-',
             pct: row.capaianPersen ?? 0,
-            status: row.status === 'perlu_perhatian' || (row.capaianPersen ?? 0) < 50 ? 'perhatian' : 'baik',
+            totalPoin: row.totalPoin ?? 0,
+            totalPoinProgres: row.totalPoinProgres ?? row.totalPoin ?? 0,
+            totalTarget: row.totalTarget ?? 200,
+            isLulus: row.isLulus ?? false,
+            statusKelulusan: row.statusKelulusan,
+            status: row.status,
             mahasiswaId: row.mahasiswaId,
           })),
         )
@@ -263,7 +275,7 @@ function DosenPADashboard() {
               { key: 'nim', label: 'NIM' },
               { key: 'ipk', label: 'IPK' },
               { key: 'capaian', label: 'Capaian', render: (row) => <CapaianBar pct={row.pct} status={row.status} /> },
-              { key: 'status', label: 'Status', render: (row) => <StatusPill status={row.status} /> },
+              { key: 'status', label: 'Status', render: (row) => <StatusPill status={row.status} isLulus={row.isLulus} /> },
               {
                 key: 'aksi',
                 label: 'Aksi',
@@ -275,7 +287,7 @@ function DosenPADashboard() {
                         label: 'Detail',
                         icon: <Eye className="h-4 w-4" />,
                         color: 'text-blue-600',
-                        onClick: () => navigate(`/dosen/lihat-detail/${row.nim}`, { state: { mahasiswa: row } }),
+                        onClick: () => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, { state: { mahasiswa: row } }),
                       },
                     ]}
                   />

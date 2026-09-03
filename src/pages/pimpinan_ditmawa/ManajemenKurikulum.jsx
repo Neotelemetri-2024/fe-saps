@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -71,13 +71,13 @@ function ManajemenKurikulum() {
   const [nonaktifTarget, setNonaktifTarget] = useState(null)
 
   const [showTambahKurikulum, setShowTambahKurikulum] = useState(false)
-  const [kurForm, setKurForm] = useState({ tahun: '', nama: '' })
+  const [kurForm, setKurForm] = useState({ tahun: new Date().getFullYear(), nama: '' })
 
   const [showTambahCapaian, setShowTambahCapaian] = useState(false)
   const [capaianForm, setCapaianForm] = useState({ nama: '', jumlahPoin: '' })
 
   const [showTambahSubCapaian, setShowTambahSubCapaian] = useState(false)
-  const [subCapaianForm, setSubCapaianForm] = useState({ capaianId: '', nama: '', presentasi: '', bobot: '' })
+  const [subCapaianForm, setSubCapaianForm] = useState({ capaianId: '', nama: '', presentasi: '' })
 
   const [editSubCapaian, setEditSubCapaian] = useState(null)
   const [editCapaian, setEditCapaian] = useState(null)
@@ -98,29 +98,70 @@ function ManajemenKurikulum() {
   const start = (currentPage - 1) * PAGE_SIZE
   const pageCapaian = (activeKur?.capaian || []).slice(start, start + PAGE_SIZE)
 
-  const loadList = () => {
+  // Perhitungan dinamis untuk persentase bobot 100% per capaian (Tambah Sub Capaian)
+  const selectedCapaianForAdd = activeKur?.capaian.find((c) => c.id === Number(subCapaianForm.capaianId))
+  const currentTotalForAdd = (selectedCapaianForAdd?.subCapaian || []).reduce(
+    (sum, sc) => sum + (parseInt(sc.presentasi, 10) || 0),
+    0
+  )
+  const sisaBobotForAdd = Math.max(0, 100 - currentTotalForAdd)
+  const inputBobotTambah = parseInt(subCapaianForm.presentasi, 10)
+  const totalSetelahTambah = currentTotalForAdd + (isNaN(inputBobotTambah) ? 0 : inputBobotTambah)
+  const isTambahValid = !isNaN(inputBobotTambah) && inputBobotTambah > 0 && totalSetelahTambah <= 100
+
+  // Perhitungan dinamis untuk persentase bobot 100% per capaian (Edit Sub Capaian)
+  const parentCapaianForEdit = editSubCapaian
+    ? activeKur?.capaian.find((c) => c.subCapaian.some((sc) => sc.id === editSubCapaian.id))
+    : null
+  const otherTotalForEdit = parentCapaianForEdit
+    ? (parentCapaianForEdit.subCapaian || [])
+        .filter((sc) => sc.id !== editSubCapaian?.id)
+        .reduce((sum, sc) => sum + (parseInt(sc.presentasi, 10) || 0), 0)
+    : 0
+  const maxAllowedForEdit = Math.max(0, 100 - otherTotalForEdit)
+  const inputBobotEdit = editSubCapaian ? parseInt(editSubCapaian.presentasi, 10) : 0
+  const totalSetelahEdit = otherTotalForEdit + (isNaN(inputBobotEdit) ? 0 : inputBobotEdit)
+  const isEditValid = !isNaN(inputBobotEdit) && inputBobotEdit > 0 && totalSetelahEdit <= 100
+
+  // Capaian yang belum 100%
+  const capaianBelumLengkap = (activeKur?.capaian || []).filter((c) => {
+    const tot = (c.subCapaian || []).reduce((acc, sc) => acc + (parseInt(sc.presentasi, 10) || 0), 0)
+    return tot !== 100
+  })
+
+  const loadList = async () => {
     setLoading(true)
-    getKurikulum()
-      .then((data) => {
-        const list = (Array.isArray(data) ? data : []).map(normalizeKurikulum)
-        setKurikulum(list)
-        if (!activeKurId && list.length) setActiveKurId(list[0].id)
-      })
-      .catch((err) => toast.error('Gagal memuat kurikulum', { description: err.message }))
-      .finally(() => setLoading(false))
+    try {
+      const data = await getKurikulum()
+      const list = (Array.isArray(data) ? data : []).map(normalizeKurikulum)
+      setKurikulum(list)
+      if (!activeKurId && list.length) setActiveKurId(list[0].id)
+
+      // Load detail untuk setiap kurikulum agar jumlah sub capaian akurat
+      const details = await Promise.all(
+        list.map((k) => getKurikulumById(k.id).then(normalizeKurikulum).catch(() => k))
+      )
+      setKurikulum(details)
+    } catch (err) {
+      toast.error('Gagal memuat kurikulum', { description: err.message })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const loadDetail = async (id) => {
     try {
       const detail = await getKurikulumById(id)
       const norm = normalizeKurikulum(detail)
-      setKurikulum((prev) => prev.map((k) => k.id === id ? norm : k))
+      setKurikulum((prev) => prev.map((k) => (k.id === id ? norm : k)))
     } catch {
-      // ignore, list sudah cukup
+      // ignore
     }
   }
 
-  useEffect(() => { loadList() }, [])
+  useEffect(() => {
+    loadList()
+  }, [])
 
   useEffect(() => {
     setPage(1)
@@ -130,7 +171,6 @@ function ManajemenKurikulum() {
   const handleToggleStatus = (id) => {
     const kur = kurikulum.find((k) => k.id === id)
     if (kur?.status === 'aktif') {
-      // Menonaktifkan kurikulum wajib konfirmasi terlebih dahulu
       setNonaktifTarget(kur)
       setShowNonaktifConfirm(true)
     } else {
@@ -144,6 +184,32 @@ function ManajemenKurikulum() {
         await nonaktifkanKurikulum(kur.id)
         toast.success('Kurikulum dinonaktifkan.')
       } else {
+        // Validasi sebelum aktivasi: seluruh capaian wajib memiliki sub-capaian dengan total bobot pas 100%
+        const detailKur = await getKurikulumById(kur.id)
+        const normKur = normalizeKurikulum(detailKur)
+        if (!normKur.capaian || normKur.capaian.length === 0) {
+          toast.error('Kurikulum tidak dapat diaktifkan', {
+            description: 'Kurikulum belum memiliki capaian kompetensi.',
+          })
+          return
+        }
+
+        for (const cap of normKur.capaian) {
+          if (!cap.subCapaian || cap.subCapaian.length === 0) {
+            toast.error('Kurikulum tidak dapat diaktifkan', {
+              description: `Capaian "${cap.label}" belum memiliki sub capaian. Total persentase bobot harus pas 100%.`,
+            })
+            return
+          }
+          const totalBobot = cap.subCapaian.reduce((sum, sc) => sum + (Number(sc.presentasi) || 0), 0)
+          if (Math.round(totalBobot * 100) / 100 !== 100) {
+            toast.error('Kurikulum tidak dapat diaktifkan', {
+              description: `Total persentase bobot pada capaian "${cap.label}" adalah ${totalBobot}%. Total seluruh persentase sub capaian wajib pas 100% (tidak boleh kurang maupun lebih).`,
+            })
+            return
+          }
+        }
+
         await aktivasiKurikulum(kur.id)
         toast.success('Kurikulum diaktifkan.')
       }
@@ -179,12 +245,22 @@ function ManajemenKurikulum() {
   }
 
   const handleTambahKurikulum = async () => {
-    if (!kurForm.nama.trim()) { toast.error('Nama kurikulum tidak boleh kosong.'); return }
-    if (!kurForm.tahun.trim()) { toast.error('Tahun tidak boleh kosong.'); return }
+    const namaTrimmed = String(kurForm.nama || '').trim()
+    const tahunInt = parseInt(kurForm.tahun, 10)
+
+    if (!namaTrimmed) {
+      toast.error('Nama kurikulum tidak boleh kosong.')
+      return
+    }
+    if (!kurForm.tahun || isNaN(tahunInt) || tahunInt < 2000 || tahunInt > 2100) {
+      toast.error('Tahun harus berupa angka integer yang valid (contoh: 2025).')
+      return
+    }
+
     try {
-      const created = await createKurikulum({ nama: kurForm.nama.trim(), tahunAkademik: kurForm.tahun.trim() })
+      const created = await createKurikulum({ nama: namaTrimmed, tahunAkademik: String(tahunInt) })
       toast.success('Kurikulum berhasil ditambahkan.')
-      setKurForm({ tahun: '', nama: '' })
+      setKurForm({ tahun: new Date().getFullYear(), nama: '' })
       setShowTambahKurikulum(false)
       loadList()
       if (created?.id) setActiveKurId(created.id)
@@ -194,8 +270,14 @@ function ManajemenKurikulum() {
   }
 
   const handleTambahCapaian = async () => {
-    if (!capaianForm.nama.trim()) { toast.error('Nama capaian tidak boleh kosong.'); return }
-    if (!capaianForm.jumlahPoin || Number(capaianForm.jumlahPoin) <= 0) { toast.error('Jumlah poin harus diisi dan lebih dari 0.'); return }
+    if (!capaianForm.nama.trim()) {
+      toast.error('Nama capaian tidak boleh kosong.')
+      return
+    }
+    if (!capaianForm.jumlahPoin || Number(capaianForm.jumlahPoin) <= 0) {
+      toast.error('Jumlah poin harus diisi dan lebih dari 0.')
+      return
+    }
     try {
       await tambahCapaian(activeKurId, {
         nama: capaianForm.nama.trim(),
@@ -203,39 +285,83 @@ function ManajemenKurikulum() {
       })
       toast.success('Capaian ditambahkan.')
       setCapaianForm({ nama: '', jumlahPoin: '' })
-      setShowTambahCapaian(false)
-      loadDetail(activeKurId)
-    } catch (err) {
-      toast.error('Gagal menambahkan capaian', { description: err.message })
-    }
+    setShowTambahCapaian(false)
+    loadDetail(activeKurId)
+  } catch (err) {
+    toast.error('Gagal menambahkan capaian', { description: err.message })
+  }
+}
+
+const handleTambahSubCapaian = async () => {
+  if (!subCapaianForm.capaianId) {
+    toast.error('Pilih capaian induk terlebih dahulu.')
+    return
+  }
+  if (!subCapaianForm.nama.trim()) {
+    toast.error('Nama sub capaian tidak boleh kosong.')
+    return
+  }
+  const bobot = parseInt(subCapaianForm.presentasi, 10)
+  if (isNaN(bobot) || bobot < 1 || bobot > 100) {
+    toast.error('Persentase bobot harus berupa bilangan bulat antara 1% - 100%.')
+    return
   }
 
-  const handleTambahSubCapaian = async () => {
-    if (!subCapaianForm.capaianId) { toast.error('Pilih capaian terlebih dahulu.'); return }
-    if (!subCapaianForm.nama.trim()) { toast.error('Nama sub capaian tidak boleh kosong.'); return }
-    if (!subCapaianForm.presentasi || Number(subCapaianForm.presentasi) <= 0) { toast.error('Bobot harus diisi dan lebih dari 0.'); return }
-    try {
-      await tambahSubCapaian(subCapaianForm.capaianId, {
-        nama: subCapaianForm.nama.trim(),
-        bobotPersen: Number(subCapaianForm.presentasi),
-      })
-      toast.success('Sub capaian ditambahkan.')
-      setSubCapaianForm({ capaianId: '', nama: '', presentasi: '', bobot: '' })
-      setShowTambahSubCapaian(false)
-      loadDetail(activeKurId)
-    } catch (err) {
-      toast.error('Gagal menambahkan sub capaian', { description: err.message })
-    }
+  const selectedCap = activeKur?.capaian.find((c) => c.id === Number(subCapaianForm.capaianId))
+  const currentTotal = (selectedCap?.subCapaian || []).reduce((sum, sc) => sum + (parseInt(sc.presentasi, 10) || 0), 0)
+  const newTotal = currentTotal + bobot
+
+  if (newTotal > 100) {
+    toast.error('Total persentase melebihi 100%', {
+      description: `Total bobot saat ini sudah ${currentTotal}%. Maksimal yang dapat ditambahkan adalah ${Math.max(0, 100 - currentTotal)}%.`,
+    })
+    return
   }
 
-  const handleEditSubCapaian = async () => {
-    if (!editSubCapaian.nama.trim()) { toast.error('Nama sub capaian tidak boleh kosong.'); return }
-    try {
-      await updateSubCapaian(editSubCapaian.id, {
-        nama: editSubCapaian.nama,
-        bobotPersen: Number(editSubCapaian.presentasi) || 0,
-      })
-      toast.success('Sub capaian diperbarui.')
+  try {
+    await tambahSubCapaian(subCapaianForm.capaianId, {
+      nama: subCapaianForm.nama.trim(),
+      bobotPersen: bobot,
+    })
+    toast.success('Sub capaian ditambahkan.')
+    setSubCapaianForm({ capaianId: '', nama: '', presentasi: '' })
+    setShowTambahSubCapaian(false)
+    loadDetail(activeKurId)
+  } catch (err) {
+    toast.error('Gagal menambahkan sub capaian', { description: err.message })
+  }
+}
+
+const handleEditSubCapaian = async () => {
+  if (!editSubCapaian.nama.trim()) {
+    toast.error('Nama sub capaian tidak boleh kosong.')
+    return
+  }
+  const bobot = parseInt(editSubCapaian.presentasi, 10)
+  if (isNaN(bobot) || bobot < 1 || bobot > 100) {
+    toast.error('Persentase bobot harus berupa bilangan bulat antara 1% - 100%.')
+    return
+  }
+
+  const parentCap = activeKur?.capaian.find((c) => c.subCapaian.some((sc) => sc.id === editSubCapaian.id))
+  const otherTotal = (parentCap?.subCapaian || [])
+    .filter((sc) => sc.id !== editSubCapaian.id)
+    .reduce((sum, sc) => sum + (parseInt(sc.presentasi, 10) || 0), 0)
+  const newTotal = otherTotal + bobot
+
+  if (newTotal > 100) {
+    toast.error('Total persentase melebihi 100%', {
+      description: `Sub capaian lain pada "${parentCap?.label}" berjumlah ${otherTotal}%. Bobot maksimal adalah ${Math.max(0, 100 - otherTotal)}%.`,
+    })
+    return
+  }
+
+  try {
+    await updateSubCapaian(editSubCapaian.id, {
+      nama: editSubCapaian.nama.trim(),
+      bobotPersen: bobot,
+    })
+    toast.success('Sub capaian diperbarui.')
       setEditSubCapaian(null)
       loadDetail(activeKurId)
     } catch (err) {
@@ -244,8 +370,14 @@ function ManajemenKurikulum() {
   }
 
   const handleEditCapaian = async () => {
-    if (!editCapaian.label.trim()) { toast.error('Nama capaian tidak boleh kosong.'); return }
-    if (!editCapaian.jumlahPoin || Number(editCapaian.jumlahPoin) <= 0) { toast.error('Jumlah poin harus diisi dan lebih dari 0.'); return }
+    if (!editCapaian.label.trim()) {
+      toast.error('Nama capaian tidak boleh kosong.')
+      return
+    }
+    if (!editCapaian.jumlahPoin || Number(editCapaian.jumlahPoin) <= 0) {
+      toast.error('Jumlah poin harus diisi dan lebih dari 0.')
+      return
+    }
     try {
       await updateCapaian(editCapaian.id, {
         nama: editCapaian.label.trim(),
@@ -312,12 +444,14 @@ function ManajemenKurikulum() {
         confirmText="NONAKTIFKAN"
         cancelText="BATAL"
         onConfirm={confirmNonaktif}
-        onCancel={() => { setShowNonaktifConfirm(false); setNonaktifTarget(null) }}
+        onCancel={() => {
+          setShowNonaktifConfirm(false)
+          setNonaktifTarget(null)
+        }}
       />
 
       <ConfirmModal
         isOpen={showHapusCapaianConfirm}
-       
         message={`Apakah Anda yakin ingin menghapus capaian "${hapusCapaianTarget?.label}"? Semua sub capaian di dalamnya juga akan ikut terhapus.`}
         confirmText="HAPUS"
         cancelText="BATAL"
@@ -327,7 +461,6 @@ function ManajemenKurikulum() {
 
       <ConfirmModal
         isOpen={showHapusSubCapaianConfirm}
-       
         message={`Apakah Anda yakin ingin menghapus sub capaian "${hapusSubCapaianTarget?.nama}"?`}
         confirmText="HAPUS"
         cancelText="BATAL"
@@ -336,200 +469,312 @@ function ManajemenKurikulum() {
       />
 
       {/* Modal Tambah Kurikulum */}
-      <Modal isOpen={showTambahKurikulum} onClose={() => setShowTambahKurikulum(false)}>
+      <Modal isOpen={showTambahKurikulum} onClose={() => setShowTambahKurikulum(false)} title="Tambah Kurikulum">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Tahun</label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Tahun Berlaku <span className="text-red-500">*</span>
+            </label>
             <input
-              type="text"
+              type="number"
+              min="2000"
+              max="2100"
+              step="1"
               value={kurForm.tahun}
-              onChange={(e) => setKurForm((p) => ({ ...p, tahun: e.target.value }))}
-              placeholder="Contoh: 2025/2026"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              onChange={(e) =>
+                setKurForm((p) => ({
+                  ...p,
+                  tahun: e.target.value === '' ? '' : parseInt(e.target.value, 10),
+                }))
+              }
+              placeholder="Contoh: 2025"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
+           
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Nama</label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Nama Kurikulum <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={kurForm.nama}
               onChange={(e) => setKurForm((p) => ({ ...p, nama: e.target.value }))}
               placeholder="Contoh: Kurikulum Merdeka 2025"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
           </div>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={handleTambahKurikulum}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white hover:opacity-90">
-            Simpan
-          </button>
-          <button type="button" onClick={() => setShowTambahKurikulum(false)}
-            className="rounded-lg border border-[#d9dce7] px-6 py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowTambahKurikulum(false)}
+            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+          >
             Batal
+          </button>
+          <button
+            type="button"
+            onClick={handleTambahKurikulum}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            Simpan
           </button>
         </div>
       </Modal>
 
       {/* Modal Tambah Capaian */}
-      <Modal isOpen={showTambahCapaian} onClose={() => setShowTambahCapaian(false)}>
+      <Modal isOpen={showTambahCapaian} onClose={() => setShowTambahCapaian(false)} title="Tambah Capaian">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Nama Capaian <span className="text-red-500">*</span></label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Nama Capaian <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={capaianForm.nama}
               onChange={(e) => setCapaianForm((p) => ({ ...p, nama: e.target.value }))}
               placeholder="Contoh: Pemantapan"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Jumlah Poin <span className="text-red-500">*</span></label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Jumlah Poin <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               value={capaianForm.jumlahPoin}
               onChange={(e) => setCapaianForm((p) => ({ ...p, jumlahPoin: e.target.value }))}
               placeholder="Contoh: 100"
               min="1"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
           </div>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={() => setShowTambahCapaian(false)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowTambahCapaian(false)}
+            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+          >
             Batal
           </button>
-          <button type="button" onClick={handleTambahCapaian}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white hover:opacity-90">
+          <button
+            type="button"
+            onClick={handleTambahCapaian}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
             Simpan
           </button>
         </div>
       </Modal>
 
       {/* Modal Tambah Sub Capaian */}
-      <Modal isOpen={showTambahSubCapaian} onClose={() => setShowTambahSubCapaian(false)}>
+      <Modal isOpen={showTambahSubCapaian} onClose={() => setShowTambahSubCapaian(false)} title="Tambah Sub Capaian">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Capaian Induk <span className="text-red-500">*</span></label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Capaian Induk <span className="text-red-500">*</span>
+            </label>
             <select
               value={subCapaianForm.capaianId}
               onChange={(e) => setSubCapaianForm((p) => ({ ...p, capaianId: e.target.value }))}
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm text-[#9aa0a6] outline-none focus:border-brand-dark"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             >
               <option value="">-- Pilih Capaian --</option>
-              {activeKur?.capaian.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
+              {activeKur?.capaian.map((c) => {
+                const capTotal = (c.subCapaian || []).reduce((sum, sc) => sum + (parseInt(sc.presentasi, 10) || 0), 0)
+                return (
+                  <option key={c.id} value={c.id}>
+                    {c.label} (Total saat ini: {capTotal}%)
+                  </option>
+                )
+              })}
             </select>
           </div>
+
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Nama Sub Capaian <span className="text-red-500">*</span></label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Nama Sub Capaian <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={subCapaianForm.nama}
               onChange={(e) => setSubCapaianForm((p) => ({ ...p, nama: e.target.value }))}
-              placeholder="Input nama sub capaian"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              placeholder="Contoh: Keikutsertaan Organisasi / Kepanitiaan"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
           </div>
+
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Bobot Poin (%) <span className="text-red-500">*</span></label>
+            <label className="mb-1 block text-sm font-medium text-[#212121]">
+              Persentase Bobot (%) <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
+              min="1"
+              max="100"
+              step="1"
               value={subCapaianForm.presentasi}
-              onChange={(e) => setSubCapaianForm((p) => ({ ...p, presentasi: e.target.value }))}
-              placeholder="Input bobot poin"
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '')
+                setSubCapaianForm((p) => ({ ...p, presentasi: val }))
+              }}
+              onKeyDown={(e) => {
+                if (['.', ',', 'e', 'E', '+', '-'].includes(e.key)) {
+                  e.preventDefault()
+                }
+              }}
+              placeholder="Contoh: 25"
+              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
             />
+            {selectedCapaianForAdd && totalSetelahTambah > 100 && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+                <AlertCircle className="h-3.5 w-3.5" /> Total bobot {totalSetelahTambah}% melebihi 100%.
+              </p>
+            )}
           </div>
         </div>
-        <div className="mt-6 flex gap-3">
-          <button type="button" onClick={handleTambahSubCapaian}
-            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90">
-            Simpan
-          </button>
-          <button type="button" onClick={() => setShowTambahSubCapaian(false)}
-            className="flex-1 rounded-lg border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowTambahSubCapaian(false)}
+            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+          >
             Batal
+          </button>
+          <button
+            type="button"
+            onClick={handleTambahSubCapaian}
+            disabled={!isTambahValid || !subCapaianForm.nama.trim() || !subCapaianForm.capaianId || totalSetelahTambah > 100}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Simpan
           </button>
         </div>
       </Modal>
 
       {/* Modal Edit Capaian */}
-      <Modal isOpen={!!editCapaian} onClose={() => setEditCapaian(null)}>
+      <Modal isOpen={!!editCapaian} onClose={() => setEditCapaian(null)} title="Edit Capaian">
         {editCapaian && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">Nama Capaian <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-sm font-medium text-[#212121]">
+                Nama Capaian <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={editCapaian.label}
                 onChange={(e) => setEditCapaian((p) => ({ ...p, label: e.target.value }))}
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">Jumlah Poin <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-sm font-medium text-[#212121]">
+                Jumlah Poin <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
                 value={editCapaian.jumlahPoin}
                 onChange={(e) => setEditCapaian((p) => ({ ...p, jumlahPoin: e.target.value }))}
                 placeholder="Contoh: 100"
                 min="1"
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
               />
             </div>
           </div>
         )}
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={() => setEditCapaian(null)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setEditCapaian(null)}
+            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+          >
             Batal
           </button>
-          <button type="button" onClick={handleEditCapaian}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white hover:opacity-90">
+          <button
+            type="button"
+            onClick={handleEditCapaian}
+            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
             Simpan
           </button>
         </div>
       </Modal>
 
       {/* Modal Edit Sub Capaian */}
-      <Modal isOpen={!!editSubCapaian} onClose={() => setEditSubCapaian(null)}>
+      <Modal isOpen={!!editSubCapaian} onClose={() => setEditSubCapaian(null)} title="Edit Sub Capaian">
         {editSubCapaian && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">Nama Sub Capaian <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-sm font-medium text-[#212121]">Capaian Induk</label>
+              <div className="rounded-lg bg-[#f5f6f8] px-3.5 py-2 text-sm font-medium text-[#333] border border-[#e9ebf8]">
+                {parentCapaianForEdit?.label || '-'}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[#212121]">
+                Nama Sub Capaian <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={editSubCapaian.nama}
                 onChange={(e) => setEditSubCapaian((p) => ({ ...p, nama: e.target.value }))}
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
               />
             </div>
+
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">Bobot Poin (%)</label>
+              <label className="mb-1 block text-sm font-medium text-[#212121]">
+                Persentase Bobot (%) <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
+                min="1"
+                max="100"
+                step="1"
                 value={editSubCapaian.presentasi}
-                onChange={(e) => setEditSubCapaian((p) => ({ ...p, presentasi: e.target.value }))}
-                placeholder="Input bobot poin"
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm outline-none focus:border-brand-dark"
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '')
+                  setEditSubCapaian((p) => ({ ...p, presentasi: val }))
+                }}
+                onKeyDown={(e) => {
+                  if (['.', ',', 'e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="Contoh: 25"
+                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
               />
+              {totalSetelahEdit > 100 && (
+                <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+                  <AlertCircle className="h-3.5 w-3.5" /> Total bobot {totalSetelahEdit}% melebihi 100%.
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditSubCapaian(null)}
+                className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleEditSubCapaian}
+                disabled={!isEditValid || !editSubCapaian.nama.trim() || totalSetelahEdit > 100}
+                className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Simpan
+              </button>
             </div>
           </div>
         )}
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={() => setEditSubCapaian(null)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]">
-            Batal
-          </button>
-          <button type="button" onClick={handleEditSubCapaian}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white hover:opacity-90">
-            Simpan
-          </button>
-        </div>
       </Modal>
 
       <div className="space-y-6">
@@ -538,21 +783,24 @@ function ManajemenKurikulum() {
           <p className="mt-1 text-sm text-[#616161]">Kelola kurikulum dan pemetaan Capaian dan Sub Capaian sesuai BRD.</p>
         </div>
 
-        {/* Tombol tambah */}
+        {/* Tombol tambah kurikulum */}
         <div>
           <button
             type="button"
-            onClick={() => { setKurForm({ tahun: '', nama: '' }); setShowTambahKurikulum(true) }}
+            onClick={() => {
+              setKurForm({ tahun: new Date().getFullYear(), nama: '' })
+              setShowTambahKurikulum(true)
+            }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
-          ><Plus className="h-4 w-4" /> Tambah Kurikulum
+          >
+            <Plus className="h-4 w-4" /> Tambah Kurikulum
           </button>
         </div>
 
         {/* Daftar Kurikulum */}
         <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-[#e9ebf8] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="border-b border-[#e9ebf8] px-5 py-4">
             <h3 className="font-bold text-[#333]">Daftar Kurikulum</h3>
-            <AlignJustify className="h-4 w-4 text-[#616161]" />
           </div>
           <div className="divide-y divide-[#e9ebf8]">
             {loading ? (
@@ -566,7 +814,9 @@ function ManajemenKurikulum() {
               return (
                 <div
                   key={kur.id}
-                  className={`flex w-full items-center justify-between px-5 py-4 transition hover:bg-[#f9fafb] ${isActive ? 'bg-[#f0faf0]' : ''}`}
+                  className={`flex w-full items-center justify-between px-5 py-4 transition hover:bg-[#f9fafb] ${
+                    isActive ? 'bg-[#f0faf0]' : ''
+                  }`}
                 >
                   <button
                     type="button"
@@ -574,24 +824,24 @@ function ManajemenKurikulum() {
                     className="flex flex-1 flex-col gap-1.5 text-left"
                   >
                     <p className={`text-sm font-bold ${isActive ? 'text-brand-dark' : 'text-[#333]'}`}>{kur.nama}</p>
-                    <p className="text-xs text-[#9aa0a6]">{kur.tahun}</p>
+                    <p className="text-xs text-[#9aa0a6]">Tahun: {kur.tahun}</p>
                     <div className="flex items-center gap-3">
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
-                        kur.status === 'aktif' ? 'bg-green-100 text-green-700'
-                        : kur.status === 'draft' ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-500'
-                      }`}>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                          kur.status === 'aktif'
+                            ? 'bg-green-100 text-green-700'
+                            : kur.status === 'draft'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
                         {kur.status === 'aktif' ? 'Aktif' : kur.status === 'draft' ? 'Draft' : 'Arsip'}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-[#616161]">{totalSub} Sub Capaian
-                      </span>
+                      <span className="flex items-center gap-1 text-xs text-[#616161]">{totalSub} Sub Capaian</span>
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-3 pl-4">
-                    <ToggleSwitch
-                      checked={kur.status === 'aktif'}
-                      onChange={() => handleToggleStatus(kur.id)}
-                    />
+                    <ToggleSwitch checked={kur.status === 'aktif'} onChange={() => handleToggleStatus(kur.id)} />
                     <ActionMenu
                       items={[
                         {
@@ -612,81 +862,84 @@ function ManajemenKurikulum() {
         {/* Detail kurikulum aktif */}
         {activeKur && (
           <div className="space-y-4">
-            <h3 className="text-xl font-extrabold text-[#333]">{activeKur.nama}</h3>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-xl font-extrabold text-[#333]">{activeKur.nama}</h3>
+            
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => { setCapaianForm({ nama: '', jumlahPoin: '' }); setShowTambahCapaian(true) }}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              ><Plus className="h-4 w-4" /> Tambah Capaian
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSubCapaianForm({ capaianId: '', nama: '', presentasi: '', bobot: '' }); setShowTambahSubCapaian(true) }}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-              ><Plus className="h-4 w-4" /> Tambah Sub Capaian
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCapaianForm({ nama: '', jumlahPoin: '' })
+                    setShowTambahCapaian(true)
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" /> Tambah Capaian
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubCapaianForm({ capaianId: '', nama: '', presentasi: '' })
+                    setShowTambahSubCapaian(true)
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" /> Tambah Sub Capaian
+                </button>
+              </div>
             </div>
 
-            <TableCard title="Manajemen Kurikulum">
+            {capaianBelumLengkap.length > 0 && (
+              <p className="text-xs text-[#616161]">
+                Bobot belum 100% pada:{' '}
+                {capaianBelumLengkap.map((c, i) => {
+                  const tot = (c.subCapaian || []).reduce((acc, sc) => acc + (Number(sc.presentasi) || 0), 0)
+                  return (
+                    <span key={c.id}>
+                      {i > 0 && ', '}
+                      <span className="font-medium text-[#333]">{c.label}</span> ({tot}%)
+                    </span>
+                  )
+                })}
+              </p>
+            )}
+
+            <TableCard title="Struktur Capaian & Sub Capaian">
               <TableFrame>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] text-left text-sm">
-                  <thead>
-                    <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
-                      <th className="px-5 py-3 text-center">Capaian</th>
-                      <th className="px-5 py-3 text-center">Poin</th>
-                      <th className="px-5 py-3 text-center">Sub Capaian</th>
-                      <th className="px-5 py-3 text-center">Presentasi Bobot</th>
-                      <th className="px-5 py-3 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeKur.capaian.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-10 text-center text-[#9aa0a6]">
-                          Belum ada capaian. Klik "Tambah Capaian" untuk memulai.
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[700px] text-left text-sm">
+                    <thead>
+                      <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                        <th className="px-5 py-3 text-center">Capaian & Status Bobot</th>
+                        <th className="px-5 py-3 text-center">Poin</th>
+                        <th className="px-5 py-3 text-center">Sub Capaian</th>
+                        <th className="px-5 py-3 text-center">Persentase Bobot</th>
+                        <th className="px-5 py-3 text-center">Aksi</th>
                       </tr>
-                    ) : (
-                      pageCapaian.map((cap) =>
-                        cap.subCapaian.length === 0 ? (
-                          <tr key={cap.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8]">
-                            <td className="px-5 py-3 align-top">
-                              <div className="flex items-center gap-1.5">
-                                <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
-                                  {cap.label}
-                                </span>
-                                <ActionMenu
-                                  items={[
-                                    {
-                                      label: 'Edit Capaian',
-                                      icon: <Pencil className="h-3.5 w-3.5" />,
-                                      color: 'text-brand-dark',
-                                      onClick: () => setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
-                                    },
-                                    {
-                                      label: 'Hapus Capaian',
-                                      icon: <Trash2 className="h-3.5 w-3.5" />,
-                                      color: 'text-red-500',
-                                      onClick: () => handleHapusCapaian(cap),
-                                    },
-                                  ]}
-                                />
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-center text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
-                            <td className="px-5 py-3 text-[#9aa0a6] italic">Belum ada sub capaian</td>
-                            <td className="px-5 py-3">-</td>
-                            <td className="px-5 py-3 text-center">-</td>
-                          </tr>
-                        ) : (
-                          cap.subCapaian.map((sc, idx) => (
-                            <tr key={sc.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
-                              {idx === 0 && (
-                                <>
-                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top">
+                    </thead>
+                    <tbody>
+                      {activeKur.capaian.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-5 py-10 text-center text-[#9aa0a6]">
+                            Belum ada capaian. Klik "Tambah Capaian" untuk memulai.
+                          </td>
+                        </tr>
+                      ) : (
+                        pageCapaian.map((cap) => {
+                          const totalBobotCap = (cap.subCapaian || []).reduce(
+                            (acc, sc) => acc + (Number(sc.presentasi) || 0),
+                            0
+                          )
+                          const isPas = Math.round(totalBobotCap * 100) / 100 === 100
+
+                          if (cap.subCapaian.length === 0) {
+                            return (
+                              <tr key={cap.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8]">
+                                <td className="px-5 py-3 align-top">
+                                  <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-1.5">
                                       <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
                                         {cap.label}
@@ -697,7 +950,8 @@ function ManajemenKurikulum() {
                                             label: 'Edit Capaian',
                                             icon: <Pencil className="h-3.5 w-3.5" />,
                                             color: 'text-brand-dark',
-                                            onClick: () => setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
+                                            onClick: () =>
+                                              setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
                                           },
                                           {
                                             label: 'Hapus Capaian',
@@ -708,6 +962,53 @@ function ManajemenKurikulum() {
                                         ]}
                                       />
                                     </div>
+                                    <span className="text-[11px] font-medium text-amber-600">
+                                      Bobot: 0% / 100%
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3 text-center text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
+                                <td className="px-5 py-3 text-[#9aa0a6] italic">Belum ada sub capaian</td>
+                                <td className="px-5 py-3 text-center">-</td>
+                                <td className="px-5 py-3 text-center">-</td>
+                              </tr>
+                            )
+                          }
+
+                          return cap.subCapaian.map((sc, idx) => (
+                            <tr key={sc.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                              {idx === 0 && (
+                                <>
+                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top">
+                                    <div className="flex flex-col gap-1.5">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
+                                          {cap.label}
+                                        </span>
+                                        <ActionMenu
+                                          items={[
+                                            {
+                                              label: 'Edit Capaian',
+                                              icon: <Pencil className="h-3.5 w-3.5" />,
+                                              color: 'text-brand-dark',
+                                              onClick: () =>
+                                                setEditCapaian({ id: cap.id, label: cap.label, jumlahPoin: cap.jumlahPoin }),
+                                            },
+                                            {
+                                              label: 'Hapus Capaian',
+                                              icon: <Trash2 className="h-3.5 w-3.5" />,
+                                              color: 'text-red-500',
+                                              onClick: () => handleHapusCapaian(cap),
+                                            },
+                                          ]}
+                                        />
+                                      </div>
+                                      {!isPas && (
+                                        <span className={`text-[11px] font-medium ${totalBobotCap > 100 ? 'text-red-600' : 'text-amber-600'}`}>
+                                          Bobot: {totalBobotCap}% / 100%
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top text-center text-[#616161]">
                                     {cap.jumlahPoin ?? '-'}
@@ -715,7 +1016,9 @@ function ManajemenKurikulum() {
                                 </>
                               )}
                               <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
-                              <td className="px-5 py-3 text-center text-[#616161]">{sc.presentasi != null ? `${sc.presentasi} %` : '-'}</td>
+                              <td className="px-5 py-3 text-center font-medium text-[#333]">
+                                {sc.presentasi != null ? `${sc.presentasi} %` : '-'}
+                              </td>
                               <td className="px-5 py-3">
                                 <div className="flex justify-center">
                                   <ActionMenu
@@ -739,35 +1042,34 @@ function ManajemenKurikulum() {
                               </td>
                             </tr>
                           ))
-                        )
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-1 border-t border-[#e9ebf8] px-5 py-3">
-                  <button
-                    type="button"
-                    disabled={currentPage <= 1}
-                    onClick={() => setPage(currentPage - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="px-2 text-xs text-[#9aa0a6]">
-                    Halaman {currentPage} dari {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setPage(currentPage + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-end gap-1 border-t border-[#e9ebf8] px-5 py-3">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage(currentPage - 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="px-2 text-xs text-[#9aa0a6]">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage(currentPage + 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </TableFrame>
             </TableCard>
           </div>

@@ -34,6 +34,11 @@ function MahasiswaPerluPerhatian() {
             status: 'red',
             prodi: item.prodi || '-',
             poin: item.totalPoin ?? item.poin ?? 0,
+            totalPoin: item.totalPoin ?? item.poin ?? 0,
+            totalPoinProgres: item.totalPoinProgres ?? item.totalPoin ?? item.poin ?? 0,
+            totalTarget: item.totalTarget ?? 200,
+            isLulus: item.isLulus ?? false,
+            statusKelulusan: item.statusKelulusan,
           })),
         )
       })

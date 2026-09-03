@@ -34,6 +34,11 @@ import PimpinanDitmawaVerifikasiEksternal from './pages/pimpinan_ditmawa/Verifik
 import PimpinanDitmawaDetailVerifikasiEksternal from './pages/pimpinan_ditmawa/DetailVerifikasiPengajuanEksternal'
 import PimpinanDitmawaVerifikasiInternal from './pages/pimpinan_ditmawa/VerifikasiPengajuanInternal'
 import PimpinanDitmawaDetailVerifikasiInternal from './pages/pimpinan_ditmawa/DetailVerifikasiPengajuanInternal'
+import PimpinanDitmawaValidasiKlaimPoin from './pages/pimpinan_ditmawa/ValidasiKlaimPoin'
+import PimpinanDitmawaDetailValidasiKlaim from './pages/pimpinan_ditmawa/DetailValidasiKlaim'
+import PimpinanDitmawaManajemenAkunUKM from './pages/pimpinan_ditmawa/ManajemenAkunUKM'
+import PimpinanDitmawaManajemenAkunUKMF from './pages/pimpinan_ditmawa/ManajemenAkunUKMF'
+import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
 import PimpinanFakultasDashboard from './pages/pimpinan_fakultas/FakultasDashboard'
 import PimpinanFakultasPersetujuan from './pages/pimpinan_fakultas/FakultasPersetujuan'
 import PimpinanFakultasVerifikasiUKMF from './pages/pimpinan_fakultas/VerifikasiPengajuanUKMF'
@@ -43,6 +48,7 @@ import PimpinanFakultasDetailVerifikasiKegiatanInternal from './pages/pimpinan_f
 import PimpinanUtamaDashboard from './pages/pimpinan_utama/UtamaDashboard'
 import DetailFakultas from './pages/pimpinan_utama/DetailFakultas'
 import DetailFakultasProdi from './pages/pimpinan_utama/DetailFakultasProdi'
+import LaporanPimpinan from './pages/pimpinan/LaporanPimpinan'
 import AdminDitmawaDashboard from './pages/admin_ditmawa/Dashboard'
 import AdminDitmawaVerifikasiKlaim from './pages/admin_ditmawa/VerifikasiKlaimPoin'
 import AdminDitmawaVerifikasiPengajuanEksternal from './pages/admin_ditmawa/VerifikasiPengajuanEksternal'
@@ -120,10 +126,19 @@ function App() {
           <Route path="tambah-matriks" element={<PimpinanDitmawaTambahMatriks />} />
           <Route path="bobot-poin" element={<PimpinanDitmawaBobotPoin />} />
           <Route path="edit-poin/:id" element={<PimpinanDitmawaEditPoin />} />
+          <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_ditmawa" />} />
+          <Route path="verifikasi-klaim" element={<PimpinanDitmawaValidasiKlaimPoin />} />
+          <Route path="verifikasi-klaim/:id" element={<PimpinanDitmawaDetailValidasiKlaim />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />
           <Route path="verifikasi-pengajuan-eksternal/:id" element={<PimpinanDitmawaDetailVerifikasiEksternal />} />
           <Route path="verifikasi-pengajuan-internal" element={<PimpinanDitmawaVerifikasiInternal />} />
           <Route path="verifikasi-pengajuan-internal/:id" element={<PimpinanDitmawaDetailVerifikasiInternal />} />
+          <Route path="manajemen-akun-ukm" element={<PimpinanDitmawaManajemenAkunUKM />} />
+          <Route path="manajemen-akun-ukmf" element={<PimpinanDitmawaManajemenAkunUKMF />} />
+          <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
+          <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
+          <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
+          <Route path="audit-log" element={<PimpinanDitmawaAuditLog />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
         </Route>
@@ -131,6 +146,7 @@ function App() {
         {/* Pimpinan Fakultas */}
         <Route path="pimpinan_fakultas" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan_fakultas']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<PimpinanFakultasDashboard />} />
+          <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_fakultas" />} />
           <Route path="persetujuan" element={<PimpinanFakultasPersetujuan />} />
           <Route path="verifikasi-pengajuan-ukmf" element={<PimpinanFakultasVerifikasiUKMF />} />
           <Route path="verifikasi-pengajuan-ukmf/:id" element={<DetailVerifikasiUKMF />} />
@@ -145,6 +161,7 @@ function App() {
           <Route path="dashboard" element={<PimpinanUtamaDashboard />} />
           <Route path="detail-fakultas" element={<DetailFakultas />} />
           <Route path="detail-fakultas/:fakultas" element={<DetailFakultasProdi />} />
+          <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_utama" />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
         </Route>

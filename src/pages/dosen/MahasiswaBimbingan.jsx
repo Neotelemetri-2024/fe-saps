@@ -26,7 +26,7 @@ function formatDate(val) {
 function CapaianBar({ poin, persen }) {
   const pct = persen != null
     ? Math.min(100, Math.round(Number(persen)))
-    : Math.min(100, Math.round((poin / TARGET_POIN) * 100))
+    : 0
   const isLow = pct < 50
   return (
     <div className="flex items-center gap-2">
@@ -41,18 +41,22 @@ function CapaianBar({ poin, persen }) {
   )
 }
 
-function StatusPill({ poin, persen, status }) {
-  const pct = persen != null
-    ? Math.round(Number(persen))
-    : Math.round((poin / TARGET_POIN) * 100)
-  const isLow = status === 'perlu_perhatian' || pct < 50
+function StatusPill({ poin, persen, status, isLulus }) {
+  if (isLulus || status === 'lulus') {
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        Lulus
+      </span>
+    )
+  }
+  const isLow = status === 'perlu_perhatian' || (persen != null && persen < 50)
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-        isLow ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+        isLow ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'
       }`}
     >
-      {isLow ? 'Perlu Perhatian' : 'Baik'}
+      {isLow ? 'Perlu Perhatian' : 'On Track'}
     </span>
   )
 }
@@ -66,7 +70,11 @@ function normalizeMahasiswa(item) {
     angkatan: item.angkatan || '-',
     ipk: item.ipk ?? '-',
     poin: item.totalPoin ?? item.poin ?? 0,
+    totalPoinProgres: item.totalPoinProgres ?? item.totalPoin ?? item.poin ?? 0,
+    totalTarget: item.totalTarget ?? 200,
     capaianPersen: item.capaianPersen,
+    isLulus: item.isLulus ?? false,
+    statusKelulusan: item.statusKelulusan,
     status: item.status,
     tanggalInput: formatDate(item.updatedAt) || item.tanggalInput || '-',
   }
@@ -184,7 +192,7 @@ function MahasiswaBimbingan() {
                   {
                     key: 'status',
                     label: 'Status',
-                    render: (m) => <StatusPill poin={m.poin} persen={m.capaianPersen} status={m.status} />,
+                    render: (m) => <StatusPill poin={m.poin} persen={m.capaianPersen} status={m.status} isLulus={m.isLulus} />,
                   },
                   {
                     key: 'aksi',

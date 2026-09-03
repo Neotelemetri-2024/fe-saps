@@ -1,0 +1,291 @@
+import { useState, useEffect, useMemo } from 'react'
+import { toast } from 'sonner'
+import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
+import { getCurrentUser } from '../../services/authService'
+import {
+  getAkunUKM,
+  createAkunUKM,
+  resetPasswordAkunUKM,
+  hapusAkunUKM,
+  toggleStatusAkunUKM,
+} from '../../services/organisasiService'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function TambahAkunModal({ onClose, onSave }) {
+  const [showPwd, setShowPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({ namaUkm: '', email: '', password: '', konfirmasiPassword: '', status: 'aktif' })
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async () => {
+    const email = form.email.trim()
+    if (!form.namaUkm || !email || !form.password) {
+      toast.error('Lengkapi semua field wajib.')
+      return
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      toast.error('Format email tidak valid.')
+      return
+    }
+    if (form.password !== form.konfirmasiPassword) {
+      toast.error('Password dan konfirmasi password tidak cocok.')
+      return
+    }
+    setSaving(true)
+    try {
+      await onSave(form)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-[#212121]">Tambah Akun UKM</h3>
+          <button type="button" onClick={onClose} className="text-[#616161] hover:text-[#333] text-xl leading-none">&times;</button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-[#212121]">Nama UKM <span className="text-red-600">*</span></label>
+            <input type="text" name="namaUkm" value={form.namaUkm} onChange={handleChange}
+              placeholder="Contoh: Neo Telemetri"
+              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
+          </div>
+          <div>
+            <label className="block text-sm text-[#212121]">Email <span className="text-red-600">*</span></label>
+            <input type="email" name="email" value={form.email} onChange={handleChange}
+              placeholder="operator@unand.ac.id" autoComplete="off"
+              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
+          </div>
+          <div>
+            <label className="block text-sm text-[#212121]">Password <span className="text-red-600">*</span></label>
+            <div className="relative mt-1">
+              <input type={showPwd ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
+                placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark pr-10" />
+              <button type="button" onClick={() => setShowPwd(!showPwd)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-[#212121]">Konfirmasi Password <span className="text-red-600">*</span></label>
+            <div className="relative mt-1">
+              <input type={showConfirmPwd ? 'text' : 'password'} name="konfirmasiPassword" value={form.konfirmasiPassword} onChange={handleChange}
+                placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark pr-10" />
+              <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+                {showConfirmPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-[#212121]">Status <span className="text-red-600">*</span></label>
+            <div className="mt-2 flex gap-6 text-sm">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="status" value="aktif" checked={form.status === 'aktif'} onChange={handleChange} className="accent-brand-dark" />
+                Aktif
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="status" value="nonaktif" checked={form.status === 'nonaktif'} onChange={handleChange} className="accent-brand-dark" />
+                Non Aktif
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="mt-7 flex gap-3">
+          <button type="button" onClick={handleSubmit} disabled={saving}
+            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
+            {saving ? 'Menyimpan...' : 'Buat'}
+          </button>
+          <button type="button" onClick={onClose}
+            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50">
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResetPasswordModal({ item, onClose, onReset }) {
+  const [newPwd, setNewPwd] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!newPwd.trim()) { toast.error('Password baru tidak boleh kosong.'); return }
+    setSaving(true)
+    try { await onReset(item, newPwd); onClose() }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-[#212121]">Reset Password</h3>
+          <button type="button" onClick={onClose} className="text-[#616161] hover:text-[#333]"><X className="h-5 w-5" /></button>
+        </div>
+        <p className="mb-4 text-sm text-[#616161]">Reset password untuk akun: <strong>{item.nama}</strong></p>
+        <div>
+          <label className="block text-sm text-[#212121]">Password Baru <span className="text-red-600">*</span></label>
+          <div className="relative mt-1">
+            <input type={showPwd ? 'text' : 'password'} value={newPwd} onChange={(e) => setNewPwd(e.target.value)}
+              placeholder="Masukkan password baru"
+              className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 pr-10 text-sm outline-none focus:border-brand-dark" />
+            <button type="button" onClick={() => setShowPwd(!showPwd)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div className="mt-6 flex gap-3">
+          <button type="button" onClick={handleSubmit} disabled={saving}
+            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
+            {saving ? 'Memproses...' : 'Reset Password'}
+          </button>
+          <button type="button" onClick={onClose}
+            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50">
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ManajemenAkunUKM() {
+  const user = getCurrentUser()
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [showTambah, setShowTambah] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [resetTarget, setResetTarget] = useState(null)
+
+  const loadData = () => {
+    setLoading(true)
+    getAkunUKM()
+      .then(setData)
+      .catch((err) => toast.error('Gagal memuat akun UKM', { description: err.message }))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { loadData() }, [])
+
+  const filtered = data.filter((d) =>
+    (d.nama || '').toLowerCase().includes(search.toLowerCase()) ||
+    (d.email || '').toLowerCase().includes(search.toLowerCase()),
+  )
+
+  const handleSave = async (form) => {
+    try {
+      await createAkunUKM({ namaUkm: form.namaUkm, email: form.email.trim(), password: form.password, status: form.status === 'aktif' })
+      setShowTambah(false)
+      toast.success('Akun UKM berhasil dibuat!')
+      loadData()
+    } catch (err) {
+      toast.error('Gagal membuat akun', { description: err.message })
+      throw err
+    }
+  }
+
+  const handleReset = async (item, passwordBaru) => {
+    try {
+      await resetPasswordAkunUKM(item.userId, passwordBaru)
+      toast.success('Password berhasil direset!')
+    } catch (err) {
+      toast.error('Gagal reset password', { description: err.message })
+      throw err
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      await hapusAkunUKM(confirmDelete.userId)
+      toast.success('Akun dihapus.')
+      setConfirmDelete(null)
+      loadData()
+    } catch (err) { toast.error('Gagal menghapus', { description: err.message }) }
+  }
+
+  const handleToggleStatus = async (item) => {
+    try {
+      await toggleStatusAkunUKM(item.userId)
+      toast.success('Status akun diperbarui')
+      loadData()
+    } catch (err) { toast.error('Gagal mengubah status', { description: err.message }) }
+  }
+
+  const columns = useMemo(() => [
+    { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{i + 1}</span> },
+    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-black">{row.nama}</span> },
+    { key: 'email', label: 'Email', render: (row) => <span className="text-black">{row.email}</span> },
+    { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
+      <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
+        <StatusBadge status={row.status} />
+      </button>
+    )},
+    { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
+      <ActionMenu items={[
+        { label: 'Reset Password', icon: <Key className="h-4 w-4" />, color: 'text-brand-dark', onClick: () => setResetTarget(row) },
+        { label: 'Hapus', icon: <Trash2 className="h-4 w-4" />, color: 'text-red-500', onClick: () => setConfirmDelete(row) },
+      ]} />
+    )},
+  ], [filtered])
+
+  return (
+    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+      {showTambah && <TambahAkunModal onClose={() => setShowTambah(false)} onSave={handleSave} />}
+      {resetTarget && <ResetPasswordModal item={resetTarget} onClose={() => setResetTarget(null)} onReset={handleReset} />}
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        message={confirmDelete ? `Yakin ingin menghapus akun "${confirmDelete.nama}"? Tindakan ini tidak bisa dibatalkan.` : ''}
+        confirmText="Ya, Hapus" cancelText="Batal"
+        onConfirm={handleDelete} onCancel={() => setConfirmDelete(null)}
+      />
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-bold text-[#222]">Manajemen Akun UKM</h2>
+          <p className="mt-1 text-sm text-[#616161]">Kelola akun operator UKM di seluruh universitas.</p>
+        </div>
+        <TableCard title="Daftar Akun UKM">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari UKM..."
+                className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark" />
+            </div>
+            <button type="button" onClick={() => setShowTambah(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+              <Plus className="h-4 w-4" />Akun UKM
+            </button>
+          </div>
+          <TableFrame>
+            <DataTable columns={columns} data={filtered} loading={loading} emptyText="Tidak ada data UKM." />
+          </TableFrame>
+        </TableCard>
+      </div>
+    </DashboardLayout>
+  )
+}
+
+export default ManajemenAkunUKM

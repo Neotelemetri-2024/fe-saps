@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiBulk } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
+import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
 
 function formatTanggal(tanggal) {
   if (!tanggal) return '-'
@@ -43,8 +44,14 @@ function normalizeKegiatan(k) {
   }
 }
 
-function buildForm(kegiatan) {
+function buildForm(kegiatan, kurList = []) {
+  const existingKurIds = [
+    ...new Set(
+      (kegiatan.existing || []).map((e) => e.subCapaian?.capaian?.kurikulumId).filter(Boolean)
+    ),
+  ]
   return {
+    kurikulumIds: existingKurIds.length > 0 ? existingKurIds : kurList.map((k) => k.id),
     capaianIds: kegiatan.existingCapaianIds || [],
     alokasi: (kegiatan.existing || []).map((e) => ({
       subCapaianId: e.subCapaianId,
@@ -64,20 +71,21 @@ function PemetaanCapaianMassal() {
   }, [location.state])
 
   const [kegiatans, setKegiatans] = useState([])
-  const [kurikulum, setKurikulum] = useState(null)
+  const [kurikulumList, setKurikulumList] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingKur, setLoadingKur] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
-  const [capaianOpen, setCapaianOpen] = useState(false)
-  const capaianRef = useRef(null)
 
   useEffect(() => {
-    const handler = (e) => {
-      if (capaianRef.current && !capaianRef.current.contains(e.target)) setCapaianOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    setLoadingKur(true)
+    getKurikulumAktif()
+      .then((kur) => {
+        const list = Array.isArray(kur) ? kur : (kur ? [kur] : [])
+        setKurikulumList(list)
+      })
+      .catch(() => toast.error('Gagal memuat kurikulum'))
+      .finally(() => setLoadingKur(false))
   }, [])
 
   useEffect(() => {
@@ -91,7 +99,7 @@ function PemetaanCapaianMassal() {
       .then((results) => {
         const valid = results.filter(Boolean).map((k) => {
           const normalized = normalizeKegiatan(k)
-          return { ...normalized, ...buildForm(normalized) }
+          return { ...normalized, ...buildForm(normalized, kurikulumList) }
         })
         if (valid.length === 0) {
           toast.error('Data kegiatan tidak ditemukan.')
@@ -103,33 +111,23 @@ function PemetaanCapaianMassal() {
       })
       .catch(() => toast.error('Gagal memuat data kegiatan'))
       .finally(() => setLoading(false))
-  }, [kegiatanIds])
-
-  useEffect(() => {
-    setLoadingKur(true)
-    getKurikulumAktif()
-      .then((kur) => setKurikulum(kur))
-      .catch(() => toast.error('Gagal memuat kurikulum'))
-      .finally(() => setLoadingKur(false))
-  }, [])
+  }, [kegiatanIds, kurikulumList.length])
 
   const backToList = () => navigate('/admin_ditmawa/verifikasi-pengajuan-eksternal')
 
   const active = kegiatans[activeIndex] || null
-  const allCapaian = kurikulum?.capaian || []
-  const visibleSubCapaian = allCapaian
-    .filter((c) => active?.capaianIds.includes(c.id))
-    .flatMap((c) => (c.subCapaian || []).map((sc) => ({ ...sc, namaCapaian: c.nama })))
 
-  const totalBobot = (kegiatan) => (kegiatan?.alokasi || []).reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-  const getBobotStatus = (kegiatan) => {
-    const tb = totalBobot(kegiatan)
-    if (kegiatan?.alokasi?.length === 0 || tb === 0) return 'kosong'
-    if (Math.abs(tb - 100) < 0.01) return 'pas'
-    if (tb < 100) return 'kurang'
-    return 'lebih'
+  const isLengkap = (kegiatan) => {
+    if (!kegiatan || kurikulumList.length === 0) return false
+    for (const kur of kurikulumList) {
+      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+      const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
+      if (kurAlokasi.length === 0) return false
+      const sum = kurAlokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
+      if (Math.abs(sum - 100) > 0.01) return false
+    }
+    return true
   }
-  const isLengkap = (kegiatan) => getBobotStatus(kegiatan) === 'pas'
   const allLengkap = kegiatans.length > 0 && kegiatans.every(isLengkap)
   const jumlahLengkap = kegiatans.filter(isLengkap).length
 
@@ -295,137 +293,35 @@ function PemetaanCapaianMassal() {
                 <p className="mt-0.5 text-sm text-[#616161]">{active?.nama}</p>
               </div>
 
-              {/* Dropdown Capaian */}
-              <div>
-                <label className="block text-sm font-medium text-black">
-                  Capaian<span className="text-red-500">*</span>{' '}
-                  <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
-                </label>
-                <div className="relative mt-1" ref={capaianRef}>
-                  <button
-                    type="button"
-                    onClick={() => setCapaianOpen((o) => !o)}
-                    className="flex w-full items-center justify-between rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark bg-white"
-                  >
-                    <span className={active.capaianIds.length === 0 ? 'text-[#9aa0a6]' : ''}>
-                      {active.capaianIds.length === 0 ? 'Pilih capaian' : `${active.capaianIds.length} capaian dipilih`}
-                    </span></button>
-                  {capaianOpen && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border border-[#e9ebf8] bg-white shadow-md">
-                      {allCapaian.map((c) => (
-                        <label key={c.id} className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-[#f5f5f5]">
-                          <input
-                            type="checkbox"
-                            className="accent-brand-dark"
-                            checked={active.capaianIds.includes(c.id)}
-                            onChange={() => toggleCapaian(c.id)}
-                          />
-                          {c.nama}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {active.capaianIds.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {allCapaian
-                      .filter((c) => active.capaianIds.includes(c.id))
-                      .map((c) => (
-                        <span key={c.id} className="inline-flex items-center gap-1 rounded-full border border-brand-dark/30 bg-brand-dark/5 px-3 py-1 text-xs font-medium text-brand-dark">
-                          {c.nama}
-                          <button type="button" onClick={() => toggleCapaian(c.id)}>
-                            <X className="h-3 w-3 text-red-600" />
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Sub Capaian */}
-              {visibleSubCapaian.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-black">
-                    Sub Capaian<span className="text-red-500">*</span>{' '}
-                    <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
-                  </label>
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {visibleSubCapaian.map((sc) => {
-                      const checked = !!(active.alokasi || []).find((a) => a.subCapaianId === sc.id)
-                      return (
-                        <label
-                          key={sc.id}
-                          className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${
-                            checked
-                              ? 'border-brand-dark bg-brand-dark/5 font-medium text-brand-dark'
-                              : 'border-[#e9ebf8] text-[#444] hover:border-brand-dark/40'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="accent-brand-dark shrink-0"
-                            checked={checked}
-                            onChange={() => toggleSub(sc.id)}
-                          />
-                          <span className="min-w-0">
-                            <span className="block truncate">{sc.nama}</span>
-                            <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">{sc.namaCapaian}</span>
-                          </span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Bobot */}
-              {(active.alokasi || []).length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-black">
-                    Bobot Persentase Sub Capaian<span className="text-red-500">*</span>
-                  </label>
-                  <div className="mt-2 space-y-2">
-                    {(active.alokasi || []).map((alok) => {
-                      const sc = visibleSubCapaian.find((s) => s.id === alok.subCapaianId)
-                      if (!sc) return null
-                      return (
-                        <div key={alok.subCapaianId} className="flex items-center gap-3">
-                          <span className="flex-1 text-sm text-[#444]">{sc.nama}</span>
-                          <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            value={alok.alokasiPersen}
-                            onChange={(e) => setAlokasiPersen(alok.subCapaianId, e.target.value)}
-                            className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark"
-                          />
-                          <span className="text-sm text-[#9aa0a6]">%</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Indikator total bobot */}
-                  <div className={`mt-3 flex items-start gap-2 rounded-lg border px-3.5 py-2.5 text-sm ${
-                    getBobotStatus(active) === 'pas'
-                      ? 'border-green-200 bg-green-50 text-green-700'
-                      : 'border-red-200 bg-red-50 text-red-600'
-                  }`}>
-                    {getBobotStatus(active) === 'pas' ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-                    ) : (
-                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                    )}
-                    <span className={`text-xs font-medium ${getBobotStatus(active) === 'pas' ? 'text-emerald-600' : 'text-red-500'}`}>
-                      <span className="font-semibold">Total bobot: {totalBobot(active)}%</span>
-                      {getBobotStatus(active) === 'kurang' && <span className="ml-1">(kurang dari 100%)</span>}
-                      {getBobotStatus(active) === 'lebih' && <span className="ml-1">(lebih dari 100%)</span>}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {visibleSubCapaian.length === 0 && active.capaianIds.length > 0 && (
-                <p className="text-sm text-[#9aa0a6]">Capaian terpilih belum memiliki sub capaian.</p>
+              {loadingKur ? (
+                <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
+              ) : kurikulumList.length === 0 ? (
+                <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan.</p>
+              ) : active && (
+                <PemetaanCapaianKurikulumSection
+                  kurikulumList={kurikulumList}
+                  selectedKurikulumIds={active.kurikulumIds || []}
+                  setSelectedKurikulumIds={(ids) =>
+                    updateActive((k) => ({
+                      ...k,
+                      kurikulumIds: typeof ids === 'function' ? ids(k.kurikulumIds || []) : ids,
+                    }))
+                  }
+                  selectedCapaianIds={active.capaianIds || []}
+                  setSelectedCapaianIds={(cids) =>
+                    updateActive((k) => ({
+                      ...k,
+                      capaianIds: typeof cids === 'function' ? cids(k.capaianIds || []) : cids,
+                    }))
+                  }
+                  alokasi={active.alokasi || []}
+                  setAlokasi={(aloks) =>
+                    updateActive((k) => ({
+                      ...k,
+                      alokasi: typeof aloks === 'function' ? aloks(k.alokasi || []) : aloks,
+                    }))
+                  }
+                />
               )}
             </div>
           </div>

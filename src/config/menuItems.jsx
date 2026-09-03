@@ -6,6 +6,7 @@ import {
   BookOpen,
   BarChart3,
   FileText,
+  FileSpreadsheet,
   LayoutGrid,
   UserCheck,
   PlusCircle,
@@ -43,26 +44,43 @@ export const mahasiswaMenu = [
 
 /* ── DOSEN PA ── */
 export const dosenPAMenu = [
-  { path: '/dosen/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" />, end: true },
-  { path: '/dosen/mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: <Users className="h-4 w-4" />, end: false },
-  { path: '/dosen/permintaan-persetujuan', label: 'Persetujuan Mahasiswa', icon: <UserCheck className="h-4 w-4" /> },
+  { path: '/dosen/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
+  { path: '/dosen/mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: <Users className="h-4 w-4" /> },
+  { path: '/dosen/permintaan-persetujuan', label: 'Permintaan Persetujuan', icon: <CheckCircle className="h-4 w-4" /> },
+  { path: '/dosen/mahasiswa-perlu-perhatian', label: 'Mahasiswa Perlu Perhatian', icon: <Users className="h-4 w-4" /> },
 ]
+
+/* ── PIMPINAN (Ditmawa / Fakultas / Utama) ── */
 export const pimpinanDitmawaMenu = [
   { path: '/pimpinan_ditmawa/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_ditmawa/manajemen-kurikulum', label: 'Manajemen Kurikulum', icon: <BookOpen className="h-4 w-4" /> },
   { path: '/pimpinan_ditmawa/bobot-poin', label: 'Bobot Poin', icon: <BarChart3 className="h-4 w-4" /> },
+  { path: '/pimpinan_ditmawa/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
   {
     path: '#',
-    label: 'Verifikasi',
+    label: 'Verifikasi & Approval',
     icon: <CheckCircle className="h-4 w-4" />,
     children: [
-      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-internal', label: 'Verifikasi Pengajuan Internal' },
-      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-eksternal', label: 'Verifikasi Pengajuan Eksternal' },
+      { path: '/pimpinan_ditmawa/verifikasi-klaim', label: 'Validasi Klaim Poin' },
+      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-internal', label: 'Proposal UKM Internal' },
+      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-eksternal', label: 'Proposal Ormawa Eksternal' },
     ],
   },
+  {
+    path: '#',
+    label: 'Manajemen Ormawa',
+    icon: <UserCog className="h-4 w-4" />,
+    children: [
+      { path: '/pimpinan_ditmawa/manajemen-akun-ukm', label: 'Akun UKM Universitas' },
+      { path: '/pimpinan_ditmawa/manajemen-akun-ukmf', label: 'Akun UKMF Fakultas' },
+    ],
+  },
+  { path: '/pimpinan_ditmawa/manajemen-event', label: 'Event Global', icon: <Search className="h-4 w-4" /> },
+  { path: '/pimpinan_ditmawa/audit-log', label: 'Audit Log Sistem', icon: <History className="h-4 w-4" /> },
 ]
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
+  { path: '/pimpinan_fakultas/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
   {
     path: '#',
     label: 'Verifikasi',
@@ -76,6 +94,7 @@ export const pimpinanFakultasMenu = [
 export const pimpinanUtamaMenu = [
   { path: '/pimpinan_utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_utama/detail-fakultas', label: 'Detail Fakultas', icon: <BarChart3 className="h-4 w-4" /> },
+  { path: '/pimpinan_utama/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN DITMAWA ── */

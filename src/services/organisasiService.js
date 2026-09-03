@@ -56,8 +56,9 @@ export async function hapusAkunUKM(userId) {
 
 // ─── UKMF (Admin Fakultas) ───────────────────────────────────────────────────
 
-export async function getAkunUKMF() {
-  const res = await get('/api/organisasi-fakultas/akun')
+export async function getAkunUKMF(fakultasId) {
+  const params = fakultasId ? { fakultasId } : {}
+  const res = await get('/api/organisasi-fakultas/akun', params)
   const data = res?.data || res || []
   return Array.isArray(data) ? data.map(normalizeAkun) : []
 }
@@ -68,6 +69,7 @@ export async function createAkunUKMF(data) {
     email: data.email,
     password: data.password,
     status: data.status === true || data.status === 'aktif' || data.status === 'Aktif',
+    fakultasId: data.fakultasId ? Number(data.fakultasId) : undefined,
   })
   return res?.data || res
 }

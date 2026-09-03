@@ -130,22 +130,24 @@ function MahasiswaDashboard() {
 
   const rawProgres = dashData?.progresTahunan || dashData?.progressTahun || []
   const progressData = (Array.isArray(rawProgres) ? rawProgres : []).map((item) => {
-    const current = item.poinTerkumpul ?? item.current ?? 0
+    const current = item.poinProgres ?? Math.min(item.poinTerkumpul ?? 0, item.targetPoin ?? 1)
     const target = item.targetPoin ?? item.target ?? 1
-    const pct = item.persentase ?? (target > 0 ? Math.round((current / target) * 100) : 0)
+    const pct = item.persentase ?? (target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0)
     return {
       tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
       current,
       target,
       pct,
+      poinLebih: item.poinLebih || 0,
       label: buildProgressLabel(pct),
       onTrack: pct >= 100,
     }
   })
 
-  const totalPoin = dashData?.totalPoin ?? progressData.reduce((sum, t) => sum + (t.current || 0), 0)
+  const totalPoinProgres = dashData?.totalPoinProgres ?? progressData.reduce((sum, t) => sum + (t.current || 0), 0)
+  const totalPoin = dashData?.totalPoin ?? totalPoinProgres
   const maxPoin = dashData?.totalTarget ?? 0
-  const pctTotal = maxPoin > 0 ? Math.round((totalPoin / maxPoin) * 100) : 0
+  const pctTotal = dashData?.persentaseTotal ?? (maxPoin > 0 ? Math.min(100, Math.round((totalPoinProgres / maxPoin) * 100)) : 0)
 
   const radarRaw = dashData?.radarData || dashData?.radar || dashData?.capaian || FALLBACK_RADAR
   const radarLabels = radarRaw.map((d) => d.label || d.nama || '')
@@ -163,11 +165,20 @@ function MahasiswaDashboard() {
             <p className="mt-3 max-w-lg text-sm text-[#616161]">
               Pantau aktivitas akademik, capaian poin, dan sertifikasi kamu secara real-time.
             </p>
-            <p className="mt-6 text-sm font-medium text-[#616161]">Total Capaian Poin</p>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-[#616161]">Poin Target Kelulusan</p>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                dashData?.isLulus || pctTotal >= 100
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}>
+                {dashData?.isLulus || pctTotal >= 100 ? 'Memenuhi Syarat Kelulusan' : 'Belum Memenuhi Syarat'}
+              </span>
+            </div>
             <div className="mt-1 flex flex-wrap items-end gap-6">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-brand-dark">{loadingDash ? '…' : totalPoin}</span>
-                <span className="text-lg font-semibold text-[#9aa0a6]">/ {maxPoin}</span>
+                <span className="text-4xl font-extrabold text-brand-dark">{loadingDash ? '…' : totalPoinProgres}</span>
+                <span className="text-lg font-semibold text-[#9aa0a6]">/ {maxPoin} poin</span>
               </div>
               <div className="min-w-[200px] flex-1">
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
@@ -189,9 +200,9 @@ function MahasiswaDashboard() {
         <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin</h3>
+              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin Kelulusan</h3>
               <p className="mt-0.5 text-sm font-medium text-brand-dark">
-                Total Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoin}</span> / {maxPoin} poin
+                Target Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoinProgres}</span> / {maxPoin} poin ({pctTotal}%)
               </p>
             </div>
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/riwayat-poin')} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, CheckCircle } from 'lucide-react'
+import { Search, CheckCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -7,6 +7,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import { RadarChartCJ } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
@@ -63,8 +64,10 @@ function RiwayatPoin() {
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
   const [totalPoin, setTotalPoin] = useState(0)
+  const [totalPoinProgres, setTotalPoinProgres] = useState(0)
   const [totalTarget, setTotalTarget] = useState(0)
   const [progressData, setProgressData] = useState([])
+  const [selectedCapaianId, setSelectedCapaianId] = useState(null)
   const [riwayat, setRiwayat] = useState([])
   const [search, setSearch] = useState('')
   const [filterKategori, setFilterKategori] = useState('')
@@ -79,21 +82,27 @@ function RiwayatPoin() {
       .then((res) => {
         const data = res?.data || res || {}
         setTotalPoin(data.totalPoin ?? 0)
+        setTotalPoinProgres(data.totalPoinProgres ?? data.totalPoin ?? 0)
         setTotalTarget(data.totalTarget ?? 0)
 
-        const progress = Array.isArray(data.progressTahun) ? data.progressTahun : []
+        const progress = Array.isArray(data.progressTahun || data.progresTahunan) ? (data.progressTahun || data.progresTahunan) : []
         setProgressData(
           progress.map((item) => {
-            const current = item.poinTerkumpul ?? item.current ?? 0
+            const current = item.poinProgres ?? Math.min(item.poinTerkumpul ?? item.current ?? 0, item.targetPoin ?? item.target ?? 1)
             const target = item.targetPoin ?? item.target ?? 1
-            const pct = item.persentase ?? (target > 0 ? Math.round((current / target) * 100) : 0)
+            const pct = item.persentase ?? (target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0)
             const onTrack = pct >= 100
             return {
+              id: item.id,
+              nama: item.nama || `Capaian ${item.urutan || ''}`,
               tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
               current,
               target,
+              poinTerkumpul: item.poinTerkumpul ?? current,
+              poinLebih: item.poinLebih || 0,
               label: buildProgressLabel({ ...item, persentase: pct }),
               onTrack,
+              subCapaian: Array.isArray(item.subCapaian) ? item.subCapaian : [],
             }
           }),
         )
@@ -123,6 +132,13 @@ function RiwayatPoin() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  const selectedCapaian = useMemo(
+    () => progressData.find((c) => c.id === selectedCapaianId) || null,
+    [progressData, selectedCapaianId]
+  )
+
+  const pctTotal = totalTarget > 0 ? Math.min(100, Math.round((totalPoinProgres / totalTarget) * 100)) : 0
 
   const kategoriOptions = useMemo(() => [...new Set(riwayat.map((r) => r.jenis).filter((v) => v && v !== '-'))], [riwayat])
   const peranOptions = useMemo(() => [...new Set(riwayat.map((r) => r.peran).filter((v) => v && v !== '-'))], [riwayat])
@@ -161,11 +177,28 @@ function RiwayatPoin() {
         <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Riwayat Poin</h2>
         <p className="text-sm text-[#616161]">Rekap seluruh kegiatan dan poin yang telah terkumpul sesuai kurikulum.</p>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin</h3>
-            <div className="flex items-center gap-2 text-sm font-medium text-brand-dark">
-              Total Capaian: <span className="font-bold">{loading ? '…' : totalPoin}</span> / {totalTarget} poin
+        <div className="rounded-xl border border-[#e9ebf8] bg-white p-4 sm:p-6 shadow-sm">
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0f2f9] pb-4">
+            <div>
+              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Kurikulum</h3>
+              <p className="mt-0.5 text-xs text-[#616161]">
+                Poin yang dihitung masuk ke progres dibatasi maksimal sesuai target capaian kurikulum.
+              </p>
+            </div>
+            <div className="flex items-center gap-5 sm:gap-6">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e98a8]">Progress Target</p>
+                <p className="mt-0.5 text-base sm:text-lg font-bold text-brand-dark">
+                  {loading ? '…' : totalPoinProgres} <span className="text-xs font-normal text-[#616161]">/ {totalTarget} poin ({pctTotal}%)</span>
+                </p>
+              </div>
+              <div className="h-9 w-px bg-[#e9ebf8]" />
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e98a8]">Total Poin Diperoleh</p>
+                <p className="mt-0.5 text-base sm:text-lg font-bold text-[#111]">
+                  {loading ? '…' : totalPoin} <span className="text-xs font-normal text-[#616161]">poin</span>
+                </p>
+              </div>
             </div>
           </div>
           {loading ? (
@@ -174,22 +207,124 @@ function RiwayatPoin() {
             <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data progress kurikulum.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {progressData.map((item, index) => (
-                <div key={index} className="rounded-lg border border-[#e9ebf8] p-4 text-center">
-                  <p className="text-xs font-semibold text-[#616161]">{item.tahun}</p>
-                  <p className="mt-1 text-2xl font-bold text-brand-dark">
-                    {item.current}
-                    <span className="text-sm font-normal text-[#616161]">/{item.target} poin</span>
+              {progressData.map((item, index) => {
+                const isSelected = selectedCapaianId === item.id
+                return (
+                  <div
+                    key={item.id ?? index}
+                    onClick={() => setSelectedCapaianId((prev) => (prev === item.id ? null : item.id))}
+                    className={`relative rounded-lg border p-4 text-center cursor-pointer transition-all duration-200 ${
+                      isSelected
+                        ? 'border-brand-dark ring-2 ring-brand-dark/20 bg-[#f9fbf9] shadow-sm'
+                        : 'border-[#e9ebf8] hover:border-brand-dark/50 hover:bg-[#fafbfa] bg-white'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-[#616161]">{item.tahun}</p>
+                    <p className="mt-1 text-2xl font-bold text-brand-dark">
+                      {item.current}
+                      <span className="text-sm font-normal text-[#616161]">/{item.target} poin</span>
+                    </p>
+                    <div className="mt-2 flex justify-center">
+                      <ProgressBar value={item.current} max={item.target || 1} height={6} />
+                    </div>
+                    <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
+                      {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
+                      <span>{item.label}</span>
+                    </div>
+                    {item.poinLebih > 0 && (
+                      <p className="mt-1.5 text-[11px] text-[#8e98a8]">
+                        +{item.poinLebih} poin lebih di riwayat
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Visualisasi Sub Capaian yang Dipilih (seperti tampilan Dosen PA) */}
+          {selectedCapaian && (
+            <div className="mt-6 rounded-xl bg-gradient-to-br from-brand-dark to-brand-light p-5 sm:p-6 text-white shadow-sm transition-all animate-in fade-in duration-200">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-extrabold text-white">Sub Capaian</h3>
+                  <p className="mt-0.5 text-xs text-white/70">
+                    Sub Capaian dalam kategori {selectedCapaian.nama?.toLowerCase()}
                   </p>
-                  <div className="mt-2 flex justify-center">
-                    <ProgressBar value={item.current} max={item.target || 1} height={6} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
-                    {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
-                    <span>{item.label}</span>
-                  </div>
+                  <p className="mt-2 text-sm font-bold text-white/90">
+                    {selectedCapaian.nama}
+                  </p>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedCapaian.id}
+                    onChange={(e) => {
+                      const targetId = Number(e.target.value) || e.target.value
+                      setSelectedCapaianId(targetId)
+                    }}
+                    className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-xs text-white outline-none backdrop-blur-sm cursor-pointer"
+                  >
+                    {progressData.map((c) => (
+                      <option key={c.id} value={c.id} className="text-[#333]">
+                        {c.nama}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCapaianId(null)}
+                    className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                    title="Tutup"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {selectedCapaian.subCapaian.length === 0 ? (
+                <p className="py-10 text-center text-xs text-white/70">
+                  Belum ada rincian sub capaian pada capaian ini.
+                </p>
+              ) : (
+                <>
+                  {/* Radar Chart */}
+                  <div className="mt-4 flex justify-center">
+                    <div className="w-full max-w-[340px]">
+                      <RadarChartCJ
+                        labels={selectedCapaian.subCapaian.map((sc) => sc.nama)}
+                        values={selectedCapaian.subCapaian.map((sc) => sc.poinTerkumpul ?? sc.poinProgres ?? 0)}
+                        darkBg
+                        height={230}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sub Capaian Bars List */}
+                  <div className="mt-5 space-y-3">
+                    {selectedCapaian.subCapaian.map((sc, idx) => {
+                      const val = sc.poinTerkumpul ?? sc.poinProgres ?? 0
+                      const target = sc.targetPoin || 0
+                      const pct = target > 0 ? Math.min(100, Math.round((val / target) * 100)) : (val > 0 ? 100 : 0)
+                      return (
+                        <div key={sc.id ?? idx} className="flex items-center gap-3">
+                          <span className="w-48 sm:w-64 shrink-0 truncate text-xs text-white/85" title={sc.nama}>
+                            {sc.nama}
+                          </span>
+                          <div className="flex-1 overflow-hidden rounded-full bg-white/20" style={{ height: 6 }}>
+                            <div
+                              className="h-full rounded-full transition-all bg-[#ff7b72]"
+                              style={{ width: `${Math.min(100, Math.max(pct, val > 0 ? 5 : 0))}%` }}
+                            />
+                          </div>
+                          <span className="w-8 shrink-0 text-right text-xs font-bold text-white">
+                            {val}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

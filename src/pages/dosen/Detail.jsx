@@ -286,7 +286,11 @@ function DosenPADetail() {
           angkatan: profil.angkatan || prev.angkatan,
           ipk: profil.ipk ?? prev.ipk,
           poin: data.totalPoin ?? prev.poin,
-          targetPoin: data.totalTarget ?? prev.targetPoin ?? 550,
+          totalPoinProgres: data.totalPoinProgres ?? data.totalPoin ?? prev.poin,
+          targetPoin: data.totalTarget ?? prev.targetPoin ?? 200,
+          persentaseTotal: data.persentaseTotal,
+          isLulus: data.isLulus,
+          statusKelulusan: data.statusKelulusan,
           mahasiswaId,
         }))
 
@@ -351,7 +355,7 @@ function DosenPADetail() {
   const radarItems = capaianRadarMap[activeCapaian]
     ?? capaianRadarMap[capaianOptions[0]]
     ?? []
-  const pctTarget = Math.round((m.poin / (m.targetPoin ?? 550)) * 100)
+  const pctTarget = m.persentaseTotal ?? (m.targetPoin > 0 ? Math.min(100, Math.round(((m.totalPoinProgres ?? m.poin) / m.targetPoin) * 100)) : 0)
   const displayedCatatan = showAllCatatan ? riwayatCatatan : riwayatCatatan.slice(0, 2)
   const displayedTimeline = showAllTimeline
     ? timelineAktivitas
@@ -464,12 +468,28 @@ function DosenPADetail() {
               </div>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-4xl font-extrabold text-brand-dark">{m.poin}</p>
-              <p className="text-sm text-[#888]">/ {m.targetPoin ?? 550} Poin</p>
-              <div className="mt-2 w-full sm:w-40">
-                <ProgressBar value={m.poin} max={m.targetPoin ?? 550} height={6} />
+              <div className="flex items-center justify-start sm:justify-end gap-2 mb-1.5">
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                  m.isLulus || pctTarget >= 100
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {m.statusKelulusan || (m.isLulus ? 'Memenuhi Syarat Kelulusan' : 'Belum Memenuhi Syarat')}
+                </span>
               </div>
-              <p className="mt-1 text-xs text-[#888]">{pctTarget} % dari target yudisium</p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-brand-dark">
+                {m.totalPoinProgres ?? m.poin}
+              </p>
+              <p className="text-sm text-[#888]">/ {m.targetPoin ?? 200} Poin Target</p>
+              {m.poin > (m.totalPoinProgres ?? m.poin) && (
+                <p className="text-xs text-[#666] mt-0.5">
+                  Total Riil: <span className="font-semibold text-brand-dark">{m.poin}</span> poin
+                </p>
+              )}
+              <div className="mt-2 w-full sm:w-44">
+                <ProgressBar value={m.totalPoinProgres ?? m.poin} max={m.targetPoin ?? 200} height={6} />
+              </div>
+              <p className="mt-1 text-xs text-[#888]">{pctTarget}% dari target kelulusan</p>
             </div>
           </div>
         </div>
