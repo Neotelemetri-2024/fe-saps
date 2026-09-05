@@ -36,7 +36,7 @@ function CapaianBar({ poin, persen }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-[#555]">{pct}%</span>
+      <span className="text-xs font-medium text-base-content/70">{pct}%</span>
     </div>
   )
 }
@@ -125,13 +125,13 @@ function MahasiswaBimbingan() {
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
       <div className="space-y-6">
-        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl mb-2">Mahasiswa Bimbingan</h2>
+        <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl mb-2">Mahasiswa Bimbingan</h2>
 
         <div className="mt-2">
           <TableCard title="Daftar Mahasiswa Bimbingan">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-white px-3 py-2 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
                   value={search}
@@ -143,7 +143,7 @@ function MahasiswaBimbingan() {
               <select
                 value={filterProdi}
                 onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 text-sm text-[#333] shadow-sm outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-sm text-base-content shadow-sm outline-none"
               >
                 <option value="">Semua Prodi</option>
                 {prodiOptions.map((p) => (
@@ -154,7 +154,7 @@ function MahasiswaBimbingan() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>
@@ -175,7 +175,7 @@ function MahasiswaBimbingan() {
                         <p className="font-bold uppercase text-black">{m.nama}</p>
                         <p className="text-xs font-normal text-black">{m.prodi}</p>
                         {m.tanggalInput && m.tanggalInput !== '-' && (
-                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#9aa0a6]">
+                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-base-content/50">
                             <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}
                           </p>
                         )}

@@ -1,378 +1,341 @@
 /**
- * Shared Chart.js wrapper components.
- * All charts auto-destroy on unmount to avoid canvas reuse errors.
+ * Shared ApexCharts wrappers. Props stay the same so dashboard pages
+ * can swap implementations without changing their data layer.
  */
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  RadialLinearScale,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-import { Bar, Radar } from 'react-chartjs-2'
+import ApexChart from './ApexChart'
+import { useAppearance } from '../../lib/appearance'
+import { isDarkTheme } from '../../constants/theme'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  RadialLinearScale,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler,
-)
-
-const BRAND_DARK = '#1a5c38'
 const BRAND_LIGHT = '#48a757'
 
-function tooltipValue(ctx) {
-  if (ctx.parsed == null) return ctx.raw
-  if (typeof ctx.parsed === 'number') return ctx.parsed
-  if (ctx.parsed.r != null) return ctx.parsed.r
-  if (ctx.parsed.y != null) return ctx.parsed.y
-  if (ctx.parsed.x != null) return ctx.parsed.x
-  return ctx.raw
-}
-
-/** Tooltip bersama untuk bar chart vertikal / stacked / grouped */
-const barTooltip = {
-  enabled: true,
-  mode: 'nearest',
-  intersect: true,
-  callbacks: {
-    label(ctx) {
-      const name = ctx.dataset.label || ctx.label || ''
-      const val = tooltipValue(ctx)
-      return name ? `${name}: ${val}` : String(val)
-    },
-  },
-}
-
-/** Tooltip untuk bar horizontal (nilai di parsed.x) */
-const horizontalBarTooltip = {
-  enabled: true,
-  mode: 'nearest',
-  intersect: true,
-  callbacks: {
-    label(ctx) {
-      const name = ctx.label || ctx.dataset.label || ''
-      const val = ctx.parsed?.x ?? ctx.raw
-      return name ? `${name}: ${val}` : String(val)
-    },
-  },
-}
-
-// ─── Stacked Bar Chart ──────────────────────────────────────────────────────
-/**
- * labels: string[]
- * datasets: { label, data: number[], color }[]
- */
-export function StackedBarChart({ labels, datasets, height = 300 }) {
-  const data = {
-    labels,
-    datasets: datasets.map((ds) => ({
-      label: ds.label,
-      data: ds.data,
-      backgroundColor: ds.color,
-      borderRadius: 3,
-      borderSkipped: false,
-      stack: 'stack',
-    })),
+function useChartSkin() {
+  const { theme } = useAppearance()
+  const dark = isDarkTheme(theme)
+  return {
+    fontFamily: 'DM Sans, system-ui, sans-serif',
+    foreColor: dark ? '#f1f5f9' : '#1e293b',
+    muted: dark ? '#94a3b8' : '#64748b',
+    grid: dark ? '#334155' : '#e5e7eb',
+    tooltipTheme: dark ? 'dark' : 'light',
   }
+}
+
+function baseChart(skin, extras = {}) {
+  return {
+    fontFamily: skin.fontFamily,
+    toolbar: { show: false },
+    zoom: { enabled: false },
+    animations: { enabled: true, speed: 400 },
+    ...extras,
+  }
+}
+
+function formatLabel(label) {
+  return String(label ?? '').replace(/\n/g, ' ')
+}
+
+export function StackedBarChart({ labels = [], datasets = [], height = 300, horizontal = false }) {
+  const skin = useChartSkin()
+  const categories = labels.map(formatLabel)
+  const series = datasets.map((ds) => ({
+    name: ds.label,
+    data: ds.data,
+  }))
+  const colors = datasets.map((ds) => ds.color).filter(Boolean)
+
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { boxWidth: 12, font: { size: 11 } },
-      },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label(ctx) {
-            const name = ctx.dataset.label || ctx.label || ''
-            const val = tooltipValue(ctx)
-            return name ? `${name}: ${val}` : String(val)
-          },
-          footer(items) {
-            const sum = items.reduce((s, i) => s + (Number(i.parsed?.y) || 0), 0)
-            return `Total: ${sum}`
-          },
-        },
+    chart: baseChart(skin, { stacked: true, type: 'bar' }),
+    colors: colors.length ? colors : undefined,
+    plotOptions: {
+      bar: {
+        horizontal,
+        borderRadius: 3,
+        columnWidth: '55%',
+        barHeight: '62%',
       },
     },
-    scales: {
-      x: {
-        stacked: true,
-        grid: { display: false },
-        ticks: { font: { size: 10 }, maxRotation: 35 },
-      },
-      y: {
-        stacked: true,
-        grid: { color: '#eef0f7' },
-        ticks: { font: { size: 10 } },
-      },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    xaxis: {
+      categories,
+      labels: { style: { fontSize: '10px', colors: skin.muted }, rotate: horizontal ? 0 : -35 },
+      axisBorder: { color: skin.grid },
+      axisTicks: { color: skin.grid },
     },
+    yaxis: {
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+    },
+    grid: { borderColor: skin.grid, strokeDashArray: 3 },
+    legend: {
+      position: 'bottom',
+      fontSize: '11px',
+      labels: { colors: skin.foreColor },
+    },
+    tooltip: { theme: skin.tooltipTheme, shared: true, intersect: false },
   }
+
   return (
-    <div style={{ height }}>
-      <Bar data={data} options={options} />
-    </div>
+    <ApexChart options={options} series={series} type="bar" height={height} width="100%" />
   )
 }
 
-// ─── Grouped Bar Chart ──────────────────────────────────────────────────────
-/**
- * labels: string[]
- * datasets: { label, data: number[], color }[]
- */
-export function GroupedBarChart({ labels, datasets, height = 280 }) {
-  const data = {
-    labels,
-    datasets: datasets.map((ds) => ({
-      label: ds.label,
-      data: ds.data,
-      backgroundColor: ds.color,
-      borderRadius: 4,
-      borderSkipped: false,
-    })),
-  }
+export function GroupedBarChart({ labels = [], datasets = [], height = 280 }) {
+  const skin = useChartSkin()
+  const categories = labels.map(formatLabel)
+  const series = datasets.map((ds) => ({
+    name: ds.label,
+    data: ds.data,
+  }))
+  const colors = datasets.map((ds) => ds.color).filter(Boolean)
+
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'nearest', intersect: true },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { boxWidth: 12, font: { size: 11 } },
-      },
-      tooltip: {
-        ...barTooltip,
-        mode: 'index',
-        intersect: false,
-      },
+    chart: baseChart(skin, { type: 'bar' }),
+    colors: colors.length ? colors : undefined,
+    plotOptions: {
+      bar: { borderRadius: 4, columnWidth: '55%' },
     },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 10 }, maxRotation: 0 },
-      },
-      y: {
-        grid: { color: '#eef0f7' },
-        ticks: { font: { size: 10 } },
-        beginAtZero: true,
-      },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    xaxis: {
+      categories,
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+      axisBorder: { color: skin.grid },
     },
+    yaxis: {
+      min: 0,
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+    },
+    grid: { borderColor: skin.grid, strokeDashArray: 3 },
+    legend: {
+      position: 'bottom',
+      fontSize: '11px',
+      labels: { colors: skin.foreColor },
+    },
+    tooltip: { theme: skin.tooltipTheme, shared: true, intersect: false },
   }
+
   return (
-    <div style={{ height }}>
-      <Bar data={data} options={options} />
-    </div>
+    <ApexChart options={options} series={series} type="bar" height={height} width="100%" />
   )
 }
 
-// ─── Vertical Bar Chart ─────────────────────────────────────────────────────
-/**
- * labels: string[]
- * values: number[]
- * color?: string
- */
-export function VerticalBarChart({ labels, values, color = BRAND_LIGHT, colors, height = 240 }) {
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: 'Nilai',
-        data: values,
-        backgroundColor: colors ?? color,
+export function VerticalBarChart({
+  labels = [],
+  values = [],
+  color = BRAND_LIGHT,
+  colors,
+  height = 240,
+}) {
+  const skin = useChartSkin()
+  const palette = Array.isArray(colors) ? colors : [color]
+  const distributed = Array.isArray(colors)
+
+  const options = {
+    chart: baseChart(skin, { type: 'bar' }),
+    colors: palette,
+    plotOptions: {
+      bar: {
         borderRadius: 4,
-        borderSkipped: false,
-      },
-    ],
-  }
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'nearest', intersect: true },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        ...barTooltip,
-        callbacks: {
-          title(items) {
-            return items[0]?.label || ''
-          },
-          label(ctx) {
-            return String(tooltipValue(ctx))
-          },
-        },
+        columnWidth: '50%',
+        distributed,
       },
     },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 9 }, maxRotation: 45 },
-      },
-      y: {
-        grid: { color: '#eef0f7' },
-        ticks: { font: { size: 10 } },
-        beginAtZero: true,
-      },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    xaxis: {
+      categories: labels.map(formatLabel),
+      labels: { style: { fontSize: '9px', colors: skin.muted }, rotate: -35 },
+      axisBorder: { color: skin.grid },
     },
+    yaxis: {
+      min: 0,
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+    },
+    grid: { borderColor: skin.grid, strokeDashArray: 3 },
+    legend: { show: false },
+    tooltip: { theme: skin.tooltipTheme },
   }
+
   return (
-    <div style={{ height }}>
-      <Bar data={data} options={options} />
-    </div>
+    <ApexChart
+      options={options}
+      series={[{ name: 'Nilai', data: values }]}
+      type="bar"
+      height={height}
+      width="100%"
+    />
   )
 }
 
-// ─── Horizontal Bar Chart (progress style) ──────────────────────────────────
-/**
- * labels: string[]
- * values: number[]
- * max?: number
- * color?: string
- */
-export function HorizontalBarChart({ labels, values, max = 100, color = BRAND_LIGHT, height }) {
+export function HorizontalBarChart({
+  labels = [],
+  values = [],
+  max = 100,
+  color = BRAND_LIGHT,
+  height,
+}) {
+  const skin = useChartSkin()
   const h = height ?? Math.max(200, labels.length * 36)
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: 'Nilai',
-        data: values,
-        backgroundColor: color,
-        borderRadius: 4,
-        borderSkipped: false,
-        barThickness: 20,
-      },
-    ],
-  }
+
   const options = {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'nearest', intersect: true },
-    plugins: {
-      legend: { display: false },
-      tooltip: horizontalBarTooltip,
-    },
-    scales: {
-      x: {
-        max,
-        grid: { color: '#eef0f7' },
-        ticks: { font: { size: 10 } },
-        beginAtZero: true,
-      },
-      y: {
-        grid: { display: false },
-        ticks: { font: { size: 10 } },
+    chart: baseChart(skin, { type: 'bar' }),
+    colors: [color],
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        borderRadius: 4,
+        barHeight: '58%',
       },
     },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    xaxis: {
+      max,
+      min: 0,
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+      axisBorder: { color: skin.grid },
+    },
+    yaxis: {
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+    },
+    grid: { borderColor: skin.grid, strokeDashArray: 3 },
+    legend: { show: false },
+    tooltip: { theme: skin.tooltipTheme },
   }
+
   return (
-    <div style={{ height: h }}>
-      <Bar data={data} options={options} />
-    </div>
+    <ApexChart
+      options={options}
+      series={[{ name: 'Nilai', data: values }]}
+      type="bar"
+      height={h}
+      width="100%"
+    />
   )
 }
 
-// ─── Radar Chart ─────────────────────────────────────────────────────────────
-/**
- * labels: string[]
- * values: number[]
- * color?: string (hex)
- * darkBg?: boolean — if true, use white lines (for dark background sections)
- */
-export function RadarChartCJ({ labels, values, color = BRAND_LIGHT, darkBg = false, height = 260 }) {
-  const gridColor = darkBg ? 'rgba(255,255,255,0.2)' : '#e9ebf8'
-  const tickColor = darkBg ? 'rgba(255,255,255,0.7)' : '#616161'
-  const pointLabelColor = darkBg ? 'rgba(255,255,255,0.85)' : '#333'
-
-  // Batasi nilai agar tidak keluar dari area radar, dan sesuaikan skala maks
-  // jika ada nilai yang melebihi 100 (mis. poin melebihi target tahunan).
+export function RadarChartCJ({
+  labels = [],
+  values = [],
+  color = BRAND_LIGHT,
+  darkBg = false,
+  height = 260,
+}) {
+  const skin = useChartSkin()
   const rawMax = values.length ? Math.max(...values) : 0
   const needsScale = rawMax > 100
   const scaleMax = needsScale ? Math.ceil((rawMax + 4) / 25) * 25 : 100
   const displayValues = values.map((v) => (needsScale ? Math.min(v, scaleMax) : v))
+  const line = darkBg ? 'rgba(255,255,255,0.9)' : color
+  const fill = darkBg ? 'rgba(255,255,255,0.22)' : color
+  const labelColor = darkBg ? 'rgba(255,255,255,0.85)' : skin.foreColor
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: 'Poin',
-        data: displayValues,
-        backgroundColor: darkBg ? 'rgba(255,255,255,0.2)' : `${color}33`,
-        borderColor: darkBg ? 'rgba(255,255,255,0.9)' : color,
-        borderWidth: 2,
-        pointBackgroundColor: darkBg ? 'white' : color,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        fill: true,
-      },
-    ],
-  }
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: {
-      padding: 4,
+    chart: baseChart(skin, { type: 'radar', background: 'transparent' }),
+    colors: [line],
+    fill: { opacity: 0.28, colors: [fill] },
+    stroke: { width: 2, colors: [line] },
+    markers: {
+      size: 4,
+      colors: [darkBg ? '#ffffff' : color],
+      strokeColors: line,
+      strokeWidth: 1,
     },
-    interaction: { mode: 'nearest', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        enabled: true,
-        backgroundColor: darkBg ? 'rgba(0,0,0,0.85)' : 'rgba(33,33,33,0.9)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        callbacks: {
-          title(items) {
-            return items[0]?.label || ''
-          },
-          label(ctx) {
-            const asli = values[ctx.dataIndex]
-            return String(asli ?? ctx.raw)
-          },
+    xaxis: {
+      categories: labels,
+      labels: { style: { colors: labels.map(() => labelColor), fontSize: '10px' } },
+    },
+    yaxis: {
+      min: 0,
+      max: scaleMax,
+      tickAmount: 4,
+      show: false,
+    },
+    plotOptions: {
+      radar: {
+        polygons: {
+          strokeColors: darkBg ? 'rgba(255,255,255,0.22)' : skin.grid,
+          connectorColors: darkBg ? 'rgba(255,255,255,0.22)' : skin.grid,
         },
       },
     },
-    scales: {
-      r: {
-        min: 0,
-        max: scaleMax,
-        grid: { color: gridColor },
-        angleLines: { color: gridColor },
-        ticks: {
-          display: false,
-          stepSize: scaleMax / 4,
-          // warna tick disiapkan jika display diaktifkan nanti
-          color: tickColor,
-        },
-        pointLabels: {
-          color: pointLabelColor,
-          font: { size: 9 },
-          centerPointLabels: true,
-        },
+    legend: { show: false },
+    tooltip: {
+      theme: darkBg ? 'dark' : skin.tooltipTheme,
+      y: {
+        formatter: (_val, opts) => String(values[opts.dataPointIndex] ?? _val),
       },
     },
   }
+
   return (
     <div style={{ height, position: 'relative', width: '100%', minWidth: 0 }}>
-      <Radar data={data} options={options} />
+      <ApexChart
+        options={options}
+        series={[{ name: 'Poin', data: displayValues }]}
+        type="radar"
+        height={height}
+        width="100%"
+      />
     </div>
+  )
+}
+
+export function DoughnutChart({
+  labels = [],
+  values = [],
+  colors,
+  height = 240,
+  centerTitle,
+  centerValue,
+  centerLabel,
+}) {
+  const skin = useChartSkin()
+  const palette = colors?.length ? colors : undefined
+  const totalLabel = centerLabel || centerTitle || ''
+
+  const options = {
+    chart: baseChart(skin, { type: 'donut' }),
+    labels: labels.map(formatLabel),
+    colors: palette,
+    stroke: { width: 0 },
+    dataLabels: { enabled: false },
+    legend: { show: false },
+    tooltip: { theme: skin.tooltipTheme },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '68%',
+          labels: {
+            show: true,
+            name: {
+              show: Boolean(totalLabel),
+              fontSize: '11px',
+              color: skin.muted,
+              offsetY: 12,
+            },
+            value: {
+              show: true,
+              fontSize: '20px',
+              fontWeight: 800,
+              color: skin.foreColor,
+              offsetY: -8,
+              formatter: () => String(centerValue ?? ''),
+            },
+            total: {
+              show: true,
+              label: totalLabel,
+              fontSize: '11px',
+              color: skin.muted,
+              formatter: () => String(centerValue ?? ''),
+            },
+          },
+        },
+      },
+    },
+  }
+
+  return (
+    <ApexChart options={options} series={values} type="donut" height={height} width="100%" />
   )
 }

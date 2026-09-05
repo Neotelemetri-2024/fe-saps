@@ -54,49 +54,49 @@ function TambahAkunModal({ onClose, onSave }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#212121]">Tambah Akun UKM</h3>
-          <button type="button" onClick={onClose} className="text-[#616161] hover:text-[#333] text-xl leading-none">×</button>
+          <h3 className="text-lg font-semibold text-base-content">Tambah Akun UKM</h3>
+          <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content text-xl leading-none">×</button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[#212121]">Nama UKM <span className="text-red-600">*</span></label>
+            <label className="block text-sm text-base-content">Nama UKM <span className="text-red-600">*</span></label>
             <input type="text" name="namaUkm" value={form.namaUkm} onChange={handleChange}
               placeholder="Contoh : Neo telemetri"
-              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
+              className="mt-1 input w-full" />
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Email <span className="text-red-600">*</span></label>
+            <label className="block text-sm text-base-content">Email <span className="text-red-600">*</span></label>
             <input type="email" name="email" value={form.email} onChange={handleChange}
               placeholder="operator@unand.ac.id"
               autoComplete="off"
-              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark" />
+              className="mt-1 input w-full" />
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Password <span className="text-red-600">*</span></label>
+            <label className="block text-sm text-base-content">Password <span className="text-red-600">*</span></label>
             <div className="relative mt-1">
               <input type={showPwd ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark pr-10" />
+                className="input w-full pr-10" />
               <button type="button" onClick={() => setShowPwd(!showPwd)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
                 {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Konfirmasi Password <span className="text-red-600">*</span></label>
+            <label className="block text-sm text-base-content">Konfirmasi Password <span className="text-red-600">*</span></label>
             <div className="relative mt-1">
               <input type={showConfirmPwd ? 'text' : 'password'} name="konfirmasiPassword" value={form.konfirmasiPassword} onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 text-sm outline-none focus:border-brand-dark pr-10" />
+                className="input w-full pr-10" />
               <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
                 {showConfirmPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Status <span className="text-red-600">*</span></label>
+            <label className="block text-sm text-base-content">Status <span className="text-red-600">*</span></label>
             <div className="mt-2 flex gap-6 text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="status" value="aktif" checked={form.status === 'aktif'} onChange={handleChange} className="accent-brand-dark" />
@@ -111,7 +111,7 @@ function TambahAkunModal({ onClose, onSave }) {
         </div>
         <div className="mt-7 flex gap-3">
           <button type="button" onClick={handleSubmit} disabled={saving}
-            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
+            className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
             {saving ? 'Menyimpan…' : 'Buat'}
           </button>
           <button type="button" onClick={onClose}
@@ -144,25 +144,25 @@ function ResetPasswordModal({ item, onClose, onReset }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#212121]">Reset Password</h3>
-          <button type="button" onClick={onClose} className="text-[#616161] hover:text-[#333]"><X className="h-5 w-5" /></button>
+          <h3 className="text-lg font-semibold text-base-content">Reset Password</h3>
+          <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content"><X className="h-5 w-5" /></button>
         </div>
-        <p className="mb-4 text-sm text-[#616161]">Reset password untuk akun: <strong>{item.nama}</strong></p>
+        <p className="mb-4 text-sm text-base-content/60">Reset password untuk akun: <strong>{item.nama}</strong></p>
         <div>
-          <label className="block text-sm text-[#212121]">Password Baru <span className="text-red-600">*</span></label>
+          <label className="block text-sm text-base-content">Password Baru <span className="text-red-600">*</span></label>
           <div className="relative mt-1">
             <input type={showPwd ? 'text' : 'password'} value={newPwd} onChange={(e) => setNewPwd(e.target.value)}
               placeholder="Masukkan password baru"
-              className="w-full rounded-lg border border-[#8e98a8] px-3 py-2 pr-10 text-sm outline-none focus:border-brand-dark" />
+              className="w-full rounded-lg border border-base-300 px-3 py-2 pr-10 text-sm outline-none focus:border-brand-dark" />
             <button type="button" onClick={() => setShowPwd(!showPwd)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8]">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
         <div className="mt-6 flex gap-3">
           <button type="button" onClick={handleSubmit} disabled={saving}
-            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
+            className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
             {saving ? 'Memproses…' : 'Reset Password'}
           </button>
           <button type="button" onClick={onClose}
@@ -294,20 +294,20 @@ function ManajemenAkunUKM() {
 
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-bold text-[#222]">Manajemen Akun UKM</h2>
+          <h2 className="text-2xl font-bold text-base-content">Manajemen Akun UKM</h2>
         </div>
 
         <div>
           <TableCard title="Akun UKM yang telah dibuat">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari UKM..."
-                  className="w-full rounded-lg border border-[#d1d5db] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                  className="input w-full"
                 />
               </div>
               <div className="flex items-center gap-2 sm:self-end">
@@ -315,7 +315,7 @@ function ManajemenAkunUKM() {
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                   >
                     Reset Filter
                   </button>
@@ -323,7 +323,7 @@ function ManajemenAkunUKM() {
                 <button
                   type="button"
                   onClick={() => setShowTambah(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
+                  className="btn btn-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:self-end"
                 ><Plus className="h-4 w-4" />Akun UKM
                 </button>
               </div>

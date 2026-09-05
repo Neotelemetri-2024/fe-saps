@@ -6,6 +6,7 @@ import StatCard from '../../components/dashboard/StatCard'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { StackedBarChart } from '../../components/charts'
+import { ChartSkeleton } from '../../components/dashboard/Skeleton'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -109,10 +110,10 @@ function Dashboard() {
     <DashboardLayout role="admin_fakultas" userName={user?.nama || 'Admin Fakultas'} userRole="Admin Fakultas">
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
-            Dasboard Fakultas <span className="text-[#222]">{namaFakultas || ''}</span>
+          <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">
+            Dasboard Fakultas <span className="text-base-content">{namaFakultas || ''}</span>
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">Verifikasi dan ajukan lanjutan kegiatan dari UKMF ke Pimpinan Fakultas</p>
+          <p className="mt-1 text-sm text-base-content/60">Verifikasi dan ajukan lanjutan kegiatan dari UKMF ke Pimpinan Fakultas</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -148,10 +149,12 @@ function Dashboard() {
         </TableCard>
 
         <div className="grid gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-[#222]">Rata rata Capaian per prodi</h3>
-            {chartData.length === 0 ? (
-              <p className="text-sm text-[#9aa0a6]">Belum ada data grafik.</p>
+          <div className="lg:col-span-2 card bg-base-100 p-6">
+            <h3 className="mb-4 text-sm font-bold text-base-content">Rata rata Capaian per prodi</h3>
+            {loading ? (
+              <ChartSkeleton height={280} />
+            ) : chartData.length === 0 ? (
+              <p className="text-sm text-base-content/50">Belum ada data grafik.</p>
             ) : (
               <StackedBarChart
                 labels={chartData.map((d) => String(d.prodi || '').replace('\n', ' '))}

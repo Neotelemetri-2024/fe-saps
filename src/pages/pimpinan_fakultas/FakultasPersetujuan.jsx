@@ -93,9 +93,9 @@ function PimpinanFakultasPersetujuan() {
             <DataTable columns={columns} data={data} />
           </TableFrame>
         </TableCard>
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-[#222]">Alasan Penolakan</h3>
-          <textarea className="w-full rounded-lg border border-[#e9ebf8] p-4 text-sm outline-none" rows={3} placeholder="Tuliskan alasan jika menolak pengajuan..." />
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-4 text-lg font-bold text-base-content">Alasan Penolakan</h3>
+          <textarea className="w-full rounded-lg border border-base-300 p-4 text-sm outline-none" rows={3} placeholder="Tuliskan alasan jika menolak pengajuan..." />
         </div>
       </div>
     </DashboardLayout>

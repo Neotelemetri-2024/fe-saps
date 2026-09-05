@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Skeleton } from './Skeleton'
 
 function isPlainObject(value) {
   return value != null && typeof value === 'object' && !(value instanceof Date) && !Array.isArray(value) && typeof value.$$typeof === 'undefined'
@@ -104,9 +105,9 @@ function DataTable({
   return (
     <div className="space-y-3">
       <div className="-mx-3 overflow-x-auto sm:-mx-0">
-        <table className="w-full min-w-[600px] text-left text-xs sm:text-sm">
+        <table className="table table-sm w-full min-w-[600px] text-left text-xs sm:text-sm">
           <thead>
-            <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-left text-xs font-semibold uppercase tracking-wide text-white">
+            <tr className="bg-primary text-xs font-semibold uppercase tracking-wide text-primary-content">
               {selectable && (
                 <th className="w-10 px-3 py-2.5 text-center sm:px-4 sm:py-3">
                   <input
@@ -114,14 +115,14 @@ function DataTable({
                     checked={allSelected}
                     ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected }}
                     onChange={onSelectAll}
-                    className="h-4 w-4 cursor-pointer accent-white"
+                    className="checkbox checkbox-xs checkbox-primary border-primary-content"
                   />
                 </th>
               )}
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="whitespace-nowrap px-3 py-2.5 text-center sm:px-4 sm:py-3"
+                  className="whitespace-nowrap px-3 py-2.5 text-center text-primary-content sm:px-4 sm:py-3"
                   style={{ width: col.width || (isNoColumn(col) ? NO_COLUMN_WIDTH : undefined) }}
                 >
                   {col.label}
@@ -131,14 +132,26 @@ function DataTable({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={totalCols} className="px-3 py-8 text-center text-sm text-[#9aa0a6] sm:px-4">
-                  Memuat data…
-                </td>
-              </tr>
+              Array.from({ length: 5 }, (_, rowIdx) => (
+                <tr key={`sk-${rowIdx}`} aria-hidden>
+                  {selectable && (
+                    <td className="px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                      <Skeleton className="mx-auto h-4 w-4" />
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className="px-3 py-2.5 sm:px-4 sm:py-3"
+                    >
+                      <Skeleton className={`h-3 ${isNoColumn(col) || isCenteredCol(col) ? 'mx-auto w-10' : 'w-4/5'}`} />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : !displayData || displayData.length === 0 ? (
               <tr>
-                <td colSpan={totalCols} className="px-3 py-8 text-center text-[#616161] sm:px-4">
+                <td colSpan={totalCols} className="px-3 py-8 text-center text-base-content/60 sm:px-4">
                   {emptyText}
                 </td>
               </tr>
@@ -153,10 +166,9 @@ function DataTable({
                     key={row.id ?? i}
                     onClick={isClickable ? () => onRowClick(row) : undefined}
                     className={[
-                      'divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 transition',
-                      isSelected ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]',
-                      isClickable ? 'cursor-pointer hover:bg-[#f0f2ff]' : 'hover:bg-[#f9fafb]',
-                    ].join(' ')}
+                      isSelected ? 'bg-primary/5' : '',
+                      isClickable ? 'cursor-pointer hover:bg-base-200' : '',
+                    ].filter(Boolean).join(' ')}
                   >
                     {selectable && (
                       <td
@@ -168,10 +180,10 @@ function DataTable({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => onSelect && onSelect(row.id)}
-                            className="h-4 w-4 cursor-pointer accent-brand-dark"
+                            className="checkbox checkbox-xs checkbox-primary"
                           />
                         ) : (
-                          <span className="block h-4 w-4 rounded border-2 border-[#e0e0e0] bg-[#f5f5f5] cursor-not-allowed"></span>
+                          <span className="checkbox checkbox-xs pointer-events-none opacity-30" />
                         )}
                       </td>
                     )}
@@ -218,15 +230,16 @@ function DataTable({
 
       {hasPagination && (
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs text-[#9aa0a6]">
+          <p className="text-xs text-base-content/50">
             Halaman {currentPage} dari {currentTotalPages}
           </p>
-          <div className="flex items-center gap-1">
+          <div className="join">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => changePage(currentPage - 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn btn-outline btn-xs join-item"
+              aria-label="Halaman sebelumnya"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -239,17 +252,13 @@ function DataTable({
               }, [])
               .map((p, idx) =>
                 p === '…' ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-[#9aa0a6]">…</span>
+                  <span key={`ellipsis-${idx}`} className="btn btn-ghost btn-xs join-item pointer-events-none">…</span>
                 ) : (
                   <button
                     key={p}
                     type="button"
                     onClick={() => changePage(p)}
-                    className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold transition ${
-                      p === currentPage
-                        ? 'bg-brand-dark text-white'
-                        : 'border border-[#e9ebf8] text-[#616161] hover:bg-[#f0f2ff]'
-                    }`}
+                    className={`btn btn-xs join-item ${p === currentPage ? 'btn-primary' : 'btn-outline'}`}
                   >
                     {p}
                   </button>
@@ -259,7 +268,8 @@ function DataTable({
               type="button"
               disabled={currentPage >= currentTotalPages}
               onClick={() => changePage(currentPage + 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn btn-outline btn-xs join-item"
+              aria-label="Halaman berikutnya"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

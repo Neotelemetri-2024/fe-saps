@@ -66,7 +66,7 @@ export default function PemetaanCapaianKurikulumSection({
   }
 
   if (activeKurikulums.length === 0) {
-    return <p className="text-sm text-red-500">Tidak ada kurikulum aktif.</p>
+    return <p className="text-sm text-error">Tidak ada kurikulum aktif.</p>
   }
 
   return (
@@ -99,28 +99,25 @@ export default function PemetaanCapaianKurikulumSection({
         return (
           <div
             key={kur.id}
-            className="rounded-xl border border-[#e9ebf8] bg-[#fafbfc]/50 p-5 space-y-4 shadow-sm"
+            className="card bg-base-200/50 space-y-4 p-5"
           >
-            {/* Header Kolom Kurikulum Aktif */}
-            <div className="flex items-center justify-between border-b border-[#e9ebf8] pb-3">
+            <div className="flex items-center justify-between border-b border-base-300 pb-3">
               <div>
-                <h4 className="text-sm font-bold text-[#222]">{kur.nama}</h4>
+                <h4 className="text-sm font-semibold text-base-content">{kur.nama}</h4>
                 {kur.tahunMulai && (
-                  <p className="text-[11px] text-[#9aa0a6]">
+                  <p className="text-[11px] text-base-content/50">
                     Tahun: {kur.tahunMulai}/{kur.tahunMulai + 1}
                   </p>
                 )}
               </div>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
-                Aktif
-              </span>
+              <span className="badge badge-success badge-sm">Aktif</span>
             </div>
 
             {/* Dropdown Capaian */}
             <div>
-              <label className="block text-sm font-medium text-black">
-                Capaian <span className="text-red-500">*</span>{' '}
-                <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
+              <label className="mb-1 block text-sm font-medium text-base-content">
+                Capaian <span className="text-error">*</span>{' '}
+                <span className="font-normal text-base-content/50">(pilih satu atau lebih)</span>
               </label>
               <div className="relative mt-1">
                 <button
@@ -128,30 +125,30 @@ export default function PemetaanCapaianKurikulumSection({
                   onClick={() =>
                     setOpenCapaianKurId((prev) => (prev === kur.id ? null : kur.id))
                   }
-                  className="flex w-full items-center justify-between rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark bg-white"
+                  className="btn btn-outline w-full justify-between font-normal"
                 >
                   <span
                     className={`truncate text-left ${
-                      selectedCapaianForKur.length === 0 ? 'text-[#9aa0a6]' : 'text-[#333]'
+                      selectedCapaianForKur.length === 0 ? 'text-base-content/50' : 'text-base-content'
                     }`}
                   >
                     {selectedCapaianForKur.length === 0
                       ? 'Pilih capaian'
                       : selectedCapaianForKur.map((c) => c.nama).join(', ')}
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-[#8e98a8] ml-2" />
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
                 </button>
 
                 {openCapaianKurId === kur.id && (
-                  <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-[#e9ebf8] bg-white shadow-md">
+                  <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-base-300 bg-base-100 shadow-md">
                     {kurCapaian.map((c) => (
                       <label
                         key={c.id}
-                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-[#f5f5f5]"
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-base-200"
                       >
                         <input
                           type="checkbox"
-                          className="accent-brand-dark"
+                          className="checkbox checkbox-sm checkbox-primary"
                           checked={selectedCapaianIds.includes(c.id)}
                           onChange={() => toggleCapaian(c.id, kur)}
                         />
@@ -166,9 +163,9 @@ export default function PemetaanCapaianKurikulumSection({
             {/* Sub Capaian */}
             {visibleSubsForKur.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-black">
-                  Sub Capaian <span className="text-red-500">*</span>{' '}
-                  <span className="font-normal text-[#9aa0a6]">(pilih satu atau lebih)</span>
+                <label className="mb-1 block text-sm font-medium text-base-content">
+                  Sub Capaian <span className="text-error">*</span>{' '}
+                  <span className="font-normal text-base-content/50">(pilih satu atau lebih)</span>
                 </label>
                 <div className="mt-2 grid grid-cols-1 gap-2">
                   {visibleSubsForKur.map((sc) => {
@@ -178,21 +175,21 @@ export default function PemetaanCapaianKurikulumSection({
                     return (
                       <label
                         key={sc.id}
-                        className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${
+                        className={`flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm ${
                           checked
-                            ? 'border-brand-dark bg-brand-dark/5 font-medium text-brand-dark'
-                            : 'border-[#e9ebf8] text-[#444] hover:border-brand-dark/40 bg-white'
+                            ? 'border-primary bg-primary/5 font-medium text-primary'
+                            : 'border-base-300 bg-base-100 text-base-content/80'
                         }`}
                       >
                         <input
                           type="checkbox"
-                          className="accent-brand-dark shrink-0"
+                          className="checkbox checkbox-sm checkbox-primary shrink-0"
                           checked={checked}
                           onChange={() => toggleSub(sc.id)}
                         />
                         <span className="min-w-0">
                           <span className="block truncate">{sc.nama}</span>
-                          <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">
+                          <span className="block truncate text-[11px] font-normal text-base-content/50">
                             {sc.namaCapaian}
                           </span>
                         </span>
@@ -206,8 +203,8 @@ export default function PemetaanCapaianKurikulumSection({
             {/* Bobot Persentase Sub Capaian */}
             {alokasiForKur.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-black">
-                  Bobot Persentase Sub Capaian <span className="text-red-500">*</span>
+                <label className="mb-1 block text-sm font-medium text-base-content">
+                  Bobot Persentase Sub Capaian <span className="text-error">*</span>
                 </label>
                 <div className="mt-2 space-y-2">
                   {alokasiForKur.map((alok) => {
@@ -220,9 +217,9 @@ export default function PemetaanCapaianKurikulumSection({
                         key={alok.subCapaianId}
                         className="flex items-center gap-3"
                       >
-                        <span className="flex-1 text-sm text-[#444]">
+                        <span className="flex-1 text-sm text-base-content/80">
                           <span className="block truncate">{sc.nama}</span>
-                          <span className="block truncate text-[11px] font-normal text-[#9aa0a6]">
+                          <span className="block truncate text-[11px] font-normal text-base-content/50">
                             {sc.namaCapaian}
                           </span>
                         </span>
@@ -235,9 +232,9 @@ export default function PemetaanCapaianKurikulumSection({
                           onChange={(e) =>
                             setAlokasiPersen(alok.subCapaianId, e.target.value)
                           }
-                          className="w-20 rounded-md border border-[#e9ebf8] p-2 text-center text-sm outline-none focus:border-brand-dark bg-white"
+                          className="input input-sm w-20 text-center"
                         />
-                        <span className="text-sm text-[#616161]">%</span>
+                        <span className="text-sm text-base-content/60">%</span>
                       </div>
                     )
                   })}
@@ -246,8 +243,8 @@ export default function PemetaanCapaianKurikulumSection({
                 <p
                   className={`mt-2 text-xs font-medium ${
                     totalBobotKur === 100
-                      ? 'text-emerald-600'
-                      : 'text-red-500'
+                      ? 'text-success'
+                      : 'text-error'
                   }`}
                 >
                   Total bobot: {totalBobotKur}%

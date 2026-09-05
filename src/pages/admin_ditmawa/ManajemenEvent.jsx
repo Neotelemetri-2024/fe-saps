@@ -21,28 +21,28 @@ function HapusEventModal({ event, onClose, onConfirm }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#212121]">Apakah anda yakin menghapus kegiatan ini?</h3>
-          <button type="button" onClick={onClose} className="text-[#616161] hover:text-[#333] text-xl leading-none">×</button>
+          <h3 className="text-lg font-semibold text-base-content">Apakah anda yakin menghapus kegiatan ini?</h3>
+          <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content text-xl leading-none">×</button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[#212121]">Nama Kegiatan</label>
+            <label className="block text-sm text-base-content">Nama Kegiatan</label>
             <input
               type="text"
               value={namaInput}
               onChange={(e) => setNamaInput(e.target.value)}
               placeholder={event?.nama}
-              className="mt-1 w-full rounded-lg border border-[#c4c6cf] px-3 py-2 text-sm outline-none focus:border-brand-dark"
+              className="mt-1 input w-full"
             />
           </div>
           <div>
-            <label className="block text-sm text-[#212121]">Skala</label>
+            <label className="block text-sm text-base-content">Skala</label>
             <input
               type="text"
               value={skalaInput}
               onChange={(e) => setSkalaInput(e.target.value)}
               placeholder={event?.skala}
-              className="mt-1 w-full rounded-lg border border-[#c4c6cf] px-3 py-2 text-sm outline-none focus:border-brand-dark"
+              className="mt-1 input w-full"
             />
           </div>
         </div>
@@ -57,7 +57,7 @@ function HapusEventModal({ event, onClose, onConfirm }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#c4c6cf] px-8 py-2.5 text-sm font-semibold text-[#616161] transition hover:bg-[#f5f5f5]"
+            className="rounded-lg border border-base-300 px-8 py-2.5 text-sm font-semibold text-base-content/60 transition hover:bg-base-200"
           >
             BATAL
           </button>
@@ -224,7 +224,7 @@ function ManajemenEvent() {
       <div>
         <p className="text-black">{row.nama}</p>
         {row.dibuatPada && row.dibuatPada !== '-' && (
-          <p className="text-xs text-[#616161]">Diajukan: {row.dibuatPada}</p>
+          <p className="text-xs text-base-content/60">Diajukan: {row.dibuatPada}</p>
         )}
       </div>
     )},
@@ -307,13 +307,13 @@ function ManajemenEvent() {
       <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Event Global</h2>
-            <p className="mt-1 text-sm text-[#616161]">Kelola event yang dibuat Admin Ditmawa: buat, kirim, dan verifikasi pendaftaran peserta.</p>
+            <h2 className="text-xl font-bold text-base-content sm:text-2xl lg:text-3xl">Event Global</h2>
+            <p className="mt-1 text-sm text-base-content/60">Kelola event yang dibuat Admin Ditmawa: buat, kirim, dan verifikasi pendaftaran peserta.</p>
           </div>
           <button
             type="button"
             onClick={goToCreate}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
+            className="btn btn-primary w-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Buat Event
           </button>
@@ -322,8 +322,8 @@ function ManajemenEvent() {
         <section>
           <TableCard title="Daftar Event Global">
             <div className="flex flex-col gap-3 lg:flex-row">
-              <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+              <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
                   value={search}
@@ -336,21 +336,21 @@ function ManajemenEvent() {
 
             <div className="flex flex-wrap gap-2">
               <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Jenis</option>
                 {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
                   <option key={j} value={j}>{j}</option>
                 ))}
               </select>
               <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
               <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2 text-sm text-[#616161] outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -358,7 +358,7 @@ function ManajemenEvent() {
               </select>
               {(search || filterJenis || filterStatus || filterSkala) && (
                 <button type="button" onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f6f8]">
+                  className="btn btn-outline btn-primary btn-sm">
                   Reset filter
                 </button>
               )}

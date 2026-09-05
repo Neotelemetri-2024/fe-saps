@@ -34,7 +34,7 @@ function EditPoin() {
 
   return (
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Edit Poin</h2>
+        <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Edit Poin</h2>
 
         <button
           type="button"
@@ -44,31 +44,31 @@ function EditPoin() {
           <ArrowLeft className="h-4 w-4" /> Kembali ke Bobot Poin
         </button>
 
-        <div className="max-w-lg rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm space-y-5">
+        <div className="max-w-lg card bg-base-100 p-6 space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">Kategori</label>
+            <label className="mb-1 block text-sm font-medium text-base-content">Kategori</label>
             <input
               type="text"
               value={kategori}
               disabled
-              className="w-full rounded-lg border border-[#e9ebf8] bg-[#f5f6f8] px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="w-full rounded-lg border border-base-300 bg-base-200 px-4 py-2.5 text-sm text-base-content/60 outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Nama Sub Kategori <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={nama}
               onChange={(e) => setNama(e.target.value)}
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm text-[#333] outline-none focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#333]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Poin <span className="text-red-500">*</span>
             </label>
             <input
@@ -77,7 +77,7 @@ function EditPoin() {
               onChange={(e) => setPoin(e.target.value === '' ? '' : Number(e.target.value))}
               min={0}
               max={1000}
-              className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm text-[#333] outline-none focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
 
@@ -85,7 +85,7 @@ function EditPoin() {
             <button
               type="button"
               onClick={() => navigate('/pimpinan_ditmawa/bobot-poin')}
-              className="rounded-lg border border-[#d9dce7] px-6 py-2.5 text-sm font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
+              className="rounded-lg border border-base-300 px-6 py-2.5 text-sm font-semibold text-base-content shadow-sm transition hover:bg-base-200"
             >
               Batal
             </button>
@@ -93,7 +93,7 @@ function EditPoin() {
               type="button"
               onClick={handleSimpan}
               disabled={submitting}
-              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+              className="btn btn-primary px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? 'Menyimpan...' : 'Simpan'}
             </button>

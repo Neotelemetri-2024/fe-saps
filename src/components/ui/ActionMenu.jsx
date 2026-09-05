@@ -9,17 +9,14 @@ import { MoreVertical } from 'lucide-react'
  *   items = [
  *     {
  *       label: 'Detail',
- *       icon: <Eye />,        // opsional
- *       color: 'text-blue-600', // opsional, default 'text-[#333]'
- *       hidden: false,        // opsional — jika true, item tidak dirender
- *       disabled: false,      // opsional — jika true, item tidak dirender (sesuai permintaan: aksi nonaktif disembunyikan)
+ *       icon: <Eye />,
+ *       color: 'text-primary',
+ *       hidden: false,
+ *       disabled: false,
  *       onClick: () => {},
  *     },
  *   ]
- *   align?: 'left' | 'right' // arah dropdown (default 'right')
- *
- * Dropdown dirender lewat portal ke document.body dengan posisi fixed berbasis
- * getBoundingClientRect, sehingga tidak terpotong oleh scroll kontainer tabel.
+ *   align?: 'left' | 'right'
  */
 function ActionMenu({ items = [], align = 'right' }) {
   const [open, setOpen] = useState(false)
@@ -78,35 +75,36 @@ function ActionMenu({ items = [], align = 'right' }) {
         title="Aksi"
         aria-label="Aksi"
         onClick={toggle}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition hover:bg-[#f0f4f0]"
+        className="btn btn-ghost btn-square btn-xs"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
 
       {open &&
         createPortal(
-          <div
+          <ul
             ref={menuRef}
-            className="z-50 w-[168px] overflow-hidden rounded-xl border border-[#e9ebf8] bg-white py-1 shadow-lg"
+            className="menu z-50 w-[168px] rounded-md border border-base-300 bg-base-100 p-1 shadow-md"
             style={{ position: 'fixed', ...pos }}
             onClick={(e) => e.stopPropagation()}
           >
             {visibleItems.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-[#9aa0a6]">Tidak ada aksi tersedia</div>
+              <li className="px-3 py-2 text-xs text-base-content/50">Tidak ada aksi tersedia</li>
             ) : (
               visibleItems.map((it, i) => (
-                <button
-                  key={it.label ?? i}
-                  type="button"
-                  onClick={(e) => runAction(e, it.onClick)}
-                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-[#f5f6f8] ${it.color || 'text-[#333]'}`}
-                >
-                  {it.icon && <span className="shrink-0">{it.icon}</span>}
-                  <span className="truncate">{it.label}</span>
-                </button>
+                <li key={it.label ?? i}>
+                  <button
+                    type="button"
+                    onClick={(e) => runAction(e, it.onClick)}
+                    className={it.color || 'text-base-content'}
+                  >
+                    {it.icon}
+                    <span className="truncate">{it.label}</span>
+                  </button>
+                </li>
               ))
             )}
-          </div>,
+          </ul>,
           document.body,
         )}
     </>

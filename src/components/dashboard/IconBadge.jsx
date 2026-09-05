@@ -1,10 +1,10 @@
 const toneMap = {
-  brand:   { bg: 'bg-[#eaf5ec]', text: 'text-brand-dark' },
-  success: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  danger:  { bg: 'bg-red-50',     text: 'text-red-600' },
-  warning: { bg: 'bg-amber-50',   text: 'text-amber-600' },
-  info:    { bg: 'bg-blue-50',    text: 'text-blue-600' },
-  neutral: { bg: 'bg-[#f0f4f0]',  text: 'text-[#616161]' },
+  brand: { box: 'bg-primary/10', text: 'text-primary' },
+  success: { box: 'bg-success/10', text: 'text-success' },
+  danger: { box: 'bg-error/10', text: 'text-error' },
+  warning: { box: 'bg-warning/10', text: 'text-warning' },
+  info: { box: 'bg-info/10', text: 'text-info' },
+  neutral: { box: 'bg-base-200', text: 'text-base-content/60' },
 }
 
 const sizeMap = {
@@ -13,11 +13,11 @@ const sizeMap = {
   lg: { box: 'h-12 w-12', icon: 'h-6 w-6' },
 }
 
-function IconBadge({ icon, tone = 'neutral', size = 'md', rounded = 'rounded-lg' }) {
+function IconBadge({ icon, tone = 'neutral', size = 'md', rounded = 'rounded-md' }) {
   const t = toneMap[tone] || toneMap.neutral
   const s = sizeMap[size] || sizeMap.md
   return (
-    <div className={`flex shrink-0 items-center justify-center ${s.box} ${rounded} ${t.bg} ${t.text}`}>
+    <div className={`flex shrink-0 items-center justify-center ${s.box} ${rounded} ${t.box} ${t.text}`}>
       {icon}
     </div>
   )

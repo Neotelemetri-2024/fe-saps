@@ -133,7 +133,7 @@ function TambahMatriks() {
   return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Tambah Kurikulum / Matriks</h2>
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Tambah Kurikulum / Matriks</h2>
         </div>
 
         <button
@@ -144,10 +144,10 @@ function TambahMatriks() {
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
-        <div className="space-y-6 rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="space-y-6 card bg-base-100 p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Nama Kurikulum <span className="text-red-500">*</span>
               </label>
               <input
@@ -155,11 +155,11 @@ function TambahMatriks() {
                 value={namaKurikulum}
                 onChange={(e) => setNamaKurikulum(e.target.value)}
                 placeholder="Contoh: Kurikulum Merdeka 2025"
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm text-[#333] outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#333]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Tahun <span className="text-red-500">*</span>
               </label>
               <input
@@ -167,7 +167,7 @@ function TambahMatriks() {
                 value={tahun}
                 onChange={(e) => setTahun(e.target.value)}
                 placeholder="Contoh: 2025/2026"
-                className="w-full rounded-lg border border-[#d9dce7] px-4 py-2.5 text-sm text-[#333] outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ function TambahMatriks() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-[#111]">Matriks Capaian</h3>
+                <h3 className="text-base font-bold text-base-content">Matriks Capaian</h3>
                 <p className="mt-0.5 text-xs text-[#888]">
                   Baris = Capaian, Kolom = Sub Capaian. Nilai diisi dengan bobot poin (%).
                 </p>
@@ -184,26 +184,26 @@ function TambahMatriks() {
                 <button
                   type="button"
                   onClick={addKolom}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#d9dce7] bg-white px-3 py-2 text-xs font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
+                  className="inline-flex items-center gap-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-xs font-semibold text-base-content shadow-sm transition hover:bg-base-200"
                 >Tambah Kolom
                 </button>
                 <button
                   type="button"
                   onClick={addBaris}
-                  className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="inline-flex items-center gap-1 btn btn-primary px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
                 >Tambah Baris
                 </button>
               </div>
             </div>
 
             {loadingCapaian ? (
-              <p className="text-sm text-[#9aa0a6]">Memuat capaian dari kurikulum aktif…</p>
+              <p className="text-sm text-base-content/50">Memuat capaian dari kurikulum aktif…</p>
             ) : (
               <TableCard title="Matriks Capaian">
                 <TableFrame>
                 <table className="w-full min-w-[600px] text-left text-sm">
                   <thead>
-                    <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                    <tr className="bg-primary text-xs font-semibold uppercase tracking-wide text-white">
                       <th className="px-4 py-3 text-center">Capaian / Sub Capaian</th>
                       {kolom.map((k) => (
                         <th key={k.id} className="px-4 py-3 text-center">
@@ -231,14 +231,14 @@ function TambahMatriks() {
                     {baris.map((b, i) => (
                       <tr
                         key={b.id}
-                        className={`divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}`}
+                        className={`divide-x divide-base-300 border-b border-base-300 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-base-200'}`}
                       >
                         <td className="px-4 py-3">
                           <input
                             type="text"
                             value={b.label}
                             onChange={(e) => updateBarisLabel(b.id, e.target.value)}
-                            className="w-full rounded border border-[#e9ebf8] px-2 py-1 text-sm text-[#333] outline-none focus:border-brand-dark"
+                            className="w-full rounded border border-base-300 px-2 py-1 text-sm text-base-content outline-none focus:border-brand-dark"
                           />
                         </td>
                         {kolom.map((k) => (
@@ -250,7 +250,7 @@ function TambahMatriks() {
                               value={b.nilai[k.id] || ''}
                               onChange={(e) => updateNilai(b.id, k.id, e.target.value)}
                               placeholder="0"
-                              className="w-full rounded border border-[#e9ebf8] px-2 py-1 text-sm text-[#333] outline-none focus:border-brand-dark"
+                              className="w-full rounded border border-base-300 px-2 py-1 text-sm text-base-content outline-none focus:border-brand-dark"
                             />
                           </td>
                         ))}
@@ -277,7 +277,7 @@ function TambahMatriks() {
           <button
             type="button"
             onClick={() => navigate('/pimpinan_ditmawa/manajemen-kurikulum')}
-            className="rounded-lg border border-[#d9dce7] px-6 py-2.5 text-sm font-semibold text-[#333] shadow-sm transition hover:bg-[#f5f6f8]"
+            className="rounded-lg border border-base-300 px-6 py-2.5 text-sm font-semibold text-base-content shadow-sm transition hover:bg-base-200"
           >
             Batal
           </button>
@@ -285,7 +285,7 @@ function TambahMatriks() {
             type="button"
             disabled={submitting || loadingCapaian}
             onClick={handleSimpan}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className="btn btn-primary px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
             {submitting ? 'Menyimpan…' : 'Simpan'}
           </button>

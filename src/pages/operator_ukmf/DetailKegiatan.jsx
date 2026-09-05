@@ -7,6 +7,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById } from '../../services/kegiatanService'
 import { InfoRow, SectionCard, formatTanggal, mapUiStatus } from '../../components/ui/DetailComponents'
+import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
 function normalizeDetail(raw) {
   if (!raw) return null
@@ -56,14 +57,14 @@ function DetailKegiatan({ role, userRole }) {
 
   if (loading) return (
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
-      <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat detail…</div>
+      <DetailSkeleton />
     </DashboardLayout>
   )
 
   if (!item) return (
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
       <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
+        <p className="text-base font-semibold text-base-content/60">Data tidak ditemukan.</p>
         <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
@@ -81,8 +82,8 @@ function DetailKegiatan({ role, userRole }) {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Kegiatan</h2>
-            <p className="mt-1 text-sm text-[#616161]">Informasi lengkap kegiatan {userRole}.</p>
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Kegiatan</h2>
+            <p className="mt-1 text-sm text-base-content/60">Informasi lengkap kegiatan {userRole}.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={item.status} /></div>
         </div>
@@ -99,7 +100,7 @@ function DetailKegiatan({ role, userRole }) {
 
         {item.capaian?.length > 0 && (
           <SectionCard title="Capaian Kurikulum">
-            {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-[#111]">{c}</p>)}
+            {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c}</p>)}
           </SectionCard>
         )}
 

@@ -32,10 +32,10 @@ function VerifikasiPengajuanEksternalPimpinan() {
     <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Verifikasi Pengajuan Kegiatan Eksternal
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             Pengajuan yang telah diteruskan oleh Admin Ditmawa.
           </p>
         </div>

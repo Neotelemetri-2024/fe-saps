@@ -68,7 +68,7 @@ function UKMDashboard() {
       key: 'no',
       label: 'No',
       render: (_row, index) => (
-        <span className="text-[#616161]">{index + 1}</span>
+        <span className="text-base-content/60">{index + 1}</span>
       ),
     },
     {
@@ -118,10 +118,10 @@ function UKMDashboard() {
     >
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Dashboard UKM {user?.namaOrganisasi || ''}
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             Kelola event dan verifikasi kehadiran peserta.
           </p>
         </div>

@@ -349,7 +349,7 @@ function ManajemenEvent() {
 
             {row.submitted &&
               row.submitted !== '-' && (
-                <p className="mt-0.5 text-xs text-[#616161]">
+                <p className="mt-0.5 text-xs text-base-content/60">
                   Diajukan: {row.submitted}
                 </p>
               )}
@@ -506,11 +506,11 @@ function ManajemenEvent() {
         {/* Header halaman */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">
               Event Fakultas
             </h2>
 
-            <p className="mt-1 text-sm text-[#616161]">
+            <p className="mt-1 text-sm text-base-content/60">
               Kelola event yang dibuat Admin Fakultas:
               buat, kirim, dan verifikasi pendaftaran
               peserta.
@@ -520,7 +520,7 @@ function ManajemenEvent() {
           <button
             type="button"
             onClick={goToCreate}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
+            className="flex w-full items-center justify-center gap-2 btn btn-primary px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Buat Event
           </button>
@@ -535,7 +535,7 @@ function ManajemenEvent() {
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
             {/* Pencarian */}
             <div className="relative w-full min-w-[200px] lg:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
 
               <input
                 type="text"
@@ -545,7 +545,7 @@ function ManajemenEvent() {
                   setPage(1)
                 }}
                 placeholder="Cari nama kegiatan..."
-                className="w-full rounded-lg border border-[#e9ebf8] bg-white py-2.5 pl-9 pr-3 text-sm text-[#333] outline-none transition placeholder:text-[#9aa0a6] focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 bg-white py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>
 
@@ -557,7 +557,7 @@ function ManajemenEvent() {
                   setFilterKategori(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[130px] flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2.5 text-xs text-[#444] outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[130px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Kategori</option>
 
@@ -577,7 +577,7 @@ function ManajemenEvent() {
                   setFilterStatus(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[120px] flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2.5 text-xs text-[#444] outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -591,7 +591,7 @@ function ManajemenEvent() {
                   setFilterSkala(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[120px] flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2.5 text-xs text-[#444] outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Skala</option>
 
@@ -612,7 +612,7 @@ function ManajemenEvent() {
                 <button
                   type="button"
                   onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-xs font-medium text-brand-dark transition hover:bg-[#f5f5f5] sm:text-sm"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
                 >
                   Reset Filter
                 </button>

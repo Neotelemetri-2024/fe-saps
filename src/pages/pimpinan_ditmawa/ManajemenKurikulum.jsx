@@ -471,7 +471,7 @@ const handleEditSubCapaian = async () => {
       <Modal isOpen={showTambahKurikulum} onClose={() => setShowTambahKurikulum(false)} title="Tambah Kurikulum">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Tahun Berlaku <span className="text-red-500">*</span>
             </label>
             <input
@@ -487,12 +487,12 @@ const handleEditSubCapaian = async () => {
                 }))
               }
               placeholder="Contoh: 2025"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
            
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Nama Kurikulum <span className="text-red-500">*</span>
             </label>
             <input
@@ -500,7 +500,7 @@ const handleEditSubCapaian = async () => {
               value={kurForm.nama}
               onChange={(e) => setKurForm((p) => ({ ...p, nama: e.target.value }))}
               placeholder="Contoh: Kurikulum Merdeka 2025"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
         </div>
@@ -508,14 +508,14 @@ const handleEditSubCapaian = async () => {
           <button
             type="button"
             onClick={() => setShowTambahKurikulum(false)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleTambahKurikulum}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             Simpan
           </button>
@@ -526,7 +526,7 @@ const handleEditSubCapaian = async () => {
       <Modal isOpen={showTambahCapaian} onClose={() => setShowTambahCapaian(false)} title="Tambah Capaian">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Nama Capaian <span className="text-red-500">*</span>
             </label>
             <input
@@ -534,11 +534,11 @@ const handleEditSubCapaian = async () => {
               value={capaianForm.nama}
               onChange={(e) => setCapaianForm((p) => ({ ...p, nama: e.target.value }))}
               placeholder="Contoh: Pemantapan"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Jumlah Poin <span className="text-red-500">*</span>
             </label>
             <input
@@ -547,7 +547,7 @@ const handleEditSubCapaian = async () => {
               onChange={(e) => setCapaianForm((p) => ({ ...p, jumlahPoin: e.target.value }))}
               placeholder="Contoh: 100"
               min="1"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
         </div>
@@ -555,14 +555,14 @@ const handleEditSubCapaian = async () => {
           <button
             type="button"
             onClick={() => setShowTambahCapaian(false)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleTambahCapaian}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             Simpan
           </button>
@@ -573,13 +573,13 @@ const handleEditSubCapaian = async () => {
       <Modal isOpen={showTambahSubCapaian} onClose={() => setShowTambahSubCapaian(false)} title="Tambah Sub Capaian">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Capaian Induk <span className="text-red-500">*</span>
             </label>
             <select
               value={subCapaianForm.capaianId}
               onChange={(e) => setSubCapaianForm((p) => ({ ...p, capaianId: e.target.value }))}
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             >
               <option value="">-- Pilih Capaian --</option>
               {activeKur?.capaian.map((c) => {
@@ -594,7 +594,7 @@ const handleEditSubCapaian = async () => {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Nama Sub Capaian <span className="text-red-500">*</span>
             </label>
             <input
@@ -602,12 +602,12 @@ const handleEditSubCapaian = async () => {
               value={subCapaianForm.nama}
               onChange={(e) => setSubCapaianForm((p) => ({ ...p, nama: e.target.value }))}
               placeholder="Contoh: Keikutsertaan Organisasi / Kepanitiaan"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[#212121]">
+            <label className="mb-1 block text-sm font-medium text-base-content">
               Persentase Bobot (%) <span className="text-red-500">*</span>
             </label>
             <input
@@ -626,7 +626,7 @@ const handleEditSubCapaian = async () => {
                 }
               }}
               placeholder="Contoh: 25"
-              className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+              className="input w-full"
             />
             {selectedCapaianForAdd && totalSetelahTambah > 100 && (
               <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
@@ -640,7 +640,7 @@ const handleEditSubCapaian = async () => {
           <button
             type="button"
             onClick={() => setShowTambahSubCapaian(false)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
           >
             Batal
           </button>
@@ -648,7 +648,7 @@ const handleEditSubCapaian = async () => {
             type="button"
             onClick={handleTambahSubCapaian}
             disabled={!isTambahValid || !subCapaianForm.nama.trim() || !subCapaianForm.capaianId || totalSetelahTambah > 100}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Simpan
           </button>
@@ -660,18 +660,18 @@ const handleEditSubCapaian = async () => {
         {editCapaian && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#212121]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Nama Capaian <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={editCapaian.label}
                 onChange={(e) => setEditCapaian((p) => ({ ...p, label: e.target.value }))}
-                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#212121]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Jumlah Poin <span className="text-red-500">*</span>
               </label>
               <input
@@ -680,7 +680,7 @@ const handleEditSubCapaian = async () => {
                 onChange={(e) => setEditCapaian((p) => ({ ...p, jumlahPoin: e.target.value }))}
                 placeholder="Contoh: 100"
                 min="1"
-                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
           </div>
@@ -689,14 +689,14 @@ const handleEditSubCapaian = async () => {
           <button
             type="button"
             onClick={() => setEditCapaian(null)}
-            className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleEditCapaian}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             Simpan
           </button>
@@ -708,26 +708,26 @@ const handleEditSubCapaian = async () => {
         {editSubCapaian && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#212121]">Capaian Induk</label>
-              <div className="rounded-lg bg-[#f5f6f8] px-3.5 py-2 text-sm font-medium text-[#333] border border-[#e9ebf8]">
+              <label className="mb-1 block text-sm font-medium text-base-content">Capaian Induk</label>
+              <div className="rounded-lg bg-base-200 px-3.5 py-2 text-sm font-medium text-base-content border border-base-300">
                 {parentCapaianForEdit?.label || '-'}
               </div>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#212121]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Nama Sub Capaian <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={editSubCapaian.nama}
                 onChange={(e) => setEditSubCapaian((p) => ({ ...p, nama: e.target.value }))}
-                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-[#212121]">
+              <label className="mb-1 block text-sm font-medium text-base-content">
                 Persentase Bobot (%) <span className="text-red-500">*</span>
               </label>
               <input
@@ -746,7 +746,7 @@ const handleEditSubCapaian = async () => {
                   }
                 }}
                 placeholder="Contoh: 25"
-                className="w-full rounded-lg border border-[#d9dce7] px-3.5 py-2 text-sm text-[#212121] outline-none transition focus:border-brand-dark"
+                className="input w-full"
               />
               {totalSetelahEdit > 100 && (
                 <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
@@ -759,7 +759,7 @@ const handleEditSubCapaian = async () => {
               <button
                 type="button"
                 onClick={() => setEditSubCapaian(null)}
-                className="rounded-lg border border-[#d9dce7] px-5 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
               >
                 Batal
               </button>
@@ -767,7 +767,7 @@ const handleEditSubCapaian = async () => {
                 type="button"
                 onClick={handleEditSubCapaian}
                 disabled={!isEditValid || !editSubCapaian.nama.trim() || totalSetelahEdit > 100}
-                className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Simpan
               </button>
@@ -778,8 +778,8 @@ const handleEditSubCapaian = async () => {
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Kurikulum</h2>
-          <p className="mt-1 text-sm text-[#616161]">Kelola kurikulum dan pemetaan Capaian dan Sub Capaian sesuai BRD.</p>
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Manajemen Kurikulum</h2>
+          <p className="mt-1 text-sm text-base-content/60">Kelola kurikulum dan pemetaan Capaian dan Sub Capaian sesuai BRD.</p>
         </div>
 
         {/* Tombol tambah kurikulum */}
@@ -790,22 +790,22 @@ const handleEditSubCapaian = async () => {
               setKurForm({ tahun: new Date().getFullYear(), nama: '' })
               setShowTambahKurikulum(true)
             }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
+            className="btn btn-primary w-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
           >
             <Plus className="h-4 w-4" /> Tambah Kurikulum
           </button>
         </div>
 
         {/* Daftar Kurikulum */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
-          <div className="border-b border-[#e9ebf8] px-5 py-4">
-            <h3 className="font-bold text-[#333]">Daftar Kurikulum</h3>
+        <div className="card bg-base-100">
+          <div className="border-b border-base-300 px-5 py-4">
+            <h3 className="font-bold text-base-content">Daftar Kurikulum</h3>
           </div>
-          <div className="divide-y divide-[#e9ebf8]">
+          <div className="divide-y divide-base-300">
             {loading ? (
-              <p className="px-5 py-6 text-sm text-[#9aa0a6]">Memuat kurikulum...</p>
+              <p className="px-5 py-6 text-sm text-base-content/50">Memuat kurikulum...</p>
             ) : kurikulum.length === 0 ? (
-              <p className="px-5 py-6 text-sm text-[#9aa0a6]">Belum ada kurikulum.</p>
+              <p className="px-5 py-6 text-sm text-base-content/50">Belum ada kurikulum.</p>
             ) : null}
             {kurikulum.map((kur) => {
               const totalSub = kur.capaian.reduce((a, c) => a + c.subCapaian.length, 0)
@@ -813,8 +813,8 @@ const handleEditSubCapaian = async () => {
               return (
                 <div
                   key={kur.id}
-                  className={`flex w-full items-center justify-between px-5 py-4 transition hover:bg-[#f9fafb] ${
-                    isActive ? 'bg-[#f0faf0]' : ''
+                  className={`flex w-full items-center justify-between px-5 py-4 transition hover:bg-base-200 ${
+                    isActive ? 'bg-base-200' : ''
                   }`}
                 >
                   <button
@@ -822,8 +822,8 @@ const handleEditSubCapaian = async () => {
                     onClick={() => setActiveKurId(isActive ? null : kur.id)}
                     className="flex flex-1 flex-col gap-1.5 text-left"
                   >
-                    <p className={`text-sm font-bold ${isActive ? 'text-brand-dark' : 'text-[#333]'}`}>{kur.nama}</p>
-                    <p className="text-xs text-[#9aa0a6]">Tahun: {kur.tahun}</p>
+                    <p className={`text-sm font-bold ${isActive ? 'text-brand-dark' : 'text-base-content'}`}>{kur.nama}</p>
+                    <p className="text-xs text-base-content/50">Tahun: {kur.tahun}</p>
                     <div className="flex items-center gap-3">
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
@@ -836,7 +836,7 @@ const handleEditSubCapaian = async () => {
                       >
                         {kur.status === 'aktif' ? 'Aktif' : kur.status === 'draft' ? 'Draft' : 'Arsip'}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-[#616161]">{totalSub} Sub Capaian</span>
+                      <span className="flex items-center gap-1 text-xs text-base-content/60">{totalSub} Sub Capaian</span>
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-3 pl-4">
@@ -863,7 +863,7 @@ const handleEditSubCapaian = async () => {
           <div className="space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-xl font-extrabold text-[#333]">{activeKur.nama}</h3>
+                <h3 className="text-xl font-extrabold text-base-content">{activeKur.nama}</h3>
             
               </div>
 
@@ -874,7 +874,7 @@ const handleEditSubCapaian = async () => {
                     setCapaianForm({ nama: '', jumlahPoin: '' })
                     setShowTambahCapaian(true)
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
                 >
                   <Plus className="h-4 w-4" /> Tambah Capaian
                 </button>
@@ -884,7 +884,7 @@ const handleEditSubCapaian = async () => {
                     setSubCapaianForm({ capaianId: '', nama: '', presentasi: '' })
                     setShowTambahSubCapaian(true)
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
                 >
                   <Plus className="h-4 w-4" /> Tambah Sub Capaian
                 </button>
@@ -892,14 +892,14 @@ const handleEditSubCapaian = async () => {
             </div>
 
             {capaianBelumLengkap.length > 0 && (
-              <p className="text-xs text-[#616161]">
+              <p className="text-xs text-base-content/60">
                 Bobot belum 100% pada:{' '}
                 {capaianBelumLengkap.map((c, i) => {
                   const tot = (c.subCapaian || []).reduce((acc, sc) => acc + (Number(sc.presentasi) || 0), 0)
                   return (
                     <span key={c.id}>
                       {i > 0 && ', '}
-                      <span className="font-medium text-[#333]">{c.label}</span> ({tot}%)
+                      <span className="font-medium text-base-content">{c.label}</span> ({tot}%)
                     </span>
                   )
                 })}
@@ -911,7 +911,7 @@ const handleEditSubCapaian = async () => {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[700px] text-left text-sm">
                     <thead>
-                      <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                      <tr className="bg-primary text-xs font-semibold uppercase tracking-wide text-white">
                         <th className="px-5 py-3 text-center">Capaian & Status Bobot</th>
                         <th className="px-5 py-3 text-center">Poin</th>
                         <th className="px-5 py-3 text-center">Sub Capaian</th>
@@ -922,7 +922,7 @@ const handleEditSubCapaian = async () => {
                     <tbody>
                       {activeKur.capaian.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-5 py-10 text-center text-[#9aa0a6]">
+                          <td colSpan={5} className="px-5 py-10 text-center text-base-content/50">
                             Belum ada capaian. Klik "Tambah Capaian" untuk memulai.
                           </td>
                         </tr>
@@ -936,11 +936,11 @@ const handleEditSubCapaian = async () => {
 
                           if (cap.subCapaian.length === 0) {
                             return (
-                              <tr key={cap.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8]">
+                              <tr key={cap.id} className="divide-x divide-base-300 border-b border-base-300">
                                 <td className="px-5 py-3 align-top">
                                   <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
+                                      <span className="rounded border border-base-300 px-2 py-0.5 text-xs font-semibold text-base-content">
                                         {cap.label}
                                       </span>
                                       <ActionMenu
@@ -966,8 +966,8 @@ const handleEditSubCapaian = async () => {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-5 py-3 text-center text-[#616161]">{cap.jumlahPoin ?? '-'}</td>
-                                <td className="px-5 py-3 text-[#9aa0a6] italic">Belum ada sub capaian</td>
+                                <td className="px-5 py-3 text-center text-base-content/60">{cap.jumlahPoin ?? '-'}</td>
+                                <td className="px-5 py-3 text-base-content/50 italic">Belum ada sub capaian</td>
                                 <td className="px-5 py-3 text-center">-</td>
                                 <td className="px-5 py-3 text-center">-</td>
                               </tr>
@@ -975,13 +975,13 @@ const handleEditSubCapaian = async () => {
                           }
 
                           return cap.subCapaian.map((sc, idx) => (
-                            <tr key={sc.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                            <tr key={sc.id} className="divide-x divide-base-300 border-b border-base-300 last:border-0 hover:bg-base-200">
                               {idx === 0 && (
                                 <>
-                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top">
+                                  <td rowSpan={cap.subCapaian.length} className="border-r border-base-300 px-5 py-3 align-top">
                                     <div className="flex flex-col gap-1.5">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="rounded border border-[#d9dce7] px-2 py-0.5 text-xs font-semibold text-[#333]">
+                                        <span className="rounded border border-base-300 px-2 py-0.5 text-xs font-semibold text-base-content">
                                           {cap.label}
                                         </span>
                                         <ActionMenu
@@ -1009,13 +1009,13 @@ const handleEditSubCapaian = async () => {
                                       )}
                                     </div>
                                   </td>
-                                  <td rowSpan={cap.subCapaian.length} className="border-r border-[#e9ebf8] px-5 py-3 align-top text-center text-[#616161]">
+                                  <td rowSpan={cap.subCapaian.length} className="border-r border-base-300 px-5 py-3 align-top text-center text-base-content/60">
                                     {cap.jumlahPoin ?? '-'}
                                   </td>
                                 </>
                               )}
-                              <td className="px-5 py-3 text-[#333]">{sc.nama || '-'}</td>
-                              <td className="px-5 py-3 text-center font-medium text-[#333]">
+                              <td className="px-5 py-3 text-base-content">{sc.nama || '-'}</td>
+                              <td className="px-5 py-3 text-center font-medium text-base-content">
                                 {sc.presentasi != null ? `${sc.presentasi} %` : '-'}
                               </td>
                               <td className="px-5 py-3">
@@ -1047,23 +1047,23 @@ const handleEditSubCapaian = async () => {
                   </table>
                 </div>
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-end gap-1 border-t border-[#e9ebf8] px-5 py-3">
+                  <div className="flex items-center justify-end gap-1 border-t border-base-300 px-5 py-3">
                     <button
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => setPage(currentPage - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="px-2 text-xs text-[#9aa0a6]">
+                    <span className="px-2 text-xs text-base-content/50">
                       Halaman {currentPage} dari {totalPages}
                     </span>
                     <button
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => setPage(currentPage + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>

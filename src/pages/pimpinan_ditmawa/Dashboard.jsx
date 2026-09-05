@@ -6,6 +6,7 @@ import { VerticalBarChart } from '../../components/charts'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import DataTable from '../../components/dashboard/DataTable'
 import PanduanCard from '../../components/dashboard/PanduanCard'
+import { CardGridSkeleton, ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
 
@@ -54,7 +55,7 @@ function Dashboard() {
             Selamat Datang<br />
             <span className="text-brand-dark">{user?.nama || 'Pimpinan Ditmawa'}</span>
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#616161]">
+          <p className="mt-2 max-w-2xl text-sm text-base-content/60">
             Pantau perkembangan mahasiswa, evaluasi kurikulum SAPS, dan kelola kegiatan kemahasiswaan Universitas Andalas.
           </p>
         </div>
@@ -81,36 +82,36 @@ function Dashboard() {
         </div>
 
         {/* Progres Capaian Kurikulum */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6">
+        <div className="card bg-base-100 p-5 sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-lg font-bold text-[#222]">Progres Capaian Kurikulum</h3>
-              <p className="mt-0.5 text-xs text-[#616161]">
+              <h3 className="text-lg font-bold text-base-content">Progres Capaian Kurikulum</h3>
+              <p className="mt-0.5 text-xs text-base-content/60">
                 Rata-rata pemenuhan poin kompetensi mahasiswa pada setiap tahun kurikulum
               </p>
             </div>
-            <span className="text-xs text-[#616161]">
+            <span className="text-xs text-base-content/60">
               Target Minimum: <strong className="text-brand-dark">{statistik.targetPoinKurikulum ?? 200} poin</strong>
             </span>
           </div>
 
           {loading ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat progres…</p>
+            <CardGridSkeleton />
           ) : capaianKurikulum.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data kurikulum aktif.</p>
+            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data kurikulum aktif.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {capaianKurikulum.map((pilar) => (
-                <div key={pilar.id || pilar.pilar} className="rounded-lg border border-[#e9ebf8] p-4 text-center">
-                  <p className="text-xs font-semibold uppercase text-[#616161]">{pilar.pilar}</p>
+                <div key={pilar.id || pilar.pilar} className="rounded-lg border border-base-300 p-4 text-center">
+                  <p className="text-xs font-semibold uppercase text-base-content/60">{pilar.pilar}</p>
                   <p className="mt-1 text-2xl font-bold text-brand-dark">
                     {pilar.rataRataPoin ?? 0}
-                    <span className="text-sm font-normal text-[#616161]">/{pilar.targetPoin} poin</span>
+                    <span className="text-sm font-normal text-base-content/60">/{pilar.targetPoin} poin</span>
                   </p>
                   <div className="mt-2 flex justify-center">
                     <ProgressBar value={pilar.rataRataPoin ?? 0} max={pilar.targetPoin || 1} height={6} />
                   </div>
-                  <p className="mt-2 text-xs font-medium text-[#616161]">
+                  <p className="mt-2 text-xs font-medium text-base-content/60">
                     {pilar.persenCapaian}% Tercapai
                   </p>
                 </div>
@@ -122,11 +123,11 @@ function Dashboard() {
         {/* Middle Section: Top Fakultas & Grafik UKM */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Ranking Capaian Fakultas */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6">
+          <div className="card bg-base-100 p-5 sm:p-6">
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-lg font-bold text-[#222]">Ranking Capaian Fakultas</h3>
-                <p className="mt-1 text-sm text-[#616161]">
+                <h3 className="text-lg font-bold text-base-content">Ranking Capaian Fakultas</h3>
+                <p className="mt-1 text-sm text-base-content/60">
                   Peringkat berdasarkan persentase capaian poin mahasiswa
                 </p>
               </div>
@@ -140,11 +141,11 @@ function Dashboard() {
             </div>
 
             {loading ? (
-              <p className="py-10 text-center text-sm text-[#9aa0a6]">Memuat ranking…</p>
+              <RankListSkeleton />
             ) : topFakultas.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#9aa0a6]">Belum ada data ranking fakultas.</p>
+              <p className="py-10 text-center text-sm text-base-content/50">Belum ada data ranking fakultas.</p>
             ) : (
-              <div className="divide-y divide-[#e9ebf8]">
+              <div className="divide-y divide-base-300">
                 {topFakultas.slice(0, 5).map((fak, index) => {
                   const rank = index + 1
                   const top = rank <= 3
@@ -155,17 +156,17 @@ function Dashboard() {
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                          top ? 'bg-brand-dark text-white' : 'bg-[#f0f2f5] text-[#616161]'
+                          top ? 'bg-brand-dark text-white' : 'bg-[#f0f2f5] text-base-content/60'
                         }`}
                       >
                         {rank}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                          <p className="truncate text-sm font-medium text-[#222]">{fak.fakultas}</p>
+                          <p className="truncate text-sm font-medium text-base-content">{fak.fakultas}</p>
                           <p className="shrink-0 text-sm font-semibold text-brand-dark">
                             {fak.rataRataPersentase}%
-                            <span className="ml-1 text-xs font-normal text-[#9aa0a6]">
+                            <span className="ml-1 text-xs font-normal text-base-content/50">
                               ({Number(fak.totalPoin ?? 0).toLocaleString('id-ID')} poin)
                             </span>
                           </p>
@@ -185,14 +186,14 @@ function Dashboard() {
           </div>
 
           {/* Grafik Poin per UKM */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6">
-            <h3 className="mb-1 text-lg font-bold text-[#222]">Grafik Poin per UKM</h3>
-            <p className="mb-4 text-sm text-[#616161]">
+          <div className="card bg-base-100 p-5 sm:p-6">
+            <h3 className="mb-1 text-lg font-bold text-base-content">Grafik Poin per UKM</h3>
+            <p className="mb-4 text-sm text-base-content/60">
               Akumulasi poin kegiatan mahasiswa berdasarkan UKM penyelenggara
             </p>
 
             {loading ? (
-              <p className="py-16 text-center text-sm text-[#9aa0a6]">Memuat grafik…</p>
+              <ChartSkeleton height={280} />
             ) : (
               <VerticalBarChart
                 labels={chartLabels.length ? chartLabels : fallbackLabels}
@@ -226,7 +227,7 @@ function Dashboard() {
                   render: (row) => (
                     <div>
                       <p className="font-bold uppercase text-black">{row.namaKegiatan}</p>
-                      <p className="text-xs font-normal text-[#616161]">
+                      <p className="text-xs font-normal text-base-content/60">
                         {row.organisasi} • {row.tipePenyelenggara}
                       </p>
                     </div>

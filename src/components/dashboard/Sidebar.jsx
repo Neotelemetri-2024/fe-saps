@@ -3,27 +3,42 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronDown, Menu, X, ChevronRight } from 'lucide-react'
 import logoUnand from '../../assets/logo_unand.png'
 
-const menuParentBtnClass = (isExpanded) =>
-  `flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
-    isExpanded
-      ? 'bg-[#f0f4f0] font-semibold text-[#111]'
-      : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
-  }`
-
 function menuHasActiveChild(item, pathname) {
   return item.children?.some(
     (child) => child.path !== '#' && (pathname === child.path || pathname.startsWith(`${child.path}/`)),
   )
 }
 
-function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
+function navClass(isActive) {
+  return `flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${
+    isActive
+      ? 'bg-primary text-primary-content shadow-xs'
+      : 'text-base-content/80 hover:bg-base-200 hover:text-base-content'
+  }`
+}
+
+function parentClass(isExpanded) {
+  return `flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${
+    isExpanded
+      ? 'bg-primary/10 text-primary'
+      : 'text-base-content/80 hover:bg-base-200 hover:text-base-content'
+  }`
+}
+
+function childClass(isActive) {
+  return `block rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+    isActive
+      ? 'bg-primary text-primary-content'
+      : 'text-base-content/70 hover:bg-base-200 hover:text-base-content'
+  }`
+}
+
+function MenuList({ menuItems, collapsed, onNavigate }) {
   const location = useLocation()
   const [openMenus, setOpenMenus] = useState(() => {
     const initial = {}
     menuItems.forEach((item) => {
-      if (menuHasActiveChild(item, location.pathname)) {
-        initial[item.label] = true
-      }
+      if (menuHasActiveChild(item, location.pathname)) initial[item.label] = true
     })
     return initial
   })
@@ -32,9 +47,7 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
     setOpenMenus((prev) => {
       const next = { ...prev }
       menuItems.forEach((item) => {
-        if (menuHasActiveChild(item, location.pathname)) {
-          next[item.label] = true
-        }
+        if (menuHasActiveChild(item, location.pathname)) next[item.label] = true
       })
       return next
     })
@@ -45,274 +58,150 @@ function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
   }
 
   return (
+    <ul className="space-y-1">
+      {menuItems.map((item) => {
+        const isHash = item.path === '#'
+        const hasChildren = item.children?.length > 0
+        const isMenuExpanded = openMenus[item.label]
+
+        if (hasChildren) {
+          return (
+            <li key={item.label}>
+              <button
+                type="button"
+                onClick={() => !collapsed && toggleMenu(item.label)}
+                title={collapsed ? item.label : undefined}
+                className={parentClass(isMenuExpanded && !collapsed)}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
+                {!collapsed && (
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-left leading-snug">{item.label}</span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isMenuExpanded ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+              {!collapsed && isMenuExpanded && (
+                <ul className="mt-1 space-y-1 pl-8">
+                  {item.children.map((child) => {
+                    if (child.path === '#') {
+                      return (
+                        <li key={child.label}>
+                          <button type="button" className={childClass(false)}>{child.label}</button>
+                        </li>
+                      )
+                    }
+                    return (
+                      <li key={child.path}>
+                        <NavLink
+                          to={child.path}
+                          end={child.end}
+                          onClick={onNavigate}
+                          className={({ isActive }) => childClass(isActive)}
+                        >
+                          {child.label}
+                        </NavLink>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </li>
+          )
+        }
+
+        if (isHash) {
+          return (
+            <li key={item.label}>
+              <button type="button" title={collapsed ? item.label : undefined} className={navClass(false)}>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
+                {!collapsed && <span className="flex-1 truncate text-left leading-snug">{item.label}</span>}
+              </button>
+            </li>
+          )
+        }
+
+        return (
+          <li key={item.path}>
+            <NavLink
+              to={item.path}
+              end={item.end}
+              title={collapsed ? item.label : undefined}
+              onClick={onNavigate}
+              className={({ isActive }) => navClass(isActive)}
+            >
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
+              {!collapsed && <span className="flex-1 truncate text-left leading-snug">{item.label}</span>}
+            </NavLink>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function Sidebar({ menuItems, collapsed, onToggle }) {
+  return (
     <aside
-      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#e9ebf8] bg-white transition-all duration-300 ${
+      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-base-300 bg-base-100 transition-all duration-300 ${
         collapsed ? 'w-[68px]' : 'w-[260px]'
       }`}
     >
-      {/* Logo + toggle */}
-      <div className="flex h-[86px] shrink-0 items-center border-b border-[#e9ebf8] px-3">
+      <div className="flex h-16 shrink-0 items-center border-b border-base-300 px-3">
         {!collapsed && (
           <div className="flex flex-1 items-center gap-3 overflow-hidden">
-            <img src={logoUnand} alt="Logo" className="h-10 w-auto shrink-0 object-contain" />
+            <img src={logoUnand} alt="Logo" className="h-9 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight text-brand-dark">
-                SAPS UNAND
-              </p>
-              <p className="text-[10px] text-[#616161]">Universitas Andalas</p>
+              <p className="truncate text-sm font-semibold leading-tight text-base-content">SAPS UNAND</p>
+              <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
             </div>
           </div>
         )}
         {collapsed && (
           <div className="flex flex-1 justify-center">
-            <img src={logoUnand} alt="Logo" className="h-9 w-auto object-contain" />
+            <img src={logoUnand} alt="Logo" className="h-8 w-auto object-contain" />
           </div>
         )}
         <button
           type="button"
           onClick={onToggle}
-          className="ml-1 shrink-0 rounded-lg p-1.5 text-[#616161] transition hover:bg-[#f0f4f0] hover:text-brand-dark"
+          className="btn btn-ghost btn-square btn-xs shrink-0"
           title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
       </div>
 
-      {/* Menu */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4">
-        <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const isHash = item.path === '#'
-            const hasChildren = item.children?.length > 0
-            const isMenuExpanded = openMenus[item.label]
-
-            if (hasChildren) {
-              return (
-                <li key={item.label}>
-                  <button
-                    type="button"
-                    onClick={() => !collapsed && toggleMenu(item.label)}
-                    title={collapsed ? item.label : undefined}
-                    className={menuParentBtnClass(isMenuExpanded && !collapsed)}
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                    {!collapsed && (
-                      <>
-                        <span className="min-w-0 flex-1 truncate text-left leading-snug">{item.label}</span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isMenuExpanded ? 'rotate-180' : ''}`} />
-                      </>
-                    )}
-                  </button>
-                  {!collapsed && isMenuExpanded && (
-                    <ul className="mt-1 space-y-1 pl-8">
-                      {item.children.map((child) => {
-                        if (child.path === '#') {
-                          return (
-                            <li key={child.label}>
-                              <button className="w-full rounded-[10px] px-3 py-2 text-left text-sm leading-snug text-[#333] transition hover:bg-[#f0f4f0] hover:text-brand-dark">
-                                {child.label}
-                              </button>
-                            </li>
-                          )
-                        }
-                        return (
-                          <li key={child.path}>
-                            <NavLink
-                              to={child.path}
-                              end={child.end}
-                              className={({ isActive }) =>
-                                `block rounded-[10px] px-3 py-2 text-left text-sm leading-snug transition ${
-                                  isActive
-                                    ? 'bg-[#f0f4f0] font-semibold text-brand-dark'
-                                    : 'text-[#333] hover:bg-[#f0f4f0] hover:text-brand-dark'
-                                }`
-                              }
-                            >
-                              {child.label}
-                            </NavLink>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
-                </li>
-              )
-            }
-
-            if (isHash) {
-              return (
-                <li key={item.label}>
-                  <button
-                    title={collapsed ? item.label : undefined}
-                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                    {!collapsed && <span className="flex-1 truncate text-left leading-snug">{item.label}</span>}
-                  </button>
-                </li>
-              )
-            }
-
-            return (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  end={item.end}
-                  title={collapsed ? item.label : undefined}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-brand-dark to-brand-light font-semibold text-white shadow-md'
-                        : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
-                    }`
-                  }
-                >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                  {!collapsed && <span className="flex-1 truncate text-left leading-snug">{item.label}</span>}
-                </NavLink>
-              </li>
-            )
-          })}
-        </ul>
+        <MenuList menuItems={menuItems} collapsed={collapsed} />
       </nav>
-
     </aside>
   )
 }
 
-/* Mobile overlay sidebar */
 function MobileSidebar({ menuItems, isOpen, onClose }) {
-  const location = useLocation()
-  const [openMenus, setOpenMenus] = useState({})
-
-  const toggleMenu = (label) => {
-    setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
-  }
-
-  useEffect(() => {
-    if (!isOpen) return
-    setOpenMenus((prev) => {
-      const next = { ...prev }
-      menuItems.forEach((item) => {
-        if (menuHasActiveChild(item, location.pathname)) {
-          next[item.label] = true
-        }
-      })
-      return next
-    })
-  }, [isOpen, location.pathname, menuItems])
-
   if (!isOpen) return null
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-        onClick={onClose}
-      />
-      {/* Panel */}
-      <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-[#e9ebf8] bg-white lg:hidden">
-        <div className="flex h-[70px] shrink-0 items-center justify-between border-b border-[#e9ebf8] px-4">
+      <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={onClose} />
+      <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-base-300 bg-base-100 lg:hidden">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-base-300 px-4">
           <div className="flex items-center gap-3">
             <img src={logoUnand} alt="Logo" className="h-9 w-auto object-contain" />
             <div>
-              <p className="text-sm font-bold leading-tight text-brand-dark">SAPS</p>
-              <p className="text-[10px] text-[#616161]">Universitas Andalas</p>
+              <p className="text-sm font-semibold leading-tight text-base-content">SAPS</p>
+              <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-[#616161] hover:bg-[#f0f4f0]">
-            <X className="h-5 w-5" />
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-square btn-xs" aria-label="Tutup menu">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-4">
-          <ul className="space-y-1">
-            {menuItems.map((item) => {
-              const isHash = item.path === '#'
-              const hasChildren = item.children?.length > 0
-              const isMenuExpanded = openMenus[item.label]
-
-              if (hasChildren) {
-                return (
-                  <li key={item.label}>
-                    <button
-                      type="button"
-                      onClick={() => toggleMenu(item.label)}
-                      className={menuParentBtnClass(isMenuExpanded)}
-                    >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                      <span className="min-w-0 flex-1 text-left leading-snug">{item.label}</span>
-                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isMenuExpanded ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isMenuExpanded && (
-                      <ul className="mt-1 space-y-1 pl-8">
-                        {item.children.map((child) => {
-                          if (child.path === '#') {
-                            return (
-                              <li key={child.label}>
-                                <button className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[#333] hover:bg-[#f0f4f0] hover:text-brand-dark">
-                                  {child.label}
-                                </button>
-                              </li>
-                            )
-                          }
-                          return (
-                            <li key={child.path}>
-                              <NavLink
-                                to={child.path}
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                  `block rounded-[10px] px-3 py-2 text-sm transition ${
-                                    isActive ? 'bg-[#f0f4f0] font-semibold text-brand-dark' : 'text-[#333] hover:bg-[#f0f4f0] hover:text-brand-dark'
-                                  }`
-                                }
-                              >
-                                {child.label}
-                              </NavLink>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    )}
-                  </li>
-                )
-              }
-
-              if (isHash) {
-                return (
-                  <li key={item.label}>
-                    <button className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-[#333] transition-all active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                      <span className="flex-1 text-left leading-snug">{item.label}</span>
-                    </button>
-                  </li>
-                )
-              }
-
-              return (
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    end={item.end}
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-all ${
-                        isActive
-                          ? 'bg-gradient-to-r from-brand-dark to-brand-light font-semibold text-white shadow-md'
-                          : 'text-[#333] active:bg-[#f0f4f0] active:text-[#111] lg:hover:bg-gradient-to-r lg:hover:from-brand-dark lg:hover:to-brand-light lg:hover:text-white'
-                      }`
-                    }
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
-                    <span className="flex-1 text-left leading-snug">{item.label}</span>
-                  </NavLink>
-                </li>
-              )
-            })}
-          </ul>
+          <MenuList menuItems={menuItems} collapsed={false} onNavigate={onClose} />
         </nav>
-
       </aside>
     </>
   )

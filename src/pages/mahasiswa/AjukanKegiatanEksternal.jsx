@@ -135,12 +135,12 @@ function AjukanKegiatanEksternal() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <Modal isOpen={!!alasanModal} onClose={() => setAlasanModal(null)}>
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-[#333]">{alasanModal?.judul}</h3>
-          <p className="text-sm text-[#616161] whitespace-pre-wrap">{alasanModal?.isi || 'Tidak ada keterangan.'}</p>
+          <h3 className="text-base font-bold text-base-content">{alasanModal?.judul}</h3>
+          <p className="text-sm text-base-content/60 whitespace-pre-wrap">{alasanModal?.isi || 'Tidak ada keterangan.'}</p>
           <button
             type="button"
             onClick={() => setAlasanModal(null)}
-            className="w-full rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+            className="w-full rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
           >
             Tutup
           </button>
@@ -159,12 +159,12 @@ function AjukanKegiatanEksternal() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-lg font-bold text-[#222] sm:text-2xl">Daftar Pengajuan</h2>
+            <h2 className="text-lg font-bold text-base-content sm:text-2xl">Daftar Pengajuan</h2>
             <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit. Kegiatan yang sudah <strong>disetujui</strong> admin dipindah ke halaman Persetujuan Dosen.</>} />
           </div>
           <button
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
+            className="btn btn-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
           >
             <Plus className="h-4 w-4" />
             <span className="sm:hidden">Ajukan Baru</span>
@@ -174,8 +174,8 @@ function AjukanKegiatanEksternal() {
 
         <TableCard title="Ajukan Kegiatan Eksternal">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="flex w-full items-center gap-2 rounded-lg border border-[#e9ebf8] px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
-              <Search className="h-3.5 w-3.5 shrink-0 text-[#616161] sm:h-4 sm:w-4" />
+            <div className="flex w-full items-center gap-2 rounded-lg border border-base-300 px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
+              <Search className="h-3.5 w-3.5 shrink-0 text-base-content/60 sm:h-4 sm:w-4" />
               <input
                 type="text"
                 value={search}
@@ -188,7 +188,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterKategori}
                 onChange={(e) => setFilterKategori(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
               >
                 <option value="">Semua Kategori</option>
                 {jenisOptions.map((j) => (
@@ -198,7 +198,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
               >
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort().map((s) => (
@@ -208,7 +208,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] px-3 py-2 text-xs text-[#333] outline-none sm:text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -219,7 +219,7 @@ function AjukanKegiatanEksternal() {
                 <button
                   type="button"
                   onClick={() => { setFilterStatus(''); setFilterKategori(''); setFilterSkala(''); setSearch('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-[#f5f5f5] sm:text-sm"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
                 >
                   Reset Filter
                 </button>

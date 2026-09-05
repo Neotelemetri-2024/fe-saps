@@ -1,35 +1,54 @@
-import React from 'react'
+import { useEffect, useRef } from 'react'
+import { X } from 'lucide-react'
+
+const SIZE_CLASS = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
+}
 
 function Modal({ isOpen, onClose, title, children, size = 'lg' }) {
-  if (!isOpen) return null
+  const dialogRef = useRef(null)
 
-  const maxWidth = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    '3xl': 'max-w-3xl',
-    '4xl': 'max-w-4xl',
-  }[size] || 'max-w-lg'
+  useEffect(() => {
+    const el = dialogRef.current
+    if (!el) return
+    if (isOpen) {
+      if (!el.open) el.showModal()
+    } else if (el.open) {
+      el.close()
+    }
+  }, [isOpen])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-lg`}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-brand-dark">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Content */}
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onClose={onClose}
+      onCancel={(e) => {
+        e.preventDefault()
+        onClose?.()
+      }}
+    >
+      <div className={`modal-box ${SIZE_CLASS[size] || SIZE_CLASS.lg}`}>
+        {(title || onClose) && (
+          <div className="mb-4 flex items-center justify-between">
+            {title ? <h3 className="text-lg font-semibold text-base-content">{title}</h3> : <span />}
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-square btn-xs" aria-label="Tutup">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
         {children}
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop">
+        <button type="submit">close</button>
+      </form>
+    </dialog>
   )
 }
 

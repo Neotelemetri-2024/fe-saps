@@ -96,7 +96,7 @@ function AdminDitmawaDashboard() {
           <div>
             <p className="text-black">{row.nama}</p>
             {row.diajukanPada && row.diajukanPada !== "-" && (
-              <p className="text-xs text-[#616161]">
+              <p className="text-xs text-base-content/60">
                 Diajukan: {row.diajukanPada}
               </p>
             )}
@@ -138,7 +138,7 @@ function AdminDitmawaDashboard() {
           <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
             Dashboard Admin Ditmawa
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             Kelola verifikasi kegiatan nasional/internasional dan event global.
           </p>
         </div>

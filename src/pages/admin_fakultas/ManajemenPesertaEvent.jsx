@@ -59,21 +59,21 @@ function SubmitModal({ isOpen, onConfirm, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl text-center">
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 text-[#999] hover:text-[#333]"><X className="h-4 w-4" /></button>
-        <h4 className="mb-2 text-lg font-bold text-[#222]">Submit Kegiatan Peserta</h4>
+        <button type="button" onClick={onClose} className="absolute right-4 top-4 text-[#999] hover:text-base-content"><X className="h-4 w-4" /></button>
+        <h4 className="mb-2 text-lg font-bold text-base-content">Submit Kegiatan Peserta</h4>
         <p className="mb-6 text-sm text-[#666]">Submit data untuk mengklaim poin peserta secara otomatik.</p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold text-white hover:opacity-90"
+            className="btn btn-primary flex-1 py-3 text-sm font-bold text-white hover:opacity-90"
           >
             SUBMIT
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl border-2 border-[#d1d5db] py-3 text-sm font-bold text-[#444] hover:bg-[#f5f5f5]"
+            className="flex-1 rounded-xl border-2 border-base-300 py-3 text-sm font-bold text-base-content/80 hover:bg-base-200"
           >
             BATAL
           </button>
@@ -241,8 +241,8 @@ function ManajemenPesertaEvent() {
         </button>
 
         <div>
-          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">{event.nama}</h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">{event.nama}</h2>
+          <p className="mt-1 text-sm text-base-content/60">
             {[event.jenis, event.tanggal, event.lokasi].filter(Boolean).join(' · ')}
           </p>
         </div>
@@ -251,12 +251,12 @@ function ManajemenPesertaEvent() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
               <div className="relative flex w-full flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari nama, NIM, atau prodi…"
-                  className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                  className="input w-full"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -311,7 +311,7 @@ function ManajemenPesertaEvent() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>
-                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-white">
+                <tr className="bg-primary text-white">
                   <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NO</th>
                   <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NIM</th>
                   <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NAMA MAHASISWA</th>
@@ -321,22 +321,22 @@ function ManajemenPesertaEvent() {
                   <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">PERAN</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
+              <tbody className="divide-y divide-base-300">
                 {loading ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-[#9aa0a6]">Memuat data…</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-base-content/50">Memuat data…</td></tr>
                 ) : pageItems.map((p, i) => (
-                  <tr key={p.id} className="divide-x divide-[#f0f0f0] hover:bg-[#f9fafb]">
-                    <td className="w-16 px-4 py-3.5 text-center text-[#616161]">{start + i + 1}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{p.nim}</td>
-                    <td className="px-4 py-3.5 font-medium text-[#222]">{p.nama}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{p.fakultas}</td>
-                    <td className="px-4 py-3.5 text-[#616161]">{p.prodi}</td>
+                  <tr key={p.id} className="divide-x divide-base-300 hover:bg-base-200">
+                    <td className="w-16 px-4 py-3.5 text-center text-base-content/60">{start + i + 1}</td>
+                    <td className="px-4 py-3.5 text-base-content/60">{p.nim}</td>
+                    <td className="px-4 py-3.5 font-medium text-base-content">{p.nama}</td>
+                    <td className="px-4 py-3.5 text-base-content/60">{p.fakultas}</td>
+                    <td className="px-4 py-3.5 text-base-content/60">{p.prodi}</td>
                     <td className="px-4 py-3.5">
                       <select
                         value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
                         onChange={(e) => setHadir(p.id, e.target.value)}
                         disabled={!isEditing}
-                        className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                        className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
                       >
                         <option value="">Belum</option>
                         <option value="true">Hadir</option>
@@ -348,7 +348,7 @@ function ManajemenPesertaEvent() {
                         value={p.peranVerifId || ''}
                         onChange={(e) => setPilihPeran(p.id, e.target.value)}
                         disabled={!isEditing}
-                        className="rounded border border-[#d1d5db] px-2 py-1 text-xs text-[#444] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                        className="rounded border border-base-300 px-2 py-1 text-xs text-base-content/80 outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
                       >
                         <option value="">Pilih Peran</option>
                         {peranOptions.map((opt) => (
@@ -362,7 +362,7 @@ function ManajemenPesertaEvent() {
             </table>
           </div>
           {!loading && filtered.length === 0 && (
-            <div className="py-10 text-center text-sm text-[#9aa0a6]">Tidak ada peserta ditemukan.</div>
+            <div className="py-10 text-center text-sm text-base-content/50">Tidak ada peserta ditemukan.</div>
           )}
 
           <div className="flex items-center justify-between border-t border-[#f0f0f0] px-6 py-3">
@@ -376,18 +376,18 @@ function ManajemenPesertaEvent() {
                     type="button"
                     disabled={currentPage <= 1}
                     onClick={() => setPage(currentPage - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <span className="px-2 text-xs text-[#9aa0a6]">
+                  <span className="px-2 text-xs text-base-content/50">
                     Halaman {currentPage} dari {totalPages}
                   </span>
                   <button
                     type="button"
                     disabled={currentPage >= totalPages}
                     onClick={() => setPage(currentPage + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -439,9 +439,9 @@ function ManajemenPesertaEvent() {
 
         {submitted && (
           <div className="pt-2">
-            <p className="text-sm font-semibold text-[#444]">Status</p>
+            <p className="text-sm font-semibold text-base-content/80">Status</p>
             <p className="mt-1 text-2xl font-extrabold">
-              <span className="text-[#222]">Telah </span>
+              <span className="text-base-content">Telah </span>
               <span className="text-brand-dark">Tercatat</span>
             </p>
           </div>

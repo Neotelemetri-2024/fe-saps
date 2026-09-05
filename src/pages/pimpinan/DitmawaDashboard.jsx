@@ -81,15 +81,15 @@ function PimpinanDitmawaDashboard() {
           <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
             Dashboard Pimpinan / Direktorat
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             Pantau aktivitas mahasiswa dan pengajuan UKM secara real-time.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((card) => (
-            <div key={card.label} className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#616161]">{card.label}</p>
+            <div key={card.label} className="card bg-base-100 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">{card.label}</p>
               <p className="mt-2 text-3xl font-extrabold text-brand-dark">
                 {loading ? '…' : String(card.value)}
               </p>
@@ -97,12 +97,12 @@ function PimpinanDitmawaDashboard() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-[#222]">
+        <div className="card bg-base-100 p-6">
+          <h3 className="text-lg font-bold text-base-content">
             Grafik poin per UKM berdasarkan pengajuan Kegiatan
           </h3>
           {grafikData.length === 0 ? (
-            <p className="mt-4 text-sm text-[#9aa0a6]">{loading ? 'Memuat…' : 'Belum ada data.'}</p>
+            <p className="mt-4 text-sm text-base-content/50">{loading ? 'Memuat…' : 'Belum ada data.'}</p>
           ) : (
             <HorizontalBarChart
               labels={grafikData.map((d) => d.label)}

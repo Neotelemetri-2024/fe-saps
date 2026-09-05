@@ -218,8 +218,8 @@ function ManajemenPeserta() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Manajemen Peserta</h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Manajemen Peserta</h2>
+          <p className="mt-1 text-sm text-base-content/60">
             {kegiatan.nama}
             {kegiatan.tanggal && ` · ${kegiatan.tanggal}`}
             {kegiatan.lokasi && ` · ${kegiatan.lokasi}`}
@@ -244,13 +244,13 @@ function ManajemenPeserta() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
               <div className="relative flex w-full flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
                 <input
                   type="text"
                   placeholder="Cari NIM atau nama…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-[#d9dce7] bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
+                  className="w-full rounded-lg border border-base-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -314,7 +314,7 @@ function ManajemenPeserta() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left text-sm">
                 <thead>
-                  <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-xs font-semibold uppercase tracking-wide text-white">
+                  <tr className="bg-primary text-xs font-semibold uppercase tracking-wide text-white">
                     <th className="w-16 px-4 py-3 text-center">No</th>
                     <th className="px-4 py-3 text-center">NIM</th>
                     <th className="px-4 py-3 text-center">Nama</th>
@@ -325,11 +325,11 @@ function ManajemenPeserta() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Memuat data…</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-base-content/50">Memuat data…</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9aa0a6]">Tidak ada peserta.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-base-content/50">Tidak ada peserta.</td></tr>
                 ) : pageItems.map((p) => (
-                    <tr key={p.partisipasiId || p.id} className="divide-x divide-[#e9ebf8] border-b border-[#e9ebf8] last:border-0 hover:bg-[#f9fafb]">
+                    <tr key={p.partisipasiId || p.id} className="divide-x divide-base-300 border-b border-base-300 last:border-0 hover:bg-base-200">
                       <td className="w-16 px-4 py-3 text-center text-black">{p.no}</td>
                       <td className="px-4 py-3 font-medium text-black">{p.nim || '-'}</td>
                       <td className="px-4 py-3 text-black">{p.nama}</td>
@@ -339,7 +339,7 @@ function ManajemenPeserta() {
                           value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
                           onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.value)}
                           disabled={!isEditing}
-                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
                         >
                           <option value="">Belum</option>
                           <option value="true">Hadir</option>
@@ -350,7 +350,7 @@ function ManajemenPeserta() {
                           value={p.peranVerifId || ''}
                           onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
                           disabled={!isEditing}
-                          className="rounded-md border border-[#e9ebf8] p-1.5 text-xs text-[#333] outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-[#f9fafb] disabled:text-[#999]"
+                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
                         >
                           <option value="">Pilih Peran</option>
                           {peranOptions.map((opt) => (
@@ -365,7 +365,7 @@ function ManajemenPeserta() {
             </div>
 
           {!loading && (
-            <div className="flex items-center justify-between border-t border-[#e9ebf8] px-6 py-3">
+            <div className="flex items-center justify-between border-t border-base-300 px-6 py-3">
               <span className="text-xs text-[#888]">
                 Menampilkan {filtered.length} dari {pesertaData.length} peserta
               </span>
@@ -376,18 +376,18 @@ function ManajemenPeserta() {
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => setPage(currentPage - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="px-2 text-xs text-[#9aa0a6]">
+                    <span className="px-2 text-xs text-base-content/50">
                       Halaman {currentPage} dari {totalPages}
                     </span>
                     <button
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => setPage(currentPage + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e9ebf8] text-[#616161] transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -438,9 +438,9 @@ function ManajemenPeserta() {
 
         {submitted && (
           <div className="pt-2">
-            <p className="text-sm font-semibold text-[#444]">Status</p>
+            <p className="text-sm font-semibold text-base-content/80">Status</p>
             <p className="mt-1 text-2xl font-extrabold">
-              <span className="text-[#222]">Telah </span>
+              <span className="text-base-content">Telah </span>
               <span className="text-brand-dark">Tercatat</span>
             </p>
           </div>

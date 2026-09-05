@@ -9,9 +9,9 @@
 function MahasiswaIdentityCell({ nama, nim, prodi }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="font-bold uppercase text-black">{nama || '-'}</p>
-      {nim ? <p className="text-sm font-normal text-black">{nim}</p> : null}
-      {prodi ? <p className="text-sm font-normal text-black">{prodi}</p> : null}
+      <p className="font-semibold uppercase text-base-content">{nama || '-'}</p>
+      {nim ? <p className="text-sm font-normal text-base-content">{nim}</p> : null}
+      {prodi ? <p className="text-sm font-normal text-base-content">{prodi}</p> : null}
     </div>
   )
 }

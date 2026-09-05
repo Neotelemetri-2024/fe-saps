@@ -53,7 +53,7 @@ const columns = [
           {row.bukti}
         </a>
       ) : (
-        <span className="text-[#9aa0a6]">{row.bukti}</span>
+        <span className="text-base-content/50">{row.bukti}</span>
       ),
   },
   { key: 'poin', label: 'POIN' },
@@ -174,37 +174,37 @@ function RiwayatPoin() {
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Riwayat Poin</h2>
-        <p className="text-sm text-[#616161]">Rekap seluruh kegiatan dan poin yang telah terkumpul sesuai kurikulum.</p>
+        <h2 className="text-xl font-bold text-base-content sm:text-2xl">Riwayat Poin</h2>
+        <p className="text-sm text-base-content/60">Rekap seluruh kegiatan dan poin yang telah terkumpul sesuai kurikulum.</p>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-4 sm:p-6 shadow-sm">
+        <div className="rounded-xl border border-base-300 bg-white p-4 sm:p-6 shadow-sm">
           <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f0f2f9] pb-4">
             <div>
-              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Kurikulum</h3>
-              <p className="mt-0.5 text-xs text-[#616161]">
+              <h3 className="text-base font-bold text-base-content sm:text-lg">Progress Kurikulum</h3>
+              <p className="mt-0.5 text-xs text-base-content/60">
                 Poin yang dihitung masuk ke progres dibatasi maksimal sesuai target capaian kurikulum.
               </p>
             </div>
             <div className="flex items-center gap-5 sm:gap-6">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e98a8]">Progress Target</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-base-content/50">Progress Target</p>
                 <p className="mt-0.5 text-base sm:text-lg font-bold text-brand-dark">
-                  {loading ? '…' : totalPoinProgres} <span className="text-xs font-normal text-[#616161]">/ {totalTarget} poin ({pctTotal}%)</span>
+                  {loading ? '…' : totalPoinProgres} <span className="text-xs font-normal text-base-content/60">/ {totalTarget} poin ({pctTotal}%)</span>
                 </p>
               </div>
               <div className="h-9 w-px bg-[#e9ebf8]" />
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e98a8]">Total Poin Diperoleh</p>
-                <p className="mt-0.5 text-base sm:text-lg font-bold text-[#111]">
-                  {loading ? '…' : totalPoin} <span className="text-xs font-normal text-[#616161]">poin</span>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-base-content/50">Total Poin Diperoleh</p>
+                <p className="mt-0.5 text-base sm:text-lg font-bold text-base-content">
+                  {loading ? '…' : totalPoin} <span className="text-xs font-normal text-base-content/60">poin</span>
                 </p>
               </div>
             </div>
           </div>
           {loading ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat progress…</p>
+            <p className="py-8 text-center text-sm text-base-content/50">Memuat progress…</p>
           ) : progressData.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data progress kurikulum.</p>
+            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data progress kurikulum.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {progressData.map((item, index) => {
@@ -216,23 +216,23 @@ function RiwayatPoin() {
                     className={`relative rounded-lg border p-4 text-center cursor-pointer transition-all duration-200 ${
                       isSelected
                         ? 'border-brand-dark ring-2 ring-brand-dark/20 bg-[#f9fbf9] shadow-sm'
-                        : 'border-[#e9ebf8] hover:border-brand-dark/50 hover:bg-[#fafbfa] bg-white'
+                        : 'border-base-300 hover:border-brand-dark/50 hover:bg-[#fafbfa] bg-white'
                     }`}
                   >
-                    <p className="text-xs font-semibold text-[#616161]">{item.tahun}</p>
+                    <p className="text-xs font-semibold text-base-content/60">{item.tahun}</p>
                     <p className="mt-1 text-2xl font-bold text-brand-dark">
                       {item.current}
-                      <span className="text-sm font-normal text-[#616161]">/{item.target} poin</span>
+                      <span className="text-sm font-normal text-base-content/60">/{item.target} poin</span>
                     </p>
                     <div className="mt-2 flex justify-center">
                       <ProgressBar value={item.current} max={item.target || 1} height={6} />
                     </div>
-                    <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
+                    <div className="mt-2 flex items-center justify-center gap-1 text-sm text-base-content/60">
                       {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
                       <span>{item.label}</span>
                     </div>
                     {item.poinLebih > 0 && (
-                      <p className="mt-1.5 text-[11px] text-[#8e98a8]">
+                      <p className="mt-1.5 text-[11px] text-base-content/50">
                         +{item.poinLebih} poin lebih di riwayat
                       </p>
                     )}
@@ -265,7 +265,7 @@ function RiwayatPoin() {
                     className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-xs text-white outline-none backdrop-blur-sm cursor-pointer"
                   >
                     {progressData.map((c) => (
-                      <option key={c.id} value={c.id} className="text-[#333]">
+                      <option key={c.id} value={c.id} className="text-base-content">
                         {c.nama}
                       </option>
                     ))}
@@ -332,46 +332,46 @@ function RiwayatPoin() {
         <TableCard title="Riwayat Poin">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Kategori</option>
                 {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
               </select>
-              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Peran</option>
                 {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
-              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Penyelenggara</option>
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
               {(search || filterKategori || filterPeran || filterStatus || filterSkala || filterPenyelenggara) && (
-                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
               )}
             </div>
           </div>
 
           <TableFrame>
             {loading ? (
-              <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat riwayat…</p>
+              <p className="py-8 text-center text-sm text-base-content/50">Memuat riwayat…</p>
             ) : (
               <DataTable columns={columns} data={filtered} />
             )}

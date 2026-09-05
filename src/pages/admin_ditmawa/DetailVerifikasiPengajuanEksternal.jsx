@@ -183,7 +183,7 @@ function DetailVerifikasiPengajuanEksternal() {
   if (loading) {
     return (
       <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
-        <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat detail…</div>
+        <div className="py-24 text-center text-sm text-base-content/50">Memuat detail…</div>
       </DashboardLayout>
     )
   }
@@ -192,7 +192,7 @@ function DetailVerifikasiPengajuanEksternal() {
     return (
       <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
         <div className="flex flex-col items-center gap-4 py-20">
-          <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
+          <p className="text-base font-semibold text-base-content/60">Data tidak ditemukan.</p>
           <button type="button" onClick={backToList}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
             <ArrowLeft className="h-4 w-4" /> Kembali
@@ -210,17 +210,17 @@ function DetailVerifikasiPengajuanEksternal() {
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-[#111]">
+            <h3 className="text-base font-bold text-base-content">
               {actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Pengajuan'}
             </h3>
-            <p className="mt-0.5 text-sm text-[#616161]">
+            <p className="mt-0.5 text-sm text-base-content/60">
               {actionType === 'revisi'
                 ? 'Tuliskan catatan yang perlu diperbaiki oleh mahasiswa.'
                 : 'Tuliskan alasan penolakan pengajuan ini.'}
             </p>
           </div>
           <textarea
-            className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+            className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             rows={4}
             placeholder={actionType === 'revisi' ? 'Contoh: Lampiran sertifikat belum diunggah...' : 'Contoh: Kegiatan tidak sesuai kriteria...'}
             value={alasan}
@@ -241,7 +241,7 @@ function DetailVerifikasiPengajuanEksternal() {
               type="button"
               disabled={submitting}
               onClick={() => setShowActionModal(false)}
-              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
             >
               Batal
             </button>
@@ -259,8 +259,8 @@ function DetailVerifikasiPengajuanEksternal() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Pengajuan Eksternal</h2>
-            <p className="mt-1 text-sm text-[#616161]">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Pengajuan Eksternal</h2>
+            <p className="mt-1 text-sm text-base-content/60">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="shrink-0">
             <StatusBadge status={item.status} />
@@ -290,9 +290,9 @@ function DetailVerifikasiPengajuanEksternal() {
         )}
 
         {!canAct && !item.alasan && (
-          <div className="rounded-xl border border-[#e9ebf8] bg-[#f9fafb] px-5 py-3.5 flex items-center gap-2">
+          <div className="rounded-xl border border-base-300 bg-base-200 px-5 py-3.5 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-            <p className="text-sm text-[#616161]">
+            <p className="text-sm text-base-content/60">
               Pengajuan ini sudah diverifikasi dengan status <StatusBadge status={item.status} />
             </p>
           </div>
@@ -330,7 +330,7 @@ function DetailVerifikasiPengajuanEksternal() {
           <SectionCard title="Capaian Kurikulum">
             <div className="space-y-1.5">
               {item.capaian.map((c, i) => (
-                <p key={i} className="text-sm font-medium text-[#111]">{c.label}</p>
+                <p key={i} className="text-sm font-medium text-base-content">{c.label}</p>
               ))}
             </div>
           </SectionCard>
@@ -369,7 +369,7 @@ function DetailVerifikasiPengajuanEksternal() {
               <button
                 type="button"
                 onClick={() => setShowCapaianForm(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
               >Teruskan ke Pimpinan
               </button>
             </div>
@@ -377,16 +377,16 @@ function DetailVerifikasiPengajuanEksternal() {
 
         {/* Form pemetaan capaian — muncul setelah klik Teruskan ke Pimpinan */}
         {canAct && showCapaianForm && (
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm space-y-5">
+          <div className="card bg-base-100 p-6 space-y-5">
             <div>
-              <h3 className="text-base font-bold text-[#222]">Pemetaan Capaian Kurikulum</h3>
-              <p className="mt-0.5 text-sm text-[#616161]">
+              <h3 className="text-base font-bold text-base-content">Pemetaan Capaian Kurikulum</h3>
+              <p className="mt-0.5 text-sm text-base-content/60">
                 Tentukan capaian kurikulum yang dicapai melalui kegiatan ini sebelum meneruskan ke Pimpinan.
               </p>
             </div>
 
             {loadingKur ? (
-              <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
+              <p className="text-sm text-base-content/50">Memuat kurikulum…</p>
             ) : kurikulumList.length === 0 ? (
               <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Super Admin.</p>
             ) : (
@@ -402,12 +402,12 @@ function DetailVerifikasiPengajuanEksternal() {
             )}
 
             {/* Tombol submit */}
-            <div className="flex flex-col gap-3 pt-2 border-t border-[#e9ebf8] sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 pt-2 border-t border-base-300 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 disabled={submitting || loadingKur}
                 onClick={handleSubmitSetuju}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
               >{submitting ? 'Memproses...' : 'Teruskan ke Pimpinan'}
               </button>
               <button
@@ -417,7 +417,7 @@ function DetailVerifikasiPengajuanEksternal() {
                   setSelectedCapaianIds([])
                   setAlokasi([])
                 }}
-                className="rounded-xl border border-[#d1d5db] bg-white px-5 py-2.5 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]"
+                className="rounded-xl border border-base-300 bg-white px-5 py-2.5 text-sm font-semibold text-base-content/80 transition hover:bg-base-200"
               >
                 Batal
               </button>

@@ -91,8 +91,8 @@ function AdminFakultasDashboard() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-lg font-bold text-[#222]">Rata-rata Capaian per Prodi</h3>
+          <div className="card bg-base-100 p-6">
+            <h3 className="mb-4 text-lg font-bold text-base-content">Rata-rata Capaian per Prodi</h3>
             <div className="space-y-3">
               {[
                 { prodi: 'Teknik Mesin', pct: 78 }, { prodi: 'Teknik Industri', pct: 72 }, { prodi: 'Informatika', pct: 85 },
@@ -100,8 +100,8 @@ function AdminFakultasDashboard() {
               ].map((p) => (
                 <div key={p.prodi}>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#333]">{p.prodi}</span>
-                    <span className="text-[#616161]">{p.pct}%</span>
+                    <span className="text-base-content">{p.prodi}</span>
+                    <span className="text-base-content/60">{p.pct}%</span>
                   </div>
                   <div className="mt-1 h-2 w-full rounded-full bg-[#e9ebf8]">
                     <div className="h-2 rounded-full bg-brand-light" style={{ width: `${p.pct}%` }} />
@@ -111,14 +111,14 @@ function AdminFakultasDashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+          <div className="card bg-base-100 p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#f0f4f0]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-base-200">
                 <Download className="h-6 w-6 text-brand-dark" />
               </div>
               <div>
                 <p className="font-semibold text-brand-dark">Download Panduan Verifikasi</p>
-                <p className="text-xs text-[#616161]">PDF - 3.1 MB</p>
+                <p className="text-xs text-base-content/60">PDF - 3.1 MB</p>
               </div>
             </div>
           </div>

@@ -7,6 +7,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardFakultasDetail } from '../../services/dashboardService'
+import { DoughnutChart, StackedBarChart } from '../../components/charts'
 
 const KATEGORI = [
   { key: 'organisasi', color: '#3b82f6', label: 'Organisasi' },
@@ -57,108 +58,6 @@ function KategoriPoinBar({ item }) {
           title={`${k.label}: ${item[k.key] || 0}`}
         />
       ))}
-    </div>
-  )
-}
-
-function HorizontalStackedBar({ data, maxVal }) {
-  const skala = maxVal || 1
-
-  return (
-    <div>
-      <div className="space-y-4">
-        {data.map((d) => {
-          const totalKategori = KATEGORI.reduce((s, k) => s + (d[k.key] || 0), 0) || 1
-          const lebarBar = (d.poin / skala) * 100
-
-          return (
-            <div key={d.prodi} className="flex items-center gap-3">
-              <span className="w-[140px] shrink-0 truncate text-right text-xs font-semibold text-brand-dark">
-                {d.prodi}
-              </span>
-              <div className="h-7 flex-1 rounded-md border border-[#e9ebf8] bg-[#f9fafb]">
-                <div className="flex h-full overflow-hidden rounded-md" style={{ width: `${lebarBar}%` }}>
-                  {KATEGORI.map((k) => {
-                    const val = d[k.key] || 0
-                    return (
-                      <div
-                        key={k.key}
-                        className="relative h-full min-w-0 cursor-default transition hover:brightness-110"
-                        style={{
-                          width: `${(val / totalKategori) * 100}%`,
-                          backgroundColor: k.color,
-                        }}
-                        title={`${d.prodi} — ${k.label}: ${val}`}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
-              <span className="w-12 shrink-0 text-left text-xs font-bold text-brand-dark" title={`Total: ${d.poin}`}>
-                {d.poin}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-5 text-xs font-medium text-[#616161]">
-        {KATEGORI.map((k) => (
-          <span key={k.key} className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded" style={{ backgroundColor: k.color }}></span>
-            {k.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function SvgDoughnut({ centerTitle = 'Total', centerValue, centerLabel, sections, size = 'h-44 w-44' }) {
-  const [hover, setHover] = useState(null)
-  let offsetBerjalan = 0
-
-  return (
-    <div className={`relative ${size} mb-8 flex items-center justify-center`}>
-      <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 42 42">
-        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#eef0f7" strokeWidth="4.5" />
-        {sections.map((cur, i) => {
-          const dashOffset = 100 - offsetBerjalan
-          offsetBerjalan += cur.percentage
-          const pct = Math.round(cur.percentage * 10) / 10
-          const tip =
-            cur.value != null
-              ? `${cur.label || '-'}: ${cur.value} (${pct}%)`
-              : `${cur.label || '-'}: ${pct}%`
-          return (
-            <circle
-              key={i}
-              cx="21"
-              cy="21"
-              r="15.915"
-              fill="transparent"
-              stroke={cur.color}
-              strokeWidth={hover?.index === i ? 5.5 : 4.5}
-              strokeDasharray={`${cur.percentage} ${100 - cur.percentage}`}
-              strokeDashoffset={dashOffset}
-              className="cursor-pointer transition-[stroke-width]"
-              style={{ pointerEvents: cur.percentage > 0 ? 'stroke' : 'none' }}
-              onMouseEnter={() => setHover({ index: i, text: tip })}
-              onMouseLeave={() => setHover(null)}
-            />
-          )
-        })}
-      </svg>
-      <div className="pointer-events-none absolute text-center">
-        <p className="text-[10px] font-semibold uppercase leading-none tracking-wider text-[#9aa0a6]">{centerTitle}</p>
-        <p className="my-0.5 text-2xl font-extrabold text-brand-dark">{centerValue}</p>
-        <p className="text-[10px] font-medium leading-none text-[#616161]">{centerLabel}</p>
-      </div>
-      {hover && (
-        <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 max-w-[90%] -translate-x-1/2 translate-y-full rounded-lg bg-[#222] px-2.5 py-1.5 text-center text-[11px] font-semibold text-white shadow-lg">
-          {hover.text}
-        </div>
-      )}
     </div>
   )
 }
@@ -228,7 +127,6 @@ function DetailFakultasProdi() {
     [distribusiPoin, prodiList],
   )
   const totalPoin = prodiList.reduce((s, p) => s + p.poin, 0)
-  const maxPoin = Math.max(...prodiList.map((p) => p.poin), 1)
 
   const mhsSections = prodiList.map((p, idx) => ({
     percentage: (p.mahasiswa / (totalMahasiswa || 1)) * 100,
@@ -258,9 +156,9 @@ function DetailFakultasProdi() {
         userName={user?.nama || 'Pimpinan Utama'}
         userRole="Pimpinan Utama (Rektor)"
       >
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-10 text-center shadow-sm">
-          <h2 className="text-xl font-bold text-[#222]">Fakultas tidak ditemukan</h2>
-          <p className="mt-2 text-sm text-[#616161]">
+        <div className="rounded-xl border border-base-300 bg-white p-10 text-center shadow-sm">
+          <h2 className="text-xl font-bold text-base-content">Fakultas tidak ditemukan</h2>
+          <p className="mt-2 text-sm text-base-content/60">
             ID fakultas tidak valid. Pilih fakultas lain dari halaman ringkasan.
           </p>
         </div>
@@ -280,10 +178,10 @@ function DetailFakultasProdi() {
             <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
               {namaFakultas || fakultasId}
             </h2>
-            <p className="mt-1 text-sm text-[#616161]">Detail program studi dan poin capaian mahasiswa.</p>
+            <p className="mt-1 text-sm text-base-content/60">Detail program studi dan poin capaian mahasiswa.</p>
           </div>
           <div className="flex items-center gap-3 self-start sm:self-center">
-            <label htmlFor="filter-prodi" className="whitespace-nowrap text-sm font-semibold text-[#333]">
+            <label htmlFor="filter-prodi" className="whitespace-nowrap text-sm font-semibold text-base-content">
               Filter Prodi
             </label>
             <div className="relative">
@@ -291,19 +189,19 @@ function DetailFakultasProdi() {
                 id="filter-prodi"
                 value={selectedProdi}
                 onChange={(e) => setSelectedProdi(e.target.value)}
-                className="cursor-pointer appearance-none rounded-lg border border-[#e9ebf8] bg-white py-2 pl-4 pr-10 text-sm text-[#333] shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                className="cursor-pointer appearance-none rounded-lg border border-base-300 bg-white py-2 pl-4 pr-10 text-sm text-base-content shadow-sm focus:border-brand-dark focus:ring-brand-dark"
               >
                 {['Semua Prodi', ...prodiList.map((p) => p.prodi)].map((p) => (
                   <option key={p}>{p}</option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#616161]" />
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/60" />
             </div>
             {selectedProdi !== 'Semua Prodi' && (
               <button
                 type="button"
                 onClick={() => setSelectedProdi('Semua Prodi')}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
               >
                 Reset Filter
               </button>
@@ -311,11 +209,11 @@ function DetailFakultasProdi() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between card bg-base-100 p-6">
           <div>
-            <h3 className="text-sm font-bold text-[#222]">Kurikulum Aktif</h3>
-            <p className="mt-1 text-sm font-semibold text-[#333]">{kurikulumLabel}</p>
-            <p className="mt-0.5 text-xs text-[#616161]">
+            <h3 className="text-sm font-bold text-base-content">Kurikulum Aktif</h3>
+            <p className="mt-1 text-sm font-semibold text-base-content">{kurikulumLabel}</p>
+            <p className="mt-0.5 text-xs text-base-content/60">
               {Number(statistik?.totalMahasiswa ?? totalMahasiswa).toLocaleString('id-ID')} Mahasiswa Terdaftar
             </p>
           </div>
@@ -331,9 +229,9 @@ function DetailFakultasProdi() {
             data={filteredProdi}
             emptyText="Belum ada data prodi."
             columns={[
-              { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-[#616161]">{item.rank}.</span> },
+              { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-base-content/60">{item.rank}.</span> },
               { key: 'prodi', label: 'Program Studi', render: (item) => <span className="font-semibold text-brand-dark">{item.prodi}</span> },
-              { key: 'poin', label: 'Total Poin', render: (item) => <span className="font-bold text-[#333]">{item.poin}</span> },
+              { key: 'poin', label: 'Total Poin', render: (item) => <span className="font-bold text-base-content">{item.poin}</span> },
               { key: 'kategori', label: 'Kategori Poin', render: (item) => <KategoriPoinBar item={item} /> },
             ]}
           />
@@ -341,25 +239,38 @@ function DetailFakultasProdi() {
         </TableCard>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-3">
-            <h3 className="mb-6 text-center text-lg font-bold text-[#222]">Rata-rata capaian per prodi</h3>
+          <div className="card bg-base-100 p-6 md:col-span-3">
+            <h3 className="mb-6 text-center text-lg font-bold text-base-content">Rata-rata capaian per prodi</h3>
             {loading || filteredProdi.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#9aa0a6]">Belum ada data grafik.</p>
+              <p className="py-10 text-center text-sm text-base-content/50">Belum ada data grafik.</p>
             ) : (
-              <HorizontalStackedBar data={filteredProdi} maxVal={maxPoin} />
+              <StackedBarChart
+                horizontal
+                labels={filteredProdi.map((d) => d.prodi)}
+                datasets={[
+                  { label: 'Organisasi', data: filteredProdi.map((d) => d.organisasi), color: '#3b82f6' },
+                  { label: 'Seminar', data: filteredProdi.map((d) => d.seminar), color: '#15803d' },
+                  { label: 'Prestasi', data: filteredProdi.map((d) => d.prestasi), color: '#eab308' },
+                ]}
+                height={Math.max(240, filteredProdi.length * 42)}
+              />
             )}
           </div>
 
-          <div className="flex flex-col items-center rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-2">
-            <h3 className="mb-4 text-center text-lg font-bold text-[#222]">Total mahasiswa</h3>
-            <SvgDoughnut
+          <div className="flex flex-col items-center card bg-base-100 p-6 md:col-span-2">
+            <h3 className="mb-4 text-center text-lg font-bold text-base-content">Total mahasiswa</h3>
+            <DoughnutChart
+              labels={mhsSections.length ? mhsSections.map((s) => s.label) : ['—']}
+              values={mhsSections.length ? mhsSections.map((s) => s.value || s.percentage) : [1]}
+              colors={mhsSections.length ? mhsSections.map((s) => s.color) : ['#eef0f7']}
+              centerTitle="Total"
               centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
               centerLabel="Mahasiswa"
-              sections={mhsSections.length ? mhsSections : [{ percentage: 100, color: '#eef0f7' }]}
+              height={220}
             />
             <div className="mt-6 w-full space-y-2 text-xs font-semibold">
               {prodiList.map((p, idx) => (
-                <div key={p.prodi} className="flex items-center justify-between text-[#616161]">
+                <div key={p.prodi} className="flex items-center justify-between text-base-content/60">
                   <div className="flex max-w-[75%] items-center gap-2.5 truncate">
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -367,7 +278,7 @@ function DetailFakultasProdi() {
                     />
                     <span className="truncate">{p.prodi}</span>
                   </div>
-                  <span className="font-bold text-[#9aa0a6]">
+                  <span className="font-bold text-base-content/50">
                     {Math.round((p.mahasiswa / (totalMahasiswa || 1)) * 100)}%
                   </span>
                 </div>
@@ -376,17 +287,20 @@ function DetailFakultasProdi() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-center text-lg font-bold text-[#222]">Poin berdasarkan skala kegiatan</h3>
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-6 text-center text-lg font-bold text-base-content">Poin berdasarkan skala kegiatan</h3>
           <div className="flex flex-col items-center justify-around gap-8 sm:flex-row">
-            <SvgDoughnut
+            <DoughnutChart
+              labels={skalaKegiatan.length ? skalaKegiatan.map((s) => s.label) : ['—']}
+              values={skalaKegiatan.length ? skalaKegiatan.map((s) => s.percentage) : [1]}
+              colors={skalaKegiatan.length ? skalaKegiatan.map((s) => s.color) : ['#eef0f7']}
               centerValue={Number(totalPoin).toLocaleString('id-ID')}
               centerLabel="Poin"
-              sections={skalaKegiatan.length ? skalaKegiatan : [{ percentage: 100, color: '#eef0f7' }]}
+              height={220}
             />
             <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-xs font-semibold">
               {skalaKegiatan.map((s) => (
-                <div key={s.label} className="flex items-center gap-3 text-[#616161]">
+                <div key={s.label} className="flex items-center gap-3 text-base-content/60">
                   <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: s.color }}></span>
                   <span>{s.label} ({s.percentage}%)</span>
                 </div>

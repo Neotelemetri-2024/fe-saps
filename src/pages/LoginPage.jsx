@@ -50,7 +50,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full overflow-hidden bg-white font-poppins">
+    <div className="flex min-h-screen w-full overflow-hidden bg-white font-sans">
       {/* Left Panel — desktop only */}
       <div className="relative hidden min-h-screen w-1/2 flex-col justify-center overflow-hidden login-bg-gradient lg:flex">
         {/* Overlay gelap agar garis grid tidak bercampur dengan warna gradient di belakangnya */}

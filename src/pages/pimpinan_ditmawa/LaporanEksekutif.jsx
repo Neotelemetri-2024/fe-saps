@@ -68,36 +68,36 @@ function LaporanEksekutif() {
   return (
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Laporan Eksekutif</h2>
-          <p className="mt-1 text-sm text-[#616161]">Preview dan unduh laporan evaluasi sistem SAPS.</p>
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Laporan Eksekutif</h2>
+          <p className="mt-1 text-sm text-base-content/60">Preview dan unduh laporan evaluasi sistem SAPS.</p>
         </div>
 
         {/* Filter & Download */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="card bg-base-100 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-4 w-4 text-[#616161]" />
-            <h3 className="text-sm font-bold text-[#333]">Filter Laporan</h3>
+            <Filter className="h-4 w-4 text-base-content/60" />
+            <h3 className="text-sm font-bold text-base-content">Filter Laporan</h3>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <select value={filter.fakultasId} onChange={(e) => setFilter((f) => ({ ...f, fakultasId: e.target.value }))}
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="select">
               <option value="">Semua Fakultas</option>
               {fakultasList.map((f) => <option key={f.id} value={f.id}>{f.nama}</option>)}
             </select>
             <input type="text" value={filter.angkatan} onChange={(e) => setFilter((f) => ({ ...f, angkatan: e.target.value }))}
               placeholder="Angkatan (mis: 2022)"
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none" />
+              className="select" />
             <input type="text" value={filter.tahunAkademik} onChange={(e) => setFilter((f) => ({ ...f, tahunAkademik: e.target.value }))}
               placeholder="Tahun Akademik (mis: 2024/2025)"
-              className="rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none" />
+              className="select" />
             <div className="flex gap-2">
               <button type="button" onClick={loadPreview}
-                className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+                className="btn btn-primary flex-1 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
                 <Eye className="mr-1 inline h-4 w-4" /> Preview
               </button>
               {(filter.fakultasId || filter.angkatan || filter.tahunAkademik) && (
                 <button type="button" onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-sm font-medium text-brand-dark hover:bg-[#f5f6f8]">
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-sm font-medium text-brand-dark hover:bg-base-200">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -124,9 +124,9 @@ function LaporanEksekutif() {
               { label: 'Total Kegiatan', value: kpi.totalKegiatan ?? '-' },
               { label: 'Lulus Target', value: kpi.persentaseLulusTarget != null ? `${kpi.persentaseLulusTarget}%` : '-' },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm">
-                <p className="text-xs font-medium text-[#9aa0a6]">{label}</p>
-                <p className="mt-1 text-xl font-bold text-[#222]">{value}</p>
+              <div key={label} className="card bg-base-100 p-4">
+                <p className="text-xs font-medium text-base-content/50">{label}</p>
+                <p className="mt-1 text-xl font-bold text-base-content">{value}</p>
               </div>
             ))}
           </div>
@@ -138,7 +138,7 @@ function LaporanEksekutif() {
             <TableFrame>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#e9ebf8] bg-gradient-to-r from-brand-dark to-brand-light text-white">
+                  <tr className="bg-primary text-primary-content">
                     <th className="px-4 py-3 text-left font-semibold">No</th>
                     <th className="px-4 py-3 text-left font-semibold">Fakultas</th>
                     <th className="px-4 py-3 text-right font-semibold">Total Poin</th>
@@ -148,7 +148,7 @@ function LaporanEksekutif() {
                 </thead>
                 <tbody>
                   {komparasi.slice(0, 10).map((item, i) => (
-                    <tr key={item.id || i} className="border-b border-[#f0f1f5] hover:bg-[#f9fafb]">
+                    <tr key={item.id || i} className="border-b border-[#f0f1f5] hover:bg-base-200">
                       <td className="px-4 py-3 text-black">{i + 1}</td>
                       <td className="px-4 py-3 font-medium text-black">{item.nama || item.fakultas || '-'}</td>
                       <td className="px-4 py-3 text-right text-black">{(item.totalPoin ?? 0).toLocaleString('id-ID')}</td>
@@ -168,7 +168,7 @@ function LaporanEksekutif() {
             <TableFrame>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#e9ebf8] bg-gradient-to-r from-brand-dark to-brand-light text-white">
+                  <tr className="bg-primary text-primary-content">
                     <th className="px-4 py-3 text-left font-semibold">Pilar</th>
                     <th className="px-4 py-3 text-right font-semibold">Target Poin</th>
                     <th className="px-4 py-3 text-right font-semibold">Rata-rata Poin</th>
@@ -177,7 +177,7 @@ function LaporanEksekutif() {
                 </thead>
                 <tbody>
                   {capaian.map((c, i) => (
-                    <tr key={c.id || i} className="border-b border-[#f0f1f5] hover:bg-[#f9fafb]">
+                    <tr key={c.id || i} className="border-b border-[#f0f1f5] hover:bg-base-200">
                       <td className="px-4 py-3 font-medium text-black">{c.pilar || c.nama || '-'}</td>
                       <td className="px-4 py-3 text-right text-black">{c.targetPoin ?? '-'}</td>
                       <td className="px-4 py-3 text-right text-black">{c.rataRataPoin ?? '-'}</td>
@@ -191,7 +191,7 @@ function LaporanEksekutif() {
         )}
 
         {loading && (
-          <div className="py-12 text-center text-sm text-[#9aa0a6]">Memuat data laporan...</div>
+          <div className="py-12 text-center text-sm text-base-content/50">Memuat data laporan...</div>
         )}
       </div>
   )

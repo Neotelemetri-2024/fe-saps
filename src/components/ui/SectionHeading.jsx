@@ -1,11 +1,9 @@
-import './SectionHeading.css'
-
 function SectionHeading({ eyebrow, title, description, id }) {
   return (
-    <div className="section-heading">
-      <span className="section-heading__eyebrow">{eyebrow}</span>
-      <h2 id={id}>{title}</h2>
-      <p>{description}</p>
+    <div>
+      {eyebrow && <span className="text-xs font-semibold uppercase tracking-wide text-primary">{eyebrow}</span>}
+      <h2 id={id} className="text-2xl font-extrabold text-base-content">{title}</h2>
+      {description && <p className="mt-1 text-sm text-base-content/60">{description}</p>}
     </div>
   )
 }

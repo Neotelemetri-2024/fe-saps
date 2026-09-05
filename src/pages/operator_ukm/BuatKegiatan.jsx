@@ -241,10 +241,10 @@ function BuatKegiatan() {
         </button>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             {isEdit ? 'Edit Kegiatan' : 'Buat Kegiatan'}
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             {isEdit
               ? 'Perbarui draft kegiatan. Setelah siap, kirim dari daftar kegiatan.'
               : 'Isi detail kegiatan dan petakan ke Capaian & Sub Capaian. Simpan sebagai draft; kirim dari daftar kegiatan setelah siap.'}
@@ -253,9 +253,9 @@ function BuatKegiatan() {
 
         <form onSubmit={handleSimpanDraft} className="space-y-5">
           {/* ── 1. Informasi Kegiatan ── */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-[#222]">1. Informasi Kegiatan</h3>
-            <p className="mt-0.5 mb-4 text-sm text-[#616161]">Lengkapi informasi kegiatan terlebih dahulu</p>
+          <div className="card bg-base-100 p-6">
+            <h3 className="text-base font-bold text-base-content">1. Informasi Kegiatan</h3>
+            <p className="mt-0.5 mb-4 text-sm text-base-content/60">Lengkapi informasi kegiatan terlebih dahulu</p>
             <div className="space-y-4">
 
               {/* Jenis Kegiatan */}
@@ -266,7 +266,7 @@ function BuatKegiatan() {
                   <select
                     value={form.kategoriId}
                     onChange={(e) => setForm((p) => ({ ...p, kategoriId: e.target.value, skalaId: '' }))}
-                    className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                    className="mt-1 block w-full rounded-md border border-base-300 p-2.5 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
                     required
                   >
                   <option value="">-- Pilih jenis kegiatan --</option>
@@ -286,7 +286,7 @@ function BuatKegiatan() {
                   value={form.nama}
                   onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
                   placeholder="Masukkan nama kegiatan"
-                  className="mt-1 block w-full rounded-d border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                  className="mt-1 block w-full rounded-d border border-base-300 p-2.5 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ function BuatKegiatan() {
                   value={form.skalaId}
                   onChange={(e) => setForm((p) => ({ ...p, skalaId: e.target.value }))}
                   disabled={!form.kategoriId || loadingSkala}
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark disabled:cursor-not-allowed disabled:bg-[#f5f5f5]"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-2.5 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark disabled:cursor-not-allowed disabled:bg-base-200"
                   required
                 >
                   <option value="">
@@ -315,7 +315,7 @@ function BuatKegiatan() {
                   ))}
                 </select>
                 {!form.kategoriId && (
-                  <p className="mt-1 text-xs text-[#9aa0a6]">Skala muncul setelah jenis kegiatan dipilih.</p>
+                  <p className="mt-1 text-xs text-base-content/50">Skala muncul setelah jenis kegiatan dipilih.</p>
                 )}
               </div>
 
@@ -329,10 +329,10 @@ function BuatKegiatan() {
                   onChange={(e) => setForm((p) => ({ ...p, deskripsi: e.target.value }))}
                   rows={4}
                   placeholder="Tujuan, agenda, dan manfaat kegiatan"
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-2.5 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark resize-none"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-2.5 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark resize-none"
                   maxLength={500}
                 />
-                <p className="mt-1 text-right text-xs text-[#9aa0a6]">{form.deskripsi.length}/500</p>
+                <p className="mt-1 text-right text-xs text-base-content/50">{form.deskripsi.length}/500</p>
               </div>
 
               {/* Tanggal */}
@@ -362,9 +362,9 @@ function BuatKegiatan() {
                       value={form.lokasi}
                       onChange={(e) => setForm((p) => ({ ...p, lokasi: e.target.value }))}
                       placeholder="Gedung / tempat kegiatan"
-                      className="block w-full rounded-md border border-[#e9ebf8] p-2.5 pr-9 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                      className="block w-full rounded-md border border-base-300 p-2.5 pr-9 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
                     />
-                    <MapPin className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9aa0a6]" />
+                    <MapPin className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/50" />
                   </div>
                 </div>
                 <div>
@@ -378,9 +378,9 @@ function BuatKegiatan() {
                       value={form.kuota}
                       onChange={(e) => setForm((p) => ({ ...p, kuota: e.target.value }))}
                       placeholder="Masukkan jumlah peserta"
-                      className="block w-full rounded-md border border-[#e9ebf8] p-2.5 pr-9 text-sm text-[#333] shadow-sm outline-none focus:border-brand-dark"
+                      className="block w-full rounded-md border border-base-300 p-2.5 pr-9 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
                     />
-                    <Users className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9aa0a6]" />
+                    <Users className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/50" />
                   </div>
                 </div>
               </div>
@@ -389,12 +389,12 @@ function BuatKegiatan() {
           </div>
 
           {/* ── 2. Pemetaan Capaian Kurikulum ── */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-[#222]">2. Pemetaan Capaian Kurikulum</h3>
-            <p className="mt-0.5 mb-4 text-sm text-[#616161]">Tentukan capaian kurikulum yang dicapai melalui kegiatan ini</p>
+          <div className="card bg-base-100 p-6">
+            <h3 className="text-base font-bold text-base-content">2. Pemetaan Capaian Kurikulum</h3>
+            <p className="mt-0.5 mb-4 text-sm text-base-content/60">Tentukan capaian kurikulum yang dicapai melalui kegiatan ini</p>
 
             {loadingKur ? (
-              <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
+              <p className="text-sm text-base-content/50">Memuat kurikulum…</p>
             ) : kurikulumList.length === 0 ? (
               <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Admin.</p>
             ) : (
@@ -437,13 +437,13 @@ function BuatKegiatan() {
               type="button"
               disabled={loading}
               onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
-              className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn btn-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >{loading ? 'Mengirim…' : 'Ajukan Sekarang'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/operator_ukm/daftar-kegiatan')}
-              className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
+              className="rounded-lg border border-base-300 bg-white px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
             >
               Batal
             </button>

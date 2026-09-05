@@ -220,7 +220,7 @@ function PemetaanCapaianMassal() {
   if (loading) {
     return (
       <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
-        <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat data kegiatan…</div>
+        <div className="py-24 text-center text-sm text-base-content/50">Memuat data kegiatan…</div>
       </DashboardLayout>
     )
   }
@@ -236,15 +236,15 @@ function PemetaanCapaianMassal() {
           >
             <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
           </button>
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-8 text-center shadow-sm">
-            <p className="text-base font-semibold text-[#222]">Tidak Ada Kegiatan yang Dipilih</p>
-            <p className="mt-1 text-sm text-[#616161]">
+          <div className="rounded-xl border border-base-300 bg-white p-8 text-center shadow-sm">
+            <p className="text-base font-semibold text-base-content">Tidak Ada Kegiatan yang Dipilih</p>
+            <p className="mt-1 text-sm text-base-content/60">
               Pilih satu atau beberapa kegiatan di halaman Verifikasi Pengajuan Eksternal terlebih dahulu untuk melakukan pemetaan capaian secara massal.
             </p>
             <button
               type="button"
               onClick={backToList}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+              className="mt-4 inline-btn btn-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               Menuju ke Verifikasi Pengajuan Eksternal
             </button>
@@ -264,21 +264,21 @@ function PemetaanCapaianMassal() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Pemetaan Capaian Massal</h2>
-            <p className="mt-1 text-sm text-[#616161]">
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Pemetaan Capaian Massal</h2>
+            <p className="mt-1 text-sm text-base-content/60">
               Isi pemetaan capaian kurikulum untuk {kegiatans.length} kegiatan sebelum diteruskan ke Pimpinan.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-4 py-2.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
             <ClipboardList className="h-4 w-4 text-brand-dark" />
-            <span className="text-sm text-[#616161]">
+            <span className="text-sm text-base-content/60">
               <span className="font-bold text-brand-dark">{jumlahLengkap}</span> / {kegiatans.length} lengkap
             </span>
           </div>
         </div>
 
         {loadingKur ? (
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 text-sm text-[#9aa0a6] shadow-sm">Memuat kurikulum…</div>
+          <div className="rounded-xl border border-base-300 bg-white p-6 text-sm text-base-content/50 shadow-sm">Memuat kurikulum…</div>
         ) : kurikulumList.length === 0 ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">
             Kurikulum aktif tidak ditemukan. Hubungi Super Admin untuk mengaktifkan kurikulum terlebih dahulu.
@@ -286,14 +286,14 @@ function PemetaanCapaianMassal() {
         ) : (
           <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
             {/* Daftar kegiatan */}
-            <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden self-start">
-              <div className="flex items-center justify-between border-b border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-                <h3 className="text-sm font-bold text-[#222]">Daftar Kegiatan</h3>
-                <span className="text-xs font-medium text-[#616161]">
+            <div className="card bg-base-100 overflow-hidden self-start">
+              <div className="flex items-center justify-between border-b border-base-300 bg-base-200 px-4 py-3">
+                <h3 className="text-sm font-bold text-base-content">Daftar Kegiatan</h3>
+                <span className="text-xs font-medium text-base-content/60">
                   {jumlahLengkap}/{kegiatans.length} Lengkap
                 </span>
               </div>
-              <div className="divide-y divide-[#e9ebf8]">
+              <div className="divide-y divide-base-300">
                 {kegiatans.map((k, idx) => {
                   const lengkap = isLengkap(k)
                   const isActive = idx === activeIndex
@@ -310,7 +310,7 @@ function PemetaanCapaianMassal() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className={`text-sm font-semibold line-clamp-1 ${
-                          isActive ? 'text-brand-dark font-bold' : 'text-[#222]'
+                          isActive ? 'text-brand-dark font-bold' : 'text-base-content'
                         }`}>
                           {idx + 1}. {k.nama}
                         </span>
@@ -323,7 +323,7 @@ function PemetaanCapaianMassal() {
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-[#616161]">
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-base-content/60">
                         <span className="truncate max-w-[140px]">{k.mahasiswa}</span>
                         <span>•</span>
                         <span className="truncate max-w-[120px]">{k.prodi}</span>
@@ -341,15 +341,15 @@ function PemetaanCapaianMassal() {
             </div>
 
             {/* Form pemetaan */}
-            <div className="rounded-xl border border-[#e9ebf8] bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-[#e9ebf8] bg-[#f9fafb] px-5 py-4 sm:px-6">
+            <div className="card bg-base-100 overflow-hidden">
+              <div className="border-b border-base-300 bg-base-200 px-5 py-4 sm:px-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <h3 className="text-base font-bold text-[#222]">
+                    <h3 className="text-base font-bold text-base-content">
                       {active?.nama}
                     </h3>
-                    <p className="mt-0.5 text-xs text-[#616161]">
-                      Diajukan oleh: <span className="font-medium text-[#333]">{active?.mahasiswa}</span> {active?.nim && active?.nim !== '-' ? `(${active?.nim})` : ''} · {active?.prodi}
+                    <p className="mt-0.5 text-xs text-base-content/60">
+                      Diajukan oleh: <span className="font-medium text-base-content">{active?.mahasiswa}</span> {active?.nim && active?.nim !== '-' ? `(${active?.nim})` : ''} · {active?.prodi}
                       {active?.kategori && active?.kategori !== '-' ? ` · ${active?.kategori}` : ''}
                       {active?.skala && active?.skala !== '-' ? ` · Skala ${active?.skala}` : ''}
                     </p>
@@ -399,8 +399,8 @@ function PemetaanCapaianMassal() {
         )}
 
         {/* Footer aksi */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-          <p className="text-sm text-[#616161]">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between card bg-base-100 p-5">
+          <p className="text-sm text-base-content/60">
             {allLengkap
               ? 'Semua kegiatan sudah lengkap. Siap diteruskan ke Pimpinan.'
               : (() => {
@@ -416,7 +416,7 @@ function PemetaanCapaianMassal() {
             <button
               type="button"
               onClick={backToList}
-              className="rounded-xl border border-[#d1d5db] bg-white px-5 py-2.5 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]"
+              className="rounded-xl border border-base-300 bg-white px-5 py-2.5 text-sm font-semibold text-base-content/80 transition hover:bg-base-200"
             >
               Batal
             </button>
@@ -424,7 +424,7 @@ function PemetaanCapaianMassal() {
               type="button"
               disabled={submitting || !allLengkap}
               onClick={handleSubmit}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >{submitting ? 'Memproses…' : `Teruskan ke Pimpinan (${kegiatans.length})`}
             </button>
           </div>

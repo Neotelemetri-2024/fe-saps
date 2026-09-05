@@ -130,17 +130,17 @@ function DaftarKegiatan() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Daftar Kegiatan</h2>
+              <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Daftar Kegiatan</h2>
               <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
             </div>
-            <p className="mt-1 text-sm text-[#616161]">
+            <p className="mt-1 text-sm text-base-content/60">
               Simpan draft dulu, lalu kirim ke Admin Fakultas setelah siap.
             </p>
           </div>
           <button
             type="button"
             onClick={() => navigate('/operator_ukmf/buat-kegiatan')}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
+            className="btn btn-primary w-full px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Buat Kegiatan
           </button>
@@ -149,30 +149,30 @@ function DaftarKegiatan() {
         <TableCard title="Kegiatan Saya">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Kategori</option>
                 {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
               </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
-              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               {(search || filterStatus || filterKategori || filterSkala) && (
-                <button type="button" onClick={() => { setSearch(''); setFilterStatus(''); setFilterKategori(''); setFilterSkala('') }} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+                <button type="button" onClick={() => { setSearch(''); setFilterStatus(''); setFilterKategori(''); setFilterSkala('') }} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
               )}
             </div>
           </div>

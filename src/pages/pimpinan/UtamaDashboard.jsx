@@ -2,6 +2,7 @@ import React from 'react'
 import { ChevronRight, Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import { StackedBarChart } from '../../components/charts'
 
 // ---------------------------------------------------------------------------
 // Mock data — swap these for real API data
@@ -53,73 +54,6 @@ function StatBox({ label, value, tone }) {
   )
 }
 
-function ProdiStackedChart({ data }) {
-  const width = 800
-  const height = 400
-  const paddingLeft = 50
-  const paddingBottom = 80
-  const maxVal = 500
-  const chartHeight = height - paddingBottom - 10
-  const barWidth = 20
-  const gap = (width - paddingLeft - barWidth * data.length) / (data.length + 1)
-
-  const yTicks = [100, 200, 300, 400, 500]
-  const colors = { organisasi: '#3b82f6', seminar: '#15803d', prestasi: '#eab308' }
-
-  const scaleY = (v) => (v / maxVal) * chartHeight
-
-  return (
-    <div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-        {yTicks.map((t) => {
-          const y = height - paddingBottom - scaleY(t)
-          return (
-            <g key={t}>
-              <line x1={paddingLeft} y1={y} x2={width} y2={y} stroke="#eef0f7" strokeWidth="1" />
-              <text x={paddingLeft - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#9aa0a6">{t}</text>
-            </g>
-          )
-        })}
-        {data.map((d, i) => {
-          const x = paddingLeft + gap + i * (barWidth + gap)
-          const baseY = height - paddingBottom
-          const hOrg = scaleY(d.organisasi)
-          const hSem = scaleY(d.seminar)
-          const hPre = scaleY(d.prestasi)
-          const yOrg = baseY - hOrg
-          const ySem = yOrg - hSem
-          const yPre = ySem - hPre
-
-          return (
-            <g key={d.fakultas}>
-              <rect x={x} y={yPre} width={barWidth} height={hPre} fill={colors.prestasi} rx="2" />
-              <rect x={x} y={ySem} width={barWidth} height={hSem} fill={colors.seminar} rx="2" />
-              <rect x={x} y={yOrg} width={barWidth} height={hOrg} fill={colors.organisasi} rx="2" />
-              
-              <text
-                x={x + barWidth / 2}
-                y={baseY + 5}
-                textAnchor="end"
-                fontSize="11"
-                fill="#616161"
-                transform={`rotate(-45 ${x + barWidth / 2} ${baseY + 5})`}
-              >
-                {d.fakultas}
-              </text>
-            </g>
-          )
-        })}
-        {/* X-axis line */}
-        <line x1={paddingLeft} y1={height - paddingBottom} x2={width} y2={height - paddingBottom} stroke="#e9ebf8" strokeWidth="1" />
-      </svg>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-[#616161]">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.organisasi }}></span>organisasi</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.seminar }}></span>seminar</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: colors.prestasi }}></span>prestasi</span>
-      </div>
-    </div>
-  )
-}
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -135,7 +69,7 @@ function PimpinanUtamaDashboard() {
           <h2 className="bg-gradient-to-r from-brand-dark to-brand-light bg-clip-text text-2xl font-extrabold text-transparent sm:text-3xl">
             Selamat Datang<br />Dr. Efa Yonnedi, SE. MPPM, Akt, CA, CRGP
           </h2>
-          <p className="mt-3 max-w-2xl text-sm text-[#616161]">
+          <p className="mt-3 max-w-2xl text-sm text-base-content/60">
             Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.
           </p>
         </div>
@@ -148,22 +82,30 @@ function PimpinanUtamaDashboard() {
         </div>
 
         {/* Grafik poin per Fakultas */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-center text-lg font-bold text-[#222]">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
-          <ProdiStackedChart data={prodiChart} />
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-4 text-center text-lg font-bold text-base-content">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
+          <StackedBarChart
+            labels={prodiChart.map((d) => d.fakultas)}
+            datasets={[
+              { label: 'Organisasi', data: prodiChart.map((d) => d.organisasi), color: '#3b82f6' },
+              { label: 'Seminar', data: prodiChart.map((d) => d.seminar), color: '#15803d' },
+              { label: 'Prestasi', data: prodiChart.map((d) => d.prestasi), color: '#eab308' },
+            ]}
+            height={360}
+          />
         </div>
 
         {/* Ranking Fakultas */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-[#222]">Ranking Fakultas</h3>
-          <p className="text-sm text-[#616161] mb-4">Daftar peringkat seluruh fakultas berdasarkan total poin semua matriks</p>
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-4 text-lg font-bold text-base-content">Ranking Fakultas</h3>
+          <p className="text-sm text-base-content/60 mb-4">Daftar peringkat seluruh fakultas berdasarkan total poin semua matriks</p>
           <div className="space-y-4">
             {rankingFakultas.map((item, index) => (
               <div key={index} className="flex items-center gap-4">
                 <span className="w-6 text-lg font-bold text-brand-dark">{index + 1}.</span>
                 <div className="flex-1">
                   <p className="font-medium text-brand-dark">{item.name}</p>
-                  <p className="text-xs text-[#616161]">{item.prodi}</p>
+                  <p className="text-xs text-base-content/60">{item.prodi}</p>
                   <ProgressBar value={item.progress} max={100} height={8} color="bg-brand-light" />
                 </div>
                 <span className="text-sm font-medium text-brand-dark">{item.progress}%</span>

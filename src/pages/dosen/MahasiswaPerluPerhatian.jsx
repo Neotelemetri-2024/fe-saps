@@ -125,12 +125,12 @@ function MahasiswaPerluPerhatian() {
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
+          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
 
           <TableCard title="Mahasiswa Perlu Perhatian">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-white px-3 py-2 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
                   value={search}
@@ -142,7 +142,7 @@ function MahasiswaPerluPerhatian() {
               <select
                 value={filterProdi}
                 onChange={(e) => setFilterProdi(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#e9ebf8] bg-white px-3 py-2 text-sm text-[#333] shadow-sm outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-sm text-base-content shadow-sm outline-none"
               >
                 <option value="">Semua Prodi</option>
                 {prodiOptions.map((p) => (
@@ -153,7 +153,7 @@ function MahasiswaPerluPerhatian() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterProdi('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>
@@ -161,11 +161,11 @@ function MahasiswaPerluPerhatian() {
             </div>
             <TableFrame>
               {loading ? (
-                <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat data…</p>
+                <p className="py-8 text-center text-sm text-base-content/50">Memuat data…</p>
               ) : (
                 <>
                   <DataTable columns={columns} data={filtered} />
-                  <p className="mt-4 text-sm text-[#616161]">
+                  <p className="mt-4 text-sm text-base-content/60">
                     menampilkan {filtered.length === 0 ? 0 : 1} - {filtered.length} dari {data.length} Mahasiswa
                   </p>
                 </>

@@ -337,12 +337,12 @@ function PersetujuanDosen() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <Modal isOpen={!!infoModal} onClose={() => setInfoModal(null)}>
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-[#333]">{infoModal?.judul}</h3>
-          <p className="text-sm text-[#616161] whitespace-pre-wrap">{infoModal?.isi || 'Tidak ada keterangan.'}</p>
+          <h3 className="text-base font-bold text-base-content">{infoModal?.judul}</h3>
+          <p className="text-sm text-base-content/60 whitespace-pre-wrap">{infoModal?.isi || 'Tidak ada keterangan.'}</p>
           <button
             type="button"
             onClick={() => setInfoModal(null)}
-            className="w-full rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+            className="w-full rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
           >
             Tutup
           </button>
@@ -351,8 +351,8 @@ function PersetujuanDosen() {
 
       <Modal isOpen={showPeranModal} onClose={() => !submittingIzin && setShowPeranModal(false)}>
         <div className="space-y-4">
-          <h3 className="text-base font-bold text-[#333]">Pilih Peran / Pencapaian</h3>
-          <p className="text-sm text-[#616161]">
+          <h3 className="text-base font-bold text-base-content">Pilih Peran / Pencapaian</h3>
+          <p className="text-sm text-base-content/60">
             Pilih peran untuk setiap kegiatan yang akan dikirim ke Dosen PA.
           </p>
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
@@ -360,11 +360,11 @@ function PersetujuanDosen() {
               const row = data.find((r) => r.id === id)
               const state = peranPerKegiatan[id] || {}
               return (
-                <div key={id} className="rounded-xl border border-[#e9ebf8] p-3 space-y-2">
-                  <p className="text-sm font-semibold text-[#333] truncate">{row?.kegiatan || '-'}</p>
-                  <p className="text-xs text-[#9aa0a6]">{row?.jenis} · {row?.skala}</p>
+                <div key={id} className="rounded-xl border border-base-300 p-3 space-y-2">
+                  <p className="text-sm font-semibold text-base-content truncate">{row?.kegiatan || '-'}</p>
+                  <p className="text-xs text-base-content/50">{row?.jenis} · {row?.skala}</p>
                   {state.loading ? (
-                    <p className="text-xs text-[#9aa0a6]">Memuat peran…</p>
+                    <p className="text-xs text-base-content/50">Memuat peran…</p>
                   ) : !state.peranList?.length ? (
                     <p className="text-xs text-red-400">Peran tidak tersedia untuk kategori ini.</p>
                   ) : (
@@ -376,7 +376,7 @@ function PersetujuanDosen() {
                           [id]: { ...prev[id], peranId: e.target.value },
                         }))
                       }
-                      className="block w-full rounded-lg border border-[#e9ebf8] p-2.5 text-sm text-[#333] focus:border-brand-dark"
+                      className="block w-full rounded-lg border border-base-300 p-2.5 text-sm text-base-content focus:border-brand-dark"
                     >
                       <option value="">Pilih peran</option>
                       {(state.peranList || []).map((p) => (
@@ -393,14 +393,14 @@ function PersetujuanDosen() {
               type="button"
               disabled={submittingIzin || [...selected].some((id) => !peranPerKegiatan[id]?.peranId)}
               onClick={handleSubmitIzinPA}
-              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+              className="btn btn-primary flex-1 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
               {submittingIzin ? 'Mengirim…' : 'Kirim ke Dosen PA'}
             </button>
             <button
               type="button"
               onClick={() => setShowPeranModal(false)}
-              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
             >
               Batal
             </button>
@@ -411,8 +411,8 @@ function PersetujuanDosen() {
       <Modal isOpen={!!revisiTarget} onClose={handleCloseRevisi} size="md">
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-[#333]">Ajukan Ulang ke Dosen PA</h3>
-            <p className="mt-0.5 text-sm text-[#616161]">
+            <h3 className="text-base font-bold text-base-content">Ajukan Ulang ke Dosen PA</h3>
+            <p className="mt-0.5 text-sm text-base-content/60">
               Kegiatan: <span className="font-medium">{revisiTarget?.kegiatan}</span>
             </p>
           </div>
@@ -425,18 +425,18 @@ function PersetujuanDosen() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-[#333] mb-1">
+            <label className="block text-sm font-medium text-base-content mb-1">
               Peran / Pencapaian<span className="text-red-500">*</span>
             </label>
             {loadingPeran ? (
-              <p className="text-sm text-[#9aa0a6]">Memuat pilihan peran…</p>
+              <p className="text-sm text-base-content/50">Memuat pilihan peran…</p>
             ) : peranList.length === 0 ? (
               <p className="text-sm text-red-400">Peran tidak tersedia untuk kategori ini.</p>
             ) : (
               <select
                 value={peranId}
                 onChange={(e) => setPeranId(e.target.value)}
-                className="block w-full rounded-lg border border-[#e9ebf8] p-2.5 text-sm text-[#333] focus:border-brand-dark"
+                className="block w-full rounded-lg border border-base-300 p-2.5 text-sm text-base-content focus:border-brand-dark"
               >
                 <option value="">Pilih peran</option>
                 {peranList.map((p) => (
@@ -451,14 +451,14 @@ function PersetujuanDosen() {
               type="button"
               disabled={submitting || !peranId}
               onClick={handleSubmitRevisi}
-              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+              className="btn btn-primary flex-1 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? 'Mengirim…' : 'Ajukan Ulang'}
             </button>
             <button
               type="button"
               onClick={handleCloseRevisi}
-              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
             >
               Batal
             </button>
@@ -468,8 +468,8 @@ function PersetujuanDosen() {
 
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Persetujuan Dosen PA</h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Persetujuan Dosen PA</h2>
+          <p className="mt-1 text-sm text-base-content/60">
             Kegiatan eksternal yang sudah disetujui admin dapat diminta persetujuan ke Dosen PA. Pantau juga status permintaan izin yang sudah dikirim.
           </p>
         </div>
@@ -477,13 +477,13 @@ function PersetujuanDosen() {
         <TableCard title="Persetujuan Dosen PA">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
 
@@ -491,7 +491,7 @@ function PersetujuanDosen() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -502,7 +502,7 @@ function PersetujuanDosen() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
               >
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (
@@ -514,7 +514,7 @@ function PersetujuanDosen() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>
@@ -597,15 +597,15 @@ function PersetujuanDosen() {
           </TableFrame>
 
           {!loading && siapPaRows.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-base-300 pt-4">
               {pilihanMode ? (
                 <>
-                  <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>
+                  <span className="text-sm text-base-content/60">{selected.size} kegiatan dipilih</span>
                   <div className="ml-auto flex gap-2">
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
                     >
                       Batal
                     </button>
@@ -613,7 +613,7 @@ function PersetujuanDosen() {
                       type="button"
                       disabled={selected.size === 0 || submittingIzin}
                       onClick={handleOpenPeranModal}
-                      className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="btn btn-primary px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Minta Persetujuan Dosen PA
                     </button>
@@ -623,7 +623,7 @@ function PersetujuanDosen() {
                 <button
                   type="button"
                   onClick={() => setPilihanMode(true)}
-                  className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary ml-auto px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                 >
                   Minta Persetujuan Dosen PA
                 </button>

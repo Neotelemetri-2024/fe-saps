@@ -450,20 +450,20 @@ function DosenPADetail() {
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
-        <div className="overflow-hidden rounded-xl border border-[#e9ebf8] bg-white shadow-sm">
+        <div className="overflow-hidden card bg-base-100">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-dark text-xl font-extrabold text-white">
                 {(m.nama || '?').split(' ').map((n) => n[0]).slice(0, 2).join('')}
               </div>
               <div>
-                <h2 className="text-lg font-extrabold text-[#222]">{loading ? 'Memuat…' : m.nama}</h2>
-                <p className="text-sm text-[#555]">{m.nim} • {m.prodi}</p>
+                <h2 className="text-lg font-extrabold text-base-content">{loading ? 'Memuat…' : m.nama}</h2>
+                <p className="text-sm text-base-content/70">{m.nim} • {m.prodi}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-brand-dark px-3 py-0.5 text-xs font-semibold text-white">
                     Angkatan {m.angkatan}
                   </span>
-                  <span className="text-sm font-semibold text-[#555]">• IPK {m.ipk}</span>
+                  <span className="text-sm font-semibold text-base-content/70">• IPK {m.ipk}</span>
                 </div>
               </div>
             </div>
@@ -540,12 +540,12 @@ function DosenPADetail() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-[#222]">Total Poin per Capaian</h3>
+          <div className="card bg-base-100 p-6">
+            <h3 className="text-base font-bold text-base-content">Total Poin per Capaian</h3>
             <p className="mt-0.5 text-xs text-[#888]">Distribusi poin mahasiswa di setiap area pengembangan</p>
             <div className="mt-5">
               {totalPoinData.length === 0 ? (
-                <p className="py-12 text-center text-sm text-[#9aa0a6]">Belum ada data poin per capaian.</p>
+                <p className="py-12 text-center text-sm text-base-content/50">Belum ada data poin per capaian.</p>
               ) : (
                 <HorizontalBarChart
                   labels={totalPoinData.map((d) => d.category)}
@@ -559,26 +559,26 @@ function DosenPADetail() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="card bg-base-100 p-6">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-[#222]">Timeline Aktivitas</h3>
+              <h3 className="text-base font-bold text-base-content">Timeline Aktivitas</h3>
               <p className="mt-0.5 text-xs text-[#888]">Riwayat kegiatan mahasiswa yang sedang dibimbing</p>
             </div>
             {timelineAktivitas.length > 0 && (
-              <span className="text-xs text-[#9aa0a6]">{timelineAktivitas.length} aktivitas</span>
+              <span className="text-xs text-base-content/50">{timelineAktivitas.length} aktivitas</span>
             )}
           </div>
 
           {timelineAktivitas.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada timeline aktivitas.</p>
+            <p className="py-6 text-center text-sm text-base-content/50">Belum ada timeline aktivitas.</p>
           ) : (
             <ul className="space-y-3">
               {displayedTimeline.map((act, i) => (
                 <li key={`${act.event}-${act.date}-${i}`} className="rounded-lg border border-[#eef0f6] bg-[#fafbfc] px-3.5 py-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug text-[#222]">{act.event}</p>
+                      <p className="text-sm font-semibold leading-snug text-base-content">{act.event}</p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#888]">
                         <span>{act.date}</span>
                         {act.kategori && act.kategori !== '-' && (
@@ -613,45 +613,45 @@ function DosenPADetail() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-[#222]">Pesan untuk Mahasiswa</h3>
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-4 text-base font-bold text-base-content">Pesan untuk Mahasiswa</h3>
           <textarea
             value={pesan}
             onChange={(e) => setPesan(e.target.value)}
             rows={4}
             placeholder="Tuliskan saran bimbingan akademik dan konseling disini"
-            className="w-full rounded-lg border border-[#d1d5db] p-4 text-sm text-[#333] outline-none focus:border-brand-dark"
+            className="w-full rounded-lg border border-base-300 p-4 text-sm text-base-content outline-none focus:border-brand-dark"
           />
           <button
             type="button"
             onClick={handleKirimPesan}
             disabled={sendingPesan}
-            className="mt-3 w-full rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className="mt-3 w-full btn btn-primary py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
             {sendingPesan ? 'Mengirim…' : 'Kirim Pesan'}
           </button>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
+        <div className="card bg-base-100 p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-bold text-[#222]">Riwayat Catatan</h3>
+            <h3 className="text-base font-bold text-base-content">Riwayat Catatan</h3>
             <button
               type="button"
               onClick={handleDownloadCatatanPdf}
               disabled={riwayatCatatan.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn btn-primary px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-3.5 w-3.5" />
               Download PDF
             </button>
           </div>
           {riwayatCatatan.length === 0 ? (
-            <p className="py-4 text-center text-sm text-[#9aa0a6]">Belum ada catatan.</p>
+            <p className="py-4 text-center text-sm text-base-content/50">Belum ada catatan.</p>
           ) : (
-            <div className="divide-y divide-[#f0f0f0]">
+            <div className="divide-y divide-base-300">
               {displayedCatatan.map((c, i) => (
                 <div key={i} className="py-3">
-                  <p className="text-sm leading-relaxed text-[#333]">{c.message}</p>
+                  <p className="text-sm leading-relaxed text-base-content">{c.message}</p>
                   <p className="mt-1 text-xs text-[#888]">{c.date}</p>
                 </div>
               ))}

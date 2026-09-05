@@ -74,14 +74,14 @@ function TambahAkunModal({ onClose, onSave }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h3 className="text-lg font-semibold text-[#212121]">
+          <h3 className="text-lg font-semibold text-base-content">
             Tambah Akun UKMF
           </h3>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#616161] transition hover:bg-[#f5f5f5] hover:text-[#333]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base-content/60 transition hover:bg-base-200 hover:text-base-content"
             aria-label="Tutup modal"
           >
             <X className="h-5 w-5" />
@@ -92,7 +92,7 @@ function TambahAkunModal({ onClose, onSave }) {
           <div>
             <label
               htmlFor="namaUkm"
-              className="block text-sm text-[#212121]"
+              className="block text-sm text-base-content"
             >
               Nama UKMF <span className="text-red-600">*</span>
             </label>
@@ -104,14 +104,14 @@ function TambahAkunModal({ onClose, onSave }) {
               value={form.namaUkm}
               onChange={handleChange}
               placeholder="Contoh: Hima FT UNAND"
-              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="mt-1 w-full rounded-lg border border-base-300 px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
           </div>
 
           <div>
             <label
               htmlFor="email"
-              className="block text-sm text-[#212121]"
+              className="block text-sm text-base-content"
             >
               Email <span className="text-red-600">*</span>
             </label>
@@ -124,14 +124,14 @@ function TambahAkunModal({ onClose, onSave }) {
               onChange={handleChange}
               placeholder="operator@unand.ac.id"
               autoComplete="off"
-              className="mt-1 w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="mt-1 w-full rounded-lg border border-base-300 px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="block text-sm text-[#212121]"
+              className="block text-sm text-base-content"
             >
               Password <span className="text-red-600">*</span>
             </label>
@@ -145,13 +145,13 @@ function TambahAkunModal({ onClose, onSave }) {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="new-password"
-                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPwd((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8] transition hover:text-[#333]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 transition hover:text-base-content"
                 aria-label={
                   showPwd
                     ? 'Sembunyikan password'
@@ -170,7 +170,7 @@ function TambahAkunModal({ onClose, onSave }) {
           <div>
             <label
               htmlFor="konfirmasiPassword"
-              className="block text-sm text-[#212121]"
+              className="block text-sm text-base-content"
             >
               Konfirmasi Password <span className="text-red-600">*</span>
             </label>
@@ -184,13 +184,13 @@ function TambahAkunModal({ onClose, onSave }) {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="new-password"
-                className="w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
 
               <button
                 type="button"
                 onClick={() => setShowConfirmPwd((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8] transition hover:text-[#333]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 transition hover:text-base-content"
                 aria-label={
                   showConfirmPwd
                     ? 'Sembunyikan konfirmasi password'
@@ -207,7 +207,7 @@ function TambahAkunModal({ onClose, onSave }) {
           </div>
 
           <fieldset>
-            <legend className="block text-sm text-[#212121]">
+            <legend className="block text-sm text-base-content">
               Status <span className="text-red-600">*</span>
             </legend>
 
@@ -253,7 +253,7 @@ function TambahAkunModal({ onClose, onSave }) {
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Menyimpan…' : 'Buat Akun'}
           </button>
@@ -292,7 +292,7 @@ function ResetPasswordModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <h3 className="text-lg font-semibold text-[#212121]">
+          <h3 className="text-lg font-semibold text-base-content">
             Reset Password
           </h3>
 
@@ -300,22 +300,22 @@ function ResetPasswordModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#616161] transition hover:bg-[#f5f5f5] hover:text-[#333] disabled:opacity-60"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base-content/60 transition hover:bg-base-200 hover:text-base-content disabled:opacity-60"
             aria-label="Tutup modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="mb-4 text-sm text-[#616161]">
+        <p className="mb-4 text-sm text-base-content/60">
           Reset password untuk akun:{' '}
-          <strong className="text-[#333]">{item.nama}</strong>
+          <strong className="text-base-content">{item.nama}</strong>
         </p>
 
         <div>
           <label
             htmlFor="passwordBaru"
-            className="block text-sm text-[#212121]"
+            className="block text-sm text-base-content"
           >
             Password Baru <span className="text-red-600">*</span>
           </label>
@@ -328,13 +328,13 @@ function ResetPasswordModal({
               onChange={(event) => setNewPwd(event.target.value)}
               placeholder="Masukkan password baru"
               autoComplete="new-password"
-              className="w-full rounded-lg border border-[#8e98a8] px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full rounded-lg border border-base-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
 
             <button
               type="button"
               onClick={() => setShowPwd((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e98a8] transition hover:text-[#333]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 transition hover:text-base-content"
               aria-label={
                 showPwd
                   ? 'Sembunyikan password'
@@ -364,7 +364,7 @@ function ResetPasswordModal({
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Memproses…' : 'Reset Password'}
           </button>
@@ -605,11 +605,11 @@ function ManajemenAkunUKMF() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
+            <h2 className="text-xl font-bold text-base-content sm:text-2xl">
               Manajemen Akun UKMF
             </h2>
 
-            <p className="mt-1 text-sm text-[#616161]">
+            <p className="mt-1 text-sm text-base-content/60">
               Kelola daftar akun UKMF di fakultas.
             </p>
           </div>
@@ -617,7 +617,7 @@ function ManajemenAkunUKMF() {
           <button
             type="button"
             onClick={() => setShowTambah(true)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
+            className="btn btn-primary w-full px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:w-auto"
           >Tambah Akun UKMF
           </button>
         </div>
@@ -625,7 +625,7 @@ function ManajemenAkunUKMF() {
         <TableCard title="Akun UKMF yang Telah Dibuat">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full flex-1 sm:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
 
               <input
                 type="text"
@@ -634,14 +634,14 @@ function ManajemenAkunUKMF() {
                   setSearch(event.target.value)
                 }
                 placeholder="Cari nama UKMF atau email..."
-                className="w-full rounded-lg border border-[#e9ebf8] bg-white py-2.5 pl-9 pr-3 text-sm text-[#333] outline-none transition placeholder:text-[#9aa0a6] focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 bg-white py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
               >
                 Reset Filter
               </button>

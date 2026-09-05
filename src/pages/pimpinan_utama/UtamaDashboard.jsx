@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { StackedBarChart } from '../../components/charts'
+import { ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -110,7 +111,7 @@ function PimpinanUtamaDashboard() {
           <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
             Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
           </h2>
-          <p className="mt-3 max-w-2xl text-sm text-[#616161]">
+          <p className="mt-3 max-w-2xl text-sm text-base-content/60">
             Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.
           </p>
         </div>
@@ -121,12 +122,12 @@ function PimpinanUtamaDashboard() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-center text-lg font-bold text-[#222]">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
+        <div className="card bg-base-100 p-6">
+          <h3 className="mb-4 text-center text-lg font-bold text-base-content">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
           {loading ? (
-            <p className="py-16 text-center text-sm text-[#9aa0a6]">Memuat grafik…</p>
+            <ChartSkeleton height={320} />
           ) : chartData.length === 0 ? (
-            <p className="py-16 text-center text-sm text-[#9aa0a6]">Belum ada data grafik fakultas.</p>
+            <p className="py-16 text-center text-sm text-base-content/50">Belum ada data grafik fakultas.</p>
           ) : (
             <StackedBarChart
               labels={chartData.map((d) => d.fakultas)}
@@ -136,11 +137,11 @@ function PimpinanUtamaDashboard() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm sm:p-6">
+        <div className="card bg-base-100 p-5 sm:p-6">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold text-[#222]">Ranking Fakultas</h3>
-              <p className="mt-1 text-sm text-[#616161]">
+              <h3 className="text-lg font-bold text-base-content">Ranking Fakultas</h3>
+              <p className="mt-1 text-sm text-base-content/60">
                 Peringkat berdasarkan total poin seluruh matriks
               </p>
             </div>
@@ -153,11 +154,11 @@ function PimpinanUtamaDashboard() {
           </div>
 
           {loading ? (
-            <p className="py-10 text-center text-sm text-[#9aa0a6]">Memuat ranking…</p>
+            <RankListSkeleton />
           ) : rankingList.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[#9aa0a6]">Belum ada data ranking fakultas.</p>
+            <p className="py-10 text-center text-sm text-base-content/50">Belum ada data ranking fakultas.</p>
           ) : (
-            <div className="divide-y divide-[#e9ebf8]">
+            <div className="divide-y divide-base-300">
               {rankingList.map((item, index) => {
                 const rank = index + 1
                 const top = rank <= 3
@@ -170,17 +171,17 @@ function PimpinanUtamaDashboard() {
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                         top
                           ? 'bg-brand-dark text-white'
-                          : 'bg-[#f0f2f5] text-[#616161]'
+                          : 'bg-[#f0f2f5] text-base-content/60'
                       }`}
                     >
                       {rank}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <p className="truncate text-sm text-[#222]">{item.name}</p>
+                        <p className="truncate text-sm text-base-content">{item.name}</p>
                         <p className="shrink-0 text-sm font-semibold text-brand-dark">
                           {item.totalPoin.toLocaleString('id-ID')}
-                          <span className="ml-1 text-xs font-normal text-[#9aa0a6]">poin</span>
+                          <span className="ml-1 text-xs font-normal text-base-content/50">poin</span>
                         </p>
                       </div>
                       <ProgressBar

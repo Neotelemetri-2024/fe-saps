@@ -190,12 +190,12 @@ function AjukanKegiatanForm() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="text-xl font-bold text-[#222] sm:text-2xl">
+              <h2 className="text-xl font-bold text-base-content sm:text-2xl">
                 {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
               </h2>
               <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
             </div>
-            <p className="mt-1 text-sm text-[#616161]">
+            <p className="mt-1 text-sm text-base-content/60">
               {isRevisi
                 ? 'Perbaiki data sesuai catatan revisi, lalu ajukan ulang.'
                 : isEditDraft
@@ -215,8 +215,8 @@ function AjukanKegiatanForm() {
           ) : null}
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-bold text-[#222]">Detail Kegiatan</h3>
+        <div className="rounded-xl border border-base-300 bg-white p-3 sm:p-6 shadow-sm">
+          <h3 className="mb-6 text-lg font-bold text-base-content">Detail Kegiatan</h3>
 
           <div className="space-y-6">
             <div>
@@ -227,7 +227,7 @@ function AjukanKegiatanForm() {
                 name="kategoriId"
                 value={formData.kategoriId}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
               >
                 <option value="">Pilih jenis kegiatan</option>
                 {kategoriList.map((k) => (
@@ -247,7 +247,7 @@ function AjukanKegiatanForm() {
                   value={formData.namaKegiatan}
                   onChange={handleChange}
                   placeholder="Masukkan nama kegiatan"
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
                 />
               </div>
               <div>
@@ -260,7 +260,7 @@ function AjukanKegiatanForm() {
                   value={formData.penyelenggara}
                   onChange={handleChange}
                   placeholder="Masukkan penyelenggara..."
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
                 />
               </div>
             </div>
@@ -274,7 +274,7 @@ function AjukanKegiatanForm() {
                 value={formData.skalaId}
                 onChange={handleChange}
                 disabled={!formData.kategoriId}
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark disabled:bg-[#f5f5f5]"
+                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark disabled:bg-base-200"
               >
                 <option value="">
                   {formData.kategoriId ? 'Pilih skala kegiatan' : 'Pilih jenis kegiatan terlebih dahulu'}
@@ -300,7 +300,7 @@ function AjukanKegiatanForm() {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Jelaskan peran dan manfaat kegiatan..."
-                className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
               />
             </div>
 
@@ -313,7 +313,7 @@ function AjukanKegiatanForm() {
                   value={formData.linkWebsite}
                   onChange={handleChange}
                   placeholder="https://..."
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
                 />
               </div>
               <div>
@@ -324,7 +324,7 @@ function AjukanKegiatanForm() {
                   value={formData.emailPenyelenggara}
                   onChange={handleChange}
                   placeholder="unand@gmail.com"
-                  className="mt-1 block w-full rounded-md border border-[#e9ebf8] p-3 text-sm text-[#333] shadow-sm focus:border-brand-dark"
+                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
                 />
               </div>
             </div>
@@ -347,14 +347,14 @@ function AjukanKegiatanForm() {
                 type="button"
                 disabled={loading || !isDirty}
                 onClick={() => setShowKirimConfirm(true)}
-                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn btn-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >{loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
               </button>
 
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] shadow-sm transition hover:bg-[#f5f5f5]"
+                className="rounded-lg border border-base-300 bg-white px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
               >
                 Batal
               </button>

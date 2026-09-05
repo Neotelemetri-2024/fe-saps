@@ -12,6 +12,7 @@ import { getPengajuan } from '../../services/pengajuanService'
 import { getKlaim } from '../../services/poinService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import PanduanCard from '../../components/dashboard/PanduanCard'
+import { CardGridSkeleton, ChartSkeleton, Skeleton } from '../../components/dashboard/Skeleton'
 
 function LihatSelengkapnyaButton({ onClick }) {
   return (
@@ -82,7 +83,7 @@ function KegiatanCell({ nama, diajukanPada }) {
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-black">{nama || '-'}</p>
-      {tanggal && <p className="text-xs text-[#616161]">Diajukan: {tanggal}</p>}
+      {tanggal && <p className="text-xs text-base-content/60">Diajukan: {tanggal}</p>}
     </div>
   )
 }
@@ -161,15 +162,15 @@ function MahasiswaDashboard() {
       <div className="space-y-4 sm:space-y-6">
         {/* Welcome + Radar */}
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="min-w-0 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm sm:p-6">
+          <div className="min-w-0 card bg-base-100 p-4 sm:p-6">
             <h2 className="text-xl font-extrabold text-black sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />{user?.nama || 'Mahasiswa'}!
             </h2>
-            <p className="mt-3 max-w-lg text-sm text-[#616161]">
+            <p className="mt-3 max-w-lg text-sm text-base-content/60">
               Pantau aktivitas akademik, capaian poin, dan sertifikasi kamu secara real-time.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium text-[#616161]">Poin Target Kelulusan</p>
+              <p className="text-sm font-medium text-base-content/60">Poin Target Kelulusan</p>
               <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                 dashData?.isLulus || pctTotal >= 100
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -180,8 +181,12 @@ function MahasiswaDashboard() {
             </div>
             <div className="mt-1 flex flex-wrap items-end gap-6">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-brand-dark">{loadingDash ? '…' : totalPoinProgres}</span>
-                <span className="text-lg font-semibold text-[#9aa0a6]">/ {maxPoin} poin</span>
+                {loadingDash ? (
+                  <Skeleton className="h-10 w-16" />
+                ) : (
+                  <span className="text-4xl font-extrabold text-brand-dark">{totalPoinProgres}</span>
+                )}
+                <span className="text-lg font-semibold text-base-content/50">/ {maxPoin} poin</span>
               </div>
               <div className="min-w-[200px] flex-1">
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
@@ -194,16 +199,20 @@ function MahasiswaDashboard() {
           <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-4 text-center shadow-sm sm:p-6">
             <h3 className="text-sm font-bold text-white">Radar Karakter Andalasian</h3>
             <div className="mx-auto mt-2 max-w-[260px]">
-              <RadarChartCJ labels={radarLabels} values={radarValues} darkBg height={200} />
+              {loadingDash ? (
+                <ChartSkeleton variant="radar" height={200} />
+              ) : (
+                <RadarChartCJ labels={radarLabels} values={radarValues} darkBg height={200} />
+              )}
             </div>
           </div>
         </div>
 
         {/* Progress per Tahun Kurikulum */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-3 sm:p-6 shadow-sm">
+        <div className="rounded-xl border border-base-300 bg-white p-3 sm:p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-[#222] sm:text-lg">Progress Poin Kelulusan</h3>
+              <h3 className="text-base font-bold text-base-content sm:text-lg">Progress Poin Kelulusan</h3>
               <p className="mt-0.5 text-sm font-medium text-brand-dark">
                 Target Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoinProgres}</span> / {maxPoin} poin ({pctTotal}%)
               </p>
@@ -211,22 +220,22 @@ function MahasiswaDashboard() {
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/riwayat-poin')} />
           </div>
           {loadingDash ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Memuat progress…</p>
+            <CardGridSkeleton />
           ) : progressData.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#9aa0a6]">Belum ada data progress kurikulum.</p>
+            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data progress kurikulum.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {progressData.map((item, index) => (
-                <div key={index} className="rounded-lg border border-[#e9ebf8] p-4 text-center">
-                  <p className="text-xs font-semibold text-[#616161]">{item.tahun}</p>
+                <div key={index} className="rounded-lg border border-base-300 p-4 text-center">
+                  <p className="text-xs font-semibold text-base-content/60">{item.tahun}</p>
                   <p className="mt-1 text-2xl font-bold text-brand-dark">
                     {item.current}
-                    <span className="text-sm font-normal text-[#616161]">/{item.target} poin</span>
+                    <span className="text-sm font-normal text-base-content/60">/{item.target} poin</span>
                   </p>
                   <div className="mt-2 flex justify-center">
                     <ProgressBar value={item.current} max={item.target || 1} height={6} />
                   </div>
-                  <div className="mt-2 flex items-center justify-center gap-1 text-sm text-[#616161]">
+                  <div className="mt-2 flex items-center justify-center gap-1 text-sm text-base-content/60">
                     {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
                     <span>{item.label}</span>
                   </div>
@@ -237,22 +246,22 @@ function MahasiswaDashboard() {
         </div>
 
         {/* Pesan dari Dosen PA */}
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
+        <div className="card bg-base-100 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-lg font-bold text-[#222]">Pesan dari Dosen PA</h3>
+            <h3 className="text-lg font-bold text-base-content">Pesan dari Dosen PA</h3>
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/pesan-dosen-pa')} />
           </div>
           {loadingSaran ? (
-            <p className="py-6 text-center text-sm text-[#9aa0a6]">Memuat pesan…</p>
+            <p className="py-6 text-center text-sm text-base-content/50">Memuat pesan…</p>
           ) : saranPa.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[#9aa0a6]">Belum ada pesan dari Dosen PA.</p>
+            <p className="py-6 text-center text-sm text-base-content/50">Belum ada pesan dari Dosen PA.</p>
           ) : (
             <div className="mt-4 space-y-4">
               {saranPa.slice(0, 3).map((s) => {
                 const waktu = formatTanggalJam(s.createdAt || s.tanggal)
                 return (
-                  <div key={s.id} className="rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-                    <p className="text-sm leading-relaxed text-[#333]">{s.isi}</p>
+                  <div key={s.id} className="rounded-lg border border-base-300 bg-base-200 px-4 py-3">
+                    <p className="text-sm leading-relaxed text-base-content">{s.isi}</p>
                     <p className="mt-1 text-xs text-[#888]">
                       {waktu ? `${waktu} · ` : ''}Dosen PA
                     </p>

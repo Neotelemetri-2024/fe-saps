@@ -270,11 +270,11 @@ function GenerateCV() {
             type="button"
             onClick={() => setGenerated(true)}
             disabled={loading}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
             {loading ? 'Memuat data…' : 'Generate CV'}
           </button>
-          <p className="text-sm text-[#616161]">Buat CV profesional dari data aktivitas Anda secara otomatis.</p>
+          <p className="text-sm text-base-content/60">Buat CV profesional dari data aktivitas Anda secara otomatis.</p>
         </div>
 
         {/* CV + tombol aksi — tampil setelah generate */}
@@ -282,7 +282,7 @@ function GenerateCV() {
           <div className="space-y-4">
             {/* Tombol Download & Bagikan */}
             <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div className="text-sm text-[#616161]">
+              <div className="text-sm text-base-content/60">
                 {linkedinConnected ? (
                   <span>
                     LinkedIn: <span className="font-semibold text-green-700">Terhubung</span>
@@ -298,7 +298,7 @@ function GenerateCV() {
                 <button
                   type="button"
                   onClick={handleDownloadPdf}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                 >
                   <Download className="h-4 w-4" /> Download PDF
                 </button>
@@ -463,7 +463,7 @@ function GenerateCV() {
         <label htmlFor="linkedin-caption" className="mb-1 block text-sm font-semibold text-[#111827]">
           Teks postingan
         </label>
-        <p className="mb-3 text-sm text-[#616161]">
+        <p className="mb-3 text-sm text-base-content/60">
           Ganti teks di bawah ini — persis ini yang akan tampil di LinkedIn, bukan pesan default. Gambar CV dilampirkan otomatis.
         </p>
         <textarea
@@ -479,13 +479,13 @@ function GenerateCV() {
           placeholder={defaultShareCaption(displayUser.name)}
           className="w-full resize-y rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#0A66C2] focus:ring-1 focus:ring-[#0A66C2]"
         />
-        <p className="mt-1 text-right text-xs text-[#9aa0a6]">{shareCaption.length}/3000</p>
+        <p className="mt-1 text-right text-xs text-base-content/50">{shareCaption.length}/3000</p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={() => setShareModalOpen(false)}
             disabled={sharingLinkedIn}
-            className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#f5f6f8] disabled:opacity-60"
+            className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-base-200 disabled:opacity-60"
           >
             Batal
           </button>

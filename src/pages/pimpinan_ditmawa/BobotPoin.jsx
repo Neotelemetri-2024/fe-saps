@@ -31,8 +31,8 @@ function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h4 className="text-sm font-bold text-[#222]">{title}</h4>
-          <button type="button" onClick={onClose} className="text-[#999] hover:text-[#333]">
+          <h4 className="text-sm font-bold text-base-content">{title}</h4>
+          <button type="button" onClick={onClose} className="text-[#999] hover:text-base-content">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -42,20 +42,20 @@ function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, 
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm() }}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-[#d1d5db] px-3 py-2 text-sm outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+          className="input w-full"
         />
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#d1d5db] px-4 py-2 text-sm font-medium text-[#444] hover:bg-[#f5f5f5]"
+            className="rounded-lg border border-base-300 px-4 py-2 text-sm font-medium text-base-content/80 hover:bg-base-200"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="btn btn-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
             Simpan
           </button>
@@ -103,7 +103,7 @@ function EditableCell({ value, onChange, editing }) {
 
   return (
     <span
-      className={`block w-full rounded px-1 py-0.5 text-center text-sm text-[#333] ${editing ? 'cursor-pointer hover:bg-[#f0f7f0]' : ''}`}
+      className={`block w-full rounded px-1 py-0.5 text-center text-sm text-base-content ${editing ? 'cursor-pointer hover:bg-base-200' : ''}`}
       onClick={() => { if (editing) setEditing_(true) }}
       title={editing ? 'Klik untuk mengedit' : ''}
     >
@@ -141,7 +141,7 @@ function EditableRowLabel({ value, onChange, editing }) {
 
   return (
     <span
-      className={`block rounded px-1 py-0.5 text-xs font-semibold uppercase text-[#333] ${editing ? 'cursor-pointer hover:bg-[#f0f7f0]' : ''}`}
+      className={`block rounded px-1 py-0.5 text-xs font-semibold uppercase text-base-content ${editing ? 'cursor-pointer hover:bg-base-200' : ''}`}
       onClick={() => { if (editing) setEditing_(true) }}
       title={editing ? 'Klik untuk mengedit' : ''}
     >
@@ -294,7 +294,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
 
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-bold text-[#222]">{draft.title}</h3>
+          <h3 className="text-base font-bold text-base-content">{draft.title}</h3>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -317,7 +317,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
                 defaultValue: '',
                 onConfirm: addRow,
               })}
-              className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-base-content/80 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed"
             ><Plus className="h-3.5 w-3.5" /> Tambah Baris
             </button>
             <button
@@ -329,7 +329,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
                 defaultValue: '',
                 onConfirm: addCol,
               })}
-              className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-[#444] hover:bg-[#f5f5f5] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 rounded-lg border border-[#ccc] bg-white px-3 py-1.5 text-xs font-medium text-base-content/80 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed"
             ><Plus className="h-3.5 w-3.5" /> Tambah Kolom
             </button>
           </div>
@@ -340,7 +340,7 @@ function SectionTable({ section, onUpdate, onDelete }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
               <thead>
-                <tr className="divide-x divide-white/20 bg-gradient-to-r from-brand-dark to-brand-light text-white">
+                <tr className="bg-primary text-white">
                   <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wide">
                     {draft.rowHeader}
                   </th>
@@ -380,9 +380,9 @@ function SectionTable({ section, onUpdate, onDelete }) {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0f0f0]">
+              <tbody className="divide-y divide-base-300">
                 {draft.rows.map((row, ri) => (
-                  <tr key={ri} className="divide-x divide-[#f0f0f0] hover:bg-[#f9fafb]">
+                  <tr key={ri} className="divide-x divide-base-300 hover:bg-base-200">
                     <td className="px-5 py-4">
                       <div className="flex items-start gap-2">
                         <div className="flex-1">
@@ -417,14 +417,14 @@ function SectionTable({ section, onUpdate, onDelete }) {
             <button
               type="button"
               onClick={handleBatal}
-              className="rounded-lg border border-[#d1d5db] px-5 py-2 text-sm font-medium text-[#444] hover:bg-[#f5f5f5]"
+              className="rounded-lg border border-base-300 px-5 py-2 text-sm font-medium text-base-content/80 hover:bg-base-200"
             >
               Batal
             </button>
             <button
               type="button"
               onClick={handleSimpan}
-              className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
+              className="btn btn-primary px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
             >
               Simpan
             </button>
@@ -453,13 +453,13 @@ function TambahMatriksModal({ isOpen, onClose, onNext }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h4 className="text-lg font-bold text-[#222]">Tambah Matriks</h4>
-          <button type="button" onClick={onClose} className="text-[#999] hover:text-[#333]">
+          <h4 className="text-lg font-bold text-base-content">Tambah Matriks</h4>
+          <button type="button" onClick={onClose} className="text-[#999] hover:text-base-content">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="mb-6">
-          <label className="mb-1.5 block text-sm font-semibold text-[#333]">
+          <label className="mb-1.5 block text-sm font-semibold text-base-content">
             Nama Matriks <span className="text-red-500">*</span>
           </label>
           <input
@@ -468,21 +468,21 @@ function TambahMatriksModal({ isOpen, onClose, onNext }) {
             onChange={(e) => setNama(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleNext() }}
             placeholder="Masukkan nama matriks"
-            className="w-full rounded-lg border border-[#d1d5db] px-3 py-2.5 text-sm outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+            className="input w-full"
           />
         </div>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl border border-[#d1d5db] py-3 text-sm font-bold uppercase text-[#444] hover:bg-[#f5f5f5]"
+            className="flex-1 rounded-xl border border-base-300 py-3 text-sm font-bold uppercase text-base-content/80 hover:bg-base-200"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-3 text-sm font-bold uppercase text-white hover:opacity-90"
+            className="btn btn-primary flex-1 py-3 text-sm font-bold uppercase text-white hover:opacity-90"
           >
             Selanjutnya
           </button>
@@ -510,31 +510,31 @@ function HistoryModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
       <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col px-4 py-6 sm:px-8">
-        <div className="flex items-center justify-between border-b border-[#e9ebf8] pb-4">
+        <div className="flex items-center justify-between border-b border-base-300 pb-4">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-[#616161]" />
-            <h4 className="text-lg font-bold text-[#222]">Histori Perubahan</h4>
+            <History className="h-5 w-5 text-base-content/60" />
+            <h4 className="text-lg font-bold text-base-content">Histori Perubahan</h4>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-[#d1d5db] bg-white px-4 py-2 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]">
+          <button type="button" onClick={onClose} className="rounded-lg border border-base-300 bg-white px-4 py-2 text-sm font-semibold text-base-content/80 transition hover:bg-base-200">
             Tutup
           </button>
         </div>
         <div className="flex-1 py-6">
           {loading ? (
-            <p className="text-sm text-[#9aa0a6]">Memuat histori...</p>
+            <p className="text-sm text-base-content/50">Memuat histori...</p>
           ) : history.length === 0 ? (
-            <p className="text-sm text-[#9aa0a6]">Belum ada histori perubahan.</p>
+            <p className="text-sm text-base-content/50">Belum ada histori perubahan.</p>
           ) : (
             <ul className="space-y-6">
               {history.map((event, index) => (
-                <li key={event.id || index} className="flex items-start gap-4 rounded-xl border border-[#e9ebf8] bg-white p-4 shadow-sm">
+                <li key={event.id || index} className="flex items-start gap-4 card bg-base-100 p-4">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[#333]">
+                    <p className="text-sm font-semibold text-base-content">
                       {event.kategori || event.kategoriNama || '-'}
                       {event.peran ? ` · ${event.peran}` : ''}
                       {event.skala ? ` · ${event.skala}` : ''}
                     </p>
-                    <p className="mt-0.5 text-sm text-[#555]">
+                    <p className="mt-0.5 text-sm text-base-content/70">
                       {event.keterangan || event.desc || `${event.poinLama ?? '-'} → ${event.poinBaru ?? '-'} Poin`}
                     </p>
                     <p className="mt-1 text-xs text-[#999]">
@@ -722,8 +722,8 @@ function BobotPoin() {
       />
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Bobot Poin</h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Bobot Poin</h2>
+          <p className="mt-1 text-sm text-base-content/60">
             Klik nilai poin untuk mengedit langsung. Tekan Enter atau klik di luar untuk konfirmasi.
           </p>
         </div>
@@ -732,22 +732,22 @@ function BobotPoin() {
           <button
             type="button"
             onClick={() => setShowTambahMatriks(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="btn btn-primary btn-sm px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >Matriks
           </button>
           <button
             type="button"
             onClick={() => setShowHistory(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#ccc] bg-white px-4 py-2 text-sm font-semibold text-[#333] hover:bg-[#f5f5f5]"
+            className="flex items-center gap-1.5 rounded-lg border border-[#ccc] bg-white px-4 py-2 text-sm font-semibold text-base-content hover:bg-base-200"
           >Histori Perubahan
           </button>
         </div>
 
         <div className="space-y-10">
           {loadingMatriks ? (
-            <p className="text-sm text-[#9aa0a6]">Memuat data bobot poin...</p>
+            <p className="text-sm text-base-content/50">Memuat data bobot poin...</p>
           ) : sections.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-[#d1d5db] bg-white px-6 py-10 text-center text-sm text-[#9aa0a6]">
+            <p className="rounded-xl border border-dashed border-base-300 bg-white px-6 py-10 text-center text-sm text-base-content/50">
               Belum ada data matriks poin. Klik tombol Matriks untuk menambah kategori baru.
             </p>
           ) : (

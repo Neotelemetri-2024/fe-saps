@@ -9,6 +9,7 @@ import StatCard from '../../components/dashboard/StatCard'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { VerticalBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
+import { ChartSkeleton, ListItemSkeleton } from '../../components/dashboard/Skeleton'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardDosen } from '../../services/dashboardService'
 
@@ -23,7 +24,7 @@ function CapaianBar({ pct, status }) {
           style={{ width: `${clamped}%` }}
         />
       </div>
-      <span className="text-xs text-[#616161]">{clamped}%</span>
+      <span className="text-xs text-base-content/60">{clamped}%</span>
     </div>
   )
 }
@@ -168,13 +169,13 @@ function DosenPADashboard() {
         {/* Welcome */}
         <div>
           <h2 className="text-2xl font-extrabold sm:text-3xl">
-            <span className="text-[#333]">Selamat Datang</span>
+            <span className="text-base-content">Selamat Datang</span>
             <br />
             <span className="text-brand-dark">
               {namaDosen}
             </span>
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#616161]">
+          <p className="mt-2 max-w-2xl text-sm text-base-content/60">
             Pantau perkembangan akademik mahasiswa bimbingan Anda dan kelola persetujuan kegiatan dengan efisien.
           </p>
         </div>
@@ -182,7 +183,7 @@ function DosenPADashboard() {
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <StatCard key={s.label} {...s} />
+            <StatCard key={s.label} {...s} loading={loading} />
           ))}
         </div>
 
@@ -198,11 +199,11 @@ function DosenPADashboard() {
             />
 
             {/* Permintaan Persetujuan */}
-            <div className="flex-1 rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-[#222]">Permintaan Persetujuan</h3>
+            <div className="flex-1 card bg-base-100 p-5">
+              <h3 className="text-sm font-bold text-base-content">Permintaan Persetujuan</h3>
               <div className="mt-3 divide-y divide-[#f0f2f8]">
                 {loading ? (
-                  <p className="py-3 text-xs text-[#888]">Memuat…</p>
+                  <ListItemSkeleton rows={3} />
                 ) : permintaan.length === 0 ? (
                   <p className="py-3 text-xs text-[#888]">Belum ada permintaan pending.</p>
                 ) : (
@@ -212,8 +213,8 @@ function DosenPADashboard() {
                         {p.inisial}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[#222]">{p.nama}</p>
-                        <p className="truncate text-xs text-[#616161]">{p.desc}</p>
+                        <p className="truncate text-sm font-semibold text-base-content">{p.nama}</p>
+                        <p className="truncate text-xs text-base-content/60">{p.desc}</p>
                       </div>
                     </div>
                   ))
@@ -232,16 +233,20 @@ function DosenPADashboard() {
           </div>
 
           {/* Right: Chart */}
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-bold text-[#222]">
+          <div className="card bg-base-100 p-5">
+            <h3 className="mb-3 text-sm font-bold text-base-content">
               Rata rata capaian jenis kegiatan mahasiswa bimbingan
             </h3>
-            <VerticalBarChart
-              labels={['Organisasi', 'Seminar', 'Prestasi']}
-              values={chartValues}
-              colors={['#3b82f6', '#15803d', '#eab308']}
-              height={280}
-            />
+            {loading ? (
+              <ChartSkeleton height={280} />
+            ) : (
+              <VerticalBarChart
+                labels={['Organisasi', 'Seminar', 'Prestasi']}
+                values={chartValues}
+                colors={['#3b82f6', '#15803d', '#eab308']}
+                height={280}
+              />
+            )}
           </div>
         </div>
 

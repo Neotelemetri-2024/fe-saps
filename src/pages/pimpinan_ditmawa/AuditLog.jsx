@@ -73,7 +73,7 @@ function AuditLog() {
     { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{start + i + 1}</span> },
     { key: 'waktu', label: 'Waktu', render: (row) => <span className="text-black">{formatTanggal(row.createdAt)}</span> },
     { key: 'entitas', label: 'Entitas', render: (row) => (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#f0f4f8] px-2.5 py-0.5 text-xs font-medium text-[#333]">
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#f0f4f8] px-2.5 py-0.5 text-xs font-medium text-base-content">
         <Shield className="h-3 w-3" /> {row.entitas || '-'}
       </span>
     )},
@@ -85,7 +85,7 @@ function AuditLog() {
     }},
     { key: 'aktor', label: 'Aktor', render: (row) => <span className="text-black">{row.aktor?.nama || row.aktorId || '-'}</span> },
     { key: 'perubahan', label: 'Perubahan', render: (row) => (
-      <div className="max-w-[200px] truncate text-xs text-[#616161]">
+      <div className="max-w-[200px] truncate text-xs text-base-content/60">
         {row.statusLama && row.statusBaru ? `${row.statusLama} -> ${row.statusBaru}` : row.statusBaru || row.statusLama || '-'}
       </div>
     )},
@@ -95,19 +95,19 @@ function AuditLog() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Audit Log</h2>
-            <p className="mt-1 text-sm text-[#616161]">Jejak riwayat aktivitas seluruh pengguna sistem.</p>
+            <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Audit Log</h2>
+            <p className="mt-1 text-sm text-base-content/60">Jejak riwayat aktivitas seluruh pengguna sistem.</p>
           </div>
           <button type="button" onClick={load}
-            className="inline-flex items-center gap-2 rounded-lg border border-brand-dark bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f6f8]">
+            className="btn btn-outline btn-primary btn-sm">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
 
         <TableCard title="Riwayat Aktivitas">
           <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
-              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+              <Search className="h-4 w-4 shrink-0 text-base-content/50" />
               <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
                 placeholder="Cari aksi, entitas, atau aktor..."
                 className="w-full text-sm outline-none" />
@@ -115,13 +115,13 @@ function AuditLog() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <select value={entitas} onChange={(e) => { setEntitas(e.target.value); setPage(1) }}
-              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none">
+              className="select select-sm flex-1">
               <option value="">Semua Entitas</option>
               {entitasOptions.map((e) => <option key={e} value={e}>{e}</option>)}
             </select>
             {(search || entitas) && (
               <button type="button" onClick={() => { setSearch(''); setEntitas(''); setPage(1) }}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]">
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
                 Reset filter
               </button>
             )}

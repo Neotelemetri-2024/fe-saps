@@ -207,10 +207,10 @@ function VerifikasiPengajuanUKMF() {
       <div className="space-y-6">
         {/* Header Halaman */}
         <div>
-          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl lg:text-3xl">
+          <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">
             Verifikasi Pengajuan UKMF
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <p className="mt-1 text-sm text-base-content/60">
             Verifikasi pengajuan kegiatan dari UKMF ke Pimpinan Fakultas.
           </p>
         </div>
@@ -220,12 +220,12 @@ function VerifikasiPengajuanUKMF() {
           {/* Filter */}
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
   <div className="relative flex w-full sm:flex-1">
-    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
     <input
       value={search}
       onChange={(e) => setSearch(e.target.value)}
       placeholder="Cari kegiatan atau UKMF..."
-      className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+      className="input w-full"
     />
   </div>
 
@@ -233,7 +233,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterStatus}
       onChange={(e) => setFilterStatus(e.target.value)}
-      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
     >
       <option value="">Semua Status</option>
       {statusOptions.map((s) => (
@@ -244,7 +244,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterJenis}
       onChange={(e) => setFilterJenis(e.target.value)}
-      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
     >
       <option value="">Semua Jenis</option>
       {[...new Set(items.map((p) => p.jenis))].map((j) => (
@@ -257,7 +257,7 @@ function VerifikasiPengajuanUKMF() {
     <select
       value={filterSkala}
       onChange={(e) => setFilterSkala(e.target.value)}
-      className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+      className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
     >
       <option value="">Semua Skala</option>
       {[...new Set(items.map((p) => p.skala))].map((s) => (
@@ -270,7 +270,7 @@ function VerifikasiPengajuanUKMF() {
     {(search || filterStatus || filterJenis || filterSkala) && (
       <button
         onClick={resetFilter}
-        className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+        className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
       >
         Reset Filter
       </button>
@@ -291,15 +291,15 @@ function VerifikasiPengajuanUKMF() {
 </div>
 
   {pilihanMode && (
-    <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-      <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
+    <div className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-200 px-4 py-3">
+      <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
       <div className="ml-auto flex gap-2">
         <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-          className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] transition hover:bg-white">
+          className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
           Batal Pilih
         </button>
         <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
-          className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
+          className="btn btn-primary px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
           Selanjutnya
         </button>
       </div>

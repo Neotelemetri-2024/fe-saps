@@ -7,6 +7,8 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardPimpinanFakultas } from '../../services/dashboardService'
 import PanduanCard from '../../components/dashboard/PanduanCard'
+import { DoughnutChart, StackedBarChart } from '../../components/charts'
+import { ChartSkeleton } from '../../components/dashboard/Skeleton'
 
 const DOUGHNUT_COLORS = ['#92400e', '#dc2626', '#15803d', '#3b82f6', '#eab308', '#7c3aed']
 
@@ -26,109 +28,6 @@ function KategoriPoinBar({ organisasi, prestasi, seminar }) {
       <div style={{ width: `${(organisasi / total) * 100}%` }} className="bg-[#15803d]" title={`Organisasi: ${organisasi}`} />
       <div style={{ width: `${(seminar / total) * 100}%` }} className="bg-[#3b82f6]" title={`Seminar: ${seminar}`} />
       <div style={{ width: `${(prestasi / total) * 100}%` }} className="bg-[#eab308]" title={`Prestasi: ${prestasi}`} />
-    </div>
-  )
-}
-
-// ── VerticalStackedBar ──
-function VerticalStackedBar({ data }) {
-  const categories = ['organisasi', 'seminar', 'prestasi']
-  const COLORS = { organisasi: '#3b82f6', seminar: '#15803d', prestasi: '#eab308' }
-  const LABELS = { organisasi: 'Organisasi', seminar: 'Seminar', prestasi: 'Prestasi' }
-  const maxSum = Math.max(...data.map((d) => categories.reduce((s, c) => s + d[c], 0)), 1)
-  const BAR_H = 220
-
-  const yTicks = [200, 400, 600, 800].filter((v) => v <= maxSum * 1.2)
-  const ticks = yTicks.length ? yTicks : [Math.round(maxSum / 2), maxSum]
-  const svgW = Math.max(data.length * 80 + 48, 200)
-  const svgH = BAR_H + 60
-
-  if (!data.length) {
-    return <p className="py-16 text-center text-sm text-[#9aa0a6]">Belum ada data capaian per prodi.</p>
-  }
-
-  return (
-    <div>
-      <div className="flex items-start">
-        <div className="mr-2 flex flex-col-reverse items-end" style={{ height: BAR_H, paddingBottom: 0 }}>
-          {ticks.map((v) => (
-            <span key={v} className="text-[10px] text-[#9ca3af]" style={{ marginBottom: v === ticks[0] ? 0 : (BAR_H / ticks.length) - 14 }}>
-              {v}
-            </span>
-          ))}
-        </div>
-        <div className="relative flex-1">
-          <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMid meet">
-            {ticks.map((v) => {
-              const y = BAR_H - (v / maxSum) * BAR_H
-              return <line key={v} x1={0} y1={y} x2={svgW} y2={y} stroke="#e5e7eb" strokeWidth={1} />
-            })}
-            {data.map((d, gi) => {
-              const total = categories.reduce((s, c) => s + d[c], 0)
-              const groupX = gi * 80 + 16
-              let yOff = BAR_H
-              return (
-                <g key={d.prodi}>
-                  {categories.map((cat) => {
-                    const h = (d[cat] / maxSum) * BAR_H
-                    yOff -= h
-                    return (
-                      <rect key={cat} x={groupX} y={yOff} width={36} height={Math.max(h, 0)} fill={COLORS[cat]} />
-                    )
-                  })}
-                  <text x={groupX + 18} y={BAR_H - (total / maxSum) * BAR_H - 5} textAnchor="middle" fontSize={10} fill="#374151" fontWeight="600">{total}</text>
-                  {String(d.prodi).split('\n').map((line, li) => (
-                    <text key={li} x={groupX + 18} y={BAR_H + 16 + li * 13} textAnchor="middle" fontSize={10} fill="#374151">{line}</text>
-                  ))}
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-5 text-xs font-medium text-[#616161]">
-        {[['organisasi', COLORS.organisasi], ['seminar', COLORS.seminar], ['prestasi', COLORS.prestasi]].map(([k, c]) => (
-          <span key={k} className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
-            {LABELS[k]}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── SvgDoughnut ──
-function SvgDoughnut({ sections, centerValue }) {
-  const total = sections.reduce((s, sec) => s + sec.value, 0) || 1
-  const radius = 15.5
-  const circumference = 2 * Math.PI * radius
-  let cumulative = 0
-  const arcs = sections.map((sec) => {
-    const offset = cumulative
-    const length = (sec.value / total) * circumference
-    cumulative += length
-    return { ...sec, offset, length }
-  })
-  return (
-    <div className="relative h-44 w-44 flex items-center justify-center">
-      <svg className="h-full w-full -rotate-90" viewBox="0 0 42 42">
-        <circle cx="21" cy="21" r={radius} fill="none" stroke="#e9ebf8" strokeWidth="5" />
-        {arcs.map((sec, i) => (
-          <circle
-            key={i} cx="21" cy="21" r={radius} fill="none"
-            stroke={sec.color} strokeWidth="5"
-            strokeDasharray={`${sec.length} ${circumference - sec.length}`}
-            strokeDashoffset={-sec.offset} strokeLinecap="butt"
-          >
-            <title>{`${sec.label || '-'}: ${sec.value}`}</title>
-          </circle>
-        ))}
-      </svg>
-      <div className="absolute text-center">
-        <p className="text-2xl font-extrabold text-brand-dark">{centerValue}</p>
-        <p className="text-[10px] font-medium text-[#616161]">Mahasiswa</p>
-      </div>
     </div>
   )
 }
@@ -211,9 +110,9 @@ function PimpinanFakultasDashboard() {
         <div>
           <h2 className="text-2xl font-extrabold sm:text-3xl">
             <span className="text-brand-dark">Dasboard Pimpinan/</span>{' '}
-            <span className="text-[#222]">Direktorat</span>
+            <span className="text-base-content">Direktorat</span>
           </h2>
-          <p className="mt-1 text-sm text-[#616161]">Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.</p>
+          <p className="mt-1 text-sm text-base-content/60">Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.</p>
         </div>
 
         {/* Stat cards */}
@@ -240,7 +139,7 @@ function PimpinanFakultasDashboard() {
         {/* Peringkat Prodi */}
         <TableCard title="Peringkat Prodi" description="Kategori Poin"
           headerRight={
-            <div className="flex gap-4 text-xs font-medium text-[#555]">
+            <div className="flex gap-4 text-xs font-medium text-base-content/70">
               {[['#15803d', 'Organisasi'], ['#3b82f6', 'Seminar'], ['#eab308', 'Prestasi']].map(([c, l]) => (
                 <span key={l} className="flex items-center gap-1.5">
                   <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
@@ -284,32 +183,46 @@ function PimpinanFakultasDashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-1 lg:col-span-3">
-            <h3 className="mb-5 text-center text-sm font-bold text-[#222]">Rata rata Capaian per prodi</h3>
+          <div className="card bg-base-100 p-6 md:col-span-1 lg:col-span-3">
+            <h3 className="mb-5 text-center text-sm font-bold text-base-content">Rata rata Capaian per prodi</h3>
             {loading ? (
-              <p className="py-16 text-center text-sm text-[#9aa0a6]">Memuat grafik…</p>
+              <ChartSkeleton height={280} />
+            ) : capaianPerProdi.length === 0 ? (
+              <p className="py-16 text-center text-sm text-base-content/50">Belum ada data capaian per prodi.</p>
             ) : (
-              <VerticalStackedBar data={capaianPerProdi} />
+              <StackedBarChart
+                labels={capaianPerProdi.map((d) => d.prodi)}
+                datasets={[
+                  { label: 'Organisasi', data: capaianPerProdi.map((d) => d.organisasi), color: '#3b82f6' },
+                  { label: 'Seminar', data: capaianPerProdi.map((d) => d.seminar), color: '#15803d' },
+                  { label: 'Prestasi', data: capaianPerProdi.map((d) => d.prestasi), color: '#eab308' },
+                ]}
+                height={280}
+              />
             )}
           </div>
 
-          <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm md:col-span-1 lg:col-span-2">
-            <h3 className="mb-5 text-center text-sm font-bold text-[#222]">Distribusi poin per prodi</h3>
+          <div className="card bg-base-100 p-6 md:col-span-1 lg:col-span-2">
+            <h3 className="mb-5 text-center text-sm font-bold text-base-content">Distribusi poin per prodi</h3>
             <div className="flex flex-col items-center">
               {loading ? (
-                <p className="py-16 text-center text-sm text-[#9aa0a6]">Memuat…</p>
+                <ChartSkeleton variant="donut" height={220} />
               ) : (
                 <>
-                  <SvgDoughnut
-                    sections={distribusiData.length ? distribusiData : [{ label: '-', value: 1, color: '#e9ebf8' }]}
+                  <DoughnutChart
+                    labels={distribusiData.length ? distribusiData.map((d) => d.label) : ['—']}
+                    values={distribusiData.length ? distribusiData.map((d) => d.value) : [1]}
+                    colors={distribusiData.length ? distribusiData.map((d) => d.color) : ['#e9ebf8']}
                     centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
+                    centerLabel="Mahasiswa"
+                    height={220}
                   />
                   <div className="mt-5 w-full space-y-2.5">
                     {distribusiData.map((d) => (
                       <div key={d.label} className="flex items-center gap-2 text-xs font-medium">
                         <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }}></span>
-                        <span className="flex-1 text-[#333]">{d.label}</span>
-                        <span className="text-[#616161]">{d.value} %</span>
+                        <span className="flex-1 text-base-content">{d.label}</span>
+                        <span className="text-base-content/60">{d.value} %</span>
                       </div>
                     ))}
                   </div>

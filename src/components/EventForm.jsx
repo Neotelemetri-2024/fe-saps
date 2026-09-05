@@ -212,7 +212,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
+          className="btn btn-ghost btn-sm text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Daftar
@@ -220,33 +220,33 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-brand-dark">{isEdit ? 'Edit Event' : 'Buat Event'}</h2>
-        <p className="mt-1 text-sm text-[#616161]">Isi detail kegiatan dan simpan sebagai draft. Kirim dari daftar setelah siap.</p>
+        <h2 className="text-2xl font-extrabold text-base-content">{isEdit ? 'Edit Event' : 'Buat Event'}</h2>
+        <p className="mt-1 text-sm text-base-content/60">Isi detail kegiatan dan simpan sebagai draft. Kirim dari daftar setelah siap.</p>
       </div>
 
       {loadingEdit && (
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-4 text-sm text-[#616161] shadow-sm">
+        <div className="card bg-base-100 p-4 text-sm text-base-content/60">
           Memuat data event…
         </div>
       )}
 
       <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <p className="text-sm text-[#616161]">Lengkapi informasi kegiatan terlebih dahulu</p>
+        <div className="card bg-base-100 p-6">
+          <p className="text-sm text-base-content/60">Lengkapi informasi kegiatan terlebih dahulu</p>
 
-          <ol className="mt-3 list-decimal pl-5 text-base font-semibold text-black">
+          <ol className="mt-3 list-decimal pl-5 text-base font-semibold text-base-content">
             <li>Informasi Kegiatan</li>
           </ol>
 
           <div className="mt-5 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-black">
-                Jenis Kegiatan <span className="text-red-600">*</span>
+              <label className="mb-1 block text-sm font-medium text-base-content">
+                Jenis Kegiatan <span className="text-error">*</span>
               </label>
               <select
                 value={form.kategoriId}
                 onChange={(e) => setForm((p) => ({ ...p, kategoriId: e.target.value, skalaId: '' }))}
-                className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                className="select w-full"
                 required
               >
                 <option value="">-- Pilih jenis kegiatan --</option>
@@ -257,27 +257,27 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black">
-                Nama Kegiatan <span className="text-red-600">*</span>
+              <label className="mb-1 block text-sm font-medium text-base-content">
+                Nama Kegiatan <span className="text-error">*</span>
               </label>
               <input
                 type="text"
                 value={form.nama}
                 onChange={(e) => setForm((p) => ({ ...p, nama: e.target.value }))}
                 placeholder="Masukkan nama kegiatan"
-                className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                className="input w-full"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black">
-                Skala Kegiatan <span className="text-red-600">*</span>
+              <label className="mb-1 block text-sm font-medium text-base-content">
+                Skala Kegiatan <span className="text-error">*</span>
               </label>
               <select
                 value={form.skalaId}
                 onChange={(e) => setForm((p) => ({ ...p, skalaId: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                className="select w-full"
                 required
                 disabled={!form.kategoriId}
               >
@@ -289,8 +289,8 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black">
-                Deskripsi Kegiatan <span className="text-red-600">*</span>
+              <label className="mb-1 block text-sm font-medium text-base-content">
+                Deskripsi Kegiatan <span className="text-error">*</span>
               </label>
               <textarea
                 value={form.deskripsi}
@@ -298,9 +298,9 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                 placeholder="Tujuan, agenda, dan manfaat kegiatan"
                 rows={4}
                 maxLength={500}
-                className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                className="textarea w-full"
               />
-              <p className="mt-1 text-right text-xs text-[#8e98a8]">{form.deskripsi.length}/500</p>
+              <p className="mt-1 text-right text-xs text-base-content/50">{form.deskripsi.length}/500</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -321,21 +321,21 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-black">
-                  Lokasi <span className="text-red-600">*</span>
+                <label className="mb-1 block text-sm font-medium text-base-content">
+                  Lokasi <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.lokasi}
                   onChange={(e) => setForm((p) => ({ ...p, lokasi: e.target.value }))}
                   placeholder="Gedung / tempat kegiatan..."
-                  className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                  className="input w-full"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">
-                  Kuota Peserta <span className="text-red-600">*</span>
+                <label className="mb-1 block text-sm font-medium text-base-content">
+                  Kuota Peserta <span className="text-error">*</span>
                 </label>
                 <input
                   type="number"
@@ -343,7 +343,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                   onChange={(e) => setForm((p) => ({ ...p, kuota: e.target.value }))}
                   placeholder="Masukkan jumlah peserta"
                   min={1}
-                  className="mt-1 w-full rounded-lg border border-[#c4c6cf] bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-brand-dark"
+                  className="input w-full"
                   required
                 />
               </div>
@@ -351,16 +351,16 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-[#e9ebf8] bg-white p-6 shadow-sm">
-          <h3 className="text-base font-bold text-brand-dark">2. Pemetaan Capaian Kurikulum</h3>
-          <p className="mt-0.5 mb-5 text-sm text-[#616161]">
+        <div className="card bg-base-100 p-6">
+          <h3 className="text-base font-semibold text-base-content">2. Pemetaan Capaian Kurikulum</h3>
+          <p className="mt-0.5 mb-5 text-sm text-base-content/60">
             Tentukan capaian kurikulum yang dicapai melalui kegiatan ini
           </p>
 
           {loadingKur ? (
-            <p className="text-sm text-[#9aa0a6]">Memuat kurikulum…</p>
+            <p className="text-sm text-base-content/50">Memuat kurikulum…</p>
           ) : kurikulumList.length === 0 ? (
-            <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Admin.</p>
+            <p className="text-sm text-error">Kurikulum aktif tidak ditemukan. Hubungi Admin.</p>
           ) : (
             <PemetaanCapaianKurikulumSection
               kurikulumList={kurikulumList}
@@ -394,7 +394,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             type="button"
             disabled={loading || loadingEdit}
             onClick={handleSimpanDraft}
-            className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn btn-outline btn-primary"
           >
             {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draft'}
           </button>
@@ -402,15 +402,11 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             type="button"
             disabled={loading || loadingEdit}
             onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
-            className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary"
           >
             {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-[#d1d5db] bg-white px-6 py-2.5 text-sm font-semibold text-[#444] transition hover:bg-[#f5f5f5]"
-          >
+          <button type="button" onClick={onCancel} className="btn btn-ghost">
             Batal
           </button>
         </div>

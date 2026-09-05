@@ -32,7 +32,7 @@ function DetailPersetujuanDosen() {
   if (!row) {
     return (
       <DashboardLayout role="dosen" userName={user?.nama || 'Dosen PA'} userRole="Dosen Pembimbing">
-        <div className="py-16 text-center text-sm text-[#9aa0a6]">Data tidak ditemukan.</div>
+        <div className="py-16 text-center text-sm text-base-content/50">Data tidak ditemukan.</div>
       </DashboardLayout>
     )
   }
@@ -77,8 +77,8 @@ function DetailPersetujuanDosen() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Permintaan Persetujuan</h2>
-            <p className="mt-1 text-sm text-[#616161]">Tinjau detail kegiatan sebelum memberikan keputusan.</p>
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Permintaan Persetujuan</h2>
+            <p className="mt-1 text-sm text-base-content/60">Tinjau detail kegiatan sebelum memberikan keputusan.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {row.isUlang && isActionable ? (
@@ -120,18 +120,18 @@ function DetailPersetujuanDosen() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
               </button>
               <button type="button" onClick={handleSetuju} disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
+                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
               </button>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-[#333]">
+              <p className="text-sm font-medium text-base-content">
                 Alasan Penolakan<span className="text-red-500">*</span>
               </p>
               <textarea rows={4} value={alasan} onChange={(e) => setAlasan(e.target.value)}
                 placeholder="Tuliskan alasan penolakan..."
                 maxLength={500}
-                className="w-full rounded-xl border border-[#e9ebf8] p-3 text-sm text-[#333] outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
+                className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
               <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button type="button" onClick={handleKirimAlasan} disabled={loading}
@@ -139,7 +139,7 @@ function DetailPersetujuanDosen() {
                   {loading ? 'Mengirim...' : 'Kirim'}
                 </button>
                 <button type="button" onClick={() => { setActionType(null); setAlasan('') }}
-                  className="rounded-xl border border-[#d9dce7] px-5 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#f5f6f8]">
+                  className="rounded-xl border border-base-300 px-5 py-2.5 text-sm font-semibold text-base-content transition hover:bg-base-200">
                   Batal
                 </button>
               </div>

@@ -84,10 +84,10 @@ function DetailFakultas() {
       userRole="Pimpinan Utama (Rektor)"
     >
       <div className="space-y-5">
-        <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Detail Fakultas</h2>
+        <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Detail Fakultas</h2>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-5 text-sm text-[#444]">
+        <div className="flex flex-wrap items-center gap-5 text-sm text-base-content/80">
           <span className="text-xs font-semibold uppercase tracking-wide text-[#888]">Kategori Poin</span>
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded-sm bg-[#16a34a]"></span> Organisasi

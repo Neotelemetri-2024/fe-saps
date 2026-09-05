@@ -121,8 +121,8 @@ function AdminDitmawaDashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-xl border border-[#e9ebf8] bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#616161]">{s.label}</p>
+            <div key={s.label} className="card bg-base-100 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">{s.label}</p>
               <p className="mt-2 text-3xl font-extrabold text-brand-dark">{loading ? '…' : s.value}</p>
             </div>
           ))}

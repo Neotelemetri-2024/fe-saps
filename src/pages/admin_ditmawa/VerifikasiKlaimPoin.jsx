@@ -230,7 +230,7 @@ function VerifikasiKlaimPoin() {
       <div className="space-y-5">
         <div>
           <div className="flex items-center gap-1.5">
-            <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">
+            <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
               Verifikasi Klaim Poin Kegiatan Eksternal
             </h2>
             <InfoTooltip message="Klaim poin kegiatan eksternal yang diajukan mahasiswa." />
@@ -239,8 +239,8 @@ function VerifikasiKlaimPoin() {
 
         <TableCard title="Daftar Klaim Poin">
           <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-[#cfd6df] bg-white px-4 py-2.5 shadow-sm">
-              <Search className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+              <Search className="h-4 w-4 shrink-0 text-base-content/50" />
               <input
                 type="text"
                 value={search}
@@ -261,7 +261,7 @@ function VerifikasiKlaimPoin() {
                 setKategori(e.target.value)
                 setPage(1)
               }}
-              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="select select-sm flex-1"
             >
               <option value="">Semua Kategori</option>
               {kategoriOptions.map((k) => (
@@ -276,7 +276,7 @@ function VerifikasiKlaimPoin() {
                 setPeran(e.target.value)
                 setPage(1)
               }}
-              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="select select-sm flex-1"
             >
               <option value="">Semua Peran</option>
               {peranOptions.map((p) => (
@@ -291,7 +291,7 @@ function VerifikasiKlaimPoin() {
                 setStatus(e.target.value)
                 setPage(1)
               }}
-              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="select select-sm flex-1"
             >
               <option value="">Semua Status</option>
               {statusOptions.map((s) => (
@@ -304,7 +304,7 @@ function VerifikasiKlaimPoin() {
                 setSkala(e.target.value)
                 setPage(1)
               }}
-              className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] bg-white px-4 py-2.5 text-sm text-[#616161] outline-none"
+              className="select select-sm flex-1"
             >
               <option value="">Semua Skala</option>
               <option value="nasional">Nasional</option>
@@ -314,7 +314,7 @@ function VerifikasiKlaimPoin() {
               <button
                 type="button"
                 onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-[#f5f6f8]"
+                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200"
               >
                 Reset filter
               </button>
@@ -328,7 +328,7 @@ function VerifikasiKlaimPoin() {
               className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
                 pilihanMode
                   ? 'border-brand-dark bg-brand-dark text-white'
-                  : 'border-brand-dark bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
+                  : 'btn btn-primary'
               }`}
             >
               Pilih Beberapa
@@ -336,8 +336,8 @@ function VerifikasiKlaimPoin() {
           </div>
 
           {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#e9ebf8] bg-[#f9fafb] px-4 py-3">
-              <span className="text-sm text-[#616161]">{selected.size} dipilih</span>
+            <div className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-200 px-4 py-3">
+              <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button
                   type="button"
@@ -345,7 +345,7 @@ function VerifikasiKlaimPoin() {
                     setPilihanMode(false)
                     setSelected(new Set())
                   }}
-                  className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161]"
+                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60"
                 >
                   Batal Pilih
                 </button>
@@ -358,7 +358,7 @@ function VerifikasiKlaimPoin() {
                     }
                     setShowBulkConfirm(true)
                   }}
-                  className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white"
+                  className="btn btn-primary px-6 py-2 text-sm font-bold text-white"
                 >
                   Selanjutnya
                 </button>

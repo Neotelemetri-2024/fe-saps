@@ -259,50 +259,50 @@ function RiwayatKegiatanInternal() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-[#222] sm:text-2xl">Riwayat Kegiatan Internal</h2>
+          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Riwayat Kegiatan Internal</h2>
         </div>
-        <p className="text-sm text-[#616161]">
+        <p className="text-sm text-base-content/60">
           Rekap kegiatan internal. Poin cair otomatis setelah izin Dosen PA disetujui serta kehadiran & peran diverifikasi UKM.
         </p>
 
         <TableCard title="Riwayat Kegiatan Internal">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select value={filterJenis} onChange={(e) => setFilterJenis(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterJenis} onChange={(e) => setFilterJenis(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Jenis</option>
                 {jenisOptions.map((j) => <option key={j} value={j}>{j}</option>)}
               </select>
-              <select value={filterKehadiran} onChange={(e) => setFilterKehadiran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterKehadiran} onChange={(e) => setFilterKehadiran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Kehadiran</option>
                 <option value="Hadir">Hadir</option>
                 <option value="Tidak Hadir">Tidak Hadir</option>
                 <option value="Belum Tercatat">Belum Tercatat</option>
               </select>
-              <select value={filterStatusPoin} onChange={(e) => setFilterStatusPoin(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterStatusPoin} onChange={(e) => setFilterStatusPoin(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Status Poin</option>
                 {statusPoinOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none">
+              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
                 <option value="">Semua Penyelenggara</option>
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
               {(search || filterJenis || filterKehadiran || filterStatusPoin || filterSkala || filterPenyelenggara) && (
-                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]">Reset Filter</button>
+                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
               )}
             </div>
           </div>
@@ -323,16 +323,16 @@ function RiwayatKegiatanInternal() {
           </TableFrame>
 
           {!loading && filtered.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-base-300 pt-4">
               {pilihanMode ? (
                 <>
-                  <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>
+                  <span className="text-sm text-base-content/60">{selected.size} kegiatan dipilih</span>
                   <div className="ml-auto flex gap-2">
                     <button
                       type="button"
                       onClick={handleBatalPilih}
                       disabled={submittingIzin}
-                      className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
                     >
                       Batal
                     </button>
@@ -340,7 +340,7 @@ function RiwayatKegiatanInternal() {
                       type="button"
                       disabled={selected.size === 0 || submittingIzin}
                       onClick={handleSubmitIzinPA}
-                      className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="btn btn-primary px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {submittingIzin ? 'Mengirim…' : 'Minta Izin PA'}
                     </button>
@@ -351,7 +351,7 @@ function RiwayatKegiatanInternal() {
                   type="button"
                   disabled={bisaMintaCount === 0}
                   onClick={() => setPilihanMode(true)}
-                  className="ml-auto flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn btn-primary ml-auto px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Minta Izin PA
                 </button>

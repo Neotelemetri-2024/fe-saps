@@ -63,11 +63,11 @@ function GenerateSertifikat() {
             type="button"
             onClick={() => setGenerated(true)}
             disabled={loading}
-            className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
             {loading ? 'Memuat data…' : 'Generate Sertifikat'}
           </button>
-          <p className="text-sm text-[#616161]">
+          <p className="text-sm text-base-content/60">
             Buat sertifikat capaian kegiatan kemahasiswaan Anda berdasarkan data yang tercatat di SAPS.
           </p>
         </div>
@@ -78,7 +78,7 @@ function GenerateSertifikat() {
               <button
                 type="button"
                 onClick={handleDownloadPdf}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                className="btn btn-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
               >
                 <Download className="h-4 w-4" /> Download PDF
               </button>
@@ -94,12 +94,12 @@ function GenerateSertifikat() {
                 <p className="text-sm font-semibold tracking-[0.2em] text-brand-dark uppercase">
                   Universitas Andalas
                 </p>
-                <p className="mt-1 text-xs text-[#616161]">Direktorat Kemahasiswaan</p>
+                <p className="mt-1 text-xs text-base-content/60">Direktorat Kemahasiswaan</p>
 
                 <h1 className="mt-8 text-3xl font-bold tracking-wide text-brand-dark uppercase">
                   Sertifikat
                 </h1>
-                <p className="mt-2 text-sm text-[#616161]">
+                <p className="mt-2 text-sm text-base-content/60">
                   Diberikan kepada
                 </p>
 
@@ -116,19 +116,19 @@ function GenerateSertifikat() {
 
                 <div className="mt-6 grid w-full max-w-md grid-cols-2 gap-4 text-sm">
                   <div className="rounded-lg border border-[#e5e7eb] px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-[#9aa0a6]">Total Poin</p>
+                    <p className="text-xs uppercase tracking-wide text-base-content/50">Total Poin</p>
                     <p className="mt-1 text-xl font-bold text-brand-dark">{mahasiswa.totalPoin}</p>
                   </div>
                   <div className="rounded-lg border border-[#e5e7eb] px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-[#9aa0a6]">Total Kegiatan</p>
+                    <p className="text-xs uppercase tracking-wide text-base-content/50">Total Kegiatan</p>
                     <p className="mt-1 text-xl font-bold text-brand-dark">{mahasiswa.totalKegiatan}</p>
                   </div>
                 </div>
 
-                <p className="mt-10 text-sm text-[#616161]">
+                <p className="mt-10 text-sm text-base-content/60">
                   Padang, {tanggalCetak}
                 </p>
-                <p className="mt-8 text-xs text-[#9aa0a6]">
+                <p className="mt-8 text-xs text-base-content/50">
                   Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas
                 </p>
               </div>

@@ -29,7 +29,7 @@ function DetailPengajuanMahasiswa() {
   if (!row) {
     return (
       <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-        <div className="py-16 text-center text-sm text-[#9aa0a6]">Data tidak ditemukan.</div>
+        <div className="py-16 text-center text-sm text-base-content/50">Data tidak ditemukan.</div>
       </DashboardLayout>
     )
   }
@@ -54,8 +54,8 @@ function DetailPengajuanMahasiswa() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Detail Pengajuan Kegiatan</h2>
-            <p className="mt-1 text-sm text-[#616161]">Informasi lengkap kegiatan yang telah diajukan.</p>
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Pengajuan Kegiatan</h2>
+            <p className="mt-1 text-sm text-base-content/60">Informasi lengkap kegiatan yang telah diajukan.</p>
           </div>
           <div className="shrink-0"><StatusBadge status={row.status} /></div>
         </div>

@@ -261,23 +261,23 @@ function KlaimPoinCapaian() {
       <Modal isOpen={showKlaimModal} onClose={() => !submittingKlaim && setShowKlaimModal(false)} size="md">
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-[#333]">Ajukan Klaim Poin Capaian</h3>
-            <p className="mt-0.5 text-sm text-[#616161]">
+            <h3 className="text-base font-bold text-base-content">Ajukan Klaim Poin Capaian</h3>
+            <p className="mt-0.5 text-sm text-base-content/60">
               Upload bukti PDF untuk masing-masing kegiatan yang dipilih. Kegiatan tanpa bukti tidak dapat diklaim.
             </p>
           </div>
 
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {klaimItems.map((item) => (
-              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : 'border-[#e9ebf8] bg-[#f9fafb]'}`}>
-                <p className="text-sm font-medium text-[#333]">{item.kegiatan}</p>
-                <p className="text-xs text-[#616161] mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
+              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : 'border-base-300 bg-base-200'}`}>
+                <p className="text-sm font-medium text-base-content">{item.kegiatan}</p>
+                <p className="text-xs text-base-content/60 mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
 
-                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-[#d1d5db] bg-white px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
+                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-base-300 bg-white px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
                   {item.bukti ? (
                     <FileText className="h-4 w-4 shrink-0 text-brand-dark" />
                   ) : (
-                    <UploadCloud className="h-4 w-4 shrink-0 text-[#9aa0a6]" />
+                    <UploadCloud className="h-4 w-4 shrink-0 text-base-content/50" />
                   )}
                   <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-brand-dark' : 'text-[#888]'}`}>
                     {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 10 MB)'}
@@ -298,7 +298,7 @@ function KlaimPoinCapaian() {
               type="button"
               disabled={submittingKlaim || !semuaBuktiLengkap}
               onClick={handleSubmitKlaim}
-              className="flex-1 rounded-xl bg-gradient-to-r from-brand-dark to-brand-light py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn btn-primary flex-1 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submittingKlaim ? 'Mengirim…' : 'Ajukan Klaim Poin'}
             </button>
@@ -306,21 +306,21 @@ function KlaimPoinCapaian() {
               type="button"
               disabled={submittingKlaim}
               onClick={() => setShowKlaimModal(false)}
-              className="flex-1 rounded-xl border border-[#d9dce7] py-2.5 text-sm font-semibold text-[#333] hover:bg-[#f5f6f8]"
+              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
             >
               Batal
             </button>
           </div>
           {klaimItems.length > 0 && !semuaBuktiLengkap && (
-            <p className="text-xs text-[#9aa0a6]">Lengkapi bukti dokumen untuk semua kegiatan sebelum dapat diajukan.</p>
+            <p className="text-xs text-base-content/50">Lengkapi bukti dokumen untuk semua kegiatan sebelum dapat diajukan.</p>
           )}
         </div>
       </Modal>
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-extrabold text-[#222] sm:text-2xl">Klaim Poin Capaian</h2>
-          <p className="mt-1 text-sm text-[#616161]">
+          <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Klaim Poin Capaian</h2>
+          <p className="mt-1 text-sm text-base-content/60">
             Klaim poin untuk kegiatan eksternal yang sudah disetujui Dosen PA, lalu pantau riwayat klaim Anda.
           </p>
         </div>
@@ -341,15 +341,15 @@ function KlaimPoinCapaian() {
           </TableFrame>
 
           {!loading && siapKlaim.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-[#e9ebf8] pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-base-300 pt-4">
               {pilihanMode ? (
                 <>
-                  <span className="text-sm text-[#616161]">{selected.size} kegiatan dipilih</span>
+                  <span className="text-sm text-base-content/60">{selected.size} kegiatan dipilih</span>
                   <div className="ml-auto flex gap-2">
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8]"
+                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
                     >
                       Batal
                     </button>
@@ -357,7 +357,7 @@ function KlaimPoinCapaian() {
                       type="button"
                       onClick={handleOpenKlaimModal}
                       disabled={selected.size === 0}
-                      className="rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                      className="btn btn-primary px-6 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
                     >
                       Klaim Poin Capaian
                     </button>
@@ -367,7 +367,7 @@ function KlaimPoinCapaian() {
                 <button
                   type="button"
                   onClick={() => setPilihanMode(true)}
-                  className="ml-auto rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary ml-auto px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                 >
                   Klaim Poin Capaian
                 </button>
@@ -379,20 +379,20 @@ function KlaimPoinCapaian() {
         <TableCard title="Riwayat Klaim Poin Anda">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
+                className="input w-full"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -402,7 +402,7 @@ function KlaimPoinCapaian() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-[#d9dce7] px-3 py-2 text-sm text-[#444] outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
               >
                 <option value="">Semua Skala</option>
                 {skalaOptions.map((s) => (
@@ -413,7 +413,7 @@ function KlaimPoinCapaian() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-[#f5f5f5]"
+                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>

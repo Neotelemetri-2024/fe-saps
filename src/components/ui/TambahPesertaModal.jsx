@@ -1,18 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Loader2, UserPlus, Check } from 'lucide-react'
+import { Search, Loader2, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cariMahasiswaPeserta, tambahPesertaManual } from '../../services/kegiatanService'
 
-/**
- * TambahPesertaModal — modal pencarian & penambahan peserta secara manual.
- *
- * Props:
- *   isOpen: boolean
- *   kegiatanId: number|string
- *   onClose: () => void
- *   onAdded: () => void   // dipanggil setelah 1+ peserta berhasil ditambahkan
- */
 function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
+  const dialogRef = useRef(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -20,6 +12,16 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
   const [selected, setSelected] = useState(new Set())
   const [searched, setSearched] = useState(false)
   const timerRef = useRef(null)
+
+  useEffect(() => {
+    const el = dialogRef.current
+    if (!el) return
+    if (isOpen) {
+      if (!el.open) el.showModal()
+    } else if (el.open) {
+      el.close()
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) {
@@ -53,8 +55,6 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
     }, 300)
     return () => clearTimeout(timerRef.current)
   }, [query, isOpen, kegiatanId])
-
-  if (!isOpen) return null
 
   const toggleSelect = (userId) => {
     setSelected((prev) => {
@@ -101,64 +101,65 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onClose={onClose}
+      onCancel={(e) => {
+        e.preventDefault()
+        onClose?.()
+      }}
+    >
+      <div className="modal-box max-w-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-[#222]">Tambah Peserta Manual</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={adding}
-            className="text-xl leading-none text-[#9aa0a6] hover:text-[#333] disabled:opacity-50"
-          >
-            ×
+          <h3 className="text-lg font-semibold text-base-content">Tambah Peserta Manual</h3>
+          <button type="button" onClick={onClose} disabled={adding} className="btn btn-ghost btn-square btn-xs" aria-label="Tutup">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0a6]" />
+        <label className="input w-full">
+          <Search className="h-4 w-4 shrink-0 text-base-content/50" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari NIM atau nama mahasiswa…"
             autoFocus
-            className="w-full rounded-lg border border-[#d9dce7] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-dark"
           />
-        </div>
+        </label>
 
-        <div className="mt-4 max-h-72 overflow-y-auto rounded-lg border border-[#e9ebf8]">
+        <div className="mt-4 max-h-72 overflow-y-auto rounded-md border border-base-300">
           {searching ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#9aa0a6]">
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-base-content/50">
               <Loader2 className="h-4 w-4 animate-spin" /> Mencari…
             </div>
           ) : query.trim().length < 2 ? (
-            <div className="py-8 text-center text-sm text-[#9aa0a6]">Ketik minimal 2 karakter NIM atau nama.</div>
+            <div className="py-8 text-center text-sm text-base-content/50">Ketik minimal 2 karakter NIM atau nama.</div>
           ) : !searched ? (
-            <div className="py-8 text-center text-sm text-[#9aa0a6]">Mencari…</div>
+            <div className="py-8 text-center text-sm text-base-content/50">Mencari…</div>
           ) : results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-[#9aa0a6]">Tidak ada mahasiswa ditemukan (semua sudah terdaftar?).</div>
+            <div className="py-8 text-center text-sm text-base-content/50">Tidak ada mahasiswa ditemukan (semua sudah terdaftar?).</div>
           ) : (
-            <div className="divide-y divide-[#f0f0f0]">
+            <div className="divide-y divide-base-300">
               <button
                 type="button"
                 onClick={toggleAll}
-                className="flex w-full items-center justify-between bg-[#f9fafb] px-4 py-2.5 text-left text-xs font-semibold text-[#616161] hover:bg-[#f0f4f0]"
+                className="flex w-full items-center justify-between bg-base-200 px-4 py-2.5 text-left text-xs font-semibold text-base-content/60"
               >
                 <span>Pilih semua hasil ({results.length})</span>
-                {results.every((r) => selected.has(r.userId)) && <Check className="h-4 w-4 text-brand-dark" />}
               </button>
               {results.map((r) => (
-                <label key={r.userId} className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-[#f9fafb]">
+                <label key={r.userId} className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-base-200">
                   <input
                     type="checkbox"
                     checked={selected.has(r.userId)}
                     onChange={() => toggleSelect(r.userId)}
-                    className="h-4 w-4 shrink-0 cursor-pointer accent-brand-dark"
+                    className="checkbox checkbox-sm checkbox-primary"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#222]">{r.nama}</p>
-                    <p className="truncate text-xs text-[#9aa0a6]">
+                    <p className="truncate text-sm font-medium text-base-content">{r.nama}</p>
+                    <p className="truncate text-xs text-base-content/50">
                       {r.nim} · {r.prodi} · {r.fakultas}
                     </p>
                   </div>
@@ -168,22 +169,17 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
           )}
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <span className="text-xs text-[#9aa0a6]">{selected.size} mahasiswa dipilih</span>
+        <div className="modal-action items-center justify-between">
+          <span className="text-xs text-base-content/50">{selected.size} mahasiswa dipilih</span>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={adding}
-              className="rounded-lg border border-[#d9dce7] px-4 py-2 text-sm font-semibold text-[#616161] hover:bg-[#f5f6f8] disabled:opacity-50"
-            >
+            <button type="button" onClick={onClose} disabled={adding} className="btn btn-ghost btn-sm">
               Batal
             </button>
             <button
               type="button"
               onClick={handleAdd}
               disabled={selected.size === 0 || adding}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-dark to-brand-light px-5 py-2 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn btn-primary btn-sm"
             >
               {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {adding ? 'Menambahkan…' : 'Tambah Peserta'}
@@ -191,7 +187,10 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
           </div>
         </div>
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop">
+        <button type="submit">close</button>
+      </form>
+    </dialog>
   )
 }
 

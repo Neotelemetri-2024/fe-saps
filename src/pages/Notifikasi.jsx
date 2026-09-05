@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { CheckCircle, XCircle, Bell, FileText, Users, Info, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
+import { NotifListSkeleton, Skeleton } from '../components/dashboard/Skeleton'
 import { getCurrentUser } from '../services/authService'
 import { getNotifikasi, bacaNotifikasi, bacaSemua } from '../services/notifikasiService'
 
@@ -230,14 +231,16 @@ function Notifikasi() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-[#222] sm:text-2xl lg:text-3xl">Notifikasi</h2>
-            <p className="mt-1.5 text-sm font-medium text-[#203820]">
-              {loading
-                ? 'Memuat…'
-                : belumDibacaCount > 0
+            <h2 className="text-xl font-bold text-base-content sm:text-2xl lg:text-3xl">Notifikasi</h2>
+            {loading ? (
+              <Skeleton className="mt-1.5 h-4 w-48" />
+            ) : (
+              <p className="mt-1.5 text-sm font-medium text-[#203820]">
+                {belumDibacaCount > 0
                   ? `${belumDibacaCount} notifikasi belum dibaca`
                   : 'Semua notifikasi sudah dibaca'}
-            </p>
+              </p>
+            )}
           </div>
           {belumDibacaCount > 0 && (
             <button
@@ -251,9 +254,9 @@ function Notifikasi() {
         </div>
 
         {/* Card putih pembungkus tab, daftar, dan pagination */}
-        <div className="rounded-xl border border-[#dddee3] bg-white p-4 sm:p-5">
+        <div className="rounded-xl border border-base-300 bg-white p-4 sm:p-5">
           {/* Tab filter */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#dddee3]">
+          <div className="flex flex-wrap items-center gap-2 border-b border-base-300">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -268,7 +271,7 @@ function Notifikasi() {
                 {tab.label}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                    activeTab === tab.key ? 'bg-[#e7fdef] text-[#203820]' : 'bg-[#f1f2f4] text-[#6d6868]'
+                    activeTab === tab.key ? 'bg-[#e7fdef] text-[#203820]' : 'bg-base-200 text-[#6d6868]'
                   }`}
                 >
                   {tab.count}
@@ -283,11 +286,9 @@ function Notifikasi() {
           {/* Daftar kartu notifikasi */}
           <div className="mt-4 space-y-3">
             {loading ? (
-              <div className="rounded-xl border border-[#dddee3] bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
-                Memuat notifikasi…
-              </div>
+              <NotifListSkeleton />
             ) : filteredNotifs.length === 0 ? (
-              <div className="rounded-xl border border-[#dddee3] bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
+              <div className="rounded-xl border border-base-300 bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
                 {activeTab === 'belum_dibaca'
                   ? 'Tidak ada notifikasi belum dibaca.'
                   : activeTab === 'sudah_dibaca'
@@ -302,7 +303,7 @@ function Notifikasi() {
                 return (
                   <div
                     key={notif.id}
-                    className="rounded-xl border border-[#dddee3] bg-[#fafbfc] p-4 sm:p-5"
+                    className="rounded-xl border border-base-300 bg-[#fafbfc] p-4 sm:p-5"
                   >
                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${cfg.bg}`}>
@@ -351,7 +352,7 @@ function Notifikasi() {
 
           {/* Pagination */}
           {!loading && filteredNotifs.length > 0 && totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between border-t border-[#dddee3] pt-4">
+            <div className="mt-4 flex items-center justify-between border-t border-base-300 pt-4">
               <span className="text-xs text-[#888]">
                 Menampilkan {start + 1}–{Math.min(start + PAGE_SIZE, filteredNotifs.length)} dari {filteredNotifs.length} notifikasi
               </span>
@@ -360,13 +361,13 @@ function Notifikasi() {
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setPage(currentPage - 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#dddee3] text-[#616161] transition hover:bg-[#f1f2f4] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 {pageNumbers.map((p, idx) =>
                   p === '...' ? (
-                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-[#9aa0a6]">
+                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-base-content/50">
                       …
                     </span>
                   ) : (
@@ -377,7 +378,7 @@ function Notifikasi() {
                       className={`flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-xs font-medium transition ${
                         p === currentPage
                           ? 'bg-brand-dark text-white'
-                          : 'border border-[#dddee3] text-[#616161] hover:bg-[#f1f2f4]'
+                          : 'border border-base-300 text-base-content/60 hover:bg-base-200'
                       }`}
                     >
                       {p}
@@ -388,7 +389,7 @@ function Notifikasi() {
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setPage(currentPage + 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#dddee3] text-[#616161] transition hover:bg-[#f1f2f4] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>

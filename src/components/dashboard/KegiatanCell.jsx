@@ -11,8 +11,8 @@ function KegiatanCell({ nama, tanggal }) {
   const showTanggal = tanggal && tanggal !== '-'
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-black">{nama || '-'}</p>
-      {showTanggal && <p className="text-xs text-[#616161]">Diajukan: {tanggal}</p>}
+      <p className="text-base-content">{nama || '-'}</p>
+      {showTanggal && <p className="text-xs text-base-content/60">Diajukan: {tanggal}</p>}
     </div>
   )
 }

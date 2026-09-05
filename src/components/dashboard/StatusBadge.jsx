@@ -1,36 +1,45 @@
+const TONE = {
+  success: 'badge-success',
+  warning: 'badge-warning',
+  error: 'badge-error',
+  info: 'badge-info',
+  neutral: 'badge-neutral',
+}
+
 const statusConfig = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Draft' },
-  diajukan: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Diajukan' },
-  diajukan_ulang: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Diajukan Ulang' },
-  terverifikasi: { bg: 'bg-indigo-100', text: 'text-indigo-800', label: 'Menunggu Persetujuan' },
-  perlu_revisi: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Perlu Revisi' },
-  revisi: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Revisi' },
-  disetujui: { bg: 'bg-green-100', text: 'text-green-800', label: 'Disetujui' },
-  ditolak: { bg: 'bg-red-100', text: 'text-red-800', label: 'Ditolak' },
-  terpublikasi: { bg: 'bg-green-100', text: 'text-green-800', label: 'Disetujui' },
-  dipublikasikan: { bg: 'bg-green-100', text: 'text-green-800', label: 'Dipublikasikan' },
-  berlangsung: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Berlangsung' },
-  selesai: { bg: 'bg-slate-100', text: 'text-slate-800', label: 'Selesai' },
-  diarsipkan: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Diarsipkan' },
-  dibatalkan: { bg: 'bg-red-50', text: 'text-red-700', label: 'Dibatalkan' },
-  diteruskan: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Diteruskan' },
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
-  belum_diklaim: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Belum Diklaim' },
-  menunggu: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Menunggu' },
-  aktif: { bg: 'bg-green-100', text: 'text-green-800', label: 'Aktif' },
-  'sudah tercatat': { bg: 'bg-green-50', text: 'text-green-800', label: 'Sudah Tercatat' },
-  'belum tercatat': { bg: 'bg-emerald-50', text: 'text-emerald-800', label: 'Belum Tercatat' },
+  draft: { tone: 'neutral', label: 'Draft' },
+  diajukan: { tone: 'info', label: 'Diajukan' },
+  diajukan_ulang: { tone: 'info', label: 'Diajukan Ulang' },
+  terverifikasi: { tone: 'info', label: 'Menunggu Persetujuan' },
+  perlu_revisi: { tone: 'warning', label: 'Perlu Revisi' },
+  revisi: { tone: 'warning', label: 'Revisi' },
+  disetujui: { tone: 'success', label: 'Disetujui' },
+  ditolak: { tone: 'error', label: 'Ditolak' },
+  terpublikasi: { tone: 'success', label: 'Disetujui' },
+  dipublikasikan: { tone: 'success', label: 'Dipublikasikan' },
+  berlangsung: { tone: 'success', label: 'Berlangsung' },
+  selesai: { tone: 'neutral', label: 'Selesai' },
+  diarsipkan: { tone: 'neutral', label: 'Diarsipkan' },
+  dibatalkan: { tone: 'error', label: 'Dibatalkan' },
+  diteruskan: { tone: 'info', label: 'Diteruskan' },
+  pending: { tone: 'warning', label: 'Pending' },
+  belum_diklaim: { tone: 'warning', label: 'Belum Diklaim' },
+  menunggu: { tone: 'info', label: 'Menunggu' },
+  aktif: { tone: 'success', label: 'Aktif' },
+  'sudah tercatat': { tone: 'success', label: 'Sudah Tercatat' },
+  'belum tercatat': { tone: 'info', label: 'Belum Tercatat' },
+  tercapai: { tone: 'success', label: 'Tercapai' },
+  'belum tercapai': { tone: 'warning', label: 'Belum Tercapai' },
 }
 
 function StatusBadge({ status }) {
   const key = String(status || '').toLowerCase()
   const cfg = statusConfig[key] || {
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
+    tone: 'warning',
     label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending',
   }
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+    <span className={`badge badge-sm ${TONE[cfg.tone] || TONE.neutral}`}>
       {cfg.label}
     </span>
   )
