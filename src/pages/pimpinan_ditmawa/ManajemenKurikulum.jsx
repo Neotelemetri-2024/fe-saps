@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Pencil, Trash2, AlignJustify, ChevronLeft, ChevronRight, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import Modal from '../../components/ui/Modal'
 import ActionMenu from '../../components/ui/ActionMenu'
@@ -426,7 +425,7 @@ const handleEditSubCapaian = async () => {
   }
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Eng. Ir. Dendi Adi Saputra M, S.T, M.T" userRole="Pimpinan">
+      <>
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title={`Hapus "${deleteTarget?.nama}"?`}
@@ -1075,7 +1074,7 @@ const handleEditSubCapaian = async () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+      </>
   )
 }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Search, Plus, Key, Trash2, Eye, EyeOff, X } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -252,7 +251,7 @@ function ManajemenAkunUKM() {
   ], [filtered])
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+      <>
       {showTambah && <TambahAkunModal onClose={() => setShowTambah(false)} onSave={handleSave} />}
       {resetTarget && <ResetPasswordModal item={resetTarget} onClose={() => setResetTarget(null)} onReset={handleReset} />}
       <ConfirmModal
@@ -284,7 +283,7 @@ function ManajemenAkunUKM() {
           </TableFrame>
         </TableCard>
       </div>
-    </DashboardLayout>
+      </>
   )
 }
 

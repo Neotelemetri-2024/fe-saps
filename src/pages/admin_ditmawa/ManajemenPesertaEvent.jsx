@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Search, X, ChevronLeft, ChevronRight, Download, UploadCloud, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatanById,
   getPesertaKegiatan,
@@ -86,6 +87,11 @@ function SubmitModal({ isOpen, onConfirm, onClose }) {
 function ManajemenPesertaEvent() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const user = getCurrentUser()
+  const role = user?.role || 'admin_ditmawa'
+  const basePath = role === 'pimpinan_ditmawa' ? '/pimpinan_ditmawa' : '/admin_ditmawa'
+  const userRole = user?.userRole || (role === 'pimpinan_ditmawa' ? 'Pimpinan Ditmawa' : 'Admin Ditmawa')
+  const userName = user?.nama || userRole
   const fileRef = useRef(null)
 
   const [event, setEvent] = useState({ nama: 'Kegiatan', jenis: '', tanggal: '', lokasi: '' })
@@ -216,8 +222,8 @@ function ManajemenPesertaEvent() {
 
   const belumDisetujui = !['disetujui', 'terpublikasi'].includes(eventStatus)
 
-  return (
-    <DashboardLayout role="admin_ditmawa" userName="Admin Ditmawa" userRole="Admin Ditmawa">
+  const pageContent = (
+    <>
       <SubmitModal
         isOpen={showSubmitModal}
         onConfirm={handleSubmitConfirm}
@@ -234,7 +240,7 @@ function ManajemenPesertaEvent() {
       <div className="space-y-6">
         <button
           type="button"
-          onClick={() => navigate('/admin_ditmawa/manajemen-event')}
+          onClick={() => navigate(`${basePath}/manajemen-event`)}
           className="flex items-center gap-1.5 text-sm font-medium text-brand-dark hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Kembali ke Manajemen Event
@@ -448,6 +454,18 @@ function ManajemenPesertaEvent() {
           </div>
         )}
       </div>
+    </>
+  )
+
+  // pimpinan_ditmawa sudah punya shared layout (PimpinanDitmawaLayout),
+  // jadi tidak perlu DashboardLayout lagi di sini
+  if (role === 'pimpinan_ditmawa') {
+    return pageContent
+  }
+
+  return (
+    <DashboardLayout role={role} userName={userName} userRole={userRole}>
+      {pageContent}
     </DashboardLayout>
   )
 }

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { History, X, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getMatriks,
@@ -711,7 +710,7 @@ function BobotPoin() {
   }
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Eng. Ir. Dendi Adi Saputra M, S.T, M.T" userRole="Pimpinan">
+      <>
       <TambahMatriksModal
         isOpen={showTambahMatriks}
         onClose={() => setShowTambahMatriks(false)}
@@ -763,7 +762,7 @@ function BobotPoin() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+      </>
   )
 }
 

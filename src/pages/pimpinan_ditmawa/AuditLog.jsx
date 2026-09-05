@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Search, Shield, RefreshCw } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -93,7 +92,6 @@ function AuditLog() {
   ], [start])
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
@@ -141,7 +139,6 @@ function AuditLog() {
           </TableFrame>
         </TableCard>
       </div>
-    </DashboardLayout>
   )
 }
 

@@ -17,7 +17,28 @@ function menuHasActiveChild(item, pathname) {
 }
 
 function Sidebar({ menuItems, userName, userRole, collapsed, onToggle }) {
-  const [openMenus, setOpenMenus] = useState({})
+  const location = useLocation()
+  const [openMenus, setOpenMenus] = useState(() => {
+    const initial = {}
+    menuItems.forEach((item) => {
+      if (menuHasActiveChild(item, location.pathname)) {
+        initial[item.label] = true
+      }
+    })
+    return initial
+  })
+
+  useEffect(() => {
+    setOpenMenus((prev) => {
+      const next = { ...prev }
+      menuItems.forEach((item) => {
+        if (menuHasActiveChild(item, location.pathname)) {
+          next[item.label] = true
+        }
+      })
+      return next
+    })
+  }, [location.pathname, menuItems])
 
   const toggleMenu = (label) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
@@ -214,7 +235,7 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
 
               if (hasChildren) {
                 return (
-                  <li key={item.label} className={isMenuExpanded ? 'sticky top-0 z-10 bg-white pb-1' : ''}>
+                  <li key={item.label}>
                     <button
                       type="button"
                       onClick={() => toggleMenu(item.label)}

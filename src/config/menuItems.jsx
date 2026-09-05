@@ -58,12 +58,12 @@ export const pimpinanDitmawaMenu = [
   { path: '/pimpinan_ditmawa/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
   {
     path: '#',
-    label: 'Verifikasi & Approval',
-    icon: <CheckCircle className="h-4 w-4" />,
+    label: 'Verifikasi',
+    icon: <FileText className="h-4 w-4" />,
     children: [
-      { path: '/pimpinan_ditmawa/verifikasi-klaim', label: 'Validasi Klaim Poin' },
-      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-internal', label: 'Proposal UKM Internal' },
-      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-eksternal', label: 'Proposal Ormawa Eksternal' },
+      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-eksternal', label: 'Verifikasi Pengajuan Eksternal' },
+      { path: '/pimpinan_ditmawa/verifikasi-pengajuan-internal', label: 'Verifikasi Pengajuan Internal' },
+      { path: '/pimpinan_ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin Eksternal' },
     ],
   },
   {

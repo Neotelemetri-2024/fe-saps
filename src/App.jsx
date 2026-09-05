@@ -39,6 +39,7 @@ import PimpinanDitmawaDetailValidasiKlaim from './pages/pimpinan_ditmawa/DetailV
 import PimpinanDitmawaManajemenAkunUKM from './pages/pimpinan_ditmawa/ManajemenAkunUKM'
 import PimpinanDitmawaManajemenAkunUKMF from './pages/pimpinan_ditmawa/ManajemenAkunUKMF'
 import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
+import PimpinanDitmawaLayout from './layouts/PimpinanDitmawaLayout'
 import PimpinanFakultasDashboard from './pages/pimpinan_fakultas/FakultasDashboard'
 import PimpinanFakultasPersetujuan from './pages/pimpinan_fakultas/FakultasPersetujuan'
 import PimpinanFakultasVerifikasiUKMF from './pages/pimpinan_fakultas/VerifikasiPengajuanUKMF'
@@ -120,13 +121,13 @@ function App() {
         </Route>
 
         {/* Pimpinan Ditmawa */}
-        <Route path="pimpinan_ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan_ditmawa']}><Outlet /></RoleGuard></AuthGuard>}>
+        <Route path="pimpinan_ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan_ditmawa']}><PimpinanDitmawaLayout /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<PimpinanDitmawaDashboardNew />} />
           <Route path="manajemen-kurikulum" element={<PimpinanDitmawaManajemenKurikulum />} />
           <Route path="tambah-matriks" element={<PimpinanDitmawaTambahMatriks />} />
           <Route path="bobot-poin" element={<PimpinanDitmawaBobotPoin />} />
           <Route path="edit-poin/:id" element={<PimpinanDitmawaEditPoin />} />
-          <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_ditmawa" />} />
+          <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_ditmawa" embedded />} />
           <Route path="verifikasi-klaim" element={<PimpinanDitmawaValidasiKlaimPoin />} />
           <Route path="verifikasi-klaim/:id" element={<PimpinanDitmawaDetailValidasiKlaim />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />

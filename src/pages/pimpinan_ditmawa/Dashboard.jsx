@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { VerticalBarChart } from '../../components/charts'
@@ -48,12 +47,7 @@ function Dashboard() {
   const fallbackValues = [35000, 28000, 22000, 19500, 16000, 14500, 12000, 9500]
 
   return (
-    <DashboardLayout
-      role="pimpinan_ditmawa"
-      userName={user?.nama || 'Pimpinan Ditmawa'}
-      userRole="Pimpinan Ditmawa"
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Welcome */}
         <div>
           <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
@@ -268,8 +262,7 @@ function Dashboard() {
           title="Manual Book User Pimpinan Ditmawa"
           description="Panduan Penggunaan Website SAPS 2026 untuk Pimpinan Ditmawa"
         />
-      </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKurikulumAktif, createKurikulum, tambahCapaian, tambahSubCapaian } from '../../services/kurikulumService'
@@ -132,11 +131,6 @@ function TambahMatriks() {
   }
 
   return (
-    <DashboardLayout
-      role="pimpinan_ditmawa"
-      userName={user?.nama || 'Pimpinan Ditmawa'}
-      userRole="Pimpinan Ditmawa"
-    >
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Tambah Kurikulum / Matriks</h2>
@@ -297,7 +291,6 @@ function TambahMatriks() {
           </button>
         </div>
       </div>
-    </DashboardLayout>
   )
 }
 

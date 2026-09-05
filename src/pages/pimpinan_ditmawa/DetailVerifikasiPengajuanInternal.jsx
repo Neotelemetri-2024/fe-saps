@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
@@ -86,24 +85,20 @@ function DetailVerifikasiPengajuanInternal() {
   const canAct = item?.status === 'diteruskan'
 
   if (loading) return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
       <div className="py-24 text-center text-sm text-[#9aa0a6]">Memuat detail…</div>
-    </DashboardLayout>
   )
 
   if (!item) return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
       <div className="flex flex-col items-center gap-4 py-20">
         <p className="text-base font-semibold text-[#616161]">Data tidak ditemukan.</p>
         <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
       </div>
-    </DashboardLayout>
   )
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
+      <>
       <ConfirmModal
         isOpen={showConfirmSetujui}
         message="Pengajuan ini akan disetujui."
@@ -194,7 +189,7 @@ function DetailVerifikasiPengajuanInternal() {
             </div>
         )}
       </div>
-    </DashboardLayout>
+      </>
   )
 }
 

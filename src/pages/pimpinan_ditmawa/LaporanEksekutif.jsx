@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Download, FileSpreadsheet, FileText, Eye, Filter, X } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getCurrentUser } from '../../services/authService'
 import { getPreviewLaporan, downloadExcelLaporan, downloadPdfLaporan, getFakultasList } from '../../services/laporanService'
@@ -67,7 +66,6 @@ function LaporanEksekutif() {
   }
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName={user?.nama || 'Pimpinan Ditmawa'} userRole="Pimpinan Ditmawa">
       <div className="space-y-5">
         <div>
           <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Laporan Eksekutif</h2>
@@ -196,7 +194,6 @@ function LaporanEksekutif() {
           <div className="py-12 text-center text-sm text-[#9aa0a6]">Memuat data laporan...</div>
         )}
       </div>
-    </DashboardLayout>
   )
 }
 

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 
 function EditPoin() {
   const navigate = useNavigate()
@@ -34,7 +33,6 @@ function EditPoin() {
   }
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
       <div className="space-y-5">
         <h2 className="text-2xl font-extrabold text-[#222] sm:text-3xl">Edit Poin</h2>
 
@@ -102,7 +100,6 @@ function EditPoin() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   )
 }
 

@@ -25,17 +25,20 @@ function LihatSelengkapnyaButton({ onClick }) {
   )
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, className = '' }) {
   const s = String(status || '').toLowerCase()
   const map = {
-    pending:    { cls: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Pending' },
-    disetujui:  { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', label: 'Disetujui' },
-    ditolak:    { cls: 'bg-red-50 text-red-600 border border-red-200', label: 'Ditolak' },
-    diteruskan: { cls: 'bg-blue-50 text-blue-600 border border-blue-200', label: 'Diteruskan' },
+    pending:            { cls: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Pending' },
+    disetujui:          { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', label: 'Disetujui' },
+    ditolak:            { cls: 'bg-red-50 text-red-600 border border-red-200', label: 'Ditolak' },
+    diteruskan:         { cls: 'bg-blue-50 text-blue-600 border border-blue-200', label: 'Diteruskan' },
+    'menunggu validasi':{ cls: 'bg-indigo-50 text-indigo-700 border border-indigo-200', label: 'Menunggu Validasi' },
+    'menunggu pimpinan':{ cls: 'bg-purple-50 text-purple-700 border border-purple-200', label: 'Menunggu Pimpinan' },
+    'perlu revisi':     { cls: 'bg-orange-50 text-orange-700 border border-orange-200', label: 'Perlu Revisi' },
   }
-  const style = map[s] || { cls: 'bg-gray-100 text-gray-600', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending' }
+  const style = map[s] || { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending' }
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${style.cls}`}>
+    <span className={`inline-flex items-center justify-center text-center rounded-full px-3 py-1 text-xs font-normal ${style.cls} ${className}`}>
       {style.label}
     </span>
   )
@@ -273,7 +276,7 @@ function MahasiswaDashboard() {
                 { key: 'jenis', label: 'Jenis' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
                 { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggalPelaksanaan || row.tanggalMulai || row.tanggal) || '-' },
-                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'status', label: 'Status', center: true, render: (row) => <div className="flex w-full items-center justify-center text-center"><StatusBadge status={row.status} /></div> },
               ]}
               data={pengajuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
               loading={loadingTables}
@@ -296,7 +299,7 @@ function MahasiswaDashboard() {
                 { key: 'peran', label: 'Peran' },
                 { key: 'penyelenggara', label: 'Penyelenggara' },
                 { key: 'tanggal', label: 'Tanggal', render: (row) => formatTanggal(row.tanggalPelaksanaan || row.tanggalMulai || row.tanggal) || '-' },
-                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'status', label: 'Status', center: true, render: (row) => <div className="flex w-full items-center justify-center text-center"><StatusBadge status={row.status} /></div> },
               ]}
               data={persetujuan.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
               loading={loadingTables}
@@ -318,7 +321,7 @@ function MahasiswaDashboard() {
                 { key: 'jenis', label: 'Jenis', render: (row) => row.jenisKegiatan || row.jenis || '-' },
                 { key: 'peran', label: 'Peran' },
                 { key: 'poin', label: 'Poin', render: (row) => <span className="font-bold text-brand-dark">{row.poin ?? '-'}</span> },
-                { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'status', label: 'Status', center: true, render: (row) => <div className="flex w-full items-center justify-center text-center"><StatusBadge status={row.status} /></div> },
               ]}
               data={klaim.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}
               loading={loadingTables}

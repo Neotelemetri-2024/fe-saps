@@ -125,6 +125,10 @@ function normalizeEvent(item) {
 function ManajemenEvent() {
   const navigate = useNavigate()
   const user = getCurrentUser()
+  const role = user?.role || 'admin_ditmawa'
+  const basePath = role === 'pimpinan_ditmawa' ? '/pimpinan_ditmawa' : '/admin_ditmawa'
+  const userRole = user?.userRole || (role === 'pimpinan_ditmawa' ? 'Pimpinan Ditmawa' : 'Admin Ditmawa')
+  const userName = user?.nama || userRole
   const [searchParams, setSearchParams] = useSearchParams()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -245,7 +249,7 @@ function ManajemenEvent() {
             icon: <Users className="h-4 w-4" />,
             color: 'text-blue-600',
             disabled: !bisaPeserta(row),
-            onClick: () => navigate(`/admin_ditmawa/manajemen-peserta-event/${row.id}`),
+            onClick: () => navigate(`${basePath}/manajemen-peserta-event/${row.id}`),
           },
           {
             label: 'Edit',
@@ -264,7 +268,7 @@ function ManajemenEvent() {
         ]}
       />
     )},
-  ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus, bisaPeserta])
+  ], [pageItems, start, navigate, bisaKirim, bisaEdit, bisaHapus, bisaPeserta, basePath])
 
   const resetFilter = () => {
     setSearch('')
@@ -274,27 +278,23 @@ function ManajemenEvent() {
     setPage(1)
   }
 
-  if (mode === 'create' || mode === 'edit') {
-    return (
-      <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
-        <EventForm
-          editItem={mode === 'edit' ? editTarget : null}
-          onCancel={goToList}
-          onSaved={() => { goToList(); load() }}
-        />
-      </DashboardLayout>
+  const content = mode === 'create' || mode === 'edit'
+    ? (
+      <EventForm
+        editItem={mode === 'edit' ? editTarget : null}
+        onCancel={goToList}
+        onSaved={() => { goToList(); load() }}
+      />
     )
-  }
-
-  return (
-    <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
-      {hapusTarget && (
-        <HapusEventModal
-          event={hapusTarget}
-          onClose={() => setHapusTarget(null)}
-          onConfirm={handleConfirmHapus}
-        />
-      )}
+    : (
+      <>
+        {hapusTarget && (
+          <HapusEventModal
+            event={hapusTarget}
+            onClose={() => setHapusTarget(null)}
+            onConfirm={handleConfirmHapus}
+          />
+        )}
       <ConfirmModal
         isOpen={!!kirimTarget}
         message="Setelah dikirim, kegiatan tidak dapat diedit. Lanjutkan?"
@@ -378,6 +378,18 @@ function ManajemenEvent() {
           </TableCard>
         </section>
       </div>
+      </>
+    )
+
+  // pimpinan_ditmawa sudah punya shared layout (PimpinanDitmawaLayout),
+  // jadi tidak perlu DashboardLayout lagi di sini
+  if (role === 'pimpinan_ditmawa') {
+    return content
+  }
+
+  return (
+    <DashboardLayout role={role} userName={userName} userRole={userRole}>
+      {content}
     </DashboardLayout>
   )
 }

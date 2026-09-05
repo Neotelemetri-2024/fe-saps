@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Eye, Search } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
@@ -142,7 +141,7 @@ function VerifikasiPengajuanInternal() {
   }
 
   return (
-    <DashboardLayout role="pimpinan_ditmawa" userName="Dr. Dendi Adi Saputra" userRole="Pimpinan Ditmawa">
+      <>
       <ConfirmModal
         isOpen={showBulkConfirm}
        
@@ -274,7 +273,7 @@ function VerifikasiPengajuanInternal() {
           </TableFrame>
         </TableCard>
       </div>
-    </DashboardLayout>
+      </>
   )
 }
 
