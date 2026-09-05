@@ -158,13 +158,14 @@ export const getRiwayatKlaimEksternal = async (req: Request, res: Response, next
         }
       },
       include: {
-        peranUsulan: { select: { nama: true } },
+        peranUsulan: { select: { id: true, nama: true } },
         partisipasi: {
           include: {
             kegiatan: {
               include: {
-                kategori: { select: { nama: true } },
-                skala: { select: { nama: true } }
+                kategori: { select: { id: true, nama: true } },
+                skala: { select: { id: true, nama: true } },
+                kurikulum: { select: { id: true } }
               }
             }
           }
@@ -174,10 +175,33 @@ export const getRiwayatKlaimEksternal = async (req: Request, res: Response, next
       orderBy: { createdAt: 'desc' }
     });
 
+    // Ambil matriks poin untuk estimasi (bulk lookup)
+    const matriksMap = new Map<string, number>();
+    const matriksList = await prisma.matriksPoin.findMany({
+      select: { kurikulumId: true, kategoriId: true, skalaId: true, peranId: true, poin: true }
+    });
+    for (const m of matriksList) {
+      matriksMap.set(`${m.kurikulumId}_${m.kategoriId}_${m.skalaId}_${m.peranId}`, m.poin);
+    }
+
     const result = data.map((k) => {
       let statusStr = 'Pending';
       if (k.status === 'disetujui') statusStr = 'Disetujui';
       else if (k.status === 'ditolak') statusStr = 'Ditolak';
+      else if (k.status === 'menunggu_validasi') statusStr = 'Menunggu Validasi';
+      else if (k.status === 'menunggu_pimpinan') statusStr = 'Menunggu Pimpinan';
+      else if (k.status === 'perlu_revisi') statusStr = 'Perlu Revisi';
+
+      // Poin sah dari perolehanPoin (setelah disetujui)
+      let poin: number | string | null = k.perolehanPoin?.totalPoin ?? null;
+
+      // Jika belum ada perolehanPoin, estimasi dari MatriksPoin
+      if (poin === null && k.peranUsulan && k.partisipasi?.kegiatan) {
+        const keg = k.partisipasi.kegiatan;
+        const key = `${keg.kurikulumId}_${keg.kategoriId}_${keg.skalaId}_${k.peranUsulan.id}`;
+        const estimasi = matriksMap.get(key);
+        poin = estimasi ?? null;
+      }
 
       return {
         id: k.id.toString(),
@@ -187,7 +211,7 @@ export const getRiwayatKlaimEksternal = async (req: Request, res: Response, next
         penyelenggara: k.partisipasi.kegiatan.penyelenggaraExt,
         tanggalPelaksanaan: k.partisipasi.kegiatan.tanggalMulai,
         skala: k.partisipasi.kegiatan.skala?.nama,
-        poin: k.perolehanPoin?.totalPoin || '-',
+        poin,
         status: statusStr,
         alasan: k.alasan || null,
         tanggalKlaim: k.createdAt

@@ -60,17 +60,17 @@ export const downloadExcelLaporan = async (req: Request, res: Response, next: Ne
       tahunAkademik: tahunAkademik ? String(tahunAkademik) : undefined,
     });
 
-    const excelBuffer = await generateExcelLaporan(data);
+    const csvBuffer = await generateExcelLaporan(data);
 
     const safeScope = data.scopeNama.replace(/[^a-zA-Z0-9_-]/g, '_');
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `Laporan_Evaluasi_SAPS_${safeScope}_${dateStr}.xlsx`;
+    const filename = `Laporan_SAPS_${safeScope}_${dateStr}.csv`;
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', excelBuffer.length);
+    res.setHeader('Content-Length', csvBuffer.length);
 
-    res.status(200).send(excelBuffer);
+    res.status(200).send(csvBuffer);
   } catch (error: any) {
     console.error('[downloadExcelLaporan]', error);
     next(error);
@@ -104,7 +104,7 @@ export const downloadPdfLaporan = async (req: Request, res: Response, next: Next
 
     const safeScope = data.scopeNama.replace(/[^a-zA-Z0-9_-]/g, '_');
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `Laporan_Resmi_SAPS_${safeScope}_${dateStr}.pdf`;
+    const filename = `Laporan_SAPS_${safeScope}_${dateStr}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

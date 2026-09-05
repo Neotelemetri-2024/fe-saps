@@ -1,236 +1,354 @@
-import PDFDocument from 'pdfkit';
-import { LaporanDataResult } from './dataLaporan.service';
+import fs from 'fs'
+import path from 'path'
+import PDFDocument from 'pdfkit'
+import { LaporanDataResult } from './dataLaporan.service'
 
-/**
- * Service untuk men-generate file PDF resmi laporan evaluasi & riset pimpinan
- * dengan layout formal Universitas Andalas.
- */
+const FONT = {
+  regular: 'Times-Roman',
+  bold: 'Times-Bold',
+}
+
+const TNR_REGULAR = [
+  '/System/Library/Fonts/Supplemental/Times New Roman.ttf',
+  '/Library/Fonts/Times New Roman.ttf',
+  '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf',
+]
+
+const TNR_BOLD = [
+  '/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf',
+  '/Library/Fonts/Times New Roman Bold.ttf',
+  '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman_Bold.ttf',
+]
+
+const MARGIN = 48
+const ROW_H = 16
+const GAP = 8
+
+function firstExisting(paths: string[]) {
+  return paths.find((p) => fs.existsSync(p))
+}
+
+function logoFile() {
+  return firstExisting([
+    path.join(process.cwd(), 'src/assets/logo_unand.png'),
+    path.join(process.cwd(), 'assets/logo_unand.png'),
+  ])
+}
+
+function registerTimes(doc: PDFKit.PDFDocument) {
+  const regular = firstExisting(TNR_REGULAR)
+  const bold = firstExisting(TNR_BOLD)
+  if (regular) {
+    doc.registerFont('TNR', regular)
+    FONT.regular = 'TNR'
+  }
+  if (bold) {
+    doc.registerFont('TNR-Bold', bold)
+    FONT.bold = 'TNR-Bold'
+  }
+}
+
+function formatNumber(value: number) {
+  return Number(value || 0).toLocaleString('id-ID')
+}
+
+function formatTanggal(value?: Date | string) {
+  const d = value ? new Date(value) : new Date()
+  if (Number.isNaN(d.getTime())) return '-'
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+type Align = 'left' | 'center' | 'right'
+
+interface TableColumn {
+  label: string
+  width: number
+  align?: Align
+}
+
+function clean(text: string) {
+  return String(text || '-').replace(/\s+/g, ' ').trim()
+}
+
+function put(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  opts: { align?: Align; bold?: boolean; size?: number; wrap?: boolean; height?: number } = {},
+) {
+  doc.font(opts.bold ? FONT.bold : FONT.regular)
+    .fontSize(opts.size ?? 9)
+    .fillColor('#000000')
+    .text(clean(text), x, y, {
+      width,
+      align: opts.align ?? 'left',
+      lineBreak: Boolean(opts.wrap),
+      ellipsis: !opts.wrap,
+      height: opts.height,
+      lineGap: 1,
+    })
+}
+
+function measureRowHeight(doc: PDFKit.PDFDocument, columns: TableColumn[], row: string[]) {
+  doc.font(FONT.regular).fontSize(9)
+  let height = ROW_H
+  columns.forEach((col, i) => {
+    const h = doc.heightOfString(clean(row[i] ?? '-'), {
+      width: col.width - 8,
+      lineGap: 1,
+    })
+    height = Math.max(height, h + 6)
+  })
+  return Math.min(height, 56)
+}
+
+function generatePdf(doc: PDFKit.PDFDocument, data: LaporanDataResult) {
+  const pageW = 595.28
+  const pageH = 841.89
+  const contentW = pageW - MARGIN * 2
+  const bottom = pageH - MARGIN
+  let y = MARGIN
+
+  const stroke = (x1: number, y1: number, x2: number, y2: number) => {
+    doc.moveTo(x1, y1).lineTo(x2, y2).lineWidth(0.6).strokeColor('#000000').stroke()
+  }
+
+  const newPage = () => {
+    doc.addPage({ size: 'A4', margin: 0 })
+    y = MARGIN
+  }
+
+  const need = (height: number) => {
+    if (y + height > bottom) newPage()
+  }
+
+  const logo = logoFile()
+  const logoH = 72
+  if (logo) doc.image(logo, MARGIN, y, { height: logoH })
+
+  put(doc, 'KEMENTERIAN PENDIDIKAN DAN KEBUDAYAAN', MARGIN, y + 2, contentW, {
+    align: 'center',
+    size: 9,
+  })
+  put(doc, 'UNIVERSITAS ANDALAS', MARGIN, y + 14, contentW, { align: 'center', bold: true, size: 14 })
+  put(doc, 'Alamat : Gedung PKM, Limau Manis Padang Kode Pos 25163', MARGIN, y + 32, contentW, {
+    align: 'center',
+    size: 8,
+  })
+  put(doc, 'Telepon : 0751-71181, 71175, 71086, 71087, 71699   Faksimile : 0751-71085', MARGIN, y + 44, contentW, {
+    align: 'center',
+    size: 8,
+  })
+  put(doc, 'Laman : https://saps.unand.ac.id   e-mail : saps@unand.ac.id', MARGIN, y + 56, contentW, {
+    align: 'center',
+    size: 8,
+  })
+
+  y += logoH + 4
+  doc.moveTo(MARGIN, y).lineTo(MARGIN + contentW, y).lineWidth(1.8).strokeColor('#000000').stroke()
+  y += 8
+
+  put(doc, 'Laporan Evaluasi Kemahasiswaan', MARGIN, y, contentW, {
+    align: 'center',
+    bold: true,
+    size: 11,
+  })
+  y += 18
+  put(doc, data.scopeNama, MARGIN, y, contentW, { align: 'center', size: 9 })
+  y += 16
+  put(
+    doc,
+    `${data.kurikulum.nama}  |  Target ${data.kurikulum.targetPoin} poin  |  ${formatTanggal()}`,
+    MARGIN,
+    y,
+    contentW,
+    { align: 'center', size: 8 },
+  )
+  y += 18
+
+  const drawTable = (title: string, columns: TableColumn[], rows: string[][]) => {
+    const left = MARGIN
+    const tableW = columns.reduce((sum, col) => sum + col.width, 0)
+    const xs = [left]
+    columns.forEach((col) => xs.push(xs[xs.length - 1] + col.width))
+    const body = rows.length
+      ? rows
+      : [columns.map((_, i) => (i === (columns[0]?.label === 'No' ? 1 : 0) ? 'Tidak ada data' : ''))]
+
+    need(ROW_H * 2 + 14)
+    put(doc, title, MARGIN, y, contentW, { bold: true, size: 11 })
+    y += 12
+
+    let blockTop = y
+
+    const vLines = (from: number, to: number) => {
+      xs.forEach((x) => stroke(x, from, x, to))
+    }
+
+    const paintHeader = () => {
+      blockTop = y
+      stroke(left, y, left + tableW, y)
+      let x = left
+      columns.forEach((col) => {
+        put(doc, col.label, x + 4, y + 3, col.width - 8, {
+          align: col.align || 'left',
+          bold: true,
+          size: 9,
+        })
+        x += col.width
+      })
+      y += ROW_H
+      stroke(left, y, left + tableW, y)
+    }
+
+    paintHeader()
+
+    body.forEach((row) => {
+      const rh = measureRowHeight(doc, columns, row)
+      if (y + rh > bottom) {
+        vLines(blockTop, y)
+        newPage()
+        paintHeader()
+      }
+      let x = left
+      columns.forEach((col, i) => {
+        put(doc, row[i] ?? '-', x + 4, y + 3, col.width - 8, {
+          align: col.align || 'left',
+          size: 9,
+          wrap: true,
+          height: rh - 4,
+        })
+        x += col.width
+      })
+      y += rh
+      stroke(left, y, left + tableW, y)
+    })
+
+    vLines(blockTop, y)
+    y += GAP
+  }
+
+  const unitLabel = data.komparasi.unit === 'fakultas' ? 'Fakultas' : 'Program Studi'
+
+  drawTable(
+    'A. Ringkasan',
+    [
+      { label: 'No', width: 28, align: 'center' },
+      { label: 'Uraian', width: 150 },
+      { label: 'Nilai', width: 90, align: 'right' },
+    ],
+    [
+      ['1', 'Mahasiswa', formatNumber(data.kpi.totalMahasiswa)],
+      ['2', 'Rata-rata poin', `${data.kpi.rataRataPoin} / ${data.kurikulum.targetPoin}`],
+      ['3', 'Capaian', `${data.kpi.rataRataPersentase}%`],
+      ['4', 'Lulus target', `${data.kpi.persentaseLulusTarget}%`],
+      ['5', 'Poin sah', formatNumber(data.kpi.totalPoinSah)],
+      ['6', 'Prestasi', formatNumber(data.kpi.totalPrestasi)],
+    ],
+  )
+
+  drawTable(
+    'B. Kurikulum',
+    [
+      { label: 'No', width: 28, align: 'center' },
+      { label: 'Tahapan', width: 100 },
+      { label: 'Tahun', width: 48 },
+      { label: 'Target', width: 52, align: 'right' },
+      { label: 'Rata-rata', width: 62, align: 'right' },
+      { label: 'Capaian', width: 58, align: 'right' },
+    ],
+    data.capaianKurikulumStats.map((c, i) => [
+      String(i + 1),
+      c.nama || '-',
+      String(c.tahun),
+      String(c.targetPoin),
+      String(c.rataRataTerkumpul),
+      `${c.persentaseCapaian}%`,
+    ]),
+  )
+
+  drawTable(
+    `C. Peringkat ${unitLabel}`,
+    [
+      { label: 'No', width: 28, align: 'center' },
+      { label: unitLabel, width: 170 },
+      { label: 'Mahasiswa', width: 62, align: 'right' },
+      { label: 'Rata-rata', width: 58, align: 'right' },
+      { label: 'Capaian', width: 54, align: 'right' },
+    ],
+    data.komparasi.items.map((item) => [
+      String(item.ranking),
+      item.nama || '-',
+      formatNumber(item.totalMahasiswa),
+      formatNumber(item.rataRataPoin),
+      `${item.rataRataPersentase ?? 0}%`,
+    ]),
+  )
+
+  drawTable(
+    'D. Prestasi',
+    [
+      { label: 'No', width: 28, align: 'center' },
+      { label: 'Mahasiswa', width: 100 },
+      { label: 'Kegiatan', width: 130 },
+      { label: 'Skala', width: 92 },
+      { label: 'Peringkat', width: 88 },
+      { label: 'Poin', width: 42, align: 'right' },
+    ],
+    data.prestasiList.map((p, i) => [
+      String(i + 1),
+      p.namaMahasiswa || '-',
+      p.namaKegiatan || '-',
+      p.skala || '-',
+      p.peran || '-',
+      String(p.poin ?? 0),
+    ]),
+  )
+
+  need(86)
+  y += 6
+  const sigW = 200
+  const sigX = MARGIN + contentW - sigW
+  put(doc, `Padang, ${formatTanggal()}`, sigX, y, sigW, {
+    align: 'center',
+    size: 9,
+  })
+  y += 14
+  put(doc, 'Mengetahui,', sigX, y, sigW, { align: 'center', size: 9 })
+  y += 48
+  put(doc, '( .................................... )', sigX, y, sigW, { align: 'center', size: 9 })
+  y += 14
+  put(doc, 'NIP. ................................', sigX, y, sigW, { align: 'center', size: 9 })
+
+  const range = doc.bufferedPageRange()
+  for (let i = range.start; i < range.start + range.count; i++) {
+    doc.switchToPage(i)
+    put(doc, String(i + 1), MARGIN, pageH - 32, contentW, { align: 'right', size: 8 })
+  }
+}
+
 export async function generatePdfLaporan(data: LaporanDataResult): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 0,
         bufferPages: true,
-      });
+        autoFirstPage: true,
+      })
 
-      const chunks: Buffer[] = [];
-      doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', (err) => reject(err));
+      const chunks: Buffer[] = []
+      doc.on('data', (chunk) => chunks.push(chunk))
+      doc.on('end', () => resolve(Buffer.concat(chunks)))
+      doc.on('error', (err) => reject(err))
 
-      const primaryColor = '#1E7E34'; // Unand Green
-      const darkColor = '#212529';
-      const grayColor = '#6C757D';
-      const lightBg = '#F8F9FA';
-      const borderColor = '#DEE2E6';
-
-      // ==========================================
-      // KOP SURAT RESMI UNIVERSITAS ANDALAS
-      // ==========================================
-      doc.rect(40, 35, doc.page.width - 80, 4).fill(primaryColor);
-      doc.moveDown(0.5);
-
-      doc.fillColor(primaryColor).fontSize(14).font('Helvetica-Bold')
-        .text('UNIVERSITAS ANDALAS', { align: 'center' });
-      doc.fillColor(darkColor).fontSize(11).font('Helvetica-Bold')
-        .text('SISTEM AKTIVITAS & PRESTASI MAHASISWA (SAPS)', { align: 'center' });
-      doc.fillColor(grayColor).fontSize(9).font('Helvetica')
-        .text('Gedung Rektorat Limau Manis, Padang - Sumatera Barat 25163', { align: 'center' });
-
-      doc.moveDown(0.5);
-      doc.strokeColor(primaryColor).lineWidth(1.5)
-        .moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke();
-      doc.moveDown(0.8);
-
-      // ==========================================
-      // JUDUL LAPORAN & METADATA
-      // ==========================================
-      doc.fillColor(darkColor).fontSize(13).font('Helvetica-Bold')
-        .text('LAPORAN EKSEKUTIF EVALUASI KEMAHASISWAAN', { align: 'center' });
-      doc.fillColor(primaryColor).fontSize(10).font('Helvetica-Bold')
-        .text(data.scopeNama.toUpperCase(), { align: 'center' });
-
-      doc.moveDown(0.5);
-      doc.fillColor(grayColor).fontSize(8).font('Helvetica')
-        .text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })} | Kurikulum: ${data.kurikulum.nama} (Target: ${data.kurikulum.targetPoin} Poin)`, { align: 'center' });
-
-      doc.moveDown(1);
-
-      // ==========================================
-      // KARTU KPI UTAMA (EXECUTIVE CARDS)
-      // ==========================================
-      const cardWidth = (doc.page.width - 80 - 20) / 3;
-      const cardHeight = 50;
-      const startY = doc.y;
-
-      const kpis = [
-        { label: 'Total Mahasiswa Terdata', val: `${data.kpi.totalMahasiswa.toLocaleString('id-ID')} Mhs` },
-        { label: 'Rata-rata Capaian Poin', val: `${data.kpi.rataRataPoin} Poin (${data.kpi.rataRataPersentase}%)` },
-        { label: 'Lulus Target Kurikulum', val: `${data.kpi.persentaseLulusTarget}% Mahasiswa` },
-      ];
-
-      kpis.forEach((kpi, idx) => {
-        const x = 40 + idx * (cardWidth + 10);
-        doc.rect(x, startY, cardWidth, cardHeight).fillAndStroke(lightBg, borderColor);
-        doc.fillColor(grayColor).fontSize(8).font('Helvetica')
-          .text(kpi.label, x + 8, startY + 8, { width: cardWidth - 16, align: 'center' });
-        doc.fillColor(primaryColor).fontSize(12).font('Helvetica-Bold')
-          .text(kpi.val, x + 8, startY + 24, { width: cardWidth - 16, align: 'center' });
-      });
-
-      doc.y = startY + cardHeight + 15;
-
-      // ==========================================
-      // SECTION 1: EVALUASI 4 PILAR KURIKULUM
-      // ==========================================
-      doc.fillColor(primaryColor).fontSize(10).font('Helvetica-Bold')
-        .text('1. Evaluasi Sebaran Capaian Per Pilar Kurikulum');
-      doc.moveDown(0.3);
-
-      // Table Header
-      const tableLeft = 40;
-      const colWidthsKur = [140, 85, 95, 110, 85];
-      let currentY = doc.y;
-
-      doc.rect(tableLeft, currentY, doc.page.width - 80, 20).fill(primaryColor);
-      doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold');
-      doc.text('Pilar Capaian', tableLeft + 5, currentY + 6);
-      doc.text('Tahun', tableLeft + colWidthsKur[0], currentY + 6);
-      doc.text('Target Poin', tableLeft + colWidthsKur[0] + colWidthsKur[1], currentY + 6);
-      doc.text('Rata-rata Terkumpul', tableLeft + colWidthsKur[0] + colWidthsKur[1] + colWidthsKur[2], currentY + 6);
-      doc.text('Capaian (%)', tableLeft + colWidthsKur[0] + colWidthsKur[1] + colWidthsKur[2] + colWidthsKur[3], currentY + 6);
-
-      currentY += 20;
-
-      data.capaianKurikulumStats.forEach((c, idx) => {
-        const bg = idx % 2 === 0 ? '#FFFFFF' : lightBg;
-        doc.rect(tableLeft, currentY, doc.page.width - 80, 18).fillAndStroke(bg, borderColor);
-        doc.fillColor(darkColor).fontSize(8).font('Helvetica');
-        doc.text(c.nama, tableLeft + 5, currentY + 5);
-        doc.text(`Tahun ${c.tahun}`, tableLeft + colWidthsKur[0], currentY + 5);
-        doc.text(`${c.targetPoin} Poin`, tableLeft + colWidthsKur[0] + colWidthsKur[1], currentY + 5);
-        doc.text(`${c.rataRataTerkumpul} Poin`, tableLeft + colWidthsKur[0] + colWidthsKur[1] + colWidthsKur[2], currentY + 5);
-        doc.text(`${c.persentaseCapaian}%`, tableLeft + colWidthsKur[0] + colWidthsKur[1] + colWidthsKur[2] + colWidthsKur[3], currentY + 5);
-        currentY += 18;
-      });
-
-      doc.y = currentY + 15;
-
-      // ==========================================
-      // SECTION 2: PERINGKAT KOMPARASI (FAKULTAS / PRODI)
-      // ==========================================
-      const unitLabel = data.komparasi.unit === 'fakultas' ? 'Fakultas' : 'Program Studi';
-      doc.fillColor(primaryColor).fontSize(10).font('Helvetica-Bold')
-        .text(`2. Peringkat Capaian Aktivitas & Poin Antar-${unitLabel}`);
-      doc.moveDown(0.3);
-
-      const colWidthsKomp = [45, 180, 95, 95, 100];
-      currentY = doc.y;
-
-      doc.rect(tableLeft, currentY, doc.page.width - 80, 20).fill(primaryColor);
-      doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold');
-      doc.text('Rank', tableLeft + 5, currentY + 6);
-      doc.text(`Nama ${unitLabel}`, tableLeft + colWidthsKomp[0], currentY + 6);
-      doc.text('Total Mahasiswa', tableLeft + colWidthsKomp[0] + colWidthsKomp[1], currentY + 6);
-      doc.text('Rata-rata Poin', tableLeft + colWidthsKomp[0] + colWidthsKomp[1] + colWidthsKomp[2], currentY + 6);
-      doc.text('Capaian Target (%)', tableLeft + colWidthsKomp[0] + colWidthsKomp[1] + colWidthsKomp[2] + colWidthsKomp[3], currentY + 6);
-
-      currentY += 20;
-
-      data.komparasi.items.slice(0, 10).forEach((item, idx) => {
-        const bg = idx % 2 === 0 ? '#FFFFFF' : lightBg;
-        doc.rect(tableLeft, currentY, doc.page.width - 80, 18).fillAndStroke(bg, borderColor);
-        doc.fillColor(darkColor).fontSize(8).font(item.ranking <= 3 ? 'Helvetica-Bold' : 'Helvetica');
-        doc.text(`#${item.ranking}`, tableLeft + 5, currentY + 5);
-        doc.text(item.nama, tableLeft + colWidthsKomp[0], currentY + 5, { width: colWidthsKomp[1] - 5 });
-        doc.text(`${item.totalMahasiswa} Mhs`, tableLeft + colWidthsKomp[0] + colWidthsKomp[1], currentY + 5);
-        doc.text(`${item.rataRataPoin} Poin`, tableLeft + colWidthsKomp[0] + colWidthsKomp[1] + colWidthsKomp[2], currentY + 5);
-        doc.text(`${item.rataRataPersentase}%`, tableLeft + colWidthsKomp[0] + colWidthsKomp[1] + colWidthsKomp[2] + colWidthsKomp[3], currentY + 5);
-        currentY += 18;
-      });
-
-      doc.y = currentY + 15;
-
-      // ==========================================
-      // SECTION 3: REKAP PRESTASI UNGGULAN (TOP 5)
-      // ==========================================
-      if (doc.y > 650) {
-        doc.addPage();
-      }
-
-      doc.fillColor(primaryColor).fontSize(10).font('Helvetica-Bold')
-        .text('3. Rekapitulasi Prestasi Unggulan Mahasiswa (SIMKATMAWA)');
-      doc.moveDown(0.3);
-
-      const colWidthsPres = [110, 120, 125, 90, 70];
-      currentY = doc.y;
-
-      doc.rect(tableLeft, currentY, doc.page.width - 80, 20).fill('#0D6EFD'); // Biru
-      doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold');
-      doc.text('Nama Mahasiswa (NIM)', tableLeft + 5, currentY + 6);
-      doc.text('Nama Prestasi / Kegiatan', tableLeft + colWidthsPres[0], currentY + 6);
-      doc.text('Penyelenggara', tableLeft + colWidthsPres[0] + colWidthsPres[1], currentY + 6);
-      doc.text('Skala / Peran', tableLeft + colWidthsPres[0] + colWidthsPres[1] + colWidthsPres[2], currentY + 6);
-      doc.text('Poin Sah', tableLeft + colWidthsPres[0] + colWidthsPres[1] + colWidthsPres[2] + colWidthsPres[3], currentY + 6);
-
-      currentY += 20;
-
-      if (data.prestasiList.length === 0) {
-        doc.rect(tableLeft, currentY, doc.page.width - 80, 20).fillAndStroke(lightBg, borderColor);
-        doc.fillColor(grayColor).fontSize(8).font('Helvetica')
-          .text('Belum ada data prestasi pada periode ini.', tableLeft + 10, currentY + 6);
-        currentY += 20;
-      } else {
-        data.prestasiList.slice(0, 8).forEach((p, idx) => {
-          const bg = idx % 2 === 0 ? '#FFFFFF' : lightBg;
-          doc.rect(tableLeft, currentY, doc.page.width - 80, 20).fillAndStroke(bg, borderColor);
-          doc.fillColor(darkColor).fontSize(8).font('Helvetica');
-          doc.text(`${p.namaMahasiswa}\n(${p.nim})`, tableLeft + 5, currentY + 3, { width: colWidthsPres[0] - 5 });
-          doc.text(p.namaKegiatan, tableLeft + colWidthsPres[0], currentY + 3, { width: colWidthsPres[1] - 5 });
-          doc.text(p.penyelenggara, tableLeft + colWidthsPres[0] + colWidthsPres[1], currentY + 3, { width: colWidthsPres[2] - 5 });
-          doc.text(`${p.skala}\n${p.peran}`, tableLeft + colWidthsPres[0] + colWidthsPres[1] + colWidthsPres[2], currentY + 3);
-          doc.text(`${p.poin} Poin`, tableLeft + colWidthsPres[0] + colWidthsPres[1] + colWidthsPres[2] + colWidthsPres[3], currentY + 6);
-          currentY += 20;
-        });
-      }
-
-      // ==========================================
-      // LEMBAR PENGESAHAN / TANDA TANGAN
-      // ==========================================
-      if (currentY > 660) {
-        doc.addPage();
-        currentY = 50;
-      } else {
-        currentY += 25;
-      }
-
-      const signX = doc.page.width - 220;
-      doc.fillColor(darkColor).fontSize(9).font('Helvetica')
-        .text(`Padang, ${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}`, signX, currentY);
-      doc.text('Mengetahui / Mengesahkan,', signX, currentY + 14);
-      doc.font('Helvetica-Bold').text(data.scopeNama, signX, currentY + 28, { width: 180 });
-
-      doc.moveDown(4);
-      doc.text('( ............................................................ )', signX, currentY + 90);
-      doc.font('Helvetica').fontSize(8).text('NIP. .................................................', signX, currentY + 104);
-
-      // Footer Penomoran Halaman
-      const range = doc.bufferedPageRange();
-      for (let i = range.start; i < range.start + range.count; i++) {
-        doc.switchToPage(i);
-        doc.fillColor(grayColor).fontSize(8).font('Helvetica')
-          .text(
-            `Dokumen Resmi SAPS Universitas Andalas — Halaman ${i + 1} dari ${range.count}`,
-            40,
-            doc.page.height - 30,
-            { align: 'center', width: doc.page.width - 80 }
-          );
-      }
-
-      doc.end();
+      registerTimes(doc)
+      generatePdf(doc, data)
+      doc.end()
     } catch (error) {
-      reject(error);
+      reject(error)
     }
-  });
+  })
 }
