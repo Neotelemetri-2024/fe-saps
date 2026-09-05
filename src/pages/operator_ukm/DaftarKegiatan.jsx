@@ -232,7 +232,7 @@ function DaftarKegiatan() {
       key: 'no',
       label: 'No',
       render: (_item, index) => (
-        <span className="text-black">
+        <span className="text-base-content">
           {index + 1}
         </span>
       ),
@@ -258,7 +258,7 @@ function DaftarKegiatan() {
       key: 'jenis',
       label: 'Jenis',
       render: (item) => (
-        <span className="text-black">
+        <span className="text-base-content">
           {labelOf(
             item.jenis ||
             item.kategori
@@ -270,7 +270,7 @@ function DaftarKegiatan() {
       key: 'skala',
       label: 'Skala',
       render: (item) => (
-        <span className="text-black">
+        <span className="text-base-content">
           {labelOf(item.skala)}
         </span>
       ),
@@ -279,7 +279,7 @@ function DaftarKegiatan() {
       key: 'tanggal',
       label: 'Tanggal',
       render: (item) => (
-        <span className="text-black">
+        <span className="text-base-content">
           {formatTanggal(
             item.tanggalMulai ||
             item.tanggal ||
@@ -406,7 +406,7 @@ function DaftarKegiatan() {
                 {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               {(search || filterStatus || filterKategori || filterSkala) && (
-                <button type="button" onClick={() => { setSearch(''); setFilterStatus(''); setFilterKategori(''); setFilterSkala('') }} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
+                <button type="button" onClick={() => { setSearch(''); setFilterStatus(''); setFilterKategori(''); setFilterSkala('') }} className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
               )}
             </div>
           </div>

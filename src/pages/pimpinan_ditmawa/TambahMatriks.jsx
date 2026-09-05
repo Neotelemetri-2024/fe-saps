@@ -176,7 +176,7 @@ function TambahMatriks() {
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-base-content">Matriks Capaian</h3>
-                <p className="mt-0.5 text-xs text-[#888]">
+                <p className="mt-0.5 text-xs text-base-content/50">
                   Baris = Capaian, Kolom = Sub Capaian. Nilai diisi dengan bobot poin (%).
                 </p>
               </div>
@@ -184,7 +184,7 @@ function TambahMatriks() {
                 <button
                   type="button"
                   onClick={addKolom}
-                  className="inline-flex items-center gap-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-xs font-semibold text-base-content shadow-sm transition hover:bg-base-200"
+                  className="inline-flex items-center gap-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-xs font-semibold text-base-content shadow-sm transition hover:bg-base-200"
                 >Tambah Kolom
                 </button>
                 <button
@@ -212,7 +212,7 @@ function TambahMatriks() {
                               type="text"
                               value={k.label}
                               onChange={(e) => updateKolomLabel(k.id, e.target.value)}
-                              className="w-full min-w-[100px] rounded border border-white/30 bg-white/10 px-2 py-0.5 text-xs text-white placeholder-white/60 outline-none focus:bg-white/20"
+                              className="w-full min-w-[100px] rounded border border-white/30 bg-base-100/10 px-2 py-0.5 text-xs text-white placeholder-white/60 outline-none focus:bg-base-100/20"
                             />
                             <button
                               type="button"
@@ -231,7 +231,7 @@ function TambahMatriks() {
                     {baris.map((b, i) => (
                       <tr
                         key={b.id}
-                        className={`divide-x divide-base-300 border-b border-base-300 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-base-200'}`}
+                        className={`divide-x divide-base-300 border-b border-base-300 last:border-0 ${i % 2 === 0 ? 'bg-base-100' : 'bg-base-200'}`}
                       >
                         <td className="px-4 py-3">
                           <input

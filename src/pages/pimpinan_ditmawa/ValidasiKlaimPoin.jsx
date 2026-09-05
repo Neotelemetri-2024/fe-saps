@@ -147,14 +147,14 @@ function ValidasiKlaimPoin() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
       <MahasiswaIdentityCell nama={row.mahasiswa} nim={row.nim} prodi={row.prodi} />
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.tanggal} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
-    { key: 'peran', label: 'Peran', render: (row) => <span className="text-black">{row.peran}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-base-content">{row.kategori}</span> },
+    { key: 'peran', label: 'Peran', render: (row) => <span className="text-base-content">{row.peran}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-base-content">{row.skala}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu items={[{
@@ -190,7 +190,7 @@ function ValidasiKlaimPoin() {
         <TableCard title="Daftar Klaim Poin">
           <div className="space-y-3">
             <div className="flex flex-col gap-3 lg:flex-row">
-              <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+              <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
                   placeholder="Cari mahasiswa atau kegiatan..."
@@ -216,7 +216,7 @@ function ValidasiKlaimPoin() {
               </select>
               {(search || kategori || status || skala) && (
                 <button type="button" onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
+                  className="rounded-lg border border-brand-dark bg-base-100 px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
                   Reset filter
                 </button>
               )}
@@ -235,7 +235,7 @@ function ValidasiKlaimPoin() {
                 <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
                 <div className="ml-auto flex gap-2">
                   <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                    className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
+                    className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
                     Batal Pilih
                   </button>
                   <button type="button"

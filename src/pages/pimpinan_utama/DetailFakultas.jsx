@@ -88,7 +88,7 @@ function DetailFakultas() {
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-5 text-sm text-base-content/80">
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#888]">Kategori Poin</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">Kategori Poin</span>
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded-sm bg-[#16a34a]"></span> Organisasi
           </span>
@@ -111,9 +111,9 @@ function DetailFakultas() {
           onPageChange={setPage}
           onRowClick={(item) => navigate(`/pimpinan_utama/detail-fakultas/${item.fakultasId}`, { state: { namaFakultas: item.nama } })}
           columns={[
-            { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-black">{item.rank}.</span> },
+            { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-base-content">{item.rank}.</span> },
             { key: 'nama', label: 'Fakultas' },
-            { key: 'total', label: 'Total Poin', render: (item) => <span className="block text-center font-medium text-black">{item.total}%</span> },
+            { key: 'total', label: 'Total Poin', render: (item) => <span className="block text-center font-medium text-base-content">{item.total}%</span> },
             {
               key: 'kategori', label: 'Kategori Poin',
               render: (item) => <KategoriBar organisasi={item.organisasi} seminar={item.seminar} prestasi={item.prestasi} />,

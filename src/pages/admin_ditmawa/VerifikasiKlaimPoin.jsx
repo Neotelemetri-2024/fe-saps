@@ -179,15 +179,15 @@ function VerifikasiKlaimPoin() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'mahasiswa', label: 'Mahasiswa', render: (row) => (
       <MahasiswaIdentityCell nama={row.mahasiswa} nim={row.nim} prodi={row.prodi} />
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.dibuatPada || ''} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
-    { key: 'peran', label: 'Peran', render: (row) => <span className="text-black">{row.peran}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
-    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-black">{row.info}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-base-content">{row.kategori}</span> },
+    { key: 'peran', label: 'Peran', render: (row) => <span className="text-base-content">{row.peran}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-base-content">{row.tanggal}</span> },
+    { key: 'info', label: 'Info Penyelenggara', render: (row) => <span className="text-base-content">{row.info}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -239,7 +239,7 @@ function VerifikasiKlaimPoin() {
 
         <TableCard title="Daftar Klaim Poin">
           <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-base-content/50" />
               <input
                 type="text"
@@ -314,7 +314,7 @@ function VerifikasiKlaimPoin() {
               <button
                 type="button"
                 onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200"
+                className="rounded-lg border border-brand-dark bg-base-100 px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200"
               >
                 Reset filter
               </button>

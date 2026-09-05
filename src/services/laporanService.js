@@ -33,7 +33,7 @@ export async function downloadExcelLaporan(filter = {}) {
   })
 
   if (!res.ok) {
-    let errorMsg = 'Gagal mengunduh file Excel'
+    let errorMsg = 'Gagal mengunduh file CSV'
     try {
       const errJson = await res.json()
       if (errJson.message) errorMsg = errJson.message
@@ -45,7 +45,7 @@ export async function downloadExcelLaporan(filter = {}) {
 
   const blob = await res.blob()
   const contentDisposition = res.headers.get('Content-Disposition')
-  let filename = 'Laporan_Evaluasi_SAPS.xlsx'
+    let filename = 'Laporan_SAPS.csv'
   if (contentDisposition) {
     const match = contentDisposition.match(/filename="?([^";]+)"?/)
     if (match && match[1]) {

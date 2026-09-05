@@ -480,16 +480,16 @@ function DosenPADetail() {
               <p className="text-3xl sm:text-4xl font-extrabold text-brand-dark">
                 {m.totalPoinProgres ?? m.poin}
               </p>
-              <p className="text-sm text-[#888]">/ {m.targetPoin ?? 200} Poin Target</p>
+              <p className="text-sm text-base-content/50">/ {m.targetPoin ?? 200} Poin Target</p>
               {m.poin > (m.totalPoinProgres ?? m.poin) && (
-                <p className="text-xs text-[#666] mt-0.5">
+                <p className="text-xs text-base-content/60 mt-0.5">
                   Total Riil: <span className="font-semibold text-brand-dark">{m.poin}</span> poin
                 </p>
               )}
               <div className="mt-2 w-full sm:w-44">
                 <ProgressBar value={m.totalPoinProgres ?? m.poin} max={m.targetPoin ?? 200} height={6} />
               </div>
-              <p className="mt-1 text-xs text-[#888]">{pctTarget}% dari target kelulusan</p>
+              <p className="mt-1 text-xs text-base-content/50">{pctTarget}% dari target kelulusan</p>
             </div>
           </div>
         </div>
@@ -504,7 +504,7 @@ function DosenPADetail() {
               <select
                 value={activeCapaian}
                 onChange={(e) => setActiveCapaian(e.target.value)}
-                className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-[11px] text-white outline-none backdrop-blur-sm"
+                className="rounded-lg border border-white/40 bg-base-100/10 px-3 py-1.5 text-[11px] text-white outline-none backdrop-blur-sm"
               >
                 <option value="">---Pilih Capaian---</option>
                 {capaianOptions.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -528,9 +528,9 @@ function DosenPADetail() {
               {radarItems.map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <span className="w-44 shrink-0 truncate text-[11px] text-white/80">{item.label}</span>
-                  <div className="flex-1 overflow-hidden rounded-full bg-white/20" style={{ height: 6 }}>
+                  <div className="flex-1 overflow-hidden rounded-full bg-base-100/20" style={{ height: 6 }}>
                     <div
-                      className={`h-full rounded-full transition-all ${item.value >= 60 ? 'bg-white' : 'bg-red-400'}`}
+                      className={`h-full rounded-full transition-all ${item.value >= 60 ? 'bg-base-100' : 'bg-red-400'}`}
                       style={{ width: `${Math.min(100, item.value)}%` }}
                     />
                   </div>
@@ -542,7 +542,7 @@ function DosenPADetail() {
 
           <div className="card bg-base-100 p-6">
             <h3 className="text-base font-bold text-base-content">Total Poin per Capaian</h3>
-            <p className="mt-0.5 text-xs text-[#888]">Distribusi poin mahasiswa di setiap area pengembangan</p>
+            <p className="mt-0.5 text-xs text-base-content/50">Distribusi poin mahasiswa di setiap area pengembangan</p>
             <div className="mt-5">
               {totalPoinData.length === 0 ? (
                 <p className="py-12 text-center text-sm text-base-content/50">Belum ada data poin per capaian.</p>
@@ -563,7 +563,7 @@ function DosenPADetail() {
           <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
             <div>
               <h3 className="text-base font-bold text-base-content">Timeline Aktivitas</h3>
-              <p className="mt-0.5 text-xs text-[#888]">Riwayat kegiatan mahasiswa yang sedang dibimbing</p>
+              <p className="mt-0.5 text-xs text-base-content/50">Riwayat kegiatan mahasiswa yang sedang dibimbing</p>
             </div>
             {timelineAktivitas.length > 0 && (
               <span className="text-xs text-base-content/50">{timelineAktivitas.length} aktivitas</span>
@@ -575,16 +575,16 @@ function DosenPADetail() {
           ) : (
             <ul className="space-y-3">
               {displayedTimeline.map((act, i) => (
-                <li key={`${act.event}-${act.date}-${i}`} className="rounded-lg border border-[#eef0f6] bg-[#fafbfc] px-3.5 py-3">
+                <li key={`${act.event}-${act.date}-${i}`} className="rounded-lg border border-base-300 bg-base-200 px-3.5 py-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold leading-snug text-base-content">{act.event}</p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#888]">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/50">
                         <span>{act.date}</span>
                         {act.kategori && act.kategori !== '-' && (
                           <>
-                            <span className="text-[#d0d4dc]">•</span>
-                            <span className="rounded bg-[#eef2ee] px-1.5 py-0.5 text-[11px] font-medium text-[#3d5c45]">
+                            <span className="text-base-content/40">•</span>
+                            <span className="rounded bg-base-200 px-1.5 py-0.5 text-[11px] font-medium text-base-content">
                               {act.kategori}
                             </span>
                           </>
@@ -652,7 +652,7 @@ function DosenPADetail() {
               {displayedCatatan.map((c, i) => (
                 <div key={i} className="py-3">
                   <p className="text-sm leading-relaxed text-base-content">{c.message}</p>
-                  <p className="mt-1 text-xs text-[#888]">{c.date}</p>
+                  <p className="mt-1 text-xs text-base-content/50">{c.date}</p>
                 </div>
               ))}
             </div>

@@ -64,7 +64,7 @@ function MahasiswaPerluPerhatian() {
   }, [data, search, filterProdi])
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'NO', render: (row) => <span className="text-black">{row.no}</span> },
+    { key: 'no', label: 'NO', render: (row) => <span className="text-base-content">{row.no}</span> },
     { key: 'mahasiswa', label: 'MAHASISWA' },
     { key: 'nim', label: 'NIM' },
     { key: 'ipk', label: 'IPK' },
@@ -74,7 +74,7 @@ function MahasiswaPerluPerhatian() {
       render: (row) => (
         <div className="flex items-center gap-2">
           <ProgressBar value={row.capaian} max={100} height={8} color="bg-red-500" />
-          <span className="text-sm text-black">{row.capaian}%</span>
+          <span className="text-sm text-base-content">{row.capaian}%</span>
         </div>
       ),
     },
@@ -129,7 +129,7 @@ function MahasiswaPerluPerhatian() {
 
           <TableCard title="Mahasiswa Perlu Perhatian">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-white px-3 py-2 shadow-sm">
+              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-2 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
@@ -142,7 +142,7 @@ function MahasiswaPerluPerhatian() {
               <select
                 value={filterProdi}
                 onChange={(e) => setFilterProdi(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-sm text-base-content shadow-sm outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-sm outline-none"
               >
                 <option value="">Semua Prodi</option>
                 {prodiOptions.map((p) => (
@@ -153,7 +153,7 @@ function MahasiswaPerluPerhatian() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterProdi('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>

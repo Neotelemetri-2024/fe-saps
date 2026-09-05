@@ -97,7 +97,7 @@ function LaporanEksekutif() {
               </button>
               {(filter.fakultasId || filter.angkatan || filter.tahunAkademik) && (
                 <button type="button" onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-sm font-medium text-brand-dark hover:bg-base-200">
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2.5 text-sm font-medium text-brand-dark hover:bg-base-200">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -148,12 +148,12 @@ function LaporanEksekutif() {
                 </thead>
                 <tbody>
                   {komparasi.slice(0, 10).map((item, i) => (
-                    <tr key={item.id || i} className="border-b border-[#f0f1f5] hover:bg-base-200">
-                      <td className="px-4 py-3 text-black">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-black">{item.nama || item.fakultas || '-'}</td>
-                      <td className="px-4 py-3 text-right text-black">{(item.totalPoin ?? 0).toLocaleString('id-ID')}</td>
-                      <td className="px-4 py-3 text-right text-black">{(item.rataRataPoin ?? 0).toLocaleString('id-ID')}</td>
-                      <td className="px-4 py-3 text-right text-black">{item.persentaseLulus != null ? `${item.persentaseLulus}%` : '-'}</td>
+                    <tr key={item.id || i} className="border-b border-base-300 hover:bg-base-200">
+                      <td className="px-4 py-3 text-base-content">{i + 1}</td>
+                      <td className="px-4 py-3 font-medium text-base-content">{item.nama || item.fakultas || '-'}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{(item.totalPoin ?? 0).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{(item.rataRataPoin ?? 0).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{item.persentaseLulus != null ? `${item.persentaseLulus}%` : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -177,11 +177,11 @@ function LaporanEksekutif() {
                 </thead>
                 <tbody>
                   {capaian.map((c, i) => (
-                    <tr key={c.id || i} className="border-b border-[#f0f1f5] hover:bg-base-200">
-                      <td className="px-4 py-3 font-medium text-black">{c.pilar || c.nama || '-'}</td>
-                      <td className="px-4 py-3 text-right text-black">{c.targetPoin ?? '-'}</td>
-                      <td className="px-4 py-3 text-right text-black">{c.rataRataPoin ?? '-'}</td>
-                      <td className="px-4 py-3 text-right text-black">{c.persenCapaian != null ? `${c.persenCapaian}%` : '-'}</td>
+                    <tr key={c.id || i} className="border-b border-base-300 hover:bg-base-200">
+                      <td className="px-4 py-3 font-medium text-base-content">{c.pilar || c.nama || '-'}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{c.targetPoin ?? '-'}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{c.rataRataPoin ?? '-'}</td>
+                      <td className="px-4 py-3 text-right text-base-content">{c.persenCapaian != null ? `${c.persenCapaian}%` : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -142,7 +142,7 @@ function VerifikasiPengajuanUKMF() {
     {
       key: 'no',
       label: 'NO',
-      render: (_, i) => <span className="text-black">{i + 1}</span>,
+      render: (_, i) => <span className="text-base-content">{i + 1}</span>,
     },
     {
       key: 'kegiatan',
@@ -270,7 +270,7 @@ function VerifikasiPengajuanUKMF() {
     {(search || filterStatus || filterJenis || filterSkala) && (
       <button
         onClick={resetFilter}
-        className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+        className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
       >
         Reset Filter
       </button>
@@ -295,7 +295,7 @@ function VerifikasiPengajuanUKMF() {
       <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
       <div className="ml-auto flex gap-2">
         <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-          className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
+          className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
           Batal Pilih
         </button>
         <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}

@@ -95,7 +95,7 @@ function UKMFDashboard() {
             <button
               type="button"
               onClick={() => navigate('/operator_ukmf/daftar-kegiatan')}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </button>

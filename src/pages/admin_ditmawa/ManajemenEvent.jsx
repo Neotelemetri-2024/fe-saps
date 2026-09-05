@@ -19,7 +19,7 @@ function HapusEventModal({ event, onClose, onConfirm }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-base-content">Apakah anda yakin menghapus kegiatan ini?</h3>
           <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content text-xl leading-none">×</button>
@@ -219,19 +219,19 @@ function ManajemenEvent() {
   const bisaPeserta = (item) => ['disetujui', 'terpublikasi'].includes(item.rawStatus)
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'nama', label: 'Nama Kegiatan', render: (row) => (
       <div>
-        <p className="text-black">{row.nama}</p>
+        <p className="text-base-content">{row.nama}</p>
         {row.dibuatPada && row.dibuatPada !== '-' && (
           <p className="text-xs text-base-content/60">Diajukan: {row.dibuatPada}</p>
         )}
       </div>
     )},
-    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-black">{row.jenis}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
-    { key: 'peserta', label: 'Peserta', center: true, render: (row) => <span className="text-black">{row.peserta}</span> },
+    { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-base-content">{row.jenis}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-base-content">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-base-content">{row.tanggal}</span> },
+    { key: 'peserta', label: 'Peserta', center: true, render: (row) => <span className="text-base-content">{row.peserta}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -322,7 +322,7 @@ function ManajemenEvent() {
         <section>
           <TableCard title="Daftar Event Global">
             <div className="flex flex-col gap-3 lg:flex-row">
-              <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+              <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
@@ -336,21 +336,21 @@ function ManajemenEvent() {
 
             <div className="flex flex-wrap gap-2">
               <select value={filterJenis} onChange={(e) => { setFilterJenis(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Jenis</option>
                 {[...new Set(data.map((d) => d.jenis).filter(Boolean))].map((j) => (
                   <option key={j} value={j}>{j}</option>
                 ))}
               </select>
               <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
               <select value={filterSkala} onChange={(e) => { setFilterSkala(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-4 py-2 text-sm text-base-content/60 outline-none">
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm text-base-content/60 outline-none">
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((d) => d.skala).filter(Boolean))].map((s) => (
                   <option key={s} value={s}>{s}</option>

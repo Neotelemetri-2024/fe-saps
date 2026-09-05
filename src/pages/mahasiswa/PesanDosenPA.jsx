@@ -35,7 +35,7 @@ function PesanDosenPA() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">Pesan dari Dosen PA</h2>
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Pesan dari Dosen PA</h2>
           <p className="mt-1 text-sm text-base-content/60">Semua catatan dan saran dari Dosen PA Anda.</p>
         </div>
 
@@ -51,7 +51,7 @@ function PesanDosenPA() {
                 return (
                   <div key={s.id} className="rounded-lg border border-base-300 bg-base-200 px-4 py-3">
                     <p className="text-sm leading-relaxed text-base-content">{s.isi}</p>
-                    <p className="mt-1 text-xs text-[#888]">
+                    <p className="mt-1 text-xs text-base-content/50">
                       {waktu ? `${waktu} · ` : ''}Dosen PA
                     </p>
                   </div>

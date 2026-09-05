@@ -274,7 +274,7 @@ function BuatKegiatan() {
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Jenis Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <select
@@ -291,7 +291,7 @@ function BuatKegiatan() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Nama Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -305,7 +305,7 @@ function BuatKegiatan() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Skala Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <select
@@ -323,7 +323,7 @@ function BuatKegiatan() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Deskripsi Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -357,7 +357,7 @@ function BuatKegiatan() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-black">
+                  <label className="block text-sm font-medium text-base-content">
                     Lokasi<span className="text-red-500">*</span>
                   </label>
                   <div className="relative mt-1">
@@ -373,7 +373,7 @@ function BuatKegiatan() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black">
+                  <label className="block text-sm font-medium text-base-content">
                     Kuota Peserta<span className="text-red-500">*</span>
                   </label>
                   <div className="relative mt-1">
@@ -446,7 +446,7 @@ function BuatKegiatan() {
             <button
               type="button"
               onClick={() => navigate('/operator_ukmf/daftar-kegiatan')}
-              className="rounded-lg border border-base-300 bg-white px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
+              className="rounded-lg border border-base-300 bg-base-100 px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
             >
               Batal
             </button>

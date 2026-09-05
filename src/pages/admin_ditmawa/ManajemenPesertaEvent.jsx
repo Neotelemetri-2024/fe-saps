@@ -59,10 +59,10 @@ function SubmitModal({ isOpen, onConfirm, onClose }) {
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl text-center">
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 text-[#999] hover:text-base-content"><X className="h-4 w-4" /></button>
+      <div className="relative w-full max-w-sm rounded-2xl bg-base-100 p-8 shadow-xl text-center">
+        <button type="button" onClick={onClose} className="absolute right-4 top-4 text-base-content/50 hover:text-base-content"><X className="h-4 w-4" /></button>
         <h4 className="mb-2 text-lg font-bold text-base-content">Submit Kegiatan Peserta</h4>
-        <p className="mb-6 text-sm text-[#666]">Submit data untuk mengklaim poin peserta secara otomatik.</p>
+        <p className="mb-6 text-sm text-base-content/60">Submit data untuk mengklaim poin peserta secara otomatik.</p>
         <div className="flex gap-3">
           <button
             type="button"
@@ -342,7 +342,7 @@ function ManajemenPesertaEvent() {
                         value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
                         onChange={(e) => setHadir(p.id, e.target.value)}
                         disabled={!isEditing}
-                        className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
+                        className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
                       >
                         <option value="">Belum</option>
                         <option value="true">Hadir</option>
@@ -354,7 +354,7 @@ function ManajemenPesertaEvent() {
                         value={p.peranVerifId || ''}
                         onChange={(e) => setPilihPeran(p.id, e.target.value)}
                         disabled={!isEditing}
-                        className="rounded border border-base-300 px-2 py-1 text-xs text-base-content/80 outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
+                        className="rounded border border-base-300 px-2 py-1 text-xs text-base-content/80 outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
                       >
                         <option value="">Pilih Peran</option>
                         {peranOptions.map((opt) => (
@@ -371,8 +371,8 @@ function ManajemenPesertaEvent() {
             <div className="py-10 text-center text-sm text-base-content/50">Tidak ada peserta ditemukan.</div>
           )}
 
-          <div className="flex items-center justify-between border-t border-[#f0f0f0] px-6 py-3">
-            <span className="text-xs text-[#888]">
+          <div className="flex items-center justify-between border-t border-base-300 px-6 py-3">
+            <span className="text-xs text-base-content/50">
               Showing {filtered.length} from Total {pesertaList.length}
             </span>
             <div className="flex items-center gap-3">
@@ -382,7 +382,7 @@ function ManajemenPesertaEvent() {
                     type="button"
                     disabled={currentPage <= 1}
                     onClick={() => setPage(currentPage - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -393,7 +393,7 @@ function ManajemenPesertaEvent() {
                     type="button"
                     disabled={currentPage >= totalPages}
                     onClick={() => setPage(currentPage + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>

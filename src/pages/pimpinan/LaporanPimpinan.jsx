@@ -7,7 +7,8 @@ import DataTable from '../../components/dashboard/DataTable'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
-import { CardGridSkeleton } from '../../components/dashboard/Skeleton'
+import { ChartSkeleton } from '../../components/dashboard/Skeleton'
+import { VerticalBarChart } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
 import {
   getPreviewLaporan,
@@ -28,9 +29,9 @@ const GLOBAL_ROLES = new Set(['pimpinan_utama', 'pimpinan_ditmawa', 'admin_ditma
 
 const TABS = [
   { id: 'ringkasan', label: 'Ringkasan' },
-  { id: 'mahasiswa', label: 'Capaian Mahasiswa' },
+  { id: 'mahasiswa', label: 'Mahasiswa' },
   { id: 'prestasi', label: 'Prestasi' },
-  { id: 'ormawa', label: 'Keaktifan Ormawa' },
+  { id: 'ormawa', label: 'Ormawa' },
 ]
 
 const TAHUN_AKADEMIK = ['2025/2026', '2024/2025', '2023/2024', '2022/2023']
@@ -44,35 +45,21 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('id-ID')
 }
 
-function formatDistribusi(kategoriPoin = {}) {
-  const items = Object.entries(kategoriPoin)
-    .map(([label, value]) => [label, Number(value) || 0])
-    .filter(([, value]) => value > 0)
-    .sort((a, b) => b[1] - a[1])
-
-  if (!items.length) return '—'
-
-  return items
-    .slice(0, 3)
-    .map(([label, value]) => `${label} ${formatNumber(value)}`)
-    .join(' · ')
-}
-
-function FilterSelect({ label, value, onChange, children }) {
+function ToolbarSelect({ label, value, onChange, children, className = '' }) {
   return (
-    <fieldset className="fieldset">
-      {label ? <legend className="fieldset-legend py-1">{label}</legend> : null}
-      <select value={value} onChange={onChange} className="select w-full">
+    <label className={`flex min-w-36 flex-1 flex-col gap-1 ${className}`}>
+      <span className="text-xs text-base-content/60">{label}</span>
+      <select value={value} onChange={onChange} className="select select-sm w-full">
         {children}
       </select>
-    </fieldset>
+    </label>
   )
 }
 
 function SearchInput({ value, onChange, placeholder }) {
   return (
-    <label className="input flex-1">
-      <Search className="h-4 w-4 shrink-0 text-base-content/50" />
+    <label className="input input-sm flex-1">
+      <Search className="h-4 w-4 shrink-0 opacity-50" />
       <input type="text" value={value} onChange={onChange} placeholder={placeholder} />
     </label>
   )
@@ -160,12 +147,12 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
   const handleDownloadExcel = async () => {
     setExportingExcel(true)
-    const toastId = toast.loading('Menyiapkan file Excel...')
+    const toastId = toast.loading('Menyiapkan file CSV...')
     try {
       await downloadExcelLaporan(buildFilter())
-      toast.success('File Excel berhasil diunduh.', { id: toastId })
+      toast.success('File CSV berhasil diunduh.', { id: toastId })
     } catch (error) {
-      toast.error('Gagal mengunduh Excel', { id: toastId, description: error.message })
+      toast.error('Gagal mengunduh CSV', { id: toastId, description: error.message })
     } finally {
       setExportingExcel(false)
     }
@@ -189,7 +176,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const ormawaList = laporanData?.ormawaList || []
   const rankingItems = laporanData?.komparasi?.items || []
   const rankingUnit = laporanData?.komparasi?.unit === 'prodi' ? 'program studi' : 'fakultas'
-  const rankingLabel = rankingUnit === 'program studi' ? 'Program Studi' : 'Fakultas'
+  const rankingLabel = rankingUnit === 'program studi' ? 'Program studi' : 'Fakultas'
 
   const filteredMahasiswa = useMemo(() => {
     const q = searchMahasiswa.trim().toLowerCase()
@@ -210,8 +197,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
         !q ||
         includesQuery(p.namaMahasiswa, q) ||
         includesQuery(p.nim, q) ||
-        includesQuery(p.namaKegiatan, q) ||
-        includesQuery(p.prodi, q)
+        includesQuery(p.namaKegiatan, q)
       const matchSkala =
         filterSkalaPrestasi === 'semua' || includesQuery(p.skala, filterSkalaPrestasi.toLowerCase())
       return matchSearch && matchSkala
@@ -234,12 +220,10 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
   const content = (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-base-content">Laporan & Evaluasi</h2>
-          <p className="mt-1 text-sm text-base-content/60">
-            Capaian kurikulum, prestasi, dan keaktifan ormawa{scopeNama ? ` — ${scopeNama}` : ''}.
-          </p>
+          <p className="mt-1 text-sm text-base-content/60">{scopeNama}</p>
         </div>
         <div className="join">
           <button
@@ -249,7 +233,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
             className="btn btn-outline btn-sm join-item"
           >
             <FileSpreadsheet className="h-4 w-4" />
-            {exportingExcel ? 'Mengunduh…' : 'Excel'}
+            {exportingExcel ? 'Mengunduh…' : 'CSV'}
           </button>
           <button
             type="button"
@@ -263,145 +247,131 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
         </div>
       </div>
 
-      <TableCard
-        title="Filter laporan"
-        description={`${laporanData?.kurikulum?.nama || 'Kurikulum SAPS'} · target ${targetPoin} poin`}
-        headerRight={
-          hasActiveFilter ? (
-            <button type="button" onClick={handleResetFilter} className="btn btn-ghost btn-sm">
-              <RotateCcw className="h-3.5 w-3.5" />
-              Reset
-            </button>
-          ) : null
-        }
-      >
-        <form onSubmit={handleApplyFilter} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <FilterSelect label="Tahun akademik" value={tahunAkademik} onChange={(e) => setTahunAkademik(e.target.value)}>
-            <option value="">Semua tahun</option>
+      <form onSubmit={handleApplyFilter} className="card bg-base-100 p-4">
+        <div className="flex flex-wrap items-end gap-2">
+          <ToolbarSelect
+            label="Tahun akademik"
+            value={tahunAkademik}
+            onChange={(e) => setTahunAkademik(e.target.value)}
+          >
+            <option value="">Semua</option>
             {TAHUN_AKADEMIK.map((tahun) => (
               <option key={tahun} value={tahun}>{tahun}</option>
             ))}
-          </FilterSelect>
+          </ToolbarSelect>
 
-          <FilterSelect label="Angkatan" value={angkatan} onChange={(e) => setAngkatan(e.target.value)}>
-            <option value="">Semua angkatan</option>
+          <ToolbarSelect label="Angkatan" value={angkatan} onChange={(e) => setAngkatan(e.target.value)}>
+            <option value="">Semua</option>
             {ANGKATAN.map((year) => (
               <option key={year} value={year}>{year}</option>
             ))}
-          </FilterSelect>
+          </ToolbarSelect>
 
           {isGlobalScope ? (
-            <FilterSelect label="Fakultas" value={fakultasId} onChange={(e) => setFakultasId(e.target.value)}>
-              <option value="">Seluruh fakultas</option>
+            <ToolbarSelect label="Fakultas" value={fakultasId} onChange={(e) => setFakultasId(e.target.value)}>
+              <option value="">Semua</option>
               {fakultasOptions.map((f) => (
                 <option key={f.id} value={f.id}>{f.nama}</option>
               ))}
-            </FilterSelect>
+            </ToolbarSelect>
           ) : (
-            <fieldset className="fieldset">
-              <legend className="fieldset-legend py-1">Fakultas</legend>
-              <input type="text" disabled value={scopeNama} className="input w-full" />
-            </fieldset>
+            <label className="flex min-w-36 flex-1 flex-col gap-1">
+              <span className="text-xs text-base-content/60">Fakultas</span>
+              <input type="text" disabled value={scopeNama} className="input input-sm w-full" />
+            </label>
           )}
 
-          <FilterSelect label="Program studi" value={prodiId} onChange={(e) => setProdiId(e.target.value)}>
-            <option value="">Semua prodi</option>
+          <ToolbarSelect label="Program studi" value={prodiId} onChange={(e) => setProdiId(e.target.value)}>
+            <option value="">Semua</option>
             {prodiOptions.map((p) => (
               <option key={p.id} value={p.id}>{p.nama}</option>
             ))}
-          </FilterSelect>
+          </ToolbarSelect>
 
-          <div className="flex items-end">
-            <button type="submit" className="btn btn-primary w-full">
+          <div className="flex gap-2">
+            <button type="submit" className="btn btn-primary btn-sm">
               <Filter className="h-4 w-4" />
               Terapkan
             </button>
+            {hasActiveFilter ? (
+              <button type="button" onClick={handleResetFilter} className="btn btn-ghost btn-sm">
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset
+              </button>
+            ) : null}
           </div>
-        </form>
-      </TableCard>
+        </div>
+      </form>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total mahasiswa"
-          value={loading ? '…' : formatNumber(kpi?.totalMahasiswa)}
+          label="Mahasiswa"
+          loading={loading}
+          value={formatNumber(kpi?.totalMahasiswa)}
         />
         <StatCard
           label="Rata-rata poin"
-          value={loading ? '…' : `${kpi?.rataRataPoin ?? 0}`}
-          sublabel={`Target ${targetPoin} poin`}
+          loading={loading}
+          value={`${kpi?.rataRataPoin ?? 0}`}
+          sublabel={`Target ${targetPoin}`}
         />
         <StatCard
-          label="Rata-rata capaian"
-          value={loading ? '…' : `${kpi?.rataRataPersentase ?? 0}%`}
-          sublabel={`${kpi?.persentaseLulusTarget ?? 0}% memenuhi target`}
+          label="Capaian"
+          loading={loading}
+          value={`${kpi?.rataRataPersentase ?? 0}%`}
+          sublabel={`${kpi?.persentaseLulusTarget ?? 0}% lulus target`}
         />
         <StatCard
-          label="Total poin sah"
-          value={loading ? '…' : formatNumber(kpi?.totalPoinSah)}
+          label="Poin sah"
+          loading={loading}
+          value={formatNumber(kpi?.totalPoinSah)}
           sublabel={`${kpi?.totalPrestasi ?? 0} prestasi`}
         />
       </div>
 
       <div role="tablist" className="tabs tabs-box">
-        {TABS.map((tab) => {
-          const count =
-            tab.id === 'mahasiswa' ? mahasiswaList.length
-              : tab.id === 'prestasi' ? prestasiList.length
-              : tab.id === 'ormawa' ? ormawaList.length
-              : null
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-              {count != null && <span className="ml-1.5 opacity-60">{count}</span>}
-            </button>
-          )
-        })}
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'ringkasan' && (
         <div className="space-y-5">
           <TableCard
-            title="Evaluasi kurikulum"
-            description="Rata-rata poin per tahapan tahun akademik"
+            title="Capaian kurikulum"
+            description={`Target ${targetPoin} poin`}
           >
             {loading ? (
-              <CardGridSkeleton />
+              <ChartSkeleton />
             ) : kurikulumStats.length === 0 ? (
-              <p className="py-8 text-center text-sm text-base-content/50">Belum ada data evaluasi kurikulum.</p>
+              <p className="py-8 text-center text-sm text-base-content/50">Belum ada data kurikulum.</p>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {kurikulumStats.map((c, i) => (
-                  <div key={c.nama || i} className="rounded-md border border-base-300 p-4">
-                    <p className="text-xs text-base-content/60">Tahun {c.tahun}</p>
-                    <p className="mt-1 text-sm font-medium text-base-content">{c.nama}</p>
-                    <p className="mt-2 text-sm tabular-nums text-base-content">
-                      {c.rataRataTerkumpul} / {c.targetPoin} poin
-                      <span className="ml-1.5 text-base-content/60">{c.persentaseCapaian}%</span>
-                    </p>
-                    <div className="mt-3">
-                      <ProgressBar value={c.rataRataTerkumpul} max={c.targetPoin || 50} height={6} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <VerticalBarChart
+                labels={kurikulumStats.map((c) => c.nama || `Tahun ${c.tahun}`)}
+                values={kurikulumStats.map((c) => Number(c.persentaseCapaian) || 0)}
+                height={220}
+              />
             )}
           </TableCard>
 
           <TableCard
             title={`Peringkat ${rankingUnit}`}
-            description="Diurutkan dari rata-rata capaian tertinggi. Distribusi menampilkan tiga kategori poin terbesar."
+            description={loading ? undefined : `${rankingItems.length} ${rankingUnit}`}
           >
             <TableFrame>
               <DataTable
                 loading={loading}
                 data={rankingItems}
                 emptyText="Belum ada data peringkat."
+                pageSize={15}
                 columns={[
                   {
                     key: 'ranking',
@@ -411,25 +381,13 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
                       <span className="tabular-nums text-base-content/70">{item.ranking}</span>
                     ),
                   },
-                  {
-                    key: 'nama',
-                    label: rankingLabel,
-                    render: (item) => <span className="text-base-content">{item.nama || '—'}</span>,
-                  },
+                  { key: 'nama', label: rankingLabel },
                   {
                     key: 'totalMahasiswa',
-                    label: 'Mahasiswa',
+                    label: 'Mhs',
                     center: true,
                     render: (item) => (
                       <span className="tabular-nums">{formatNumber(item.totalMahasiswa)}</span>
-                    ),
-                  },
-                  {
-                    key: 'totalPoin',
-                    label: 'Total poin',
-                    center: true,
-                    render: (item) => (
-                      <span className="tabular-nums">{formatNumber(item.totalPoin)}</span>
                     ),
                   },
                   {
@@ -443,18 +401,15 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
                   {
                     key: 'rataRataPersentase',
                     label: 'Capaian',
-                    center: true,
                     render: (item) => (
-                      <span className="tabular-nums">{item.rataRataPersentase ?? 0}%</span>
-                    ),
-                  },
-                  {
-                    key: 'kategoriPoin',
-                    label: 'Distribusi poin',
-                    render: (item) => (
-                      <span className="text-xs text-base-content/70">
-                        {formatDistribusi(item.kategoriPoin)}
-                      </span>
+                      <div className="min-w-28">
+                        <ProgressBar
+                          value={Number(item.rataRataPersentase) || 0}
+                          max={100}
+                          height={6}
+                          showPercent
+                        />
+                      </div>
                     ),
                   },
                 ]}
@@ -465,45 +420,39 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
       )}
 
       {activeTab === 'mahasiswa' && (
-        <TableCard title="Capaian poin mahasiswa" description={`${filteredMahasiswa.length} mahasiswa`}>
-          <div className="flex flex-col gap-3 lg:flex-row">
+        <TableCard
+          title="Capaian mahasiswa"
+          description={`${filteredMahasiswa.length} mahasiswa`}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <SearchInput
               value={searchMahasiswa}
               onChange={(e) => setSearchMahasiswa(e.target.value)}
               placeholder="Cari NIM, nama, atau prodi"
             />
-            <FilterSelect value={filterStatusMahasiswa} onChange={(e) => setFilterStatusMahasiswa(e.target.value)}>
-              <option value="semua">Semua status ({mahasiswaList.length})</option>
+            <select
+              value={filterStatusMahasiswa}
+              onChange={(e) => setFilterStatusMahasiswa(e.target.value)}
+              className="select select-sm sm:w-44"
+            >
+              <option value="semua">Semua status</option>
               <option value="tercapai">Tercapai</option>
               <option value="belum">Belum tercapai</option>
-            </FilterSelect>
+            </select>
           </div>
           <TableFrame>
             <DataTable
               loading={loading}
               data={filteredMahasiswa}
-              emptyText="Tidak ada data mahasiswa yang sesuai filter."
+              emptyText="Tidak ada data mahasiswa."
+              pageSize={15}
               columns={[
                 { key: 'nim', label: 'NIM', render: (row) => <span className="font-mono text-sm">{row.nim}</span> },
                 { key: 'nama', label: 'Nama' },
-                {
-                  key: 'prodi',
-                  label: 'Prodi / Fakultas',
-                  render: (row) => (
-                    <div>
-                      <p>{row.prodi}</p>
-                      <p className="text-xs text-base-content/60">{row.fakultas}</p>
-                    </div>
-                  ),
-                },
-                { key: 'angkatan', label: 'Angkatan', center: true, render: (row) => row.angkatan || '—' },
-                { key: 'poinTahun1', label: 'Thn 1', center: true },
-                { key: 'poinTahun2', label: 'Thn 2', center: true },
-                { key: 'poinTahun3', label: 'Thn 3', center: true },
-                { key: 'poinTahun4', label: 'Thn 4', center: true },
+                { key: 'prodi', label: 'Prodi' },
                 {
                   key: 'totalPoin',
-                  label: 'Total',
+                  label: 'Poin',
                   center: true,
                   render: (row) => (
                     <span className="tabular-nums">{row.totalPoin} / {row.targetPoin}</span>
@@ -527,56 +476,36 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
       )}
 
       {activeTab === 'prestasi' && (
-        <TableCard title="Rekap prestasi" description="Kejuaraan yang sudah diverifikasi">
-          <div className="flex flex-col gap-3 lg:flex-row">
+        <TableCard
+          title="Prestasi"
+          description={`${filteredPrestasi.length} kejuaraan`}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <SearchInput
               value={searchPrestasi}
               onChange={(e) => setSearchPrestasi(e.target.value)}
-              placeholder="Cari prestasi, mahasiswa, atau kompetisi"
+              placeholder="Cari mahasiswa atau kegiatan"
             />
-            <FilterSelect value={filterSkalaPrestasi} onChange={(e) => setFilterSkalaPrestasi(e.target.value)}>
+            <select
+              value={filterSkalaPrestasi}
+              onChange={(e) => setFilterSkalaPrestasi(e.target.value)}
+              className="select select-sm sm:w-44"
+            >
               <option value="semua">Semua skala</option>
               <option value="internasional">Internasional</option>
               <option value="nasional">Nasional</option>
-              <option value="wilayah">Wilayah / Provinsi</option>
-            </FilterSelect>
+              <option value="wilayah">Wilayah</option>
+            </select>
           </div>
           <TableFrame>
             <DataTable
               loading={loading}
               data={filteredPrestasi}
               emptyText="Belum ada data prestasi."
+              pageSize={15}
               columns={[
-                {
-                  key: 'namaMahasiswa',
-                  label: 'Mahasiswa',
-                  render: (row) => (
-                    <div>
-                      <p>{row.namaMahasiswa}</p>
-                      <p className="font-mono text-xs text-base-content/60">{row.nim}</p>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'fakultas',
-                  label: 'Fakultas / Prodi',
-                  render: (row) => (
-                    <div>
-                      <p>{row.prodi}</p>
-                      <p className="text-xs text-base-content/60">{row.fakultas}</p>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'namaKegiatan',
-                  label: 'Kegiatan',
-                  render: (row) => (
-                    <div>
-                      <p>{row.namaKegiatan}</p>
-                      <p className="text-xs text-base-content/60">{row.penyelenggara || '—'}</p>
-                    </div>
-                  ),
-                },
+                { key: 'namaMahasiswa', label: 'Mahasiswa' },
+                { key: 'namaKegiatan', label: 'Kegiatan' },
                 {
                   key: 'skala',
                   label: 'Skala',
@@ -589,7 +518,6 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
                   center: true,
                   render: (row) => <span className="tabular-nums">+{row.poin}</span>,
                 },
-                { key: 'tanggal', label: 'Tanggal', render: (row) => row.tanggal || '—' },
               ]}
             />
           </TableFrame>
@@ -597,28 +525,23 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
       )}
 
       {activeTab === 'ormawa' && (
-        <TableCard title="Keaktifan ormawa" description="Event terselenggara dan poin yang didistribusikan">
+        <TableCard
+          title="Keaktifan ormawa"
+          description={`${filteredOrmawa.length} organisasi`}
+        >
           <SearchInput
             value={searchOrmawa}
             onChange={(e) => setSearchOrmawa(e.target.value)}
-            placeholder="Cari organisasi atau fakultas"
+            placeholder="Cari organisasi"
           />
           <TableFrame>
             <DataTable
               loading={loading}
               data={filteredOrmawa}
-              emptyText="Belum ada data keaktifan ormawa."
+              emptyText="Belum ada data ormawa."
+              pageSize={15}
               columns={[
-                {
-                  key: 'nama',
-                  label: 'Organisasi',
-                  render: (row) => (
-                    <div>
-                      <p>{row.nama}</p>
-                      <p className="text-xs text-base-content/60">{row.fakultas || '—'}</p>
-                    </div>
-                  ),
-                },
+                { key: 'nama', label: 'Organisasi' },
                 {
                   key: 'tipe',
                   label: 'Tipe',
@@ -638,7 +561,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
                 },
                 {
                   key: 'totalPoinDidistribusikan',
-                  label: 'Poin didistribusikan',
+                  label: 'Poin',
                   center: true,
                   render: (row) => (
                     <span className="tabular-nums">{formatNumber(row.totalPoinDidistribusikan)}</span>

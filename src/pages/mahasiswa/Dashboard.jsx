@@ -13,35 +13,17 @@ import { getKlaim } from '../../services/poinService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { CardGridSkeleton, ChartSkeleton, Skeleton } from '../../components/dashboard/Skeleton'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 
 function LihatSelengkapnyaButton({ onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+      className="btn btn-outline btn-primary btn-sm"
     >
       Lihat selengkapnya →
     </button>
-  )
-}
-
-function StatusBadge({ status, className = '' }) {
-  const s = String(status || '').toLowerCase()
-  const map = {
-    pending:            { cls: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Pending' },
-    disetujui:          { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', label: 'Disetujui' },
-    ditolak:            { cls: 'bg-red-50 text-red-600 border border-red-200', label: 'Ditolak' },
-    diteruskan:         { cls: 'bg-blue-50 text-blue-600 border border-blue-200', label: 'Diteruskan' },
-    'menunggu validasi':{ cls: 'bg-indigo-50 text-indigo-700 border border-indigo-200', label: 'Menunggu Validasi' },
-    'menunggu pimpinan':{ cls: 'bg-purple-50 text-purple-700 border border-purple-200', label: 'Menunggu Pimpinan' },
-    'perlu revisi':     { cls: 'bg-orange-50 text-orange-700 border border-orange-200', label: 'Perlu Revisi' },
-  }
-  const style = map[s] || { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending' }
-  return (
-    <span className={`inline-flex items-center justify-center text-center rounded-full px-3 py-1 text-xs font-normal ${style.cls} ${className}`}>
-      {style.label}
-    </span>
   )
 }
 
@@ -82,7 +64,7 @@ function KegiatanCell({ nama, diajukanPada }) {
   const tanggal = formatTanggal(diajukanPada)
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-black">{nama || '-'}</p>
+      <p className="text-base-content">{nama || '-'}</p>
       {tanggal && <p className="text-xs text-base-content/60">Diajukan: {tanggal}</p>}
     </div>
   )
@@ -163,7 +145,7 @@ function MahasiswaDashboard() {
         {/* Welcome + Radar */}
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="min-w-0 card bg-base-100 p-4 sm:p-6">
-            <h2 className="text-xl font-extrabold text-black sm:text-2xl lg:text-3xl">
+            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />{user?.nama || 'Mahasiswa'}!
             </h2>
             <p className="mt-3 max-w-lg text-sm text-base-content/60">
@@ -171,25 +153,23 @@ function MahasiswaDashboard() {
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-base-content/60">Poin Target Kelulusan</p>
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                dashData?.isLulus || pctTotal >= 100
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              <span className={`badge badge-sm ${
+                dashData?.isLulus || pctTotal >= 100 ? 'badge-success' : 'badge-warning'
               }`}>
                 {dashData?.isLulus || pctTotal >= 100 ? 'Memenuhi Syarat Kelulusan' : 'Belum Memenuhi Syarat'}
               </span>
             </div>
             <div className="mt-1 flex flex-wrap items-end gap-6">
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline">
                 {loadingDash ? (
                   <Skeleton className="h-10 w-16" />
                 ) : (
-                  <span className="text-4xl font-extrabold text-brand-dark">{totalPoinProgres}</span>
+                  <span className="text-4xl font-extrabold text-base-content">{totalPoinProgres}</span>
                 )}
-                <span className="text-lg font-semibold text-base-content/50">/ {maxPoin} poin</span>
+                <span className="text-lg font-semibold text-base-content/50">/{maxPoin} poin</span>
               </div>
               <div className="min-w-[200px] flex-1">
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e9ebf8]">
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-base-300">
                   <div className="h-2.5 rounded-full bg-brand-dark transition-all" style={{ width: `${Math.min(pctTotal, 100)}%` }} />
                 </div>
               </div>
@@ -209,12 +189,12 @@ function MahasiswaDashboard() {
         </div>
 
         {/* Progress per Tahun Kurikulum */}
-        <div className="rounded-xl border border-base-300 bg-white p-3 sm:p-6 shadow-sm">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-3 sm:p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-bold text-base-content sm:text-lg">Progress Poin Kelulusan</h3>
-              <p className="mt-0.5 text-sm font-medium text-brand-dark">
-                Target Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoinProgres}</span> / {maxPoin} poin ({pctTotal}%)
+              <p className="mt-0.5 text-sm font-medium text-base-content">
+                Target Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoinProgres}</span>/{maxPoin} poin ({pctTotal}%)
               </p>
             </div>
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/riwayat-poin')} />
@@ -224,20 +204,20 @@ function MahasiswaDashboard() {
           ) : progressData.length === 0 ? (
             <p className="py-8 text-center text-sm text-base-content/50">Belum ada data progress kurikulum.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {progressData.map((item, index) => (
-                <div key={index} className="rounded-lg border border-base-300 p-4 text-center">
+                <div key={index} className="rounded-lg border border-base-300 px-4 py-3 text-center">
                   <p className="text-xs font-semibold text-base-content/60">{item.tahun}</p>
-                  <p className="mt-1 text-2xl font-bold text-brand-dark">
+                  <p className="mt-1 text-2xl font-bold leading-none text-base-content">
                     {item.current}
                     <span className="text-sm font-normal text-base-content/60">/{item.target} poin</span>
                   </p>
-                  <div className="mt-2 flex justify-center">
-                    <ProgressBar value={item.current} max={item.target || 1} height={6} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-center gap-1 text-sm text-base-content/60">
-                    {item.onTrack && <CheckCircle className="h-4 w-4 text-emerald-600" />}
+                  <div className="mt-1 flex items-center justify-center gap-1 text-xs text-base-content/60">
+                    {item.onTrack && <CheckCircle className="h-3.5 w-3.5 text-base-content" />}
                     <span>{item.label}</span>
+                  </div>
+                  <div className="mt-2">
+                    <ProgressBar value={item.current} max={item.target || 1} height={6} />
                   </div>
                 </div>
               ))}
@@ -262,7 +242,7 @@ function MahasiswaDashboard() {
                 return (
                   <div key={s.id} className="rounded-lg border border-base-300 bg-base-200 px-4 py-3">
                     <p className="text-sm leading-relaxed text-base-content">{s.isi}</p>
-                    <p className="mt-1 text-xs text-[#888]">
+                    <p className="mt-1 text-xs text-base-content/50">
                       {waktu ? `${waktu} · ` : ''}Dosen PA
                     </p>
                   </div>

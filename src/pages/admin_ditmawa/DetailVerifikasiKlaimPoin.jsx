@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimById, verifikasiKlaim } from '../../services/poinService'
 import { getApiBase } from '../../services/apiClient'
-import { InfoRow, SectionCard, formatTanggal } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  formatTanggal,
+  DetailBackButton,
+  DetailHeader,
+  DecisionNote,
+  RejectForm,
+  VerifiedBanner,
+  DecisionActions,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
@@ -105,82 +115,57 @@ function DetailVerifikasiKlaimPoin() {
 
   const canAct = item?.status === 'pending'
 
-  if (loading && !item) return (
-    <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
-      <div className="py-24 text-center text-sm text-base-content/50">Memuat detail…</div>
-    </DashboardLayout>
-  )
+  if (loading && !item) {
+    return (
+      <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
+        <DetailSkeleton />
+      </DashboardLayout>
+    )
+  }
 
-  if (!item) return (
-    <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
-      <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-base font-semibold text-base-content/60">Data klaim tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
-      </div>
-    </DashboardLayout>
-  )
+  if (!item) {
+    return (
+      <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
+        <EmptyDetail onBack={backToList} message="Data klaim tidak ditemukan." />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
       <ConfirmModal
         isOpen={showConfirmSetujui}
         message={`Klaim poin "${item?.kegiatan}" oleh ${item?.mahasiswa} akan disetujui.`}
-        confirmText={submitting ? 'Memproses...' : 'YA, SETUJUI'}
-        cancelText="BATAL"
+        confirmText={submitting ? 'Memproses…' : 'Setujui'}
+        cancelText="Batal"
         onConfirm={handleSetujui}
         onCancel={() => setShowConfirmSetujui(false)}
       />
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-base-content">{actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Klaim'}</h3>
-            <p className="mt-0.5 text-sm text-base-content/60">{actionType === 'revisi' ? 'Tuliskan catatan yang perlu diperbaiki.' : 'Tuliskan alasan penolakan klaim.'}</p>
-          </div>
-          <textarea className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" rows={4}
-            placeholder={actionType === 'revisi' ? 'Contoh: Bukti belum lengkap...' : 'Contoh: Kegiatan tidak memenuhi syarat...'}
-            value={alasan} onChange={(e) => setAlasan(e.target.value)} />
-          <div className="flex gap-3 pt-1">
-            <button type="button" disabled={submitting} onClick={handleKirimAction}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 ${actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'}`}>
-              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Klaim'}
-            </button>
-            <button type="button" disabled={submitting} onClick={() => setShowActionModal(false)}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200">Batal</button>
-          </div>
-        </div>
+        <RejectForm
+          title={actionType === 'revisi' ? 'Minta revisi' : 'Tolak klaim'}
+          description={actionType === 'revisi' ? 'Tuliskan catatan yang perlu diperbaiki.' : 'Tuliskan alasan penolakan klaim.'}
+          placeholder={actionType === 'revisi' ? 'Contoh: Bukti belum lengkap.' : 'Contoh: Kegiatan tidak memenuhi syarat.'}
+          submitLabel={actionType === 'revisi' ? 'Kirim revisi' : 'Tolak'}
+          variant={actionType === 'revisi' ? 'warning' : 'error'}
+          alasan={alasan}
+          onChange={setAlasan}
+          onSubmit={handleKirimAction}
+          onCancel={() => setShowActionModal(false)}
+          submitting={submitting}
+        />
       </Modal>
 
       <div className="space-y-5">
-        <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
-        </button>
+        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailHeader
+          title="Detail klaim poin"
+          description="Tinjau informasi klaim sebelum memberi keputusan."
+          status={item.status}
+        />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Klaim Poin</h2>
-            <p className="mt-1 text-sm text-base-content/60">Tinjau informasi klaim sebelum memberikan keputusan.</p>
-          </div>
-          <div className="shrink-0"><StatusBadge status={item.status} /></div>
-        </div>
-
-        {!canAct && item.alasan && (
-          <div className={`rounded-xl border p-4 ${item.status === 'ditolak' ? 'border-red-200 bg-red-50' : item.status === 'revisi' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}>
-            <p className={`text-xs font-semibold mb-1 ${item.status === 'ditolak' ? 'text-red-700' : item.status === 'revisi' ? 'text-yellow-700' : 'text-green-700'}`}>
-              {item.status === 'ditolak' ? 'Alasan Penolakan' : 'Catatan Revisi'}
-            </p>
-            <p className={`text-sm whitespace-pre-wrap ${item.status === 'ditolak' ? 'text-red-800' : item.status === 'revisi' ? 'text-yellow-800' : 'text-green-800'}`}>{item.alasan}</p>
-          </div>
-        )}
-
-        {!canAct && !item.alasan && (
-          <div className="rounded-xl border border-base-300 bg-base-200 px-5 py-3.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-            <p className="text-sm text-base-content/60">Klaim sudah diverifikasi dengan status <StatusBadge status={item.status} /></p>
-          </div>
-        )}
+        {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
+        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} noun="Klaim" /> : null}
 
         <SectionCard title="Informasi Mahasiswa">
           <InfoRow label="Nama Mahasiswa" value={item.mahasiswa} />
@@ -201,7 +186,7 @@ function DetailVerifikasiKlaimPoin() {
 
         <SectionCard title="Bukti Dokumen">
           {item.bukti ? (
-            <a href={item.bukti} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand-dark underline hover:opacity-75">
+            <a href={item.bukti} target="_blank" rel="noreferrer" className="link link-primary text-sm">
               Lihat bukti dokumen
             </a>
           ) : (
@@ -221,19 +206,14 @@ function DetailVerifikasiKlaimPoin() {
           </SectionCard>
         )}
 
-        {canAct && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
-              </button>
-              <button type="button" onClick={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white">Minta Revisi
-              </button>
-              <button type="button" onClick={() => setShowConfirmSetujui(true)}
-                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Setujui Klaim
-              </button>
-            </div>
-        )}
+        {canAct ? (
+          <DecisionActions
+            onReject={() => { setActionType('tolak'); setAlasan(''); setShowActionModal(true) }}
+            onRevise={() => { setActionType('revisi'); setAlasan(''); setShowActionModal(true) }}
+            onApprove={() => setShowConfirmSetujui(true)}
+            approveLabel="Setujui klaim"
+          />
+        ) : null}
       </div>
     </DashboardLayout>
   )

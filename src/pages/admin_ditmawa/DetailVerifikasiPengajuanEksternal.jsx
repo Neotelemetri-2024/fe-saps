@@ -1,15 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
+import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 import { getKegiatanById, verifikasiKegiatan } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
 import { getCurrentUser } from '../../services/authService'
-import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  DetailBackButton,
+  DetailHeader,
+  DecisionNote,
+  RejectForm,
+  VerifiedBanner,
+  DecisionActions,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 
 function formatDate(val) {
   if (!val) return '-'
@@ -78,18 +87,7 @@ function DetailVerifikasiPengajuanEksternal() {
   const [loadingKur, setLoadingKur] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [alokasi, setAlokasi] = useState([])
-  const [capaianOpen, setCapaianOpen] = useState(false)
-  const capaianRef = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (capaianRef.current && !capaianRef.current.contains(e.target)) {
-        setCapaianOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  const [selectedCapaianIds, setSelectedCapaianIds] = useState([])
 
   // Load kegiatan
   useEffect(() => {
@@ -183,7 +181,7 @@ function DetailVerifikasiPengajuanEksternal() {
   if (loading) {
     return (
       <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
-        <div className="py-24 text-center text-sm text-base-content/50">Memuat detail…</div>
+        <DetailSkeleton />
       </DashboardLayout>
     )
   }
@@ -191,13 +189,7 @@ function DetailVerifikasiPengajuanEksternal() {
   if (!item) {
     return (
       <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
-        <div className="flex flex-col items-center gap-4 py-20">
-          <p className="text-base font-semibold text-base-content/60">Data tidak ditemukan.</p>
-          <button type="button" onClick={backToList}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
-            <ArrowLeft className="h-4 w-4" /> Kembali
-          </button>
-        </div>
+        <EmptyDetail onBack={backToList} />
       </DashboardLayout>
     )
   }
@@ -208,95 +200,30 @@ function DetailVerifikasiPengajuanEksternal() {
     <DashboardLayout role="admin_ditmawa" userName={userName} userRole="Admin Ditmawa">
       {/* Modal Revisi / Tolak */}
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-base-content">
-              {actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Pengajuan'}
-            </h3>
-            <p className="mt-0.5 text-sm text-base-content/60">
-              {actionType === 'revisi'
-                ? 'Tuliskan catatan yang perlu diperbaiki oleh mahasiswa.'
-                : 'Tuliskan alasan penolakan pengajuan ini.'}
-            </p>
-          </div>
-          <textarea
-            className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
-            rows={4}
-            placeholder={actionType === 'revisi' ? 'Contoh: Lampiran sertifikat belum diunggah...' : 'Contoh: Kegiatan tidak sesuai kriteria...'}
-            value={alasan}
-            onChange={(e) => setAlasan(e.target.value)}
-          />
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={handleKirimAction}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 ${
-                actionType === 'revisi' ? 'bg-orange-500' : 'bg-red-600'
-              }`}
-            >
-              {submitting ? 'Mengirim…' : actionType === 'revisi' ? 'Kirim Revisi' : 'Tolak Pengajuan'}
-            </button>
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => setShowActionModal(false)}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
-            >
-              Batal
-            </button>
-          </div>
-        </div>
+        <RejectForm
+          title={actionType === 'revisi' ? 'Minta revisi' : 'Tolak pengajuan'}
+          description={actionType === 'revisi' ? 'Tuliskan catatan yang perlu diperbaiki oleh mahasiswa.' : 'Tuliskan alasan penolakan pengajuan ini.'}
+          placeholder={actionType === 'revisi' ? 'Contoh: Lampiran sertifikat belum diunggah.' : 'Contoh: Kegiatan tidak sesuai kriteria.'}
+          submitLabel={actionType === 'revisi' ? 'Kirim revisi' : 'Tolak'}
+          variant={actionType === 'revisi' ? 'warning' : 'error'}
+          alasan={alasan}
+          onChange={setAlasan}
+          onSubmit={handleKirimAction}
+          onCancel={() => setShowActionModal(false)}
+          submitting={submitting}
+        />
       </Modal>
 
       <div className="space-y-5">
-        {/* Back */}
-        <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
-        </button>
+        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailHeader
+          title="Detail pengajuan eksternal"
+          description="Tinjau informasi kegiatan sebelum memberi keputusan."
+          status={item.status}
+        />
 
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Pengajuan Eksternal</h2>
-            <p className="mt-1 text-sm text-base-content/60">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
-          </div>
-          <div className="shrink-0">
-            <StatusBadge status={item.status} />
-          </div>
-        </div>
-
-        {/* Alasan jika sudah diverifikasi */}
-        {!canAct && item.alasan && (
-          <div className={`rounded-xl border p-4 ${
-            item.status === 'ditolak' ? 'border-red-200 bg-red-50' :
-            item.status === 'perlu_revisi' ? 'border-yellow-200 bg-yellow-50' :
-            'border-green-200 bg-green-50'
-          }`}>
-            <p className={`text-xs font-semibold mb-1 ${
-              item.status === 'ditolak' ? 'text-red-700' :
-              item.status === 'perlu_revisi' ? 'text-yellow-700' :
-              'text-green-700'
-            }`}>
-              {item.status === 'ditolak' ? 'Alasan Penolakan' : 'Catatan Revisi'}
-            </p>
-            <p className={`text-sm whitespace-pre-wrap ${
-              item.status === 'ditolak' ? 'text-red-800' :
-              item.status === 'perlu_revisi' ? 'text-yellow-800' :
-              'text-green-800'
-            }`}>{item.alasan}</p>
-          </div>
-        )}
-
-        {!canAct && !item.alasan && (
-          <div className="rounded-xl border border-base-300 bg-base-200 px-5 py-3.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-            <p className="text-sm text-base-content/60">
-              Pengajuan ini sudah diverifikasi dengan status <StatusBadge status={item.status} />
-            </p>
-          </div>
-        )}
+        {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
+        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} /> : null}
 
         {/* Info Mahasiswa */}
         <SectionCard title="Informasi Mahasiswa">
@@ -327,68 +254,50 @@ function DetailVerifikasiPengajuanEksternal() {
 
         {/* Capaian yang sudah diinput (setelah disetujui) */}
         {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum">
-            <div className="space-y-1.5">
-              {item.capaian.map((c, i) => (
-                <p key={i} className="text-sm font-medium text-base-content">{c.label}</p>
-              ))}
-            </div>
+          <SectionCard title="Capaian kurikulum">
+            {item.capaian.map((c, i) => (
+              <p key={i} className="text-sm text-base-content">{c.label}</p>
+            ))}
           </SectionCard>
         )}
 
         {item.subCapaian?.length > 0 && (
-          <SectionCard title="Sub Capaian & Bobot">
-            <div className="space-y-2.5">
-              {item.subCapaian.map((sc, i) => (
-                <InfoRow
-                  key={i}
-                  label={sc.label}
-                  sublabel={sc.capaian}
-                  value={sc.persen != null ? `${sc.persen}%` : '-'}
-                />
-              ))}
-            </div>
+          <SectionCard title="Sub capaian">
+            {item.subCapaian.map((sc, i) => (
+              <InfoRow
+                key={i}
+                label={sc.label}
+                sublabel={sc.capaian}
+                value={sc.persen != null ? `${sc.persen}%` : '—'}
+              />
+            ))}
           </SectionCard>
         )}
 
         {/* Tombol aksi awal */}
-        {canAct && !showCapaianForm && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => openAction('tolak')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
-              >Tolak
-              </button>
-              <button
-                type="button"
-                onClick={() => openAction('revisi')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-400 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white"
-              >Minta Revisi
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCapaianForm(true)}
-                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
-              >Teruskan ke Pimpinan
-              </button>
-            </div>
-        )}
+        {canAct && !showCapaianForm ? (
+          <DecisionActions
+            onReject={() => openAction('tolak')}
+            onRevise={() => openAction('revisi')}
+            onApprove={() => setShowCapaianForm(true)}
+            approveLabel="Teruskan ke pimpinan"
+          />
+        ) : null}
 
         {/* Form pemetaan capaian — muncul setelah klik Teruskan ke Pimpinan */}
         {canAct && showCapaianForm && (
-          <div className="card bg-base-100 p-6 space-y-5">
+          <div className="card border border-base-300 bg-base-100 p-5 space-y-5">
             <div>
-              <h3 className="text-base font-bold text-base-content">Pemetaan Capaian Kurikulum</h3>
+              <h3 className="text-sm font-semibold text-base-content">Pemetaan capaian kurikulum</h3>
               <p className="mt-0.5 text-sm text-base-content/60">
-                Tentukan capaian kurikulum yang dicapai melalui kegiatan ini sebelum meneruskan ke Pimpinan.
+                Tentukan capaian kurikulum yang dicapai melalui kegiatan ini sebelum meneruskan ke pimpinan.
               </p>
             </div>
 
             {loadingKur ? (
               <p className="text-sm text-base-content/50">Memuat kurikulum…</p>
             ) : kurikulumList.length === 0 ? (
-              <p className="text-sm text-red-500">Kurikulum aktif tidak ditemukan. Hubungi Super Admin.</p>
+              <p className="text-sm text-error">Kurikulum aktif tidak ditemukan. Hubungi Super Admin.</p>
             ) : (
               <PemetaanCapaianKurikulumSection
                 kurikulumList={kurikulumList}
@@ -402,14 +311,7 @@ function DetailVerifikasiPengajuanEksternal() {
             )}
 
             {/* Tombol submit */}
-            <div className="flex flex-col gap-3 pt-2 border-t border-base-300 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                disabled={submitting || loadingKur}
-                onClick={handleSubmitSetuju}
-                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
-              >{submitting ? 'Memproses...' : 'Teruskan ke Pimpinan'}
-              </button>
+            <div className="flex flex-col-reverse gap-2 border-t border-base-300 pt-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -417,9 +319,17 @@ function DetailVerifikasiPengajuanEksternal() {
                   setSelectedCapaianIds([])
                   setAlokasi([])
                 }}
-                className="rounded-xl border border-base-300 bg-white px-5 py-2.5 text-sm font-semibold text-base-content/80 transition hover:bg-base-200"
+                className="btn btn-ghost btn-sm"
               >
                 Batal
+              </button>
+              <button
+                type="button"
+                disabled={submitting || loadingKur}
+                onClick={handleSubmitSetuju}
+                className="btn btn-primary btn-sm"
+              >
+                {submitting ? 'Memproses…' : 'Teruskan ke pimpinan'}
               </button>
             </div>
           </div>

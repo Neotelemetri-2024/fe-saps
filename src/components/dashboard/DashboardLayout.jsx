@@ -8,7 +8,11 @@ import AccessibilityMenu from './AccessibilityMenu'
 import { NavSearchModal, NavSearchTrigger } from './NavSearch'
 import * as menuConfig from '../../config/menuItems'
 
-const DashboardChromeContext = createContext(false)
+export const DashboardChromeContext = createContext(false)
+
+export function useDashboardChrome() {
+  return useContext(DashboardChromeContext)
+}
 
 const roleMenuMap = {
   mahasiswa: menuConfig.mahasiswaMenu,

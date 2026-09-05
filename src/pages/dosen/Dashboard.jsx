@@ -18,7 +18,7 @@ function CapaianBar({ pct, status }) {
   const clamped = Math.min(100, Math.max(0, pct))
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2 w-28 rounded-full bg-[#e9ebf8]">
+      <div className="h-2 w-28 rounded-full bg-base-300">
         <div
           className={`h-2 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`}
           style={{ width: `${clamped}%` }}
@@ -31,19 +31,11 @@ function CapaianBar({ pct, status }) {
 
 function StatusPill({ status, isLulus }) {
   if (isLulus || status === 'lulus') {
-    return (
-      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-        Lulus
-      </span>
-    )
+    return <span className="badge badge-sm badge-success">Lulus</span>
   }
   const isBaik = status === 'baik' || status === 'on_track'
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        isBaik ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-      }`}
-    >
+    <span className={`badge badge-sm ${isBaik ? 'badge-success' : 'badge-error'}`}>
       {isBaik ? 'Baik' : 'Perlu Perhatian'}
     </span>
   )
@@ -201,11 +193,11 @@ function DosenPADashboard() {
             {/* Permintaan Persetujuan */}
             <div className="flex-1 card bg-base-100 p-5">
               <h3 className="text-sm font-bold text-base-content">Permintaan Persetujuan</h3>
-              <div className="mt-3 divide-y divide-[#f0f2f8]">
+              <div className="mt-3 divide-y divide-base-300">
                 {loading ? (
                   <ListItemSkeleton rows={3} />
                 ) : permintaan.length === 0 ? (
-                  <p className="py-3 text-xs text-[#888]">Belum ada permintaan pending.</p>
+                  <p className="py-3 text-xs text-base-content/50">Belum ada permintaan pending.</p>
                 ) : (
                   permintaan.map((p, i) => (
                     <div key={i} className="flex items-center gap-3 py-3">
@@ -224,7 +216,7 @@ function DosenPADashboard() {
                 <button
                   type="button"
                   onClick={() => navigate('/dosen/permintaan-persetujuan')}
-                  className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+                  className="btn btn-outline btn-primary btn-sm"
                 >
                   Lihat selengkapnya →
                 </button>
@@ -257,7 +249,7 @@ function DosenPADashboard() {
             <button
               type="button"
               onClick={() => navigate('/dosen/mahasiswa-bimbingan')}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </button>
@@ -272,8 +264,8 @@ function DosenPADashboard() {
                 label: 'Mahasiswa',
                 render: (row) => (
                   <div>
-                    <p className="font-bold uppercase text-black">{row.nama}</p>
-                    <p className="text-xs font-normal text-black">{row.prodi}</p>
+                    <p className="font-bold uppercase text-base-content">{row.nama}</p>
+                    <p className="text-xs font-normal text-base-content">{row.prodi}</p>
                   </div>
                 ),
               },

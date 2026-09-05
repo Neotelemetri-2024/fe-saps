@@ -219,7 +219,7 @@ function AjukanKegiatanEksternal() {
                 <button
                   type="button"
                   onClick={() => { setFilterStatus(''); setFilterKategori(''); setFilterSkala(''); setSearch('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
                 >
                   Reset Filter
                 </button>

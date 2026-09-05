@@ -30,7 +30,7 @@ function CapaianBar({ poin, persen }) {
   const isLow = pct < 50
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2.5 w-28 overflow-hidden rounded-full bg-[#e9ebf8]">
+      <div className="h-2.5 w-28 overflow-hidden rounded-full bg-base-300">
         <div
           className={`h-full rounded-full transition-all ${isLow ? 'bg-red-500' : 'bg-brand-dark'}`}
           style={{ width: `${pct}%` }}
@@ -43,19 +43,11 @@ function CapaianBar({ poin, persen }) {
 
 function StatusPill({ poin, persen, status, isLulus }) {
   if (isLulus || status === 'lulus') {
-    return (
-      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-        Lulus
-      </span>
-    )
+    return <span className="badge badge-sm badge-success">Lulus</span>
   }
   const isLow = status === 'perlu_perhatian' || (persen != null && persen < 50)
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        isLow ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'
-      }`}
-    >
+    <span className={`badge badge-sm ${isLow ? 'badge-error' : 'badge-success'}`}>
       {isLow ? 'Perlu Perhatian' : 'On Track'}
     </span>
   )
@@ -130,7 +122,7 @@ function MahasiswaBimbingan() {
         <div className="mt-2">
           <TableCard title="Daftar Mahasiswa Bimbingan">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-white px-3 py-2 shadow-sm">
+              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-2 shadow-sm">
                 <Search className="h-4 w-4 shrink-0 text-base-content/50" />
                 <input
                   type="text"
@@ -143,7 +135,7 @@ function MahasiswaBimbingan() {
               <select
                 value={filterProdi}
                 onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-white px-3 py-2 text-sm text-base-content shadow-sm outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-sm outline-none"
               >
                 <option value="">Semua Prodi</option>
                 {prodiOptions.map((p) => (
@@ -154,7 +146,7 @@ function MahasiswaBimbingan() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>
@@ -172,8 +164,8 @@ function MahasiswaBimbingan() {
                     label: 'Mahasiswa',
                     render: (m) => (
                       <div>
-                        <p className="font-bold uppercase text-black">{m.nama}</p>
-                        <p className="text-xs font-normal text-black">{m.prodi}</p>
+                        <p className="font-bold uppercase text-base-content">{m.nama}</p>
+                        <p className="text-xs font-normal text-base-content">{m.prodi}</p>
                         {m.tanggalInput && m.tanggalInput !== '-' && (
                           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-base-content/50">
                             <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}

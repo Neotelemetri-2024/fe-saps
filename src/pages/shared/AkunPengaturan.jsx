@@ -161,7 +161,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
         <div className="flex flex-col gap-10">
           <h2 className="text-xl font-bold text-base-content sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
 
-          <div className="mx-auto w-full max-w-md rounded-xl border border-base-300 bg-white px-6 py-6 shadow-sm">
+          <div className="mx-auto w-full max-w-md rounded-xl border border-base-300 bg-base-100 px-6 py-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
               <span className="flex h-20 w-20 items-center justify-center rounded-full bg-base-200">
                 <UserCircle className="h-12 w-12 text-brand-dark" />
@@ -188,7 +188,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-black">Nama Lengkap</label>
+                  <label className="block text-sm font-medium text-base-content">Nama Lengkap</label>
                   <input
                     type="text"
                     name="namaLengkap"
@@ -199,26 +199,26 @@ function AkunPengaturan({ role: roleProp } = {}) {
                 </div>
                 {showIdentitas && (
                   <div>
-                    <label className="block text-sm font-medium text-black">{form.identitasLabel}</label>
+                    <label className="block text-sm font-medium text-base-content">{form.identitasLabel}</label>
                     <input
                       type="text"
                       value={form.identitas}
                       readOnly
-                      className="mt-1 w-full rounded-lg border border-base-300 bg-[#f9f9f9] p-3 text-sm text-base-content shadow-sm"
+                      className="mt-1 w-full rounded-lg border border-base-300 bg-base-200 p-3 text-sm text-base-content shadow-sm"
                     />
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-black">Jabatan</label>
+                  <label className="block text-sm font-medium text-base-content">Jabatan</label>
                   <input
                     type="text"
                     value={form.jabatan}
                     readOnly
-                    className="mt-1 w-full rounded-lg border border-base-300 bg-[#f9f9f9] p-3 text-sm text-base-content shadow-sm"
+                    className="mt-1 w-full rounded-lg border border-base-300 bg-base-200 p-3 text-sm text-base-content shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black">Email</label>
+                  <label className="block text-sm font-medium text-base-content">Email</label>
                   <input
                     type="email"
                     name="email"
@@ -228,7 +228,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black">Nomor Telepon</label>
+                  <label className="block text-sm font-medium text-base-content">Nomor Telepon</label>
                   <input
                     type="text"
                     name="nomorTelepon"
@@ -239,7 +239,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black">Alamat</label>
+                  <label className="block text-sm font-medium text-base-content">Alamat</label>
                   <textarea
                     name="alamat"
                     rows={3}
@@ -270,7 +270,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-black">Password Lama <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">Password Lama <span className="text-red-500">*</span></label>
                 <div className="relative mt-1">
                   <input
                     type={showOld ? 'text' : 'password'}
@@ -286,7 +286,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">Password Baru <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">Password Baru <span className="text-red-500">*</span></label>
                 <div className="relative mt-1">
                   <input
                     type={showNew ? 'text' : 'password'}
@@ -302,7 +302,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">Konfirmasi Password Baru <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">Konfirmasi Password Baru <span className="text-red-500">*</span></label>
                 <div className="relative mt-1">
                   <input
                     type={showConfirm ? 'text' : 'password'}
@@ -333,7 +333,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
 
         <div className="max-w-sm btn btn-primary p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/20">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-base-100/20">
               <Lock className="h-4 w-4 text-white" />
             </span>
             <div>

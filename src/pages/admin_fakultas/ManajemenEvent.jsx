@@ -333,7 +333,7 @@ function ManajemenEvent() {
         key: 'no',
         label: 'NO',
         render: (row) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {start + pageItems.indexOf(row) + 1}
           </span>
         ),
@@ -343,7 +343,7 @@ function ManajemenEvent() {
         label: 'NAMA KEGIATAN',
         render: (row) => (
           <div>
-            <p className="font-medium text-black">
+            <p className="font-medium text-base-content">
               {row.kegiatan}
             </p>
 
@@ -360,7 +360,7 @@ function ManajemenEvent() {
         key: 'kategori',
         label: 'KATEGORI',
         render: (row) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {row.kategori}
           </span>
         ),
@@ -369,7 +369,7 @@ function ManajemenEvent() {
         key: 'skala',
         label: 'SKALA',
         render: (row) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {row.skala}
           </span>
         ),
@@ -378,7 +378,7 @@ function ManajemenEvent() {
         key: 'tanggal',
         label: 'TANGGAL',
         render: (row) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {row.tanggal}
           </span>
         ),
@@ -388,7 +388,7 @@ function ManajemenEvent() {
         label: 'PESERTA',
         center: true,
         render: (row) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {row.peserta}
           </span>
         ),
@@ -545,7 +545,7 @@ function ManajemenEvent() {
                   setPage(1)
                 }}
                 placeholder="Cari nama kegiatan..."
-                className="w-full rounded-lg border border-base-300 bg-white py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 bg-base-100 py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>
 
@@ -557,7 +557,7 @@ function ManajemenEvent() {
                   setFilterKategori(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[130px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[130px] flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Kategori</option>
 
@@ -577,7 +577,7 @@ function ManajemenEvent() {
                   setFilterStatus(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (
@@ -591,7 +591,7 @@ function ManajemenEvent() {
                   setFilterSkala(event.target.value)
                   setPage(1)
                 }}
-                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-white px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
+                className="min-w-[120px] flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-xs text-base-content/80 outline-none transition focus:border-brand-dark sm:text-sm lg:flex-none"
               >
                 <option value="">Semua Skala</option>
 
@@ -612,7 +612,7 @@ function ManajemenEvent() {
                 <button
                   type="button"
                   onClick={resetFilter}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2.5 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2.5 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
                 >
                   Reset Filter
                 </button>

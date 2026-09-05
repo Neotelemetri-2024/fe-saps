@@ -51,7 +51,7 @@ function Dashboard() {
     <div className="space-y-6">
         {/* Welcome */}
         <div>
-          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Selamat Datang<br />
             <span className="text-brand-dark">{user?.nama || 'Pimpinan Ditmawa'}</span>
           </h2>
@@ -134,7 +134,7 @@ function Dashboard() {
               <button
                 type="button"
                 onClick={() => navigate('/pimpinan_ditmawa/laporan')}
-                className="inline-flex items-center rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+                className="inline-flex items-center btn btn-outline btn-primary btn-sm"
               >
                 Lihat selengkapnya →
               </button>
@@ -156,7 +156,7 @@ function Dashboard() {
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                          top ? 'bg-brand-dark text-white' : 'bg-[#f0f2f5] text-base-content/60'
+                          top ? 'bg-brand-dark text-white' : 'bg-base-200 text-base-content/60'
                         }`}
                       >
                         {rank}
@@ -211,7 +211,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/pimpinan_ditmawa/verifikasi-pengajuan-internal')}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </button>
@@ -226,7 +226,7 @@ function Dashboard() {
                   label: 'Kegiatan',
                   render: (row) => (
                     <div>
-                      <p className="font-bold uppercase text-black">{row.namaKegiatan}</p>
+                      <p className="font-bold uppercase text-base-content">{row.namaKegiatan}</p>
                       <p className="text-xs font-normal text-base-content/60">
                         {row.organisasi} • {row.tipePenyelenggara}
                       </p>
@@ -243,7 +243,7 @@ function Dashboard() {
                     <button
                       type="button"
                       onClick={() => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-internal/${row.id}`)}
-                      className="rounded-lg border border-brand-dark bg-white px-3 py-1 text-xs font-semibold text-brand-dark hover:bg-[#f5f7f5] transition"
+                      className="btn btn-outline btn-primary btn-xs"
                     >
                       Tinjau
                     </button>

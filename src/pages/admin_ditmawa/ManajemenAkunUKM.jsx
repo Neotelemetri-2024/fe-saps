@@ -52,7 +52,7 @@ function TambahAkunModal({ onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-base-content">Tambah Akun UKM</h3>
           <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content text-xl leading-none">×</button>
@@ -142,7 +142,7 @@ function ResetPasswordModal({ item, onClose, onReset }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-base-content">Reset Password</h3>
           <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content"><X className="h-5 w-5" /></button>
@@ -247,9 +247,9 @@ function ManajemenAkunUKM() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{i + 1}</span> },
-    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-black">{row.nama}</span> },
-    { key: 'email', label: 'Email', render: (row) => <span className="text-black">{row.email}</span> },
+    { key: 'no', label: 'No', render: (_, i) => <span className="text-base-content">{i + 1}</span> },
+    { key: 'nama', label: 'Nama UKM', render: (row) => <span className="font-medium text-base-content">{row.nama}</span> },
+    { key: 'email', label: 'Email', render: (row) => <span className="text-base-content">{row.email}</span> },
     { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
       <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
         <StatusBadge status={row.status} />
@@ -315,7 +315,7 @@ function ManajemenAkunUKM() {
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                    className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                   >
                     Reset Filter
                   </button>

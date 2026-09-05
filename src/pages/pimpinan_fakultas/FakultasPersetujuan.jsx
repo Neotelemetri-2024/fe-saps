@@ -41,7 +41,7 @@ function PimpinanFakultasPersetujuan() {
   }, [])
 
   const columns = [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{row.no}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{row.no}</span> },
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'pengaju', label: 'Pengaju' },
     { key: 'nim', label: 'NIM' },

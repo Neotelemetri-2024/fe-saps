@@ -140,7 +140,7 @@ function PermintaanPersetujuan() {
     { key: "kegiatan", label: "KEGIATAN", render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: "peran", label: "PERAN" },
     { key: "skala", label: "SKALA" },
-    { key: "jenis", label: "JENIS", render: (row) => <span className="text-black">{row.jenis}</span> },
+    { key: "jenis", label: "JENIS", render: (row) => <span className="text-base-content">{row.jenis}</span> },
     { key: "penyelenggara", label: "PENYELENGGARA" },
     { key: "tanggal", label: "TANGGAL" },
     {
@@ -240,7 +240,7 @@ function PermintaanPersetujuan() {
                 <button
                   type="button"
                   onClick={() => { setSearch(""); setFilterStatus(""); setFilterSkala("") }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>
@@ -264,7 +264,7 @@ function PermintaanPersetujuan() {
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
+                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
                   Batal Pilih
                 </button>
                 <button type="button"

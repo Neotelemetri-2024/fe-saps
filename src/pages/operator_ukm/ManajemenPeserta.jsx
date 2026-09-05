@@ -250,7 +250,7 @@ function ManajemenPeserta() {
                   placeholder="Cari NIM atau nama…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-base-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
+                  className="w-full rounded-lg border border-base-300 bg-base-100 py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -330,16 +330,16 @@ function ManajemenPeserta() {
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-base-content/50">Tidak ada peserta.</td></tr>
                 ) : pageItems.map((p) => (
                     <tr key={p.partisipasiId || p.id} className="divide-x divide-base-300 border-b border-base-300 last:border-0 hover:bg-base-200">
-                      <td className="w-16 px-4 py-3 text-center text-black">{p.no}</td>
-                      <td className="px-4 py-3 font-medium text-black">{p.nim || '-'}</td>
-                      <td className="px-4 py-3 text-black">{p.nama}</td>
-                      <td className="px-4 py-3 text-black">{p.prodi}</td>
+                      <td className="w-16 px-4 py-3 text-center text-base-content">{p.no}</td>
+                      <td className="px-4 py-3 font-medium text-base-content">{p.nim || '-'}</td>
+                      <td className="px-4 py-3 text-base-content">{p.nama}</td>
+                      <td className="px-4 py-3 text-base-content">{p.prodi}</td>
                       <td className="px-4 py-3 text-center">
                         <select
                           value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
                           onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.value)}
                           disabled={!isEditing}
-                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
+                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
                         >
                           <option value="">Belum</option>
                           <option value="true">Hadir</option>
@@ -350,7 +350,7 @@ function ManajemenPeserta() {
                           value={p.peranVerifId || ''}
                           onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
                           disabled={!isEditing}
-                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-[#999]"
+                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
                         >
                           <option value="">Pilih Peran</option>
                           {peranOptions.map((opt) => (
@@ -366,7 +366,7 @@ function ManajemenPeserta() {
 
           {!loading && (
             <div className="flex items-center justify-between border-t border-base-300 px-6 py-3">
-              <span className="text-xs text-[#888]">
+              <span className="text-xs text-base-content/50">
                 Menampilkan {filtered.length} dari {pesertaData.length} peserta
               </span>
               <div className="flex items-center gap-3">
@@ -376,7 +376,7 @@ function ManajemenPeserta() {
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => setPage(currentPage - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -387,7 +387,7 @@ function ManajemenPeserta() {
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => setPage(currentPage + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>

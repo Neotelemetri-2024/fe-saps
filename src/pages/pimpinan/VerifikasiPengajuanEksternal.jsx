@@ -61,7 +61,7 @@ function VerifikasiPengajuanEksternalPimpinan() {
                   ),
                 },
                 { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan || '-'} tanggal={item.diajukanPada || '-'} /> },
-                { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-black">{item.kategori || '-'}</span> },
+                { key: 'kategori', label: 'Kategori', render: (item) => <span className="text-base-content">{item.kategori || '-'}</span> },
                 { key: 'tanggal', label: 'Tanggal', render: (item) => item.tanggal || '-' },
                 { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
               ]}

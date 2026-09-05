@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
+import Modal from '../../components/ui/Modal'
 import { setujuiTolak } from '../../services/pengajuanService'
 import { getCurrentUser } from '../../services/authService'
-import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  DetailBackButton,
+  DetailHeader,
+  DecisionActions,
+  RejectForm,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 
 function formatDate(val) {
   if (!val) return '-'
@@ -25,14 +32,14 @@ function DetailPersetujuanDosen() {
   const user = getCurrentUser()
   const row = location.state?.row
 
-  const [actionType, setActionType] = useState(null)
+  const [showReject, setShowReject] = useState(false)
   const [alasan, setAlasan] = useState('')
   const [loading, setLoading] = useState(false)
 
   if (!row) {
     return (
       <DashboardLayout role="dosen" userName={user?.nama || 'Dosen PA'} userRole="Dosen Pembimbing">
-        <div className="py-16 text-center text-sm text-base-content/50">Data tidak ditemukan.</div>
+        <EmptyDetail onBack={() => navigate(-1)} />
       </DashboardLayout>
     )
   }
@@ -45,6 +52,7 @@ function DetailPersetujuanDosen() {
   const tanggalPengajuan = formatDate(row.tanggalDiajukan || row.createdAt)
   const tanggalKegiatan = formatDate(kg.tanggalMulai) || row.tanggal || '-'
   const isActionable = row.status === 'pending' || row.status === 'diajukan'
+  const status = row.isUlang && isActionable ? 'diajukan_ulang' : row.status
 
   const handleSetuju = async () => {
     setLoading(true)
@@ -69,83 +77,55 @@ function DetailPersetujuanDosen() {
 
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen PA'} userRole="Dosen Pembimbing">
+      <Modal isOpen={showReject} onClose={() => !loading && setShowReject(false)} size="md">
+        <RejectForm
+          alasan={alasan}
+          onChange={setAlasan}
+          onSubmit={handleKirimAlasan}
+          onCancel={() => setShowReject(false)}
+          submitting={loading}
+        />
+      </Modal>
+
       <div className="space-y-5">
-        <button type="button" onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
+        <DetailBackButton onClick={() => navigate(-1)} />
+        <DetailHeader
+          title="Detail permintaan persetujuan"
+          description="Tinjau detail kegiatan sebelum memberi keputusan."
+          status={status}
+        />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Permintaan Persetujuan</h2>
-            <p className="mt-1 text-sm text-base-content/60">Tinjau detail kegiatan sebelum memberikan keputusan.</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {row.isUlang && isActionable ? (
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">Diajukan Ulang</span>
-            ) : (
-              <StatusBadge status={row.status} />
-            )}
-          </div>
-        </div>
-
-        <SectionCard title="Identitas Mahasiswa">
-          <InfoRow label="Nama Mahasiswa" value={row.mahasiswa} />
+        <SectionCard title="Identitas mahasiswa">
+          <InfoRow label="Nama mahasiswa" value={row.mahasiswa} />
           <InfoRow label="NIM" value={nim} />
-          <InfoRow label="Program Studi" value={prodi} />
+          <InfoRow label="Program studi" value={prodi} />
           <InfoRow label="Fakultas" value={fakultas} />
-          <InfoRow label="Tanggal Pengajuan" value={tanggalPengajuan} />
+          <InfoRow label="Tanggal pengajuan" value={tanggalPengajuan} />
         </SectionCard>
 
-        <SectionCard title="Detail Kegiatan">
-          <InfoRow label="Nama Kegiatan" value={row.kegiatan} />
-          <InfoRow label="Jenis / Kategori" value={row.jenis} />
+        <SectionCard title="Detail kegiatan">
+          <InfoRow label="Nama kegiatan" value={row.kegiatan} />
+          <InfoRow label="Jenis / kategori" value={row.jenis} />
           <InfoRow label="Skala" value={kg.skala?.nama || '-'} />
-          <InfoRow label="Peran / Pencapaian" value={row.peran} />
+          <InfoRow label="Peran / pencapaian" value={row.peran} />
           <InfoRow label="Penyelenggara" value={row.penyelenggara} />
-          <InfoRow label="Tanggal Pelaksanaan" value={tanggalKegiatan} />
-          {(kg.linkPenyelenggara || kg.linkWebsite) && (
-            <InfoRow label="Link Website" value={kg.linkPenyelenggara || kg.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite} />
-          )}
-          {kg.emailPenyelenggara && (
-            <InfoRow label="Email Penyelenggara" value={kg.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara}`} />
-          )}
-          {kg.deskripsi && <InfoRow label="Deskripsi" value={kg.deskripsi} multiline />}
+          <InfoRow label="Tanggal pelaksanaan" value={tanggalKegiatan} />
+          {(kg.linkPenyelenggara || kg.linkWebsite) ? (
+            <InfoRow label="Website" value={kg.linkPenyelenggara || kg.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite} />
+          ) : null}
+          {kg.emailPenyelenggara ? (
+            <InfoRow label="Email penyelenggara" value={kg.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara}`} />
+          ) : null}
+          {kg.deskripsi ? <InfoRow label="Deskripsi" value={kg.deskripsi} multiline /> : null}
         </SectionCard>
 
-        {isActionable && (
-          !actionType ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setActionType('tolak'); setAlasan('') }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
-              </button>
-              <button type="button" onClick={handleSetuju} disabled={loading}
-                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">{loading ? 'Memproses...' : 'Setujui'}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-base-content">
-                Alasan Penolakan<span className="text-red-500">*</span>
-              </p>
-              <textarea rows={4} value={alasan} onChange={(e) => setAlasan(e.target.value)}
-                placeholder="Tuliskan alasan penolakan..."
-                maxLength={500}
-                className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" />
-              <p className="text-right text-xs text-[#888]">{alasan.length}/500</p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={handleKirimAlasan} disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60">
-                  {loading ? 'Mengirim...' : 'Kirim'}
-                </button>
-                <button type="button" onClick={() => { setActionType(null); setAlasan('') }}
-                  className="rounded-xl border border-base-300 px-5 py-2.5 text-sm font-semibold text-base-content transition hover:bg-base-200">
-                  Batal
-                </button>
-              </div>
-            </div>
-          )
-        )}
+        {isActionable ? (
+          <DecisionActions
+            onReject={() => { setShowReject(true); setAlasan('') }}
+            onApprove={handleSetuju}
+            approveLabel={loading ? 'Memproses…' : 'Setujui'}
+          />
+        ) : null}
       </div>
     </DashboardLayout>
   )

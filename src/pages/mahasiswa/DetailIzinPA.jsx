@@ -1,15 +1,19 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
-import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  DetailBackButton,
+  DetailHeader,
+  DecisionNote,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
   if (val == null || val === '') return '-'
   const s = String(val).trim()
   if (!s || s === '-') return '-'
-  // Sudah diformat di list (mis. "21 Agu 2026") — jangan parse ulang
   if (/[a-zA-ZÀ-ÿ]/.test(s) && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/T\d{2}:/.test(s)) return s
   try {
     const d = new Date(val)
@@ -29,14 +33,12 @@ function DetailIzinPAMahasiswa() {
   if (!row) {
     return (
       <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-        <div className="py-16 text-center text-sm text-base-content/50">Data tidak ditemukan.</div>
+        <EmptyDetail onBack={() => navigate(-1)} />
       </DashboardLayout>
     )
   }
 
   const kg = row.partisipasi?.kegiatan || (typeof row.kegiatan === 'object' && row.kegiatan ? row.kegiatan : {}) || {}
-  const isRevisi = row.status === 'revisi'
-  const isDitolak = row.status === 'ditolak'
   const tanggalKegiatan = formatTanggal(
     kg.tanggalMulai || row.tanggalMulai || row.tanggalPelaksanaan || row.tanggal
   )
@@ -45,53 +47,42 @@ function DetailIzinPAMahasiswa() {
   )
   const namaKegiatan = typeof row.kegiatan === 'string' ? row.kegiatan : (kg.nama || '-')
   const skala = kg.skala?.nama || (typeof kg.skala === 'string' ? kg.skala : null) || row.skala || '-'
+  const status = row.isUlang && (row.status === 'pending' || row.status === 'diajukan')
+    ? 'diajukan_ulang'
+    : row.status
+  const noteTitle = row.status === 'ditolak'
+    ? 'Alasan penolakan dosen PA'
+    : row.status === 'revisi'
+      ? 'Catatan revisi dosen PA'
+      : undefined
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-5">
-        <button type="button" onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
+        <DetailBackButton onClick={() => navigate(-1)} />
+        <DetailHeader
+          title="Detail izin dosen PA"
+          description="Informasi kegiatan yang dimintakan persetujuan ke dosen PA."
+          status={status}
+        />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Izin Dosen PA</h2>
-            <p className="mt-1 text-sm text-base-content/60">Informasi kegiatan yang dimintakan persetujuan ke Dosen PA.</p>
-          </div>
-          <div className="shrink-0">
-            {row.isUlang && (row.status === 'pending' || row.status === 'diajukan') ? (
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">Diajukan Ulang</span>
-            ) : (
-              <StatusBadge status={row.status} />
-            )}
-          </div>
-        </div>
+        <DecisionNote status={row.status} alasan={row.alasan} title={noteTitle} />
 
-        {(isRevisi || isDitolak) && row.alasan && (
-          <div className={`rounded-xl border p-4 ${isRevisi ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'}`}>
-            <p className={`text-xs font-semibold mb-1 ${isRevisi ? 'text-yellow-700' : 'text-red-700'}`}>
-              {isRevisi ? 'Catatan Revisi Dosen PA' : 'Alasan Penolakan Dosen PA'}
-            </p>
-            <p className={`text-sm whitespace-pre-wrap ${isRevisi ? 'text-yellow-800' : 'text-red-800'}`}>{row.alasan}</p>
-          </div>
-        )}
-
-        <SectionCard title="Detail Kegiatan">
-          <InfoRow label="Nama Kegiatan" value={namaKegiatan} />
-          <InfoRow label="Jenis / Kategori" value={row.jenis} />
+        <SectionCard title="Detail kegiatan">
+          <InfoRow label="Nama kegiatan" value={namaKegiatan} />
+          <InfoRow label="Jenis / kategori" value={row.jenis} />
           <InfoRow label="Skala" value={skala} />
-          <InfoRow label="Peran / Pencapaian" value={row.peran} />
+          <InfoRow label="Peran / pencapaian" value={row.peran} />
           <InfoRow label="Penyelenggara" value={row.penyelenggara} />
-          <InfoRow label="Tanggal Pelaksanaan" value={tanggalKegiatan} />
-          <InfoRow label="Tanggal Diajukan ke PA" value={tanggalDiajukan} />
-          {(kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite) && (
-            <InfoRow label="Link Website" value={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} />
-          )}
-          {(kg.emailPenyelenggara || row.emailPenyelenggara) && (
-            <InfoRow label="Email Penyelenggara" value={kg.emailPenyelenggara || row.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara || row.emailPenyelenggara}`} />
-          )}
-          {(kg.deskripsi || row.deskripsi) && <InfoRow label="Deskripsi" value={kg.deskripsi || row.deskripsi} multiline />}
+          <InfoRow label="Tanggal pelaksanaan" value={tanggalKegiatan} />
+          <InfoRow label="Tanggal diajukan ke PA" value={tanggalDiajukan} />
+          {(kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite) ? (
+            <InfoRow label="Website" value={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} href={kg.linkPenyelenggara || kg.linkWebsite || row.linkWebsite} />
+          ) : null}
+          {(kg.emailPenyelenggara || row.emailPenyelenggara) ? (
+            <InfoRow label="Email penyelenggara" value={kg.emailPenyelenggara || row.emailPenyelenggara} href={`mailto:${kg.emailPenyelenggara || row.emailPenyelenggara}`} />
+          ) : null}
+          {(kg.deskripsi || row.deskripsi) ? <InfoRow label="Deskripsi" value={kg.deskripsi || row.deskripsi} multiline /> : null}
         </SectionCard>
       </div>
     </DashboardLayout>

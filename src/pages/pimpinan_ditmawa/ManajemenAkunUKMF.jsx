@@ -40,7 +40,7 @@ function TambahAkunModal({ onClose, onSave, fakultasList = [] }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-base-content">Tambah Akun UKMF</h3>
           <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content text-xl leading-none">&times;</button>
@@ -128,7 +128,7 @@ function ResetPasswordModal({ item, onClose, onReset }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-base-content">Reset Password</h3>
           <button type="button" onClick={onClose} className="text-base-content/60 hover:text-base-content"><X className="h-5 w-5" /></button>
@@ -233,10 +233,10 @@ function ManajemenAkunUKMF() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (_, i) => <span className="text-black">{i + 1}</span> },
+    { key: 'no', label: 'No', render: (_, i) => <span className="text-base-content">{i + 1}</span> },
     { key: 'nama', label: 'Nama UKMF', render: (row) => (
       <div>
-        <span className="font-medium text-black">{row.nama}</span>
+        <span className="font-medium text-base-content">{row.nama}</span>
         {row.fakultas && (
           <span className="ml-2 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
             {row.fakultas}
@@ -244,7 +244,7 @@ function ManajemenAkunUKMF() {
         )}
       </div>
     )},
-    { key: 'email', label: 'Email', render: (row) => <span className="text-black">{row.email}</span> },
+    { key: 'email', label: 'Email', render: (row) => <span className="text-base-content">{row.email}</span> },
     { key: 'status', label: 'Status', stopPropagation: true, render: (row) => (
       <button type="button" onClick={() => handleToggleStatus(row)} title="Klik untuk ubah status">
         <StatusBadge status={row.status} />
@@ -285,7 +285,7 @@ function ManajemenAkunUKMF() {
               <select
                 value={selectedFakultasId}
                 onChange={(e) => setSelectedFakultasId(e.target.value)}
-                className="rounded-lg border border-base-300 bg-white px-3 py-2 text-sm text-base-content outline-none focus:border-brand-dark"
+                className="rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content outline-none focus:border-brand-dark"
               >
                 <option value="">Semua Fakultas (15 Fakultas)</option>
                 {fakultasList.map((f) => (

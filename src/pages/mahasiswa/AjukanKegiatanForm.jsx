@@ -215,12 +215,12 @@ function AjukanKegiatanForm() {
           ) : null}
         </div>
 
-        <div className="rounded-xl border border-base-300 bg-white p-3 sm:p-6 shadow-sm">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-3 sm:p-6 shadow-sm">
           <h3 className="mb-6 text-lg font-bold text-base-content">Detail Kegiatan</h3>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-black">
+              <label className="block text-sm font-medium text-base-content">
                 Jenis Kegiatan<span className="text-red-500">*</span>
               </label>
               <select
@@ -238,7 +238,7 @@ function AjukanKegiatanForm() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Nama Kegiatan<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -251,7 +251,7 @@ function AjukanKegiatanForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">
+                <label className="block text-sm font-medium text-base-content">
                   Penyelenggara<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -266,7 +266,7 @@ function AjukanKegiatanForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black">
+              <label className="block text-sm font-medium text-base-content">
                 Skala Kegiatan<span className="text-red-500">*</span>
               </label>
               <select
@@ -293,7 +293,7 @@ function AjukanKegiatanForm() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-black">Deskripsi Kegiatan</label>
+              <label className="block text-sm font-medium text-base-content">Deskripsi Kegiatan</label>
               <textarea
                 name="deskripsiKegiatan"
                 value={formData.deskripsiKegiatan}
@@ -306,7 +306,7 @@ function AjukanKegiatanForm() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-black">Link Website Penyelenggara</label>
+                <label className="block text-sm font-medium text-base-content">Link Website Penyelenggara</label>
                 <input
                   type="url"
                   name="linkWebsite"
@@ -317,7 +317,7 @@ function AjukanKegiatanForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-black">Email Penyelenggara</label>
+                <label className="block text-sm font-medium text-base-content">Email Penyelenggara</label>
                 <input
                   type="email"
                   name="emailPenyelenggara"
@@ -330,7 +330,7 @@ function AjukanKegiatanForm() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-col gap-3 border-t border-[#f0f0f0] pt-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-base-300 pt-4 sm:flex-row sm:justify-end">
               {/* Simpan draft — hanya tampil jika bukan mode revisi */}
               {!isRevisi && (
                 <button
@@ -354,7 +354,7 @@ function AjukanKegiatanForm() {
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="rounded-lg border border-base-300 bg-white px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
+                className="rounded-lg border border-base-300 bg-base-100 px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
               >
                 Batal
               </button>

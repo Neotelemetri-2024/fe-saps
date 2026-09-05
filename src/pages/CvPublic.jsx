@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import logoUnand from '../assets/logo_unand.png'
+import { Link, useParams } from 'react-router-dom'
 import { getPublicCv } from '../services/cvService'
+import { PublicLoading, PublicStatus } from '../components/PublicChrome'
 
 function CvPublic() {
   const { token } = useParams()
@@ -19,20 +19,15 @@ function CvPublic() {
       .finally(() => setLoading(false))
   }, [token])
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8]">
-        <p className="text-sm text-[#9aa0a6]">Memuat CV…</p>
-      </div>
-    )
-  }
+  if (loading) return <PublicLoading />
 
   if (notFound || !data?.mahasiswa) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#f5f6f8] px-4 text-center">
-        <img src={logoUnand} alt="Unand" className="h-12 w-12" />
-        <p className="text-base font-semibold text-[#616161]">CV tidak ditemukan atau tautan sudah tidak berlaku.</p>
-      </div>
+      <PublicStatus
+        title="CV tidak ditemukan"
+        description="Tautan tidak berlaku atau data sudah tidak tersedia."
+        actions={<Link to="/login" className="btn btn-primary btn-sm">Masuk ke SAPS</Link>}
+      />
     )
   }
 

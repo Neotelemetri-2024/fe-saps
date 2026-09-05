@@ -87,14 +87,14 @@ function AdminDitmawaDashboard() {
       {
         key: "no",
         label: "No",
-        render: (row) => <span className="text-black">{row.no}</span>,
+        render: (row) => <span className="text-base-content">{row.no}</span>,
       },
       {
         key: "nama",
         label: "Nama Kegiatan",
         render: (row) => (
           <div>
-            <p className="text-black">{row.nama}</p>
+            <p className="text-base-content">{row.nama}</p>
             {row.diajukanPada && row.diajukanPada !== "-" && (
               <p className="text-xs text-base-content/60">
                 Diajukan: {row.diajukanPada}
@@ -106,17 +106,17 @@ function AdminDitmawaDashboard() {
       {
         key: "kategori",
         label: "Kategori",
-        render: (row) => <span className="text-black">{row.kategori}</span>,
+        render: (row) => <span className="text-base-content">{row.kategori}</span>,
       },
       {
         key: "skala",
         label: "Skala",
-        render: (row) => <span className="text-black">{row.skala}</span>,
+        render: (row) => <span className="text-base-content">{row.skala}</span>,
       },
       {
         key: "tanggal",
         label: "Tanggal",
-        render: (row) => <span className="text-black">{row.tanggal}</span>,
+        render: (row) => <span className="text-base-content">{row.tanggal}</span>,
       },
       {
         key: "status",
@@ -135,7 +135,7 @@ function AdminDitmawaDashboard() {
     >
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Dashboard Admin Ditmawa
           </h2>
           <p className="mt-1 text-sm text-base-content/60">
@@ -159,7 +159,7 @@ function AdminDitmawaDashboard() {
             <button
               type="button"
               onClick={() => navigate("/admin_ditmawa/verifikasi-pengajuan-internal")}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </button>

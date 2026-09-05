@@ -13,13 +13,13 @@ import { get } from '../../services/apiClient'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 
 const statusStyle = {
-  Pending: 'bg-yellow-100 text-yellow-600 border border-yellow-300',
-  Disetujui: 'bg-green-100 text-green-700 border border-green-300',
-  Ditolak: 'bg-red-100 text-red-600 border border-red-300',
-  Revisi: 'bg-orange-100 text-orange-600 border border-orange-300',
-  Aktif: 'bg-green-100 text-green-700 border border-green-300',
-  Draft: 'bg-gray-100 text-gray-600 border border-gray-300',
-  'Verifikasi Admin': 'bg-blue-100 text-blue-700 border border-blue-300',
+  Pending: 'badge-warning',
+  Disetujui: 'badge-success',
+  Ditolak: 'badge-error',
+  Revisi: 'badge-warning',
+  Aktif: 'badge-success',
+  Draft: 'badge-ghost',
+  'Verifikasi Admin': 'badge-info',
 }
 
 function formatTanggal(start, end) {
@@ -84,7 +84,7 @@ function Dashboard() {
     {
       key: 'no',
       label: 'NO',
-      render: (row) => <span className="text-black">{row.no}</span>,
+      render: (row) => <span className="text-base-content">{row.no}</span>,
     },
     {
       key: 'kegiatan',
@@ -99,7 +99,7 @@ function Dashboard() {
       key: 'status',
       label: 'STATUS',
       render: (row) => (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[row.status] || statusStyle.Pending}`}>
+        <span className={`badge badge-sm ${statusStyle[row.status] || statusStyle.Pending}`}>
           {row.status}
         </span>
       ),
@@ -132,7 +132,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/admin_fakultas/verifikasi-pengajuan-ukmf')}
-              className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </button>

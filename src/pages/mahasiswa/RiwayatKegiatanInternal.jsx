@@ -302,7 +302,7 @@ function RiwayatKegiatanInternal() {
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
               {(search || filterJenis || filterKehadiran || filterStatusPoin || filterSkala || filterPenyelenggara) && (
-                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
+                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
               )}
             </div>
           </div>

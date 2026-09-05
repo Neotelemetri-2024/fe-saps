@@ -50,7 +50,7 @@ function KategoriPoinBar({ item }) {
   const total = item.poin || KATEGORI.reduce((s, k) => s + (item[k.key] || 0), 0) || 1
 
   return (
-    <div className="flex h-2.5 w-32 overflow-hidden rounded-full bg-[#e9ebf8]">
+    <div className="flex h-2.5 w-32 overflow-hidden rounded-full bg-base-300">
       {KATEGORI.map((k) => (
         <div
           key={k.key}
@@ -156,7 +156,7 @@ function DetailFakultasProdi() {
         userName={user?.nama || 'Pimpinan Utama'}
         userRole="Pimpinan Utama (Rektor)"
       >
-        <div className="rounded-xl border border-base-300 bg-white p-10 text-center shadow-sm">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-10 text-center shadow-sm">
           <h2 className="text-xl font-bold text-base-content">Fakultas tidak ditemukan</h2>
           <p className="mt-2 text-sm text-base-content/60">
             ID fakultas tidak valid. Pilih fakultas lain dari halaman ringkasan.
@@ -175,7 +175,7 @@ function DetailFakultasProdi() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
+            <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
               {namaFakultas || fakultasId}
             </h2>
             <p className="mt-1 text-sm text-base-content/60">Detail program studi dan poin capaian mahasiswa.</p>
@@ -189,7 +189,7 @@ function DetailFakultasProdi() {
                 id="filter-prodi"
                 value={selectedProdi}
                 onChange={(e) => setSelectedProdi(e.target.value)}
-                className="cursor-pointer appearance-none rounded-lg border border-base-300 bg-white py-2 pl-4 pr-10 text-sm text-base-content shadow-sm focus:border-brand-dark focus:ring-brand-dark"
+                className="cursor-pointer appearance-none rounded-lg border border-base-300 bg-base-100 py-2 pl-4 pr-10 text-sm text-base-content shadow-sm focus:border-brand-dark focus:ring-brand-dark"
               >
                 {['Semua Prodi', ...prodiList.map((p) => p.prodi)].map((p) => (
                   <option key={p}>{p}</option>
@@ -201,7 +201,7 @@ function DetailFakultasProdi() {
               <button
                 type="button"
                 onClick={() => setSelectedProdi('Semua Prodi')}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
               >
                 Reset Filter
               </button>

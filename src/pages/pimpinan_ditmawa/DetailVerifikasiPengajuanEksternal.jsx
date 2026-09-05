@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import StatusBadge from '../../components/dashboard/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 import { getKegiatanById, approvalKegiatan } from '../../services/kegiatanService'
-import { getCurrentUser } from '../../services/authService'
-import { InfoRow, SectionCard } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  DetailBackButton,
+  DetailHeader,
+  DecisionNote,
+  RejectForm,
+  VerifiedBanner,
+  DecisionActions,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 
 function formatDate(val) {
   if (!val) return '-'
@@ -42,7 +50,6 @@ function normalizeKegiatanDetail(k) {
     tanggalPengajuan: formatDate(k.createdAt),
     kegiatan: k.nama || '-',
     kategori: k.kategori?.nama || '-',
-    jenis: k.kategori?.nama || '-',
     skala: k.skala?.nama || '-',
     tanggal: formatDate(k.tanggalMulai),
     penyelenggara: k.penyelenggaraExt || '-',
@@ -65,11 +72,8 @@ function DetailVerifikasiPengajuanEksternal() {
   const [showActionModal, setShowActionModal] = useState(false)
   const [alasan, setAlasan] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [userName, setUserName] = useState('Pimpinan Ditmawa')
 
   useEffect(() => {
-    const u = getCurrentUser()
-    if (u?.nama) setUserName(u.nama)
     setLoading(true)
     getKegiatanById(id)
       .then((k) => setItem(normalizeKegiatanDetail(k)))
@@ -86,140 +90,112 @@ function DetailVerifikasiPengajuanEksternal() {
       toast.success('Pengajuan disetujui!')
       setShowConfirmSetujui(false)
       backToList()
-    } catch (err) { toast.error('Gagal', { description: err.message }) }
-    finally { setSubmitting(false) }
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleKirimAction = async () => {
-    if (!alasan.trim()) { toast.error('Alasan tidak boleh kosong.'); return }
+    if (!alasan.trim()) {
+      toast.error('Alasan tidak boleh kosong.')
+      return
+    }
     setSubmitting(true)
     try {
       await approvalKegiatan(id, { keputusan: 'tolak', alasan: alasan.trim() })
       toast.success('Pengajuan ditolak!')
       setShowActionModal(false)
       backToList()
-    } catch (err) { toast.error('Gagal', { description: err.message }) }
-    finally { setSubmitting(false) }
+    } catch (err) {
+      toast.error('Gagal', { description: err.message })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  if (loading) return (
-      <div className="py-24 text-center text-sm text-base-content/50">Memuat detail…</div>
-  )
+  if (loading) return <DetailSkeleton />
 
-  if (!item) return (
-      <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-base font-semibold text-base-content/60">Data tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
-      </div>
-  )
+  if (!item) return <EmptyDetail onBack={backToList} />
 
   const canAct = item.status === 'terverifikasi'
 
   return (
-      <>
+    <>
       <ConfirmModal
         isOpen={showConfirmSetujui}
         message="Pengajuan ini akan disetujui dan poin akan diberikan kepada mahasiswa."
-        confirmText={submitting ? 'Memproses...' : 'SETUJUI'}
-        cancelText="BATAL"
+        confirmText={submitting ? 'Memproses…' : 'Setujui'}
+        cancelText="Batal"
         onConfirm={handleSetujui}
         onCancel={() => setShowConfirmSetujui(false)}
       />
       <Modal isOpen={showActionModal} onClose={() => !submitting && setShowActionModal(false)} size="md">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-base-content">Tolak Pengajuan</h3>
-            <p className="mt-0.5 text-sm text-base-content/60">Tuliskan alasan penolakan.</p>
-          </div>
-          <textarea className="w-full rounded-xl border border-base-300 p-3 text-sm text-base-content outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark" rows={4}
-            placeholder="Contoh: Kegiatan tidak sesuai kriteria..."
-            value={alasan} onChange={(e) => setAlasan(e.target.value)} />
-          <div className="flex gap-3 pt-1">
-            <button type="button" disabled={submitting} onClick={handleKirimAction}
-              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60">
-              {submitting ? 'Mengirim…' : 'Tolak Pengajuan'}
-            </button>
-            <button type="button" disabled={submitting} onClick={() => setShowActionModal(false)}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200">Batal</button>
-          </div>
-        </div>
+        <RejectForm
+          alasan={alasan}
+          onChange={setAlasan}
+          onSubmit={handleKirimAction}
+          onCancel={() => setShowActionModal(false)}
+          submitting={submitting}
+        />
       </Modal>
 
       <div className="space-y-5">
-        <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
-        </button>
+        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailHeader
+          title="Detail pengajuan eksternal"
+          description="Tinjau informasi kegiatan sebelum memberi keputusan."
+          status={item.status}
+        />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Pengajuan Eksternal</h2>
-            <p className="mt-1 text-sm text-base-content/60">Tinjau informasi kegiatan sebelum memberikan keputusan.</p>
-          </div>
-          <div className="shrink-0"><StatusBadge status={item.status} /></div>
-        </div>
+        {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
 
-        {!canAct && item.alasan && (
-          <div className={`rounded-xl border p-4 ${item.status === 'ditolak' ? 'border-red-200 bg-red-50' : item.status === 'perlu_revisi' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}>
-            <p className={`text-xs font-semibold mb-1 ${item.status === 'ditolak' ? 'text-red-700' : item.status === 'perlu_revisi' ? 'text-yellow-700' : 'text-green-700'}`}>
-              {item.status === 'ditolak' ? 'Alasan Penolakan' : 'Catatan Revisi'}
-            </p>
-            <p className={`text-sm whitespace-pre-wrap ${item.status === 'ditolak' ? 'text-red-800' : item.status === 'perlu_revisi' ? 'text-yellow-800' : 'text-green-800'}`}>{item.alasan}</p>
-          </div>
-        )}
+        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} /> : null}
 
-        {!canAct && !item.alasan && (
-          <div className="rounded-xl border border-base-300 bg-base-200 px-5 py-3.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-base-content/50" />
-            <p className="text-sm text-base-content/60">Pengajuan sudah diverifikasi dengan status <StatusBadge status={item.status} /></p>
-          </div>
-        )}
-
-        <SectionCard title="Informasi Mahasiswa">
-          <InfoRow label="Nama Mahasiswa" value={item.namaMahasiswa} />
+        <SectionCard title="Informasi mahasiswa">
+          <InfoRow label="Nama" value={item.namaMahasiswa} />
           <InfoRow label="NIM" value={item.nim} />
-          <InfoRow label="Program Studi" value={item.prodi} />
+          <InfoRow label="Program studi" value={item.prodi} />
           <InfoRow label="Fakultas" value={item.fakultas} />
-          <InfoRow label="Tanggal Pengajuan" value={item.tanggalPengajuan} />
+          <InfoRow label="Tanggal pengajuan" value={item.tanggalPengajuan} />
         </SectionCard>
 
-        <SectionCard title="Detail Kegiatan">
-          <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
+        <SectionCard title="Detail kegiatan">
+          <InfoRow label="Nama kegiatan" value={item.kegiatan} />
           <InfoRow label="Kategori" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
-          <InfoRow label="Tanggal Pelaksanaan" value={item.tanggal} />
+          <InfoRow label="Tanggal pelaksanaan" value={item.tanggal} />
           <InfoRow label="Penyelenggara" value={item.penyelenggara} />
-          {item.email && item.email !== '-' && <InfoRow label="Email Penyelenggara" value={item.email} href={`mailto:${item.email}`} />}
-          {item.linkWebsite && item.linkWebsite !== '-' && <InfoRow label="Link Website" value={item.linkWebsite} href={item.linkWebsite} />}
-          {item.deskripsi && <InfoRow label="Deskripsi" value={item.deskripsi} multiline />}
+          {item.email && item.email !== '-' ? <InfoRow label="Email" value={item.email} href={`mailto:${item.email}`} /> : null}
+          {item.linkWebsite && item.linkWebsite !== '-' ? <InfoRow label="Website" value={item.linkWebsite} href={item.linkWebsite} /> : null}
+          {item.deskripsi ? <InfoRow label="Deskripsi" value={item.deskripsi} multiline /> : null}
         </SectionCard>
 
-        {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum">
-            {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c.label}</p>)}
+        {item.capaian?.length > 0 ? (
+          <SectionCard title="Capaian kurikulum">
+            {item.capaian.map((c, i) => (
+              <p key={i} className="text-sm text-base-content">{c.label}</p>
+            ))}
           </SectionCard>
-        )}
+        ) : null}
 
-        {item.subCapaian?.length > 0 && (
-          <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen != null ? `${sc.persen}%` : '-'} />)}
+        {item.subCapaian?.length > 0 ? (
+          <SectionCard title="Sub capaian">
+            {item.subCapaian.map((sc, i) => (
+              <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen != null ? `${sc.persen}%` : '—'} />
+            ))}
           </SectionCard>
-        )}
+        ) : null}
 
-        {canAct && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setShowActionModal(true); setAlasan('') }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white">Tolak
-              </button>
-              <button type="button" onClick={() => setShowConfirmSetujui(true)}
-                className="btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90">Setujui
-              </button>
-            </div>
-        )}
+        {canAct ? (
+          <DecisionActions
+            onReject={() => { setShowActionModal(true); setAlasan('') }}
+            onApprove={() => setShowConfirmSetujui(true)}
+          />
+        ) : null}
       </div>
-      </>
+    </>
   )
 }
 

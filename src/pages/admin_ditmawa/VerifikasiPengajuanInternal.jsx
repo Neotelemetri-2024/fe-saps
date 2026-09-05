@@ -133,14 +133,14 @@ function VerifikasiPengajuanInternal() {
   }
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{start + pageItems.indexOf(row) + 1}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{start + pageItems.indexOf(row) + 1}</span> },
     { key: 'organisasi', label: 'Organisasi', render: (row) => (
       <MahasiswaIdentityCell nama={row.namaMahasiswa} nim={row.nim} prodi={row.prodi} />
     )},
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
-    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-black">{row.kategori}</span> },
-    { key: 'skala', label: 'Skala', render: (row) => <span className="text-black">{row.skala}</span> },
-    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-black">{row.tanggal}</span> },
+    { key: 'kategori', label: 'Kategori', render: (row) => <span className="text-base-content">{row.kategori}</span> },
+    { key: 'skala', label: 'Skala', render: (row) => <span className="text-base-content">{row.skala}</span> },
+    { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-base-content">{row.tanggal}</span> },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
@@ -204,7 +204,7 @@ function VerifikasiPengajuanInternal() {
 
         <TableCard title="Daftar Pengajuan Internal">
           <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-base-content/50" />
               <input
                 type="text"
@@ -241,7 +241,7 @@ function VerifikasiPengajuanInternal() {
             </select>
             {(search || kategori || status || skala) && (
               <button type="button" onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
+                className="rounded-lg border border-brand-dark bg-base-100 px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
                 Reset filter
               </button>
             )}
@@ -261,7 +261,7 @@ function VerifikasiPengajuanInternal() {
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
+                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
                   Batal Pilih
                 </button>
                 <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}

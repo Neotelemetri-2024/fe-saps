@@ -15,6 +15,12 @@ const rolePrefixes = {
   pimpinan_utama: '/pimpinan_utama',
 }
 
+export function roleHomePath(user = getCurrentUser()) {
+  if (!user?.role) return '/login'
+  const prefix = rolePrefixes[user.role]
+  return prefix ? `${prefix}/dashboard` : '/login'
+}
+
 function AuthGuard({ children }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />

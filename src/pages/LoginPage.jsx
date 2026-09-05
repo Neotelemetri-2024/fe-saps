@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { login } from '../services/authService'
-import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import logoUnand from '../assets/logo_unand.png'
-import { GridScan } from '../components/GridScan'
+import GradientWaves from '../components/GradientWaves'
+import AccessibilityMenu from '../components/dashboard/AccessibilityMenu'
+import { useAppearance } from '../lib/appearance'
+import { isDarkTheme } from '../constants/theme'
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -13,8 +16,9 @@ function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
+  const { theme } = useAppearance()
+  const dark = isDarkTheme(theme)
 
-  // Hapus session lama saat halaman login dibuka
   useEffect(() => {
     localStorage.removeItem('saps_current_user')
   }, [])
@@ -49,147 +53,136 @@ function LoginPage() {
     }
   }
 
-  return (
-    <div className="flex min-h-screen w-full overflow-hidden bg-white font-sans">
-      {/* Left Panel — desktop only */}
-      <div className="relative hidden min-h-screen w-1/2 flex-col justify-center overflow-hidden login-bg-gradient lg:flex">
-        {/* Overlay gelap agar garis grid tidak bercampur dengan warna gradient di belakangnya */}
-        <div className="absolute inset-0 bg-[#111111]/85" />
-
-        {/* Decorative background — GridScan (WebGL) */}
-        <div className="absolute inset-0 overflow-hidden">
-          <GridScan
-            sensitivity={0.55}
-            lineThickness={1}
-            linesColor="#4a4a4a"
-            gridScale={0.12}
-            scanColor="#6fe08a"
-            scanOpacity={0.45}
-            enablePost
-            bloomIntensity={0.6}
-            chromaticAberration={0.002}
-            noiseIntensity={0.01}
+  const form = (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-base-content" htmlFor="login-email">
+          Email atau username
+        </label>
+        <label className="input w-full">
+          <User className="h-4 w-4 opacity-50" />
+          <input
+            id="login-email"
+            type="text"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
+            placeholder="Masukkan email Anda"
+            autoComplete="username"
           />
-        </div>
+        </label>
+      </div>
 
-        <div className="relative z-10 flex flex-col items-center px-16 text-center">
-          <h1 className="text-white">
-            <span className="block text-6xl font-bold leading-tight">Selamat Datang!</span>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-base-content" htmlFor="login-password">
+          Password
+        </label>
+        <label className="input w-full">
+          <Lock className="h-4 w-4 opacity-50" />
+          <input
+            id="login-password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
+            placeholder="Masukkan password Anda"
+            autoComplete="current-password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+            className="btn btn-ghost btn-xs btn-square"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </label>
+      </div>
+
+      {errorMsg ? (
+        <div role="alert" className="alert alert-error text-sm">
+          <span>{errorMsg}</span>
+        </div>
+      ) : null}
+
+      <button type="submit" disabled={loading} className="btn btn-primary w-full">
+        {loading ? <span className="loading loading-spinner loading-sm" /> : null}
+        {loading ? 'Memproses…' : 'Masuk'}
+      </button>
+
+      <div className="divider text-xs text-base-content/50">atau</div>
+
+      <button
+        type="button"
+        onClick={() => toast.info('Login SSO Unand belum tersedia')}
+        className="btn btn-outline btn-primary w-full"
+      >
+        Masuk dengan SSO Unand
+      </button>
+    </form>
+  )
+
+  return (
+    <div className="flex min-h-screen w-full bg-base-200 font-sans lg:overflow-hidden lg:bg-base-100">
+      <div className={`relative hidden h-screen w-1/2 flex-col justify-center overflow-hidden lg:flex ${dark ? 'bg-black' : 'bg-white'}`}>
+        <GradientWaves
+          horizonColor={dark ? '#16a34a' : '#009219'}
+          waveColor={dark ? '#22c55e' : '#006e0b'}
+          crestColor={dark ? '#4ade80' : '#017a2d'}
+          speed={0.4}
+          amplitude={2.5}
+          waveScale={0.6}
+          waveRatio={0.9}
+          swell={35}
+          turbulence={20}
+          tilt={1.11}
+          zoom={0.55}
+          height={6.5}
+          fogDepth={18}
+          detail="medium"
+          brightness={dark ? 1.2 : 1}
+          opacity={1}
+          mouseInteraction
+          parallaxStrength={0.5}
+          grain
+          grainIntensity={0.025}
+        />
+        <div className="pointer-events-none relative z-10 flex flex-col items-center px-16 text-center">
+          <h1 className="text-5xl font-extrabold leading-tight text-primary">
+            Selamat Datang!
           </h1>
-          <p className="mt-8 max-w-[423px] text-base leading-relaxed text-white">
-            SAPS adalah sistem berbasis web yang dirancang untuk mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara efektif, transparan, dan terintegrasi.
+          <p className="mt-6 max-w-md text-sm leading-relaxed text-primary/80">
+            SAPS mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara terintegrasi.
           </p>
         </div>
       </div>
 
-      {/* Right Panel — Form */}
-      <div className="flex w-full min-h-screen flex-col bg-white lg:w-1/2">
-        {/* Mobile top banner */}
-        <div className="flex items-center justify-center gap-3 login-bg-gradient px-6 py-6 lg:hidden">
-          <img src={logoUnand} alt="Logo" className="h-12 w-12 rounded-full object-cover" />
-          <div>
-            <p className="text-base font-bold leading-tight text-white">SAPS</p>
-            <p className="text-[10px] text-white/70">Universitas Andalas</p>
-          </div>
-        </div>
-
-        {/* Form + Logo */}
-        <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 lg:px-[86px] lg:py-0">
-          {/* Logo — desktop top */}
-          <div className="hidden justify-center pb-6 lg:flex">
-            <div className="flex flex-col items-center gap-1 text-center">
-              <img src={logoUnand} alt="Logo Universitas Andalas" className="h-11 w-11 object-contain" />
-              <div>
-                <p className="text-xl font-bold leading-[26px]">
-                  <span className="bg-gradient-to-r from-[#0e3b1e] to-[#48a757] bg-clip-text text-transparent">
-                    SAPS
-                  </span>
-                </p>
-                <p className="text-base text-[#616161]">Universitas Andalas</p>
-              </div>
+      <div className="relative flex min-h-screen w-full flex-col lg:w-1/2 lg:bg-base-100">
+        <header className="flex items-center justify-between border-b border-base-300 bg-base-100 px-4 py-3 lg:absolute lg:inset-x-0 lg:top-0 lg:z-20 lg:border-0 lg:bg-transparent lg:px-5 lg:py-4">
+          <div className="flex items-center gap-2 lg:hidden">
+            <img src={logoUnand} alt="Universitas Andalas" className="h-9 w-9 object-contain" />
+            <div>
+              <p className="text-sm font-semibold text-base-content">SAPS</p>
+              <p className="text-xs text-base-content/60">Universitas Andalas</p>
             </div>
           </div>
+          <div className="hidden lg:block" />
+          <AccessibilityMenu />
+        </header>
 
-          <div className="mx-auto w-full max-w-lg">
-            <h2 className="text-2xl font-bold leading-tight text-[#292727] sm:text-3xl">
-              Log in
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#969696] sm:text-base">
-              Silahkan login menggunakan informasi akun portal Anda.
-            </p>
+        <div className="flex flex-1 flex-col justify-center px-4 py-6 sm:px-8 lg:px-20 lg:py-10">
+          <div className="mx-auto w-full max-w-md">
+            <div className="hidden flex-col items-center gap-1 pb-8 text-center lg:flex">
+              <img src={logoUnand} alt="Logo Universitas Andalas" className="h-11 w-11 object-contain" />
+              <p className="text-xl font-extrabold text-primary">SAPS</p>
+              <p className="text-sm text-base-content/60">Universitas Andalas</p>
+            </div>
 
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-black">Email or username</label>
-                <div className="mt-1 flex h-11 items-center gap-3 rounded-xl border border-[#0e3b1e] px-3 lg:h-12 lg:px-4">
-                  <User className="h-4 w-4 shrink-0 text-[#969696]" />
-                  <input
-                    type="text"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
-                    placeholder="Masukkan email Anda"
-                    className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-black">Password</label>
-                <div className="mt-1 flex h-11 items-center gap-3 rounded-xl border border-[#0e3b1e] px-3 lg:h-12 lg:px-4">
-                  <Lock className="h-4 w-4 shrink-0 text-[#969696]" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
-                    placeholder="Masukkan password Anda"
-                    className="h-full w-full bg-transparent text-sm text-black outline-none placeholder:text-[#969696]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                    className="shrink-0 text-[#969696]"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error message */}
-              {errorMsg && (
-                <div className="flex items-center gap-2 px-1 py-1">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                  <p className="text-sm text-red-600">{errorMsg}</p>
-                </div>
-              )}
-
-              {/* Login Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#0e3b1e] to-[#2f7a3c] text-sm font-medium text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60 lg:h-12 lg:text-base"
-              >
-                {loading ? 'Memproses...' : 'Login'}
-              </button>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3 pt-1">
-                <div className="h-px flex-1 bg-[#e0e0e0]" />
-                <span className="text-xs text-[#969696]">atau</span>
-                <div className="h-px flex-1 bg-[#e0e0e0]" />
-              </div>
-
-              {/* SSO Button */}
-              <button
-                type="button"
-                onClick={() => toast.info('Login SSO Unand belum tersedia')}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#0e3b1e] bg-white text-sm font-medium text-[#0e3b1e] transition-all hover:bg-[#f0f7f2] lg:h-12"
-              >
-                Login dengan SSO Unand
-              </button>
-            </form>
+            <div className="card border border-base-300 bg-base-100 p-5 sm:p-6 lg:border-0 lg:bg-transparent lg:p-0">
+              <h2 className="text-2xl font-extrabold text-base-content">Masuk</h2>
+              <p className="mt-1 text-sm text-base-content/60">
+                Gunakan akun portal Universitas Andalas.
+              </p>
+              <div className="mt-6">{form}</div>
+            </div>
           </div>
         </div>
       </div>

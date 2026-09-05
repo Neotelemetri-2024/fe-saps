@@ -189,7 +189,7 @@
 }
 
 .text-brand-dark {
-  color: #111 !important;
+  color: var(--color-primary);
 }
 
 @media (hover: hover) {

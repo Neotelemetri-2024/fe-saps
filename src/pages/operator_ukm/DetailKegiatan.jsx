@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import StatusBadge from '../../components/dashboard/StatusBadge'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById } from '../../services/kegiatanService'
-import { InfoRow, SectionCard, formatTanggal, mapUiStatus } from '../../components/ui/DetailComponents'
+import {
+  InfoRow,
+  SectionCard,
+  formatTanggal,
+  mapUiStatus,
+  DetailBackButton,
+  DetailHeader,
+  EmptyDetail,
+} from '../../components/ui/DetailComponents'
 import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
 function normalizeDetail(raw) {
@@ -63,30 +69,19 @@ function DetailKegiatan({ role, userRole }) {
 
   if (!item) return (
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
-      <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-base font-semibold text-base-content/60">Data tidak ditemukan.</p>
-        <button type="button" onClick={backToList} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark px-6 py-2 text-sm font-semibold text-white hover:opacity-90">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
-      </div>
+      <EmptyDetail onBack={backToList} />
     </DashboardLayout>
   )
 
   return (
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
       <div className="space-y-5">
-        <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
-        </button>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Detail Kegiatan</h2>
-            <p className="mt-1 text-sm text-base-content/60">Informasi lengkap kegiatan {userRole}.</p>
-          </div>
-          <div className="shrink-0"><StatusBadge status={item.status} /></div>
-        </div>
+        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailHeader
+          title="Detail kegiatan"
+          description={`Informasi lengkap kegiatan ${userRole}.`}
+          status={item.status}
+        />
 
         <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.nama} />

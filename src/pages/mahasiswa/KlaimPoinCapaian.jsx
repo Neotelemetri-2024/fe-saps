@@ -273,13 +273,13 @@ function KlaimPoinCapaian() {
                 <p className="text-sm font-medium text-base-content">{item.kegiatan}</p>
                 <p className="text-xs text-base-content/60 mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
 
-                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-base-300 bg-white px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
+                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-base-300 bg-base-100 px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
                   {item.bukti ? (
                     <FileText className="h-4 w-4 shrink-0 text-brand-dark" />
                   ) : (
                     <UploadCloud className="h-4 w-4 shrink-0 text-base-content/50" />
                   )}
-                  <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-brand-dark' : 'text-[#888]'}`}>
+                  <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-brand-dark' : 'text-base-content/50'}`}>
                     {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 10 MB)'}
                   </span>
                   <input
@@ -413,7 +413,7 @@ function KlaimPoinCapaian() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
                 >
                   Reset Filter
                 </button>

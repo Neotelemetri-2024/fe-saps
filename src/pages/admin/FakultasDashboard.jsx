@@ -40,7 +40,7 @@ function AdminFakultasDashboard() {
   }, [])
 
   const columns = [
-    { key: 'no', label: 'No', render: (row) => <span className="text-black">{row.no}</span> },
+    { key: 'no', label: 'No', render: (row) => <span className="text-base-content">{row.no}</span> },
     { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
     { key: 'ukm', label: 'UKM' },
     { key: 'tgl', label: 'Tanggal' },
@@ -103,7 +103,7 @@ function AdminFakultasDashboard() {
                     <span className="text-base-content">{p.prodi}</span>
                     <span className="text-base-content/60">{p.pct}%</span>
                   </div>
-                  <div className="mt-1 h-2 w-full rounded-full bg-[#e9ebf8]">
+                  <div className="mt-1 h-2 w-full rounded-full bg-base-300">
                     <div className="h-2 rounded-full bg-brand-light" style={{ width: `${p.pct}%` }} />
                   </div>
                 </div>

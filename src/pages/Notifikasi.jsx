@@ -25,19 +25,19 @@ const ROLE_LABEL = {
 // - ditolak    -> lingkaran merah muda, ikon merah
 // - lainnya    -> lingkaran kuning, ikon oranye-coklat
 const TYPE_CONFIG = {
-  disetujui: { icon: CheckCircle, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
-  ditolak: { icon: XCircle, iconColor: 'text-[#cc2719]', bg: 'bg-[#fdf3f1]' },
-  pengajuan_baru: { icon: FileText, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  kegiatan: { icon: Clock, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  klaim: { icon: FileText, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
-  event: { icon: Bell, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  peserta: { icon: Users, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  saran: { icon: Info, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  saran_pa: { icon: Info, iconColor: 'text-[#9f4d18]', bg: 'bg-[#fbf1c2]' },
-  izin_pa: { icon: CheckCircle, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
-  klaim_poin: { icon: FileText, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
-  perolehan_poin: { icon: CheckCircle, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
-  default: { icon: Bell, iconColor: 'text-[#203820]', bg: 'bg-[#e7fdef]' },
+  disetujui: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
+  ditolak: { icon: XCircle, iconColor: 'text-error', bg: 'bg-error/15' },
+  pengajuan_baru: { icon: FileText, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  kegiatan: { icon: Clock, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  klaim: { icon: FileText, iconColor: 'text-success', bg: 'bg-success/15' },
+  event: { icon: Bell, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  peserta: { icon: Users, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  saran: { icon: Info, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  saran_pa: { icon: Info, iconColor: 'text-warning', bg: 'bg-warning/15' },
+  izin_pa: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
+  klaim_poin: { icon: FileText, iconColor: 'text-success', bg: 'bg-success/15' },
+  perolehan_poin: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
+  default: { icon: Bell, iconColor: 'text-success', bg: 'bg-success/15' },
 }
 
 // Rute tujuan chip aksi per tipe notifikasi dan role pengguna
@@ -77,17 +77,17 @@ function resolveAction(notif, role) {
   const refId = notif.raw?.refId
 
   let label = 'Verifikasi Detail Kegiatan'
-  let cls = 'bg-[#e7fdef] text-[#203820]'
+  let cls = 'btn btn-ghost btn-xs'
 
   if (judul.includes('ditolak')) {
     label = 'Lihat Alasan'
-    cls = 'bg-[#fdf3f1] text-[#cc2719]'
+    cls = 'btn btn-ghost btn-xs text-error'
   } else if (judul.includes('saran')) {
     label = 'Saran'
-    cls = 'bg-[#fbf1c2] text-[#9f4d18]'
+    cls = 'btn btn-ghost btn-xs'
   } else if (judul.includes('direview') || judul.includes('menunggu') || judul.includes('review') || judul.includes('diproses')) {
     label = 'Verifikasi'
-    cls = 'bg-[#fbf1c2] text-[#9f4d18]'
+    cls = 'btn btn-ghost btn-xs'
   } else if (notif.type === 'klaim_poin' || notif.type === 'perolehan_poin') {
     label = 'Lihat Detail'
   }
@@ -235,7 +235,7 @@ function Notifikasi() {
             {loading ? (
               <Skeleton className="mt-1.5 h-4 w-48" />
             ) : (
-              <p className="mt-1.5 text-sm font-medium text-[#203820]">
+              <p className="mt-1.5 text-sm font-medium text-base-content">
                 {belumDibacaCount > 0
                   ? `${belumDibacaCount} notifikasi belum dibaca`
                   : 'Semua notifikasi sudah dibaca'}
@@ -254,7 +254,7 @@ function Notifikasi() {
         </div>
 
         {/* Card putih pembungkus tab, daftar, dan pagination */}
-        <div className="rounded-xl border border-base-300 bg-white p-4 sm:p-5">
+        <div className="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-5">
           {/* Tab filter */}
           <div className="flex flex-wrap items-center gap-2 border-b border-base-300">
             {TABS.map((tab) => (
@@ -265,13 +265,13 @@ function Notifikasi() {
                 className={`relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition ${
                   activeTab === tab.key
                     ? 'text-brand-dark'
-                    : 'text-[#6d6868] hover:text-[#212529]'
+                    : 'text-base-content/60 hover:text-base-content'
                 }`}
               >
                 {tab.label}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                    activeTab === tab.key ? 'bg-[#e7fdef] text-[#203820]' : 'bg-base-200 text-[#6d6868]'
+                    activeTab === tab.key ? 'bg-primary/15 text-primary' : 'bg-base-200 text-base-content/60'
                   }`}
                 >
                   {tab.count}
@@ -288,7 +288,7 @@ function Notifikasi() {
             {loading ? (
               <NotifListSkeleton />
             ) : filteredNotifs.length === 0 ? (
-              <div className="rounded-xl border border-base-300 bg-[#fafbfc] px-6 py-12 text-center text-sm text-[#6d6868]">
+              <div className="rounded-xl border border-base-300 bg-base-200 px-6 py-12 text-center text-sm text-base-content/60">
                 {activeTab === 'belum_dibaca'
                   ? 'Tidak ada notifikasi belum dibaca.'
                   : activeTab === 'sudah_dibaca'
@@ -303,7 +303,7 @@ function Notifikasi() {
                 return (
                   <div
                     key={notif.id}
-                    className="rounded-xl border border-base-300 bg-[#fafbfc] p-4 sm:p-5"
+                    className="rounded-xl border border-base-300 bg-base-200 p-4 sm:p-5"
                   >
                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${cfg.bg}`}>
@@ -311,23 +311,23 @@ function Notifikasi() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-semibold leading-snug text-[#212529]">
+                          <p className="text-sm font-semibold leading-snug text-base-content">
                             {notif.title}
                             {notif.belumDibaca && (
-                              <span className="ml-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#203820] align-middle" title="Belum dibaca"></span>
+                              <span className="ml-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary align-middle" title="Belum dibaca"></span>
                             )}
                           </p>
-                          <span className="shrink-0 text-xs text-[#9aa49c]">{notif.time}</span>
+                          <span className="shrink-0 text-xs text-base-content/50">{notif.time}</span>
                         </div>
                         {notif.message && (
-                          <p className="mt-1.5 text-sm leading-relaxed text-[#6d6868]">{notif.message}</p>
+                          <p className="mt-1.5 text-sm leading-relaxed text-base-content/60">{notif.message}</p>
                         )}
                         {action && (
                           <div className="mt-3 flex flex-wrap items-center gap-3">
                             <button
                               type="button"
                               onClick={() => navigate(action.path)}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:opacity-80 ${action.cls}`}
+                              className={action.cls}
                             >
                               {action.label}
                             </button>
@@ -353,7 +353,7 @@ function Notifikasi() {
           {/* Pagination */}
           {!loading && filteredNotifs.length > 0 && totalPages > 1 && (
             <div className="mt-4 flex items-center justify-between border-t border-base-300 pt-4">
-              <span className="text-xs text-[#888]">
+              <span className="text-xs text-base-content/50">
                 Menampilkan {start + 1}–{Math.min(start + PAGE_SIZE, filteredNotifs.length)} dari {filteredNotifs.length} notifikasi
               </span>
               <div className="flex items-center gap-1">

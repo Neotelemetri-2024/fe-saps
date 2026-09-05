@@ -106,6 +106,7 @@ function App() {
           <Route path="pesan-dosen-pa" element={<PesanDosenPA />} />
           <Route path="pengaturan" element={<AkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Dosen PA */}
@@ -118,6 +119,7 @@ function App() {
           <Route path="mahasiswa-perlu-perhatian" element={<MahasiswaPerluPerhatian />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Pimpinan Ditmawa */}
@@ -142,6 +144,7 @@ function App() {
           <Route path="audit-log" element={<PimpinanDitmawaAuditLog />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Pimpinan Fakultas */}
@@ -155,6 +158,7 @@ function App() {
           <Route path="verifikasi-kegiatan-internal/:id" element={<PimpinanFakultasDetailVerifikasiKegiatanInternal />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Pimpinan Utama */}
@@ -165,6 +169,7 @@ function App() {
           <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_utama" />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Admin Ditmawa */}
@@ -183,6 +188,7 @@ function App() {
           <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Admin Fakultas */}
@@ -195,6 +201,7 @@ function App() {
           <Route path="verifikasi-pengajuan-ukmf/:id" element={<AdminFakultasDetailVerifikasiUKMF />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* UKM */}
@@ -206,6 +213,7 @@ function App() {
           <Route path="daftar-kegiatan/:id/manajemen-peserta" element={<UKMManajemenPeserta />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* UKMF */}
@@ -217,6 +225,7 @@ function App() {
           <Route path="buat-kegiatan" element={<UKMFBuatKegiatan />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* 404 */}

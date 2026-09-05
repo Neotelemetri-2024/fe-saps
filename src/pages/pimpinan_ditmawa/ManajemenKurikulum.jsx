@@ -51,7 +51,7 @@ function ToggleSwitch({ checked, onChange }) {
       }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-base-100 shadow transition-transform duration-200 ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
@@ -1052,7 +1052,7 @@ const handleEditSubCapaian = async () => {
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => setPage(currentPage - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -1063,7 +1063,7 @@ const handleEditSubCapaian = async () => {
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => setPage(currentPage + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-[#f0f2ff] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>

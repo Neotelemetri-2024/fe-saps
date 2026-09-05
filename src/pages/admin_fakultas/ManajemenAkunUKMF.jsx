@@ -72,7 +72,7 @@ function TambahAkunModal({ onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-8">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-5 shadow-xl sm:p-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h3 className="text-lg font-semibold text-base-content">
             Tambah Akun UKMF
@@ -290,7 +290,7 @@ function ResetPasswordModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-8">
+      <div className="w-full max-w-md rounded-2xl bg-base-100 p-5 shadow-xl sm:p-8">
         <div className="mb-5 flex items-center justify-between gap-4">
           <h3 className="text-lg font-semibold text-base-content">
             Reset Password
@@ -510,7 +510,7 @@ function ManajemenAkunUKMF() {
         key: 'no',
         label: 'No',
         render: (_, index) => (
-          <span className="text-black">
+          <span className="text-base-content">
             {index + 1}
           </span>
         ),
@@ -523,7 +523,7 @@ function ManajemenAkunUKMF() {
         key: 'email',
         label: 'Email',
         render: (row) => (
-          <span className="text-black">{row.email}</span>
+          <span className="text-base-content">{row.email}</span>
         ),
       },
       {
@@ -634,14 +634,14 @@ function ManajemenAkunUKMF() {
                   setSearch(event.target.value)
                 }
                 placeholder="Cari nama UKMF atau email..."
-                className="w-full rounded-lg border border-base-300 bg-white py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full rounded-lg border border-base-300 bg-base-100 py-2.5 pl-9 pr-3 text-sm text-base-content outline-none transition placeholder:text-base-content/50 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
             </div>
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="rounded-lg border border-brand-dark bg-white px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
               >
                 Reset Filter
               </button>

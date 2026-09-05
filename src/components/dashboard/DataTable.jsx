@@ -40,9 +40,10 @@ function isCenteredCol(col) {
  *   page?          number
  *   totalPages?    number
  *   onPageChange?  (page) => void
- *   pageSize?      number — ukuran halaman internal (default 10).
- *                  Dipakai hanya jika page/totalPages/onPageChange TIDAK diberikan,
- *                  yaitu halaman tidak mengelola pagination sendiri.
+   *   pageSize?      number — ukuran halaman internal (default 10).
+   *                  Dipakai hanya jika page/totalPages/onPageChange TIDAK diberikan,
+   *                  yaitu halaman tidak mengelola pagination sendiri.
+   *   totalItems?    number — jumlah total untuk teks “1–10 dari N” (opsional, mode managed).
  *
  *   // Row interaksi
  *   onRowClick?    (row) => void  — klik seluruh baris
@@ -63,6 +64,7 @@ function DataTable({
   totalPages,
   onPageChange,
   pageSize = 10,
+  totalItems,
   // row
   onRowClick,
 }) {
@@ -99,11 +101,24 @@ function DataTable({
   const someSelected = selectable && selected ? selectableRows.some((r) => selected.has(r.id)) : false
 
   const hasPagination = currentTotalPages > 1
+  const shownCount = displayData?.length || 0
+  const knownTotal = hasManagedPagination ? totalItems : total
+  const from = knownTotal != null && shownCount
+    ? (hasManagedPagination
+      ? (currentPage - 1) * shownCount + 1
+      : (safeInternalPage - 1) * pageSize + 1)
+    : 0
+  const to = knownTotal != null && shownCount
+    ? (hasManagedPagination ? from + shownCount - 1 : Math.min(safeInternalPage * pageSize, total))
+    : 0
+  const paginationLabel = knownTotal != null
+    ? `${from}–${to} dari ${knownTotal}`
+    : `Halaman ${currentPage} dari ${currentTotalPages}`
 
   const totalCols = columns.length + (selectable ? 1 : 0)
 
   return (
-    <div className="space-y-3">
+    <div>
       <div className="-mx-3 overflow-x-auto sm:-mx-0">
         <table className="table table-sm w-full min-w-[600px] text-left text-xs sm:text-sm">
           <thead>
@@ -228,54 +243,36 @@ function DataTable({
         </table>
       </div>
 
-      {hasPagination && (
-        <div className="flex items-center justify-between px-1">
-          <p className="text-xs text-base-content/50">
-            Halaman {currentPage} dari {currentTotalPages}
+      {hasPagination ? (
+        <div className="flex flex-col gap-3 border-t border-base-300 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-base-content/60">
+            {paginationLabel}
           </p>
           <div className="join">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => changePage(currentPage - 1)}
-              className="btn btn-outline btn-xs join-item"
+              className="btn btn-sm join-item"
               aria-label="Halaman sebelumnya"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            {Array.from({ length: currentTotalPages }, (_, i) => i + 1)
-              .filter((p) => p === 1 || p === currentTotalPages || Math.abs(p - currentPage) <= 1)
-              .reduce((acc, p, idx, arr) => {
-                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…')
-                acc.push(p)
-                return acc
-              }, [])
-              .map((p, idx) =>
-                p === '…' ? (
-                  <span key={`ellipsis-${idx}`} className="btn btn-ghost btn-xs join-item pointer-events-none">…</span>
-                ) : (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => changePage(p)}
-                    className={`btn btn-xs join-item ${p === currentPage ? 'btn-primary' : 'btn-outline'}`}
-                  >
-                    {p}
-                  </button>
-                )
-              )}
+            <span className="btn btn-sm join-item pointer-events-none">
+              {currentPage} / {currentTotalPages}
+            </span>
             <button
               type="button"
               disabled={currentPage >= currentTotalPages}
               onClick={() => changePage(currentPage + 1)}
-              className="btn btn-outline btn-xs join-item"
+              className="btn btn-sm join-item"
               aria-label="Halaman berikutnya"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

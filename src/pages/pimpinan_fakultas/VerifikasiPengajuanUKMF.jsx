@@ -144,10 +144,10 @@ function VerifikasiPengajuanUKMF() {
     { key: 'no', label: 'No', render: (_item, index) => start + index + 1 },
     {
       key: 'namaUkmf', label: 'Nama UKMF',
-      render: (item) => <span className="uppercase text-black">{item.namaUkmf}</span>,
+      render: (item) => <span className="uppercase text-base-content">{item.namaUkmf}</span>,
     },
     { key: 'kegiatan', label: 'Kegiatan', render: (item) => <KegiatanCell nama={item.kegiatan} tanggal={item.diajukanPada} /> },
-    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-black">{item.jenis}</span> },
+    { key: 'jenis', label: 'Jenis', render: (item) => <span className="text-base-content">{item.jenis}</span> },
     { key: 'skala', label: 'Skala' },
     { key: 'tanggal', label: 'Tanggal' },
     { key: 'status', label: 'Status', render: (item) => <StatusBadge status={item.status} /> },
@@ -191,7 +191,7 @@ function VerifikasiPengajuanUKMF() {
 
         <div className="space-y-3">
           <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-white px-4 py-2.5 shadow-sm">
+            <div className="flex flex-1 items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
               <Search className="h-4 w-4 shrink-0 text-base-content/50" />
               <input
                 type="text"
@@ -227,7 +227,7 @@ function VerifikasiPengajuanUKMF() {
             </select>
             {(search || kategori || skala || status) && (
               <button type="button" onClick={resetFilter}
-                className="rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
+                className="rounded-lg border border-brand-dark bg-base-100 px-4 py-2 text-sm font-medium text-brand-dark outline-none transition hover:bg-base-200">
                 Reset filter
               </button>
             )}
@@ -247,7 +247,7 @@ function VerifikasiPengajuanUKMF() {
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-white">
+                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
                   Batal Pilih
                 </button>
                 <button type="button"

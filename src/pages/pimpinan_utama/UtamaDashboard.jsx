@@ -108,7 +108,7 @@ function PimpinanUtamaDashboard() {
     <DashboardLayout role="pimpinan_utama" userName={user?.nama || 'Pimpinan Utama'} userRole="Pimpinan Utama (Rektor)">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-black sm:text-3xl">
+          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
           </h2>
           <p className="mt-3 max-w-2xl text-sm text-base-content/60">
@@ -147,7 +147,7 @@ function PimpinanUtamaDashboard() {
             </div>
             <Link
               to="/pimpinan_utama/detail-fakultas"
-              className="inline-flex items-center rounded-lg border border-brand-dark bg-white px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f5f7f5]"
+              className="inline-flex items-center btn btn-outline btn-primary btn-sm"
             >
               Lihat selengkapnya →
             </Link>
@@ -171,7 +171,7 @@ function PimpinanUtamaDashboard() {
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                         top
                           ? 'bg-brand-dark text-white'
-                          : 'bg-[#f0f2f5] text-base-content/60'
+                          : 'bg-base-200 text-base-content/60'
                       }`}
                     >
                       {rank}
