@@ -170,9 +170,12 @@ function generatePdf(doc: PDFKit.PDFDocument, data: LaporanDataResult) {
 
   const drawTable = (title: string, columns: TableColumn[], rows: string[][]) => {
     const left = MARGIN
-    const tableW = columns.reduce((sum, col) => sum + col.width, 0)
+    const definedW = columns.reduce((sum, col) => sum + col.width, 0)
+    const scale = contentW / definedW
+    const cols = columns.map((col) => ({ ...col, width: col.width * scale }))
+    const tableW = contentW
     const xs = [left]
-    columns.forEach((col) => xs.push(xs[xs.length - 1] + col.width))
+    cols.forEach((col) => xs.push(xs[xs.length - 1] + col.width))
     const body = rows.length
       ? rows
       : [columns.map((_, i) => (i === (columns[0]?.label === 'No' ? 1 : 0) ? 'Tidak ada data' : ''))]
@@ -191,7 +194,7 @@ function generatePdf(doc: PDFKit.PDFDocument, data: LaporanDataResult) {
       blockTop = y
       stroke(left, y, left + tableW, y)
       let x = left
-      columns.forEach((col) => {
+      cols.forEach((col) => {
         put(doc, col.label, x + 4, y + 3, col.width - 8, {
           align: col.align || 'left',
           bold: true,
@@ -206,14 +209,14 @@ function generatePdf(doc: PDFKit.PDFDocument, data: LaporanDataResult) {
     paintHeader()
 
     body.forEach((row) => {
-      const rh = measureRowHeight(doc, columns, row)
+      const rh = measureRowHeight(doc, cols, row)
       if (y + rh > bottom) {
         vLines(blockTop, y)
         newPage()
         paintHeader()
       }
       let x = left
-      columns.forEach((col, i) => {
+      cols.forEach((col, i) => {
         put(doc, row[i] ?? '-', x + 4, y + 3, col.width - 8, {
           align: col.align || 'left',
           size: 9,
