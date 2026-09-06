@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, CheckCircle, X } from 'lucide-react'
+import { ChartSkeleton } from '../../components/dashboard/Skeleton'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -32,32 +33,32 @@ function mapStatus(status) {
 
 function buildProgressLabel(item) {
   const pct = item.persentase ?? 0
-  if (item.status === 'completed' || pct >= 100) return 'COMPLETED'
-  return 'PROGRESS'
+  if (item.status === 'completed' || pct >= 100) return 'Selesai'
+  return 'Berlangsung'
 }
 
 const columns = [
-  { key: 'no', label: 'NO' },
-  { key: 'kegiatan', label: 'KEGIATAN', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
-  { key: 'jenis', label: 'JENIS' },
-  { key: 'peran', label: 'PERAN' },
-  { key: 'skala', label: 'SKALA' },
-  { key: 'penyelenggara', label: 'PENYELENGGARA' },
-  { key: 'tanggal', label: 'TANGGAL' },
+  { key: 'no', label: 'No' },
+  { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
+  { key: 'jenis', label: 'Jenis' },
+  { key: 'peran', label: 'Peran' },
+  { key: 'skala', label: 'Skala' },
+  { key: 'penyelenggara', label: 'Penyelenggara' },
+  { key: 'tanggal', label: 'Tanggal' },
   {
     key: 'bukti',
-    label: 'BUKTI',
+    label: 'Bukti',
     render: (row) =>
       row.buktiUrl ? (
-        <a href={row.buktiUrl} target="_blank" rel="noreferrer" className="text-brand-dark underline">
+        <a href={row.buktiUrl} target="_blank" rel="noreferrer" className="link link-primary">
           {row.bukti}
         </a>
       ) : (
         <span className="text-base-content/50">{row.bukti}</span>
       ),
   },
-  { key: 'poin', label: 'POIN' },
-  { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
+  { key: 'poin', label: 'Poin' },
+  { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
 ]
 
 function RiwayatPoin() {
@@ -95,7 +96,7 @@ function RiwayatPoin() {
             return {
               id: item.id,
               nama: item.nama || `Capaian ${item.urutan || ''}`,
-              tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
+              tahun: item.nama || `Tahun ${item.urutan || ''}`,
               current,
               target,
               poinTerkumpul: item.poinTerkumpul ?? current,
@@ -173,36 +174,39 @@ function RiwayatPoin() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold text-base-content sm:text-2xl">Riwayat Poin</h2>
-        <p className="text-sm text-base-content/60">Rekap seluruh kegiatan dan poin yang telah terkumpul sesuai kurikulum.</p>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-base-content">Riwayat poin</h2>
+          <p className="mt-1 text-sm text-base-content/60">Kegiatan dan poin sesuai kurikulum</p>
+        </div>
 
-        <div className="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-6 shadow-sm">
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-base-300 pb-4">
+        <div className="card bg-base-100 p-5">
+          <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h3 className="text-base font-bold text-base-content sm:text-lg">Progress Kurikulum</h3>
+              <h3 className="text-sm font-semibold text-base-content">Progres kurikulum</h3>
               <p className="mt-0.5 text-xs text-base-content/60">
-                Poin yang dihitung masuk ke progres dibatasi maksimal sesuai target capaian kurikulum.
+                Poin progres dibatasi sesuai target capaian.
               </p>
             </div>
-            <div className="flex items-center gap-5 sm:gap-6">
+            <div className="flex items-center gap-5">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-base-content/50">Progress Target</p>
-                <p className="mt-0.5 text-base font-bold text-base-content sm:text-lg">
-                  {loading ? '…' : totalPoinProgres}<span className="text-xs font-normal text-base-content/60">/{totalTarget} poin ({pctTotal}%)</span>
+                <p className="text-xs text-base-content/60">Progres target</p>
+                <p className="mt-0.5 text-base font-extrabold text-base-content">
+                  {loading ? '…' : totalPoinProgres}
+                  <span className="text-xs font-normal text-base-content/60">/{totalTarget} ({pctTotal}%)</span>
                 </p>
               </div>
-              <div className="h-9 w-px bg-base-300" />
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-base-content/50">Total Poin Diperoleh</p>
-                <p className="mt-0.5 text-base sm:text-lg font-bold text-base-content">
-                  {loading ? '…' : totalPoin} <span className="text-xs font-normal text-base-content/60">poin</span>
+                <p className="text-xs text-base-content/60">Total diperoleh</p>
+                <p className="mt-0.5 text-base font-extrabold text-base-content">
+                  {loading ? '…' : totalPoin}
+                  <span className="text-xs font-normal text-base-content/60"> poin</span>
                 </p>
               </div>
             </div>
           </div>
           {loading ? (
-            <p className="py-8 text-center text-sm text-base-content/50">Memuat progress…</p>
+            <ChartSkeleton height={140} />
           ) : progressData.length === 0 ? (
             <p className="py-8 text-center text-sm text-base-content/50">Belum ada data progress kurikulum.</p>
           ) : (
@@ -210,50 +214,43 @@ function RiwayatPoin() {
               {progressData.map((item, index) => {
                 const isSelected = selectedCapaianId === item.id
                 return (
-                  <div
+                  <button
                     key={item.id ?? index}
+                    type="button"
                     onClick={() => setSelectedCapaianId((prev) => (prev === item.id ? null : item.id))}
-                    className={`relative rounded-lg border p-4 text-center cursor-pointer transition-all duration-200 ${
-                      isSelected
-                        ? 'border-brand-dark ring-2 ring-brand-dark/20 bg-base-200 shadow-sm'
-                        : 'border-base-300 hover:border-brand-dark/50 hover:bg-base-200 bg-base-100'
+                    className={`rounded-lg border p-4 text-center ${
+                      isSelected ? 'border-primary bg-base-200' : 'border-base-300 bg-base-100'
                     }`}
                   >
-                    <p className="text-xs font-semibold text-base-content/60">{item.tahun}</p>
-                    <p className="mt-1 text-2xl font-bold leading-none text-base-content">
+                    <p className="text-xs text-base-content/60">{item.tahun}</p>
+                    <p className="mt-1 text-2xl font-extrabold leading-none text-base-content">
                       {item.current}
                       <span className="text-sm font-normal text-base-content/60">/{item.target} poin</span>
                     </p>
                     <div className="mt-1 flex items-center justify-center gap-1 text-xs text-base-content/60">
-                      {item.onTrack && <CheckCircle className="h-3.5 w-3.5 text-base-content" />}
+                      {item.onTrack ? <CheckCircle className="h-3.5 w-3.5 text-base-content" /> : null}
                       <span>{item.label}</span>
                     </div>
                     <div className="mt-2">
                       <ProgressBar value={item.current} max={item.target || 1} height={6} />
                     </div>
-                    {item.poinLebih > 0 && (
+                    {item.poinLebih > 0 ? (
                       <p className="mt-1.5 text-[11px] text-base-content/50">
                         +{item.poinLebih} poin lebih di riwayat
                       </p>
-                    )}
-                  </div>
+                    ) : null}
+                  </button>
                 )
               })}
             </div>
           )}
 
-          {/* Visualisasi Sub Capaian yang Dipilih (seperti tampilan Dosen PA) */}
-          {selectedCapaian && (
-            <div className="mt-6 rounded-xl bg-gradient-to-br from-brand-dark to-brand-light p-5 sm:p-6 text-white shadow-sm transition-all animate-in fade-in duration-200">
+          {selectedCapaian ? (
+            <div className="mt-5 border-t border-base-300 pt-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-extrabold text-white">Sub Capaian</h3>
-                  <p className="mt-0.5 text-xs text-white/70">
-                    Sub Capaian dalam kategori {selectedCapaian.nama?.toLowerCase()}
-                  </p>
-                  <p className="mt-2 text-sm font-bold text-white/90">
-                    {selectedCapaian.nama}
-                  </p>
+                  <h3 className="text-sm font-semibold text-base-content">Sub capaian</h3>
+                  <p className="mt-0.5 text-xs text-base-content/60">{selectedCapaian.nama}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -262,10 +259,10 @@ function RiwayatPoin() {
                       const targetId = Number(e.target.value) || e.target.value
                       setSelectedCapaianId(targetId)
                     }}
-                    className="rounded-lg border border-white/40 bg-base-100/10 px-3 py-1.5 text-xs text-white outline-none backdrop-blur-sm cursor-pointer"
+                    className="select select-sm"
                   >
                     {progressData.map((c) => (
-                      <option key={c.id} value={c.id} className="text-base-content">
+                      <option key={c.id} value={c.id}>
                         {c.nama}
                       </option>
                     ))}
@@ -273,7 +270,7 @@ function RiwayatPoin() {
                   <button
                     type="button"
                     onClick={() => setSelectedCapaianId(null)}
-                    className="rounded-lg p-1.5 text-white/70 hover:bg-base-100/10 hover:text-white transition-colors"
+                    className="btn btn-ghost btn-sm btn-square"
                     title="Tutup"
                   >
                     <X className="h-4 w-4" />
@@ -282,99 +279,78 @@ function RiwayatPoin() {
               </div>
 
               {selectedCapaian.subCapaian.length === 0 ? (
-                <p className="py-10 text-center text-xs text-white/70">
+                <p className="py-8 text-center text-sm text-base-content/50">
                   Belum ada rincian sub capaian pada capaian ini.
                 </p>
               ) : (
                 <>
-                  {/* Radar Chart */}
-                  <div className="mt-4 flex justify-center">
-                    <div className="w-full max-w-[340px]">
-                      <RadarChartCJ
-                        labels={selectedCapaian.subCapaian.map((sc) => sc.nama)}
-                        values={selectedCapaian.subCapaian.map((sc) => sc.poinTerkumpul ?? sc.poinProgres ?? 0)}
-                        darkBg
-                        height={230}
-                      />
-                    </div>
+                  <div className="mt-3 overflow-visible">
+                    <RadarChartCJ
+                      labels={selectedCapaian.subCapaian.map((sc) => sc.nama)}
+                      values={selectedCapaian.subCapaian.map((sc) => sc.poinTerkumpul ?? sc.poinProgres ?? 0)}
+                      height={360}
+                    />
                   </div>
-
-                  {/* Sub Capaian Bars List */}
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
                     {selectedCapaian.subCapaian.map((sc, idx) => {
                       const val = sc.poinTerkumpul ?? sc.poinProgres ?? 0
-                      const target = sc.targetPoin || 0
-                      const pct = target > 0 ? Math.min(100, Math.round((val / target) * 100)) : (val > 0 ? 100 : 0)
+                      const target = sc.targetPoin || 100
                       return (
-                        <div key={sc.id ?? idx} className="flex items-center gap-3">
-                          <span className="w-48 sm:w-64 shrink-0 truncate text-xs text-white/85" title={sc.nama}>
-                            {sc.nama}
-                          </span>
-                          <div className="flex-1 overflow-hidden rounded-full bg-base-100/20" style={{ height: 6 }}>
-                            <div
-                              className="h-full rounded-full transition-all bg-[#ff7b72]"
-                              style={{ width: `${Math.min(100, Math.max(pct, val > 0 ? 5 : 0))}%` }}
-                            />
-                          </div>
-                          <span className="w-8 shrink-0 text-right text-xs font-bold text-white">
-                            {val}
-                          </span>
-                        </div>
+                        <ProgressBar
+                          key={sc.id ?? idx}
+                          value={val}
+                          max={target || 100}
+                          height={6}
+                          label={sc.nama}
+                          showPercent
+                        />
                       )
                     })}
                   </div>
                 </>
               )}
             </div>
-          )}
+          ) : null}
         </div>
 
-        <TableCard title="Riwayat Poin">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
+        <TableCard title="Riwayat poin">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="input input-sm flex-1">
+              <Search className="h-4 w-4 shrink-0 opacity-50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari kegiatan..."
-                className="input w-full"
+                placeholder="Cari kegiatan"
               />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
-                <option value="">Semua Kategori</option>
-                {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
-              </select>
-              <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
-                <option value="">Semua Peran</option>
-                {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
-                <option value="">Semua Status</option>
-                {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-              <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
-                <option value="">Semua Skala</option>
-                {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none">
-                <option value="">Semua Penyelenggara</option>
-                {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-              {(search || filterKategori || filterPeran || filterStatus || filterSkala || filterPenyelenggara) && (
-                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
-              )}
-            </div>
+            </label>
+            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="select select-sm sm:w-40">
+              <option value="">Semua kategori</option>
+              {kategoriOptions.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+            <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)} className="select select-sm sm:w-36">
+              <option value="">Semua peran</option>
+              {peranOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="select select-sm sm:w-36">
+              <option value="">Semua status</option>
+              {statusOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+            <select value={filterSkala} onChange={(e) => setFilterSkala(e.target.value)} className="select select-sm sm:w-36">
+              <option value="">Semua skala</option>
+              {skalaOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={filterPenyelenggara} onChange={(e) => setFilterPenyelenggara(e.target.value)} className="select select-sm sm:w-44">
+              <option value="">Semua penyelenggara</option>
+              {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            {(search || filterKategori || filterPeran || filterStatus || filterSkala || filterPenyelenggara) ? (
+              <button type="button" onClick={resetFilter} className="btn btn-ghost btn-sm">Reset</button>
+            ) : null}
           </div>
 
           <TableFrame>
-            {loading ? (
-              <p className="py-8 text-center text-sm text-base-content/50">Memuat riwayat…</p>
-            ) : (
-              <DataTable columns={columns} data={filtered} />
-            )}
+            <DataTable columns={columns} data={filtered} loading={loading} emptyText="Belum ada riwayat poin." />
           </TableFrame>
         </TableCard>
       </div>

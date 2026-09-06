@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
+import ProgressBar from '../../components/dashboard/ProgressBar'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { VerticalBarChart } from '../../components/charts'
 import PanduanCard from '../../components/dashboard/PanduanCard'
@@ -13,32 +15,10 @@ import { ChartSkeleton, ListItemSkeleton } from '../../components/dashboard/Skel
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardDosen } from '../../services/dashboardService'
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-function CapaianBar({ pct, status }) {
-  const clamped = Math.min(100, Math.max(0, pct))
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 w-28 rounded-full bg-base-300">
-        <div
-          className={`h-2 rounded-full ${status === 'baik' ? 'bg-emerald-600' : 'bg-red-600'}`}
-          style={{ width: `${clamped}%` }}
-        />
-      </div>
-      <span className="text-xs text-base-content/60">{clamped}%</span>
-    </div>
-  )
-}
-
-function StatusPill({ status, isLulus }) {
-  if (isLulus || status === 'lulus') {
-    return <span className="badge badge-sm badge-success">Lulus</span>
-  }
-  const isBaik = status === 'baik' || status === 'on_track'
-  return (
-    <span className={`badge badge-sm ${isBaik ? 'badge-success' : 'badge-error'}`}>
-      {isBaik ? 'Baik' : 'Perlu Perhatian'}
-    </span>
-  )
+function statusMahasiswa(row) {
+  if (row.isLulus || row.status === 'lulus') return 'lulus'
+  if (row.status === 'baik' || row.status === 'on_track') return 'baik'
+  return row.status || 'perlu_perhatian'
 }
 
 function formatTanggal(val) {
@@ -69,28 +49,26 @@ function pickChartValue(chartKategori, keys) {
 function buildStats(data) {
   return [
     {
-      label: 'TOTAL MAHASISWA',
+      label: 'Total mahasiswa',
       value: String(data?.totalMahasiswa ?? 0),
       link: true,
       action: '/dosen/mahasiswa-bimbingan',
     },
     {
-      label: 'RATA RATA IPK',
+      label: 'Rata-rata IPK',
       value: String(data?.rataRataIpk ?? '-'),
       link: false,
     },
     {
-      label: 'PENDING APPROVAL',
+      label: 'Pending approval',
       value: String(data?.pendingApproval ?? 0),
       link: false,
       action: '/dosen/permintaan-persetujuan',
     },
     {
-      label: 'PERLU PERHATIAN',
+      label: 'Perlu perhatian',
       value: String(data?.perluPerhatian ?? 0),
       link: false,
-      sublabel: 'Mahasiswa',
-      sublink: 'lihat Detail',
       action: '/dosen/mahasiswa-perlu-perhatian',
     },
   ]
@@ -117,11 +95,6 @@ function DosenPADashboard() {
           (data?.permintaanPersetujuan || []).slice(0, 5).map((item) => ({
             nama: item.namaMahasiswa || 'Mahasiswa',
             desc: item.namaKegiatan || item.kegiatan || '-',
-            inisial: (item.namaMahasiswa || 'UA')
-              .split(' ')
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join(''),
           })),
         )
         const chart = data?.chartKategori || []
@@ -156,148 +129,134 @@ function DosenPADashboard() {
 
   return (
     <DashboardLayout role="dosen" userName={namaDosen} userRole="Dosen Pembimbing">
-      <div className="space-y-6">
-
-        {/* Welcome */}
+      <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold sm:text-3xl">
-            <span className="text-base-content">Selamat Datang</span>
-            <br />
-            <span className="text-brand-dark">
-              {namaDosen}
-            </span>
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-base-content/60">
-            Pantau perkembangan akademik mahasiswa bimbingan Anda dan kelola persetujuan kegiatan dengan efisien.
-          </p>
+          <h2 className="text-2xl font-extrabold text-base-content">Dashboard</h2>
+          <p className="mt-1 text-sm text-base-content/60">{namaDosen}</p>
         </div>
 
-        {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
             <StatCard key={s.label} {...s} loading={loading} />
           ))}
         </div>
 
-        {/* Middle row: Download + Permintaan | Chart */}
         <div className="grid gap-5 lg:grid-cols-2">
-
-          {/* Left column */}
           <div className="flex flex-col gap-4">
-            {/* Download Panduan */}
             <PanduanCard
               title="Manual Book User Dosen PA"
               description="Panduan Penggunaan Website SAPS untuk Dosen PA"
             />
 
-            {/* Permintaan Persetujuan */}
-            <div className="flex-1 card bg-base-100 p-5">
-              <h3 className="text-sm font-bold text-base-content">Permintaan Persetujuan</h3>
+            <div className="card flex-1 bg-base-100 p-5">
+              <h3 className="text-sm font-semibold text-base-content">Permintaan persetujuan</h3>
               <div className="mt-3 divide-y divide-base-300">
                 {loading ? (
                   <ListItemSkeleton rows={3} />
                 ) : permintaan.length === 0 ? (
-                  <p className="py-3 text-xs text-base-content/50">Belum ada permintaan pending.</p>
+                  <p className="py-3 text-sm text-base-content/50">Belum ada permintaan pending.</p>
                 ) : (
                   permintaan.map((p, i) => (
-                    <div key={i} className="flex items-center gap-3 py-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-dark text-xs font-bold text-white">
-                        {p.inisial}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-base-content">{p.nama}</p>
-                        <p className="truncate text-xs text-base-content/60">{p.desc}</p>
-                      </div>
+                    <div key={i} className="py-3">
+                      <p className="truncate text-sm text-base-content">{p.nama}</p>
+                      <p className="truncate text-xs text-base-content/60">{p.desc}</p>
                     </div>
                   ))
                 )}
               </div>
-              <div className="mt-3 text-right">
+              <div className="mt-3">
                 <button
                   type="button"
                   onClick={() => navigate('/dosen/permintaan-persetujuan')}
                   className="btn btn-outline btn-primary btn-sm"
                 >
-                  Lihat selengkapnya →
+                  Lihat selengkapnya
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right: Chart */}
           <div className="card bg-base-100 p-5">
-            <h3 className="mb-3 text-sm font-bold text-base-content">
-              Rata rata capaian jenis kegiatan mahasiswa bimbingan
+            <h3 className="mb-3 text-sm font-semibold text-base-content">
+              Rata-rata capaian jenis kegiatan
             </h3>
             {loading ? (
-              <ChartSkeleton height={280} />
+              <ChartSkeleton height={260} />
             ) : (
               <VerticalBarChart
                 labels={['Organisasi', 'Seminar', 'Prestasi']}
                 values={chartValues}
-                colors={['#3b82f6', '#15803d', '#eab308']}
-                height={280}
+                height={260}
               />
             )}
           </div>
         </div>
 
-        {/* Progres Capaian Tahunan */}
         <TableCard
-          title="Progres Capaian Tahunan"
+          title="Progres capaian tahunan"
           headerRight={
             <button
               type="button"
               onClick={() => navigate('/dosen/mahasiswa-bimbingan')}
               className="btn btn-outline btn-primary btn-sm"
             >
-              Lihat selengkapnya →
+              Lihat selengkapnya
             </button>
           }
         >
           <TableFrame>
-          <DataTable
-            columns={[
-              { key: '_no', label: 'No' },
-              {
-                key: 'nama',
-                label: 'Mahasiswa',
-                render: (row) => (
-                  <div>
-                    <p className="font-bold uppercase text-base-content">{row.nama}</p>
-                    <p className="text-xs font-normal text-base-content">{row.prodi}</p>
-                  </div>
-                ),
-              },
-              { key: 'nim', label: 'NIM' },
-              { key: 'ipk', label: 'IPK' },
-              { key: 'capaian', label: 'Capaian', render: (row) => <CapaianBar pct={row.pct} status={row.status} /> },
-              { key: 'status', label: 'Status', render: (row) => <StatusPill status={row.status} isLulus={row.isLulus} /> },
-              {
-                key: 'aksi',
-                label: 'Aksi',
-                stopPropagation: true,
-                render: (row) => (
-                  <ActionMenu
-                    items={[
-                      {
-                        label: 'Detail',
-                        icon: <Eye className="h-4 w-4" />,
-                        color: 'text-blue-600',
-                        onClick: () => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, { state: { mahasiswa: row } }),
-                      },
-                    ]}
-                  />
-                ),
-              },
-            ]}
-            data={progresTahunan.map((r, i) => ({ ...r, _no: i + 1 }))}
-            loading={loading}
-            emptyText="Belum ada data mahasiswa bimbingan."
-          />
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                {
+                  key: 'nama',
+                  label: 'Mahasiswa',
+                  render: (row) => (
+                    <div>
+                      <p className="text-base-content">{row.nama}</p>
+                      <p className="text-xs text-base-content/60">{row.prodi}</p>
+                    </div>
+                  ),
+                },
+                { key: 'nim', label: 'NIM' },
+                { key: 'ipk', label: 'IPK' },
+                {
+                  key: 'capaian',
+                  label: 'Capaian',
+                  render: (row) => (
+                    <div className="min-w-28">
+                      <ProgressBar value={row.pct} max={100} height={6} showPercent />
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (row) => <StatusBadge status={statusMahasiswa(row)} />,
+                },
+                {
+                  key: 'aksi',
+                  label: 'Aksi',
+                  stopPropagation: true,
+                  render: (row) => (
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Detail',
+                          icon: <Eye className="h-4 w-4" />,
+                          onClick: () => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, { state: { mahasiswa: row } }),
+                        },
+                      ]}
+                    />
+                  ),
+                },
+              ]}
+              data={progresTahunan.map((r, i) => ({ ...r, _no: i + 1 }))}
+              loading={loading}
+              emptyText="Belum ada data mahasiswa bimbingan."
+            />
           </TableFrame>
         </TableCard>
-
       </div>
     </DashboardLayout>
   )

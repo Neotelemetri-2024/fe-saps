@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Info, ChevronLeft, ChevronRight, Search, Download, UploadCloud, UserPlus } from 'lucide-react'
+import { Info, Search, Download, UploadCloud, UserPlus } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
+import DataTable from '../../components/dashboard/DataTable'
+import { DetailBackButton } from '../../components/ui/DetailComponents'
+import { KehadiranSelect, PeranSelect } from '../../components/dashboard/PesertaFields'
 import { getCurrentUser } from '../../services/authService'
 import {
   getKegiatanById,
@@ -74,7 +77,6 @@ function ManajemenPeserta() {
   const [isEditing, setIsEditing] = useState(false)
   const [showTambahModal, setShowTambahModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [page, setPage] = useState(1)
 
   const loadData = () => {
     setLoading(true)
@@ -204,21 +206,13 @@ function ManajemenPeserta() {
   const hadir = pesertaData.filter((p) => p.hadir === true).length
   const tidakHadir = pesertaData.filter((p) => p.hadir === false).length
 
-  const PAGE_SIZE = 10
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * PAGE_SIZE
-  const pageItems = filtered.slice(start, start + PAGE_SIZE)
-
   return (
     <DashboardLayout role="operator_ukmf" userName={user?.nama || 'Operator UKMF'} userRole="Operator UKMF">
-      <div className="space-y-6">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
+      <div className="space-y-5">
+        <DetailBackButton onClick={() => navigate(-1)} />
 
         <div>
-          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Manajemen Peserta</h2>
+          <h2 className="text-2xl font-extrabold text-base-content">Manajemen peserta</h2>
           <p className="mt-1 text-sm text-base-content/60">
             {kegiatan.nama}
             {kegiatan.tanggal && ` · ${kegiatan.tanggal}`}
@@ -227,33 +221,32 @@ function ManajemenPeserta() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Total Terdaftar" value={total} />
-          <StatCard label="Hadir" value={hadir} />
-          <StatCard label="Tidak Hadir" value={tidakHadir} />
+          <StatCard label="Total terdaftar" value={String(total)} loading={loading} />
+          <StatCard label="Hadir" value={String(hadir)} loading={loading} />
+          <StatCard label="Tidak hadir" value={String(tidakHadir)} loading={loading} />
         </div>
 
-        <div className="flex items-start gap-2 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-700">
-          <Info className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>
-            Centang/pilih kehadiran dan peran boleh dikosongkan dulu. Poin cair otomatis setelah
-            Dosen PA menyetujui izin serta kehadiran & peran terverifikasi. Klik <strong>Submit Poin Peserta</strong> untuk menyimpan perubahan.
+        <div className="alert alert-warning">
+          <Info className="h-4 w-4 shrink-0" />
+          <p className="text-sm">
+            Kehadiran dan peran boleh dikosongkan dulu. Poin cair setelah izin Dosen PA disetujui.
+            Klik Submit poin peserta untuk menyimpan perubahan.
           </p>
         </div>
 
-        <TableCard title="Daftar Peserta">
+        <TableCard title="Daftar peserta">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
-              <div className="relative flex w-full flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
+            <div className="flex flex-col gap-2 lg:flex-1 lg:flex-row lg:items-center">
+              <label className="input input-sm flex-1">
+                <Search className="h-4 w-4 shrink-0 opacity-50" />
                 <input
                   type="text"
-                  placeholder="Cari NIM atau nama…"
+                  placeholder="Cari NIM atau nama"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-base-300 bg-base-100 py-2 pl-9 pr-3 text-sm shadow-sm outline-none focus:border-brand-dark"
                 />
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+              </label>
+              <div className="join">
                 {['semua', 'hadir', 'tidak', 'belum'].map((f) => (
                   <button
                     key={f}
@@ -261,19 +254,19 @@ function ManajemenPeserta() {
                     onClick={() => setFilterKehadiran(f)}
                     className={kehadiranFilterBtnClass(filterKehadiran === f)}
                   >
-                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : f === 'tidak' ? 'Tidak Hadir' : 'Belum'}
+                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : f === 'tidak' ? 'Tidak hadir' : 'Belum'}
                   </button>
                 ))}
-                {(search || filterKehadiran !== 'semua') && (
-                  <button
-                    type="button"
-                    onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
-                    className={pesertaResetFilterBtnClass}
-                  >
-                    Reset Filter
-                  </button>
-                )}
               </div>
+              {(search || filterKehadiran !== 'semua') ? (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
+                  className={pesertaResetFilterBtnClass}
+                >
+                  Reset
+                </button>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -311,140 +304,81 @@ function ManajemenPeserta() {
           />
 
           <TableFrame>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left text-sm">
-                <thead>
-                  <tr className="bg-primary text-xs font-semibold uppercase tracking-wide text-white">
-                    <th className="w-16 px-4 py-3 text-center">No</th>
-                    <th className="px-4 py-3 text-center">NIM</th>
-                    <th className="px-4 py-3 text-center">Nama</th>
-                    <th className="px-4 py-3 text-center">Prodi</th>
-                    <th className="px-4 py-3 text-center">Hadir</th>
-                    <th className="px-4 py-3 text-center">Peran</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-base-content/50">Memuat data…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-base-content/50">Tidak ada peserta.</td></tr>
-                ) : pageItems.map((p) => (
-                    <tr key={p.partisipasiId || p.id} className="divide-x divide-base-300 border-b border-base-300 last:border-0 hover:bg-base-200">
-                      <td className="w-16 px-4 py-3 text-center text-base-content">{p.no}</td>
-                      <td className="px-4 py-3 font-medium text-base-content">{p.nim || '-'}</td>
-                      <td className="px-4 py-3 text-base-content">{p.nama}</td>
-                      <td className="px-4 py-3 text-base-content">{p.prodi}</td>
-                      <td className="px-4 py-3 text-center">
-                        <select
-                          value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
-                          onChange={(e) => handleKehadiranChange(p.partisipasiId || p.id, e.target.value)}
-                          disabled={!isEditing}
-                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
-                        >
-                          <option value="">Belum</option>
-                          <option value="true">Hadir</option>
-                          <option value="false">Tidak Hadir</option>
-                        </select>
-                      </td>                      <td className="px-4 py-3">
-                        <select
-                          value={p.peranVerifId || ''}
-                          onChange={(e) => handlePeranChange(p.partisipasiId || p.id, e.target.value)}
-                          disabled={!isEditing}
-                          className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
-                        >
-                          <option value="">Pilih Peran</option>
-                          {peranOptions.map((opt) => (
-                            <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
-                          ))}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-          {!loading && (
-            <div className="flex items-center justify-between border-t border-base-300 px-6 py-3">
-              <span className="text-xs text-base-content/50">
-                Menampilkan {filtered.length} dari {pesertaData.length} peserta
-              </span>
-              <div className="flex items-center gap-3">
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled={currentPage <= 1}
-                      onClick={() => setPage(currentPage - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <span className="px-2 text-xs text-base-content/50">
-                      Halaman {currentPage} dari {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setPage(currentPage + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'nim', label: 'NIM' },
+                { key: 'nama', label: 'Nama' },
+                { key: 'prodi', label: 'Prodi' },
+                {
+                  key: 'hadir',
+                  label: 'Hadir',
+                  center: true,
+                  render: (p) => (
+                    <KehadiranSelect
+                      value={p.hadir}
+                      disabled={!isEditing}
+                      onChange={(v) => handleKehadiranChange(p.partisipasiId || p.id, v)}
+                    />
+                  ),
+                },
+                {
+                  key: 'peran',
+                  label: 'Peran',
+                  render: (p) => (
+                    <PeranSelect
+                      value={p.peranVerifId}
+                      disabled={!isEditing}
+                      options={peranOptions}
+                      onChange={(v) => handlePeranChange(p.partisipasiId || p.id, v)}
+                    />
+                  ),
+                },
+              ]}
+              data={filtered.map((p, i) => ({ ...p, _no: i + 1 }))}
+              loading={loading}
+              emptyText="Tidak ada peserta."
+              pageSize={10}
+            />
+            <div className="flex flex-wrap items-center gap-2 border-t border-base-300 px-3 py-3">
+              <button
+                type="button"
+                onClick={() => setShowTambahModal(true)}
+                className={pesertaTambahBtnClass}
+              >
+                <UserPlus className="h-4 w-4" /> Tambah peserta
+              </button>
+              {!isEditing ? (
+                <button type="button" onClick={() => setIsEditing(true)} className={pesertaEditBtnClass}>
+                  Edit
+                </button>
+              ) : (
+                <>
                   <button
                     type="button"
-                    onClick={() => setShowTambahModal(true)}
-                    className={pesertaTambahBtnClass}
-                  ><UserPlus className="h-4 w-4" /> Tambah Peserta
+                    onClick={handleBatalEdit}
+                    disabled={submitLoading}
+                    className={pesertaBatalBtnClass}
+                  >
+                    Batal
                   </button>
-                  {!isEditing && (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className={pesertaEditBtnClass}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {isEditing && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleBatalEdit}
-                        disabled={submitLoading}
-                        className={`${pesertaBatalBtnClass} disabled:opacity-60`}
-                      >
-                        Batal
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSubmitPoin}
-                        disabled={submitLoading}
-                        className={pesertaSubmitBtnClass}
-                      >
-                        {submitLoading ? 'Memproses…' : 'Submit Poin Peserta'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmitPoin}
+                    disabled={submitLoading}
+                    className={pesertaSubmitBtnClass}
+                  >
+                    {submitLoading ? 'Memproses…' : 'Submit poin peserta'}
+                  </button>
+                </>
+              )}
             </div>
-          )}
           </TableFrame>
         </TableCard>
 
-        {submitted && (
-          <div className="pt-2">
-            <p className="text-sm font-semibold text-base-content/80">Status</p>
-            <p className="mt-1 text-2xl font-extrabold">
-              <span className="text-base-content">Telah </span>
-              <span className="text-brand-dark">Tercatat</span>
-            </p>
-          </div>
-        )}
+        {submitted ? (
+          <p className="text-sm text-base-content/60">Poin peserta telah tercatat.</p>
+        ) : null}
       </div>
     </DashboardLayout>
   )

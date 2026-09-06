@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import StatusBadge from '../../components/dashboard/StatusBadge'
+import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 import { RadarChartCJ, HorizontalBarChart } from '../../components/charts'
+import { DetailBackButton } from '../../components/ui/DetailComponents'
 import { getCurrentUser } from '../../services/authService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { get, post } from '../../services/apiClient'
@@ -77,14 +80,6 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
-}
-
-function statusBadgeClass(status) {
-  const s = String(status || '').toLowerCase()
-  if (s.includes('tolak')) return 'border-red-200 bg-red-50 text-red-700'
-  if (s.includes('pending') || s.includes('menunggu')) return 'border-amber-200 bg-amber-50 text-amber-700'
-  if (s.includes('universitas')) return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  return 'border-green-200 bg-green-50 text-green-700'
 }
 
 const TIMELINE_PREVIEW = 4
@@ -439,207 +434,173 @@ function DosenPADetail() {
     iframe.srcdoc = html
   }
 
+  const kelulusanStatus = m.isLulus || pctTarget >= 100 ? 'lulus' : 'belum_lulus'
+
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
-      <div className="space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
+      <div className="space-y-5">
+        <DetailBackButton onClick={() => navigate(-1)} />
 
-        <div className="overflow-hidden card bg-base-100">
-          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-dark text-xl font-extrabold text-white">
-                {(m.nama || '?').split(' ').map((n) => n[0]).slice(0, 2).join('')}
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-base-content">{loading ? 'Memuat…' : m.nama}</h2>
-                <p className="text-sm text-base-content/70">{m.nim} • {m.prodi}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-brand-dark px-3 py-0.5 text-xs font-semibold text-white">
-                    Angkatan {m.angkatan}
-                  </span>
-                  <span className="text-sm font-semibold text-base-content/70">• IPK {m.ipk}</span>
-                </div>
-              </div>
+        {loading && m.nama === '-' ? (
+          <DetailSkeleton />
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold text-base-content">{m.nama}</h2>
+              <p className="mt-1 text-sm text-base-content/60">
+                {m.nim} · {m.prodi} · Angkatan {m.angkatan} · IPK {m.ipk}
+              </p>
             </div>
-            <div className="text-left sm:text-right">
-              <div className="flex items-center justify-start sm:justify-end gap-2 mb-1.5">
-                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                  m.isLulus || pctTarget >= 100
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {m.statusKelulusan || (m.isLulus ? 'Memenuhi Syarat Kelulusan' : 'Belum Memenuhi Syarat')}
-                </span>
-              </div>
-              <p className="text-3xl sm:text-4xl font-extrabold text-brand-dark">
+            <div className="sm:min-w-44 sm:text-right">
+              <StatusBadge status={kelulusanStatus} />
+              <p className="mt-2 text-2xl font-extrabold text-base-content">
                 {m.totalPoinProgres ?? m.poin}
               </p>
-              <p className="text-sm text-base-content/50">/ {m.targetPoin ?? 200} Poin Target</p>
+              <p className="text-sm text-base-content/60">/ {m.targetPoin ?? 200} poin target</p>
               {m.poin > (m.totalPoinProgres ?? m.poin) && (
-                <p className="text-xs text-base-content/60 mt-0.5">
-                  Total Riil: <span className="font-semibold text-brand-dark">{m.poin}</span> poin
+                <p className="mt-0.5 text-xs text-base-content/60">
+                  Total riil: {m.poin} poin
                 </p>
               )}
-              <div className="mt-2 w-full sm:w-44">
+              <div className="mt-2 w-full sm:w-44 sm:ml-auto">
                 <ProgressBar value={m.totalPoinProgres ?? m.poin} max={m.targetPoin ?? 200} height={6} />
               </div>
-              <p className="mt-1 text-xs text-base-content/50">{pctTarget}% dari target kelulusan</p>
+              <p className="mt-1 text-xs text-base-content/50">{pctTarget}% dari target</p>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div className="rounded-xl bg-gradient-to-br from-brand-dark to-brand-light p-5 text-white shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-extrabold">Sub Capaian</h3>
-                <p className="mt-0.5 text-[11px] text-white/60">Sub Capaian dalam kategori fondasi</p>
-              </div>
-              <select
-                value={activeCapaian}
-                onChange={(e) => setActiveCapaian(e.target.value)}
-                className="rounded-lg border border-white/40 bg-base-100/10 px-3 py-1.5 text-[11px] text-white outline-none backdrop-blur-sm"
-              >
-                <option value="">---Pilih Capaian---</option>
-                {capaianOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            {activeCapaian && (
-              <p className="mt-3 text-xs font-semibold text-white/80">{activeCapaian}</p>
-            )}
-
-            <div className="mt-3 flex justify-center">
-              <RadarChartCJ
-                labels={radarItems.map((r) => r.label)}
-                values={radarItems.map((r) => r.value)}
-                darkBg
-                height={220}
-              />
-            </div>
-
-            <div className="mt-4 space-y-2.5">
-              {radarItems.map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <span className="w-44 shrink-0 truncate text-[11px] text-white/80">{item.label}</span>
-                  <div className="flex-1 overflow-hidden rounded-full bg-base-100/20" style={{ height: 6 }}>
-                    <div
-                      className={`h-full rounded-full transition-all ${item.value >= 60 ? 'bg-base-100' : 'bg-red-400'}`}
-                      style={{ width: `${Math.min(100, item.value)}%` }}
-                    />
-                  </div>
-                  <span className="w-7 shrink-0 text-right text-[11px] font-bold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card bg-base-100 p-6">
-            <h3 className="text-base font-bold text-base-content">Total Poin per Capaian</h3>
-            <p className="mt-0.5 text-xs text-base-content/50">Distribusi poin mahasiswa di setiap area pengembangan</p>
-            <div className="mt-5">
-              {totalPoinData.length === 0 ? (
-                <p className="py-12 text-center text-sm text-base-content/50">Belum ada data poin per capaian.</p>
-              ) : (
-                <HorizontalBarChart
-                  labels={totalPoinData.map((d) => d.category)}
-                  values={totalPoinData.map((d) => d.value)}
-                  max={100}
-                  color="#1a5c38"
-                  height={220}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 p-6">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+        <div className="card bg-base-100 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h3 className="text-base font-bold text-base-content">Timeline Aktivitas</h3>
-              <p className="mt-0.5 text-xs text-base-content/50">Riwayat kegiatan mahasiswa yang sedang dibimbing</p>
+              <h3 className="text-sm font-semibold text-base-content">Sub capaian</h3>
+              <p className="mt-0.5 text-xs text-base-content/60">Poin per sub capaian</p>
             </div>
-            {timelineAktivitas.length > 0 && (
-              <span className="text-xs text-base-content/50">{timelineAktivitas.length} aktivitas</span>
+            <select
+              value={activeCapaian}
+              onChange={(e) => setActiveCapaian(e.target.value)}
+              className="select select-sm sm:max-w-64"
+            >
+              <option value="">Pilih capaian</option>
+              {capaianOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          {activeCapaian ? (
+            <p className="mt-3 text-xs text-base-content/70">{activeCapaian}</p>
+          ) : null}
+
+          <div className="mt-2">
+            <RadarChartCJ
+              labels={radarItems.map((r) => r.label)}
+              values={radarItems.map((r) => r.value)}
+              height={360}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {radarItems.map((item) => (
+              <ProgressBar
+                key={item.label}
+                value={item.value}
+                max={100}
+                height={6}
+                label={item.label}
+                showPercent
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="card bg-base-100 p-5">
+          <h3 className="text-sm font-semibold text-base-content">Total poin per capaian</h3>
+          <p className="mt-0.5 text-xs text-base-content/60">Distribusi poin per area</p>
+          <div className="mt-5">
+            {totalPoinData.length === 0 ? (
+              <p className="py-12 text-center text-sm text-base-content/50">Belum ada data poin per capaian.</p>
+            ) : (
+              <HorizontalBarChart
+                labels={totalPoinData.map((d) => d.category)}
+                values={totalPoinData.map((d) => d.value)}
+                max={100}
+                height={260}
+              />
             )}
+          </div>
+        </div>
+
+        <div className="card bg-base-100 p-5">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content">Timeline aktivitas</h3>
+              <p className="mt-0.5 text-xs text-base-content/60">Kegiatan mahasiswa bimbingan</p>
+            </div>
+            {timelineAktivitas.length > 0 ? (
+              <span className="text-xs text-base-content/50">{timelineAktivitas.length} aktivitas</span>
+            ) : null}
           </div>
 
           {timelineAktivitas.length === 0 ? (
             <p className="py-6 text-center text-sm text-base-content/50">Belum ada timeline aktivitas.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="divide-y divide-base-300">
               {displayedTimeline.map((act, i) => (
-                <li key={`${act.event}-${act.date}-${i}`} className="rounded-lg border border-base-300 bg-base-200 px-3.5 py-3">
+                <li key={`${act.event}-${act.date}-${i}`} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug text-base-content">{act.event}</p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/50">
-                        <span>{act.date}</span>
-                        {act.kategori && act.kategori !== '-' && (
-                          <>
-                            <span className="text-base-content/40">•</span>
-                            <span className="rounded bg-base-200 px-1.5 py-0.5 text-[11px] font-medium text-base-content">
-                              {act.kategori}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <p className="text-sm text-base-content">{act.event}</p>
+                      <p className="mt-1 text-xs text-base-content/50">
+                        {act.date}
+                        {act.kategori && act.kategori !== '-' ? ` · ${act.kategori}` : ''}
+                      </p>
                     </div>
-                    <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusBadgeClass(act.status)}`}>
-                      {act.status}
-                    </span>
+                    <StatusBadge status={act.status} />
                   </div>
                 </li>
               ))}
             </ul>
           )}
 
-          {timelineAktivitas.length > TIMELINE_PREVIEW && (
+          {timelineAktivitas.length > TIMELINE_PREVIEW ? (
             <button
               type="button"
               onClick={() => setShowAllTimeline((v) => !v)}
-              className="mt-4 text-xs font-semibold text-brand-dark hover:underline"
+              className="btn btn-ghost btn-sm mt-3"
             >
               {showAllTimeline
-                ? 'Sembunyikan timeline'
-                : `Lihat semua timeline (${timelineAktivitas.length}) ›`}
+                ? 'Sembunyikan'
+                : `Lihat semua (${timelineAktivitas.length})`}
             </button>
-          )}
+          ) : null}
         </div>
 
-        <div className="card bg-base-100 p-6">
-          <h3 className="mb-4 text-base font-bold text-base-content">Pesan untuk Mahasiswa</h3>
+        <div className="card bg-base-100 p-5">
+          <h3 className="mb-3 text-sm font-semibold text-base-content">Pesan untuk mahasiswa</h3>
           <textarea
             value={pesan}
             onChange={(e) => setPesan(e.target.value)}
             rows={4}
-            placeholder="Tuliskan saran bimbingan akademik dan konseling disini"
-            className="w-full rounded-lg border border-base-300 p-4 text-sm text-base-content outline-none focus:border-brand-dark"
+            placeholder="Tulis saran bimbingan"
+            className="textarea w-full"
           />
           <button
             type="button"
             onClick={handleKirimPesan}
             disabled={sendingPesan}
-            className="mt-3 w-full btn btn-primary py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            className="btn btn-primary btn-sm mt-3"
           >
-            {sendingPesan ? 'Mengirim…' : 'Kirim Pesan'}
+            {sendingPesan ? 'Mengirim…' : 'Kirim pesan'}
           </button>
         </div>
 
-        <div className="card bg-base-100 p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-bold text-base-content">Riwayat Catatan</h3>
+        <div className="card bg-base-100 p-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-base-content">Riwayat catatan</h3>
             <button
               type="button"
               onClick={handleDownloadCatatanPdf}
               disabled={riwayatCatatan.length === 0}
-              className="btn btn-primary px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn btn-outline btn-primary btn-sm"
             >
               <Download className="h-3.5 w-3.5" />
               Download PDF
@@ -657,15 +618,15 @@ function DosenPADetail() {
               ))}
             </div>
           )}
-          {riwayatCatatan.length > 2 && (
+          {riwayatCatatan.length > 2 ? (
             <button
               type="button"
               onClick={() => setShowAllCatatan((v) => !v)}
-              className="mt-3 text-xs font-semibold text-brand-dark hover:underline"
+              className="btn btn-ghost btn-sm mt-2"
             >
-              {showAllCatatan ? 'Sembunyikan catatan' : 'lihat semua catatan ›'}
+              {showAllCatatan ? 'Sembunyikan' : 'Lihat semua catatan'}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </DashboardLayout>

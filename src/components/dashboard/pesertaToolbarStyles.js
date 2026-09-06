@@ -1,8 +1,9 @@
 export function kehadiranFilterBtnClass(active) {
-  return active ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'
+  return `btn btn-sm join-item ${active ? 'btn-primary' : 'btn-ghost'}`
 }
 
-export const pesertaResetFilterBtnClass = 'btn btn-outline btn-primary btn-sm'
+export const pesertaResetFilterBtnClass = 'btn btn-ghost btn-sm'
+export const pesertaFieldClass = 'select select-xs'
 export const pesertaDownloadBtnClass = 'btn btn-outline btn-sm'
 export const pesertaImportBtnClass = 'btn btn-primary btn-sm'
 export const pesertaTambahBtnClass = 'btn btn-outline btn-primary btn-sm'

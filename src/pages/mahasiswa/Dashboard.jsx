@@ -12,7 +12,7 @@ import { getPengajuan } from '../../services/pengajuanService'
 import { getKlaim } from '../../services/poinService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import PanduanCard from '../../components/dashboard/PanduanCard'
-import { CardGridSkeleton, ChartSkeleton, Skeleton } from '../../components/dashboard/Skeleton'
+import { CardGridSkeleton, ChartSkeleton, ListItemSkeleton, Skeleton } from '../../components/dashboard/Skeleton'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 
 function LihatSelengkapnyaButton({ onClick }) {
@@ -22,14 +22,14 @@ function LihatSelengkapnyaButton({ onClick }) {
       onClick={onClick}
       className="btn btn-outline btn-primary btn-sm"
     >
-      Lihat selengkapnya →
+      Lihat selengkapnya
     </button>
   )
 }
 
 function buildProgressLabel(pct) {
-  if (pct >= 100) return 'COMPLETED'
-  return 'PROGRESS'
+  if (pct >= 100) return 'Selesai'
+  return 'Berlangsung'
 }
 
 function formatTanggal(value) {
@@ -120,7 +120,7 @@ function MahasiswaDashboard() {
     const target = item.targetPoin ?? item.target ?? 1
     const pct = item.persentase ?? (target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0)
     return {
-      tahun: (item.nama || `TAHUN ${item.urutan || ''}`).toUpperCase(),
+      tahun: item.nama || `Tahun ${item.urutan || ''}`,
       current,
       target,
       pct,
@@ -131,7 +131,6 @@ function MahasiswaDashboard() {
   })
 
   const totalPoinProgres = dashData?.totalPoinProgres ?? progressData.reduce((sum, t) => sum + (t.current || 0), 0)
-  const totalPoin = dashData?.totalPoin ?? totalPoinProgres
   const maxPoin = dashData?.totalTarget ?? 0
   const pctTotal = dashData?.persentaseTotal ?? (maxPoin > 0 ? Math.min(100, Math.round((totalPoinProgres / maxPoin) * 100)) : 0)
 
@@ -141,16 +140,21 @@ function MahasiswaDashboard() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-      <div className="space-y-4 sm:space-y-6">
-        {/* Welcome + Radar */}
+      <div className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="min-w-0 card bg-base-100 p-4 sm:p-6">
+          <div className="card min-w-0 bg-base-100 p-4 sm:p-6">
             <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">
               Selamat Datang,<br />{user?.nama || 'Mahasiswa'}!
             </h2>
             <p className="mt-3 max-w-lg text-sm text-base-content/60">
               Pantau aktivitas akademik, capaian poin, dan sertifikasi kamu secara real-time.
             </p>
+            {dashData?.kurikulumNama ? (
+              <p className="mt-2 text-sm text-base-content/70">
+                Kurikulum: <span className="font-medium text-base-content">{dashData.kurikulumNama}</span>
+                {dashData?.angkatan ? ` · Angkatan ${dashData.angkatan}` : ''}
+              </p>
+            ) : null}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-base-content/60">Poin Target Kelulusan</p>
               <span className={`badge badge-sm ${
@@ -188,13 +192,12 @@ function MahasiswaDashboard() {
           </div>
         </div>
 
-        {/* Progress per Tahun Kurikulum */}
-        <div className="rounded-xl border border-base-300 bg-base-100 p-3 sm:p-6 shadow-sm">
+        <div className="card bg-base-100 p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-base-content sm:text-lg">Progress Poin Kelulusan</h3>
-              <p className="mt-0.5 text-sm font-medium text-base-content">
-                Target Capaian: <span className="font-bold">{loadingDash ? '…' : totalPoinProgres}</span>/{maxPoin} poin ({pctTotal}%)
+              <h3 className="text-sm font-semibold text-base-content">Progres poin kelulusan</h3>
+              <p className="mt-0.5 text-sm text-base-content/60">
+                {loadingDash ? '…' : totalPoinProgres}/{maxPoin} poin ({pctTotal}%)
               </p>
             </div>
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/riwayat-poin')} />
@@ -207,13 +210,13 @@ function MahasiswaDashboard() {
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {progressData.map((item, index) => (
                 <div key={index} className="rounded-lg border border-base-300 px-4 py-3 text-center">
-                  <p className="text-xs font-semibold text-base-content/60">{item.tahun}</p>
-                  <p className="mt-1 text-2xl font-bold leading-none text-base-content">
+                  <p className="text-xs text-base-content/60">{item.tahun}</p>
+                  <p className="mt-1 text-2xl font-extrabold leading-none text-base-content">
                     {item.current}
                     <span className="text-sm font-normal text-base-content/60">/{item.target} poin</span>
                   </p>
                   <div className="mt-1 flex items-center justify-center gap-1 text-xs text-base-content/60">
-                    {item.onTrack && <CheckCircle className="h-3.5 w-3.5 text-base-content" />}
+                    {item.onTrack ? <CheckCircle className="h-3.5 w-3.5 text-base-content" /> : null}
                     <span>{item.label}</span>
                   </div>
                   <div className="mt-2">
@@ -228,11 +231,13 @@ function MahasiswaDashboard() {
         {/* Pesan dari Dosen PA */}
         <div className="card bg-base-100 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-lg font-bold text-base-content">Pesan dari Dosen PA</h3>
+            <h3 className="text-sm font-semibold text-base-content">Pesan dari Dosen PA</h3>
             <LihatSelengkapnyaButton onClick={() => navigate('/mahasiswa/pesan-dosen-pa')} />
           </div>
           {loadingSaran ? (
-            <p className="py-6 text-center text-sm text-base-content/50">Memuat pesan…</p>
+            <div className="mt-3">
+              <ListItemSkeleton rows={3} />
+            </div>
           ) : saranPa.length === 0 ? (
             <p className="py-6 text-center text-sm text-base-content/50">Belum ada pesan dari Dosen PA.</p>
           ) : (
@@ -309,7 +314,7 @@ function MahasiswaDashboard() {
                 { key: 'kegiatan', label: 'Kegiatan', render: (row) => <KegiatanCell nama={row.namaKegiatan || row.kegiatan} diajukanPada={row.tanggalKlaim || row.createdAt} /> },
                 { key: 'jenis', label: 'Jenis', render: (row) => row.jenisKegiatan || row.jenis || '-' },
                 { key: 'peran', label: 'Peran' },
-                { key: 'poin', label: 'Poin', render: (row) => <span className="font-bold text-brand-dark">{row.poin ?? '-'}</span> },
+                { key: 'poin', label: 'Poin', render: (row) => <span className="tabular-nums text-base-content">{row.poin ?? '-'}</span> },
                 { key: 'status', label: 'Status', center: true, render: (row) => <div className="flex w-full items-center justify-center text-center"><StatusBadge status={row.status} /></div> },
               ]}
               data={klaim.slice(0, 5).map((r, i) => ({ ...r, _no: i + 1 }))}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Lock, User, UserCircle, Eye, EyeOff } from 'lucide-react'
+import { Lock, User, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser, updateProfil, gantiPassword } from '../../services/authService'
@@ -198,27 +198,18 @@ function AkunPengaturan() {
         onConfirm={handleDisconnectLinkedIn}
         onCancel={() => !disconnecting && setShowDisconnectModal(false)}
       />
-      <div className="space-y-6">
-        <div className="flex flex-col gap-10">
-          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Profil dan Pengaturan</h2>
-
-          <div className="mx-auto w-full max-w-md rounded-xl border border-base-300 bg-base-100 px-6 py-6 shadow-sm">
-            <div className="flex flex-col items-center text-center">
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-base-200">
-                <UserCircle className="h-12 w-12 text-brand-dark" />
-              </span>
-              <h3 className="mt-3 text-xl font-bold text-base-content uppercase">{form.namaLengkap || '—'}</h3>
-              <p className="mt-0.5 text-sm text-base-content/60">{form.nim || '—'}</p>
-            </div>
-          </div>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-base-content">Profil dan pengaturan</h2>
+          <p className="mt-1 text-sm text-base-content/60">{form.namaLengkap || 'Mahasiswa'}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Informasi Pribadi */}
           <div className="card bg-base-100 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <User className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-base-content">Informasi Pribadi</h3>
+              <User className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-base-content">Informasi pribadi</h3>
             </div>
 
             {loading ? (
@@ -232,7 +223,7 @@ function AkunPengaturan() {
                       type="text"
                       value={form.namaLengkap}
                       onChange={(e) => setForm((p) => ({ ...p, namaLengkap: e.target.value }))}
-                      className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                      className="input mt-1 w-full"
                     />
                   </div>
                   <div>
@@ -241,7 +232,7 @@ function AkunPengaturan() {
                       type="text"
                       value={form.nim}
                       readOnly
-                      className="mt-1 block w-full rounded-md border border-base-300 bg-base-200 p-3 text-sm text-base-content shadow-sm"
+                      className="input mt-1 w-full bg-base-200"
                     />
                   </div>
                   <div>
@@ -249,7 +240,7 @@ function AkunPengaturan() {
                     <select
                       value={form.fakultasId}
                       onChange={(e) => setForm((p) => ({ ...p, fakultasId: e.target.value, programStudiId: '' }))}
-                      className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                      className="select mt-1 w-full"
                     >
                       <option value="">Pilih Fakultas</option>
                       {fakultasList.map((f) => (
@@ -262,7 +253,7 @@ function AkunPengaturan() {
                     <select
                       value={form.programStudiId}
                       onChange={(e) => setForm((p) => ({ ...p, programStudiId: e.target.value }))}
-                      className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                      className="select mt-1 w-full"
                       disabled={!form.fakultasId}
                     >
                       <option value="">Pilih Program studi</option>
@@ -277,7 +268,7 @@ function AkunPengaturan() {
                       type="text"
                       value={form.nomorTelepon}
                       onChange={(e) => setForm((p) => ({ ...p, nomorTelepon: e.target.value }))}
-                      className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                      className="input mt-1 w-full"
                       placeholder="Masukkan nomor telepon"
                     />
                   </div>
@@ -288,7 +279,7 @@ function AkunPengaturan() {
                     rows={3}
                     value={form.alamat}
                     onChange={(e) => setForm((p) => ({ ...p, alamat: e.target.value }))}
-                    className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                    className="input mt-1 w-full"
                     placeholder="Masukkan alamat"
                   />
                 </div>
@@ -296,7 +287,7 @@ function AkunPengaturan() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="btn btn-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn btn-primary btn-sm"
                   >
                     {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
                   </button>
@@ -308,8 +299,8 @@ function AkunPengaturan() {
           {/* Ganti Password */}
           <div className="card bg-base-100 p-6">
             <div className="mb-5 flex items-center gap-3">
-              <Lock className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-base-content">Ganti Password</h3>
+              <Lock className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-base-content">Ganti password</h3>
             </div>
             <div className="space-y-4">
               <div>
@@ -320,7 +311,7 @@ function AkunPengaturan() {
                     name="passwordLama"
                     value={pwdForm.passwordLama}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
                   <button type="button" onClick={() => setShowOld(!showOld)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
@@ -336,7 +327,7 @@ function AkunPengaturan() {
                     name="passwordBaru"
                     value={pwdForm.passwordBaru}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
                   <button type="button" onClick={() => setShowNew(!showNew)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
@@ -352,7 +343,7 @@ function AkunPengaturan() {
                     name="konfirmasiPassword"
                     value={pwdForm.konfirmasiPassword}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
                   <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
@@ -365,7 +356,7 @@ function AkunPengaturan() {
                   type="button"
                   onClick={handleGantiPassword}
                   disabled={changingPwd}
-                  className="btn btn-primary px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn btn-primary btn-sm"
                 >
                   {changingPwd ? 'Mengganti…' : 'Ganti Password'}
                 </button>
@@ -381,7 +372,7 @@ function AkunPengaturan() {
               <LinkedInIcon />
             </span>
             <div>
-              <h3 className="text-lg font-bold text-base-content">Koneksi LinkedIn</h3>
+              <h3 className="text-sm font-semibold text-base-content">Koneksi LinkedIn</h3>
               <p className="text-xs text-base-content/50">Untuk membagikan CV ke LinkedIn. Token biasanya berlaku sekitar 60 hari.</p>
             </div>
           </div>
@@ -441,18 +432,9 @@ function AkunPengaturan() {
           )}
         </div>
 
-        {/* KEAMANAN */}
-        <div className="max-w-sm btn btn-primary p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-base-100/20">
-              <Lock className="h-4 w-4 text-white" />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-white">KEAMANAN</p>
-              <p className="mt-0.5 text-xs leading-snug text-white/80">Data login dan kata sandi Anda terintegrasi dengan portal utama universitas.</p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-base-content/60">
+          Data login terintegrasi dengan portal utama universitas.
+        </p>
       </div>
     </DashboardLayout>
   )

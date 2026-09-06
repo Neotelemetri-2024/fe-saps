@@ -135,37 +135,35 @@ function PermintaanPersetujuan() {
   };
 
   const columns = [
-    { key: "no", label: "NO" },
-    { key: "mahasiswa", label: "MAHASISWA" },
-    { key: "kegiatan", label: "KEGIATAN", render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
-    { key: "peran", label: "PERAN" },
-    { key: "skala", label: "SKALA" },
-    { key: "jenis", label: "JENIS", render: (row) => <span className="text-base-content">{row.jenis}</span> },
-    { key: "penyelenggara", label: "PENYELENGGARA" },
-    { key: "tanggal", label: "TANGGAL" },
+    { key: "no", label: "No" },
+    { key: "mahasiswa", label: "Mahasiswa" },
+    { key: "kegiatan", label: "Kegiatan", render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} /> },
+    { key: "peran", label: "Peran" },
+    { key: "skala", label: "Skala" },
+    { key: "jenis", label: "Jenis" },
+    { key: "penyelenggara", label: "Penyelenggara" },
+    { key: "tanggal", label: "Tanggal" },
     {
       key: "status",
-      label: "STATUS",
-      render: (row) =>
-        row.isUlang && (row.status === 'pending' || row.status === 'diajukan') ? (
-          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-            Diajukan Ulang
-          </span>
-        ) : (
-          <StatusBadge status={row.status} />
-        ),
+      label: "Status",
+      render: (row) => (
+        <StatusBadge
+          status={row.isUlang && (row.status === 'pending' || row.status === 'diajukan')
+            ? 'diajukan_ulang'
+            : row.status}
+        />
+      ),
     },
     {
       key: "aksi",
-      label: "AKSI",
+      label: "Aksi",
       stopPropagation: true,
       render: (row) => pilihanMode ? null : (
         <ActionMenu
           items={[
             {
-              label: "Detail & Verifikasi",
+              label: "Detail",
               icon: <Eye className="h-4 w-4" />,
-              color: "text-blue-600",
               onClick: () => navigate(`/dosen/permintaan-persetujuan/${row.id}`, { state: { row } }),
             },
           ]}
@@ -184,97 +182,94 @@ function PermintaanPersetujuan() {
         isOpen={showBulkConfirm}
         title="Setujui Permintaan Terpilih"
         message={`Apakah Anda yakin ingin menyetujui ${selected.size} permintaan persetujuan ini?`}
-        confirmText={bulkLoading ? 'Memproses...' : 'SETUJUI'}
-        cancelText="BATAL"
+        confirmText={bulkLoading ? 'Memproses...' : 'Setujui'}
+        cancelText="Batal"
         onConfirm={handleBulkConfirm}
         onCancel={() => setShowBulkConfirm(false)}
       />
 
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-5">
         <div>
-          <h2 className="text-xl font-bold text-base-content sm:text-2xl">
-            Permintaan Persetujuan
+          <h2 className="text-2xl font-extrabold text-base-content">
+            Permintaan persetujuan
           </h2>
-          <p className="text-sm text-base-content/60">
-            Pengajuan dari mahasiswa bimbingan Anda akan muncul di sini.
+          <p className="mt-1 text-sm text-base-content/60">
+            Pengajuan dari mahasiswa bimbingan
           </p>
         </div>
 
-        <TableCard title="Permintaan Persetujuan">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative flex w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
+        <TableCard title="Daftar permintaan">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="input input-sm flex-1">
+              <Search className="h-4 w-4 shrink-0 opacity-50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari mahasiswa atau kegiatan..."
-                className="input w-full"
+                placeholder="Cari mahasiswa atau kegiatan"
               />
-            </div>
+            </label>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
-              >
-                <option value="">Semua Status</option>
-                {statusOptions.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="select select-sm sm:w-44"
+            >
+              <option value="">Semua status</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
 
-              <select
-                value={filterSkala}
-                onChange={(e) => setFilterSkala(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-sm text-base-content/80 outline-none"
-              >
-                <option value="">Semua Skala</option>
-                {skalaOptions.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+            <select
+              value={filterSkala}
+              onChange={(e) => setFilterSkala(e.target.value)}
+              className="select select-sm sm:w-44"
+            >
+              <option value="">Semua skala</option>
+              {skalaOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
 
-              {(search || filterStatus || filterSkala) && (
-                <button
-                  type="button"
-                  onClick={() => { setSearch(""); setFilterStatus(""); setFilterSkala("") }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
-                >
-                  Reset Filter
-                </button>
-              )}
-
+            {(search || filterStatus || filterSkala) ? (
               <button
                 type="button"
-                onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
-                className={`rounded-lg border border-brand-dark px-4 py-2 text-sm font-semibold transition ${
-                  pilihanMode
-                    ? 'bg-brand-dark text-white'
-                    : 'bg-gradient-to-r from-brand-dark to-brand-light text-white hover:opacity-90'
-                }`}>
-                Pilih Beberapa
+                onClick={() => { setSearch(""); setFilterStatus(""); setFilterSkala("") }}
+                className="btn btn-ghost btn-sm"
+              >
+                Reset
               </button>
-            </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => { setPilihanMode((v) => !v); setSelected(new Set()) }}
+              className={`btn btn-sm ${pilihanMode ? 'btn-primary' : 'btn-outline btn-primary'}`}
+            >
+              Pilih beberapa
+            </button>
           </div>
 
-          {pilihanMode && (
-            <div className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-200 px-4 py-3">
+          {pilihanMode ? (
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
-              <div className="ml-auto flex gap-2">
-                <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
-                  Batal Pilih
-                </button>
-                <button type="button"
-                  onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
-                  className="btn btn-primary px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
-                  Setujui Terpilih
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
+                className="btn btn-ghost btn-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}
+                className="btn btn-primary btn-sm"
+              >
+                Setujui terpilih
+              </button>
             </div>
-          )}
+          ) : null}
 
           <TableFrame>
             <DataTable

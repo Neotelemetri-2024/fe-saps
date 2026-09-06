@@ -227,7 +227,7 @@ function RiwayatKegiatanInternal() {
     { key: 'peran', label: 'PERAN' },
     {
       key: 'kehadiran',
-      label: 'KEHADIRAN',
+      label: 'Kehadiran',
       render: (row) => (
         <div className="flex w-full justify-center">
           <KehadiranBadge status={row.kehadiran} />
@@ -236,7 +236,7 @@ function RiwayatKegiatanInternal() {
     },
     {
       key: 'statusPoin',
-      label: 'STATUS POIN',
+      label: 'Status poin',
       render: (row) => (
         <div className="flex w-full justify-center">
           <StatusPoinBadge label={row.statusPoin} />
@@ -245,10 +245,10 @@ function RiwayatKegiatanInternal() {
     },
     {
       key: 'poin',
-      label: 'POIN',
+      label: 'Poin',
       center: true,
       render: (row) => (
-        <span className="text-brand-dark">
+        <span className="tabular-nums text-base-content">
           {row.poin === null || row.poin === undefined || row.poin === '' ? '-' : row.poin}
         </span>
       ),
@@ -259,7 +259,7 @@ function RiwayatKegiatanInternal() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Riwayat Kegiatan Internal</h2>
+          <h2 className="text-2xl font-extrabold text-base-content">Riwayat kegiatan internal</h2>
         </div>
         <p className="text-sm text-base-content/60">
           Rekap kegiatan internal. Poin cair otomatis setelah izin Dosen PA disetujui serta kehadiran & peran diverifikasi UKM.
@@ -302,7 +302,7 @@ function RiwayatKegiatanInternal() {
                 {penyelenggaraOptions.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
               {(search || filterJenis || filterKehadiran || filterStatusPoin || filterSkala || filterPenyelenggara) && (
-                <button type="button" onClick={resetFilter} className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200">Reset Filter</button>
+                <button type="button" onClick={resetFilter} className="btn btn-ghost btn-sm">Reset</button>
               )}
             </div>
           </div>

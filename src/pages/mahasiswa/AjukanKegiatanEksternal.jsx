@@ -140,7 +140,7 @@ function AjukanKegiatanEksternal() {
           <button
             type="button"
             onClick={() => setAlasanModal(null)}
-            className="w-full rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
+            className="btn btn-ghost btn-sm w-full"
           >
             Tutup
           </button>
@@ -164,7 +164,7 @@ function AjukanKegiatanEksternal() {
           </div>
           <button
             onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
-            className="btn btn-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 sm:px-6 sm:py-3"
+            className="btn btn-primary btn-sm"
           >
             <Plus className="h-4 w-4" />
             <span className="sm:hidden">Ajukan Baru</span>
@@ -219,7 +219,7 @@ function AjukanKegiatanEksternal() {
                 <button
                   type="button"
                   onClick={() => { setFilterStatus(''); setFilterKategori(''); setFilterSkala(''); setSearch('') }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-xs font-medium text-brand-dark transition hover:bg-base-200 sm:text-sm"
+                  className="btn btn-ghost btn-sm"
                 >
                   Reset Filter
                 </button>
@@ -251,7 +251,7 @@ function AjukanKegiatanEksternal() {
                         {
                           label: 'Detail',
                           icon: <Eye className="h-4 w-4" />,
-                          color: 'text-blue-600',
+                          color: 'text-primary',
                           onClick: () => navigate(`/mahasiswa/kegiatan-eksternal/${row.id}`, { state: { row } }),
                         },
                         {

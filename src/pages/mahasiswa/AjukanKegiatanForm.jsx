@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { ArrowLeft, Save } from 'lucide-react'
+import { DetailBackButton } from '../../components/ui/DetailComponents'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 import DatePickerInput from '../../components/ui/DatePickerInput'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import InfoTooltip from '../../components/ui/InfoTooltip'
@@ -176,22 +177,14 @@ function AjukanKegiatanForm() {
         onCancel={() => setShowKirimConfirm(false)}
       />
 
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-            className="flex items-center gap-1 text-sm text-brand-dark hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" /> Kembali
-          </button>
-        </div>
+      <div className="space-y-5">
+        <DetailBackButton onClick={() => navigate('/mahasiswa/kegiatan-eksternal')} />
 
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="text-xl font-bold text-base-content sm:text-2xl">
-                {isRevisi ? 'Perbaiki & Ajukan Ulang' : isEditDraft ? 'Edit Draft Kegiatan' : 'Pengajuan Kegiatan'}
+              <h2 className="text-2xl font-extrabold text-base-content">
+                {isRevisi ? 'Perbaiki & ajukan ulang' : isEditDraft ? 'Edit draft kegiatan' : 'Pengajuan kegiatan'}
               </h2>
               <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
             </div>
@@ -204,19 +197,14 @@ function AjukanKegiatanForm() {
             </p>
           </div>
           {isRevisi ? (
-            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 shrink-0">
-              Revisi
-            </span>
+            <StatusBadge status="revisi" />
           ) : draftId ? (
-            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 shrink-0">
-              <Save className="h-3.5 w-3.5" />
-              Draft
-            </span>
+            <StatusBadge status="draft" />
           ) : null}
         </div>
 
-        <div className="rounded-xl border border-base-300 bg-base-100 p-3 sm:p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-bold text-base-content">Detail Kegiatan</h3>
+        <div className="card bg-base-100 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-base-content">Detail kegiatan</h3>
 
           <div className="space-y-6">
             <div>
@@ -227,7 +215,7 @@ function AjukanKegiatanForm() {
                 name="kategoriId"
                 value={formData.kategoriId}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                className="select mt-1 w-full"
               >
                 <option value="">Pilih jenis kegiatan</option>
                 {kategoriList.map((k) => (
@@ -247,7 +235,7 @@ function AjukanKegiatanForm() {
                   value={formData.namaKegiatan}
                   onChange={handleChange}
                   placeholder="Masukkan nama kegiatan"
-                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                  className="input mt-1 w-full"
                 />
               </div>
               <div>
@@ -260,7 +248,7 @@ function AjukanKegiatanForm() {
                   value={formData.penyelenggara}
                   onChange={handleChange}
                   placeholder="Masukkan penyelenggara..."
-                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                  className="input mt-1 w-full"
                 />
               </div>
             </div>
@@ -274,7 +262,7 @@ function AjukanKegiatanForm() {
                 value={formData.skalaId}
                 onChange={handleChange}
                 disabled={!formData.kategoriId}
-                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark disabled:bg-base-200"
+                className="select mt-1 w-full disabled:bg-base-200"
               >
                 <option value="">
                   {formData.kategoriId ? 'Pilih skala kegiatan' : 'Pilih jenis kegiatan terlebih dahulu'}
@@ -300,7 +288,7 @@ function AjukanKegiatanForm() {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Jelaskan peran dan manfaat kegiatan..."
-                className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                className="input mt-1 w-full"
               />
             </div>
 
@@ -313,7 +301,7 @@ function AjukanKegiatanForm() {
                   value={formData.linkWebsite}
                   onChange={handleChange}
                   placeholder="https://..."
-                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                  className="input mt-1 w-full"
                 />
               </div>
               <div>
@@ -324,7 +312,7 @@ function AjukanKegiatanForm() {
                   value={formData.emailPenyelenggara}
                   onChange={handleChange}
                   placeholder="unand@gmail.com"
-                  className="mt-1 block w-full rounded-md border border-base-300 p-3 text-sm text-base-content shadow-sm focus:border-brand-dark"
+                  className="input mt-1 w-full"
                 />
               </div>
             </div>
@@ -337,8 +325,8 @@ function AjukanKegiatanForm() {
                   type="button"
                   disabled={loading || !isDirty}
                   onClick={handleSimpanDraft}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >{draftId ? 'Perbarui Draft' : 'Simpan Draft'}
+                  className="btn btn-outline btn-primary btn-sm"
+                >{draftId ? 'Perbarui draft' : 'Simpan draft'}
                 </button>
               )}
 
@@ -347,14 +335,14 @@ function AjukanKegiatanForm() {
                 type="button"
                 disabled={loading || !isDirty}
                 onClick={() => setShowKirimConfirm(true)}
-                className="btn btn-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >{loading ? 'Mengirim…' : isRevisi ? 'Ajukan Ulang' : 'Ajukan Sekarang'}
+                className="btn btn-primary btn-sm"
+              >{loading ? 'Mengirim…' : isRevisi ? 'Ajukan ulang' : 'Ajukan'}
               </button>
 
               <button
                 type="button"
                 onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="rounded-lg border border-base-300 bg-base-100 px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
+                className="btn btn-ghost btn-sm"
               >
                 Batal
               </button>

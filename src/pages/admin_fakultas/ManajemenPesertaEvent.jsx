@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, X, ChevronLeft, ChevronRight, Download, UploadCloud, UserPlus } from 'lucide-react'
+import { Search, Download, UploadCloud, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import DataTable from '../../components/dashboard/DataTable'
+import { DetailBackButton } from '../../components/ui/DetailComponents'
+import { KehadiranSelect, PeranSelect } from '../../components/dashboard/PesertaFields'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import {
   getKegiatanById,
   getPesertaKegiatan,
@@ -54,35 +58,6 @@ function formatTanggal(value) {
   }
 }
 
-function SubmitModal({ isOpen, onConfirm, onClose }) {
-  if (!isOpen) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-sm rounded-2xl bg-base-100 p-8 shadow-xl text-center">
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 text-base-content/50 hover:text-base-content"><X className="h-4 w-4" /></button>
-        <h4 className="mb-2 text-lg font-bold text-base-content">Submit Kegiatan Peserta</h4>
-        <p className="mb-6 text-sm text-base-content/60">Submit data untuk mengklaim poin peserta secara otomatik.</p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="btn btn-primary flex-1 py-3 text-sm font-bold text-white hover:opacity-90"
-          >
-            SUBMIT
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl border-2 border-base-300 py-3 text-sm font-bold text-base-content/80 hover:bg-base-200"
-          >
-            BATAL
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ManajemenPesertaEvent() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -100,7 +75,6 @@ function ManajemenPesertaEvent() {
   const [showTambahModal, setShowTambahModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [page, setPage] = useState(1)
 
   const loadData = () => {
     setLoading(true)
@@ -202,26 +176,18 @@ function ManajemenPesertaEvent() {
     }
   }
 
-  function handleResetFilter() {
-    setSearch('')
-    setFilterKehadiran('semua')
-    setPage(1)
-  }
-
-  const PAGE_SIZE = 10
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * PAGE_SIZE
-  const pageItems = filtered.slice(start, start + PAGE_SIZE)
-
   const belumDisetujui = !['disetujui', 'terpublikasi'].includes(eventStatus)
 
   return (
     <DashboardLayout role="admin_fakultas" userName="Admin Fakultas" userRole="Admin Fakultas">
-      <SubmitModal
+      <ConfirmModal
         isOpen={showSubmitModal}
+        title="Submit poin peserta"
+        message="Kehadiran dan peran akan disimpan, lalu poin peserta diproses otomatis."
+        confirmText="Submit"
+        cancelText="Batal"
         onConfirm={handleSubmitConfirm}
-        onClose={() => setShowSubmitModal(false)}
+        onCancel={() => setShowSubmitModal(false)}
       />
 
       <TambahPesertaModal
@@ -231,35 +197,37 @@ function ManajemenPesertaEvent() {
         onAdded={loadData}
       />
 
-      <div className="space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate('/admin_fakultas/manajemen-event')}
-          className="flex items-center gap-1.5 text-sm font-medium text-brand-dark hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Manajemen Event
-        </button>
+      <div className="space-y-5">
+        <DetailBackButton onClick={() => navigate('/admin_fakultas/manajemen-event')}>
+          Kembali ke manajemen event
+        </DetailBackButton>
 
         <div>
-          <h2 className="text-xl font-extrabold text-base-content sm:text-2xl lg:text-3xl">{event.nama}</h2>
+          <h2 className="text-2xl font-extrabold text-base-content">Manajemen peserta</h2>
           <p className="mt-1 text-sm text-base-content/60">
-            {[event.jenis, event.tanggal, event.lokasi].filter(Boolean).join(' · ')}
+            {[event.nama, event.jenis, event.tanggal, event.lokasi].filter(Boolean).join(' · ')}
           </p>
         </div>
 
-        <TableCard title="Daftar Peserta">
+        {belumDisetujui ? (
+          <div className="alert alert-warning">
+            <span className="text-sm">Event belum disetujui pimpinan. Edit dan submit poin belum bisa dilakukan.</span>
+          </div>
+        ) : null}
+
+        <TableCard title="Daftar peserta">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center">
-              <div className="relative flex w-full flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
+            <div className="flex flex-col gap-2 lg:flex-1 lg:flex-row lg:items-center">
+              <label className="input input-sm flex-1">
+                <Search className="h-4 w-4 shrink-0 opacity-50" />
                 <input
+                  type="text"
+                  placeholder="Cari nama, NIM, atau prodi"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari nama, NIM, atau prodi…"
-                  className="input w-full"
                 />
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+              </label>
+              <div className="join">
                 {['semua', 'hadir', 'tidak hadir'].map((f) => (
                   <button
                     key={f}
@@ -267,32 +235,34 @@ function ManajemenPesertaEvent() {
                     onClick={() => setFilterKehadiran(f)}
                     className={kehadiranFilterBtnClass(filterKehadiran === f)}
                   >
-                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                    {f === 'semua' ? 'Semua' : f === 'hadir' ? 'Hadir' : 'Tidak hadir'}
                   </button>
                 ))}
-                {(search || filterKehadiran !== 'semua') && (
-                  <button
-                    type="button"
-                    onClick={handleResetFilter}
-                    className={pesertaResetFilterBtnClass}
-                  >
-                    Reset Filter
-                  </button>
-                )}
               </div>
+              {(search || filterKehadiran !== 'semua') ? (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); setFilterKehadiran('semua') }}
+                  className={pesertaResetFilterBtnClass}
+                >
+                  Reset
+                </button>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => downloadTemplatePeserta(id).catch((err) => toast.error('Gagal download template', { description: err.message }))}
                 className={pesertaDownloadBtnClass}
-              ><Download className="h-4 w-4" /> Unduh Template
+              >
+                <Download className="h-4 w-4" /> Unduh template
               </button>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 className={pesertaImportBtnClass}
-              ><UploadCloud className="h-4 w-4" /> Import File
+              >
+                <UploadCloud className="h-4 w-4" /> Import file
               </button>
               <input
                 ref={fileRef}
@@ -307,119 +277,65 @@ function ManajemenPesertaEvent() {
               />
             </div>
           </div>
-          <TableFrame>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-max text-sm">
-              <thead>
-                <tr className="bg-primary text-white">
-                  <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NO</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NIM</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">NAMA MAHASISWA</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">FAKULTAS</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">PROGRAM STUDI</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">KEHADIRAN</th>
-                  <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wide">PERAN</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-base-300">
-                {loading ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-base-content/50">Memuat data…</td></tr>
-                ) : pageItems.map((p, i) => (
-                  <tr key={p.id} className="divide-x divide-base-300 hover:bg-base-200">
-                    <td className="w-16 px-4 py-3.5 text-center text-base-content/60">{start + i + 1}</td>
-                    <td className="px-4 py-3.5 text-base-content/60">{p.nim}</td>
-                    <td className="px-4 py-3.5 font-medium text-base-content">{p.nama}</td>
-                    <td className="px-4 py-3.5 text-base-content/60">{p.fakultas}</td>
-                    <td className="px-4 py-3.5 text-base-content/60">{p.prodi}</td>
-                    <td className="px-4 py-3.5">
-                      <select
-                        value={p.hadir === true ? 'true' : p.hadir === false ? 'false' : ''}
-                        onChange={(e) => setHadir(p.id, e.target.value)}
-                        disabled={!isEditing}
-                        className="rounded-md border border-base-300 p-1.5 text-xs text-base-content outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
-                      >
-                        <option value="">Belum</option>
-                        <option value="true">Hadir</option>
-                        <option value="false">Tidak Hadir</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <select
-                        value={p.peranVerifId || ''}
-                        onChange={(e) => setPilihPeran(p.id, e.target.value)}
-                        disabled={!isEditing}
-                        className="rounded border border-base-300 px-2 py-1 text-xs text-base-content/80 outline-none focus:border-brand-dark disabled:cursor-default disabled:bg-base-200 disabled:text-base-content/40"
-                      >
-                        <option value="">Pilih Peran</option>
-                        {peranOptions.map((opt) => (
-                          <option key={opt.id} value={String(opt.id)}>{opt.nama}</option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {!loading && filtered.length === 0 && (
-            <div className="py-10 text-center text-sm text-base-content/50">Tidak ada peserta ditemukan.</div>
-          )}
 
-          <div className="flex items-center justify-between border-t border-base-300 px-6 py-3">
-            <span className="text-xs text-base-content/50">
-              Showing {filtered.length} from Total {pesertaList.length}
-            </span>
-            <div className="flex items-center gap-3">
-              {totalPages > 1 && (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    disabled={currentPage <= 1}
-                    onClick={() => setPage(currentPage - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="px-2 text-xs text-base-content/50">
-                    Halaman {currentPage} dari {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setPage(currentPage + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              {belumDisetujui && !submitted && !isEditing && (
-                <span className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                  Event belum disetujui pimpinan
-                </span>
-              )}
+          <TableFrame>
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                { key: 'nim', label: 'NIM' },
+                { key: 'nama', label: 'Nama' },
+                { key: 'fakultas', label: 'Fakultas' },
+                { key: 'prodi', label: 'Program studi' },
+                {
+                  key: 'hadir',
+                  label: 'Hadir',
+                  center: true,
+                  render: (p) => (
+                    <KehadiranSelect
+                      value={p.hadir}
+                      disabled={!isEditing}
+                      onChange={(v) => setHadir(p.id, v)}
+                    />
+                  ),
+                },
+                {
+                  key: 'peran',
+                  label: 'Peran',
+                  render: (p) => (
+                    <PeranSelect
+                      value={p.peranVerifId}
+                      disabled={!isEditing}
+                      options={peranOptions}
+                      onChange={(v) => setPilihPeran(p.id, v)}
+                    />
+                  ),
+                },
+              ]}
+              data={filtered.map((p, i) => ({ ...p, _no: i + 1 }))}
+              loading={loading}
+              emptyText="Tidak ada peserta."
+              pageSize={10}
+            />
+            <div className="flex flex-wrap items-center gap-2 border-t border-base-300 px-3 py-3">
               <button
                 type="button"
                 onClick={() => setShowTambahModal(true)}
                 className={pesertaTambahBtnClass}
-              ><UserPlus className="h-4 w-4" /> Tambah Peserta
+              >
+                <UserPlus className="h-4 w-4" /> Tambah peserta
               </button>
-              {!submitted && !isEditing && !belumDisetujui && (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className={pesertaEditBtnClass}
-                >
+              {!submitted && !isEditing && !belumDisetujui ? (
+                <button type="button" onClick={() => setIsEditing(true)} className={pesertaEditBtnClass}>
                   Edit
                 </button>
-              )}
-              {!submitted && isEditing && (
+              ) : null}
+              {!submitted && isEditing ? (
                 <>
                   <button
                     type="button"
                     onClick={handleBatalEdit}
                     disabled={saving}
-                    className={`${pesertaBatalBtnClass} disabled:opacity-60`}
+                    className={pesertaBatalBtnClass}
                   >
                     Batal
                   </button>
@@ -429,23 +345,17 @@ function ManajemenPesertaEvent() {
                     disabled={saving}
                     className={pesertaSubmitBtnClass}
                   >
-                    {saving ? 'Memproses…' : 'Submit Poin Peserta'}
+                    {saving ? 'Memproses…' : 'Submit poin peserta'}
                   </button>
                 </>
-              )}
+              ) : null}
             </div>
-          </div>
-        </TableFrame></TableCard>
+          </TableFrame>
+        </TableCard>
 
-        {submitted && (
-          <div className="pt-2">
-            <p className="text-sm font-semibold text-base-content/80">Status</p>
-            <p className="mt-1 text-2xl font-extrabold">
-              <span className="text-base-content">Telah </span>
-              <span className="text-brand-dark">Tercatat</span>
-            </p>
-          </div>
-        )}
+        {submitted ? (
+          <p className="text-sm text-base-content/60">Poin peserta telah tercatat.</p>
+        ) : null}
       </div>
     </DashboardLayout>
   )

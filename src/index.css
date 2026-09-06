@@ -103,7 +103,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-size: var(--app-font-size, 16px);
+    font-size: var(--app-font-size, 18px);
   }
 
   body {

@@ -25,6 +25,7 @@ function normalizeKurikulum(k) {
     id: k.id,
     nama: k.nama || k.namaKurikulum || '-',
     tahun: k.tahunAkademik || k.tahun || '-',
+    angkatanMulai: k.angkatanMulai ?? null,
     status: k.status || 'draft',
     capaian: (k.capaian || k.capaiapembelajaran || []).map((c) => ({
       id: c.id,
@@ -37,6 +38,16 @@ function normalizeKurikulum(k) {
       })),
     })),
   }
+}
+
+function formatCakupanAngkatan(kur, allKurikulum) {
+  if (kur.angkatanMulai == null) return 'Angkatan mulai belum diisi'
+  const nextStarts = allKurikulum
+    .map((k) => k.angkatanMulai)
+    .filter((y) => y != null && y > kur.angkatanMulai)
+    .sort((a, b) => a - b)
+  if (nextStarts.length === 0) return `Angkatan ${kur.angkatanMulai} dan seterusnya`
+  return `Angkatan ${kur.angkatanMulai}–${nextStarts[0] - 1}`
 }
 
 function ToggleSwitch({ checked, onChange }) {
@@ -70,7 +81,7 @@ function ManajemenKurikulum() {
   const [nonaktifTarget, setNonaktifTarget] = useState(null)
 
   const [showTambahKurikulum, setShowTambahKurikulum] = useState(false)
-  const [kurForm, setKurForm] = useState({ tahun: new Date().getFullYear(), nama: '' })
+  const [kurForm, setKurForm] = useState({ tahun: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`, angkatanMulai: new Date().getFullYear(), nama: '' })
 
   const [showTambahCapaian, setShowTambahCapaian] = useState(false)
   const [capaianForm, setCapaianForm] = useState({ nama: '', jumlahPoin: '' })
@@ -245,21 +256,37 @@ function ManajemenKurikulum() {
 
   const handleTambahKurikulum = async () => {
     const namaTrimmed = String(kurForm.nama || '').trim()
-    const tahunInt = parseInt(kurForm.tahun, 10)
+    const tahunInt = parseInt(String(kurForm.tahun).split('/')[0], 10)
+    const angkatanMulai = Number(kurForm.angkatanMulai)
 
     if (!namaTrimmed) {
       toast.error('Nama kurikulum tidak boleh kosong.')
       return
     }
     if (!kurForm.tahun || isNaN(tahunInt) || tahunInt < 2000 || tahunInt > 2100) {
-      toast.error('Tahun harus berupa angka integer yang valid (contoh: 2025).')
+      toast.error('Tahun akademik harus valid (contoh: 2025/2026).')
+      return
+    }
+    if (!angkatanMulai || angkatanMulai < 2000 || angkatanMulai > 2100) {
+      toast.error('Angkatan mulai harus diisi (contoh: 2024).')
       return
     }
 
     try {
-      const created = await createKurikulum({ nama: namaTrimmed, tahunAkademik: String(tahunInt) })
+      const tahunAkademik = String(kurForm.tahun).includes('/')
+        ? String(kurForm.tahun)
+        : `${tahunInt}/${tahunInt + 1}`
+      const created = await createKurikulum({
+        nama: namaTrimmed,
+        tahunAkademik,
+        angkatanMulai,
+      })
       toast.success('Kurikulum berhasil ditambahkan.')
-      setKurForm({ tahun: new Date().getFullYear(), nama: '' })
+      setKurForm({
+        tahun: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+        angkatanMulai: new Date().getFullYear(),
+        nama: '',
+      })
       setShowTambahKurikulum(false)
       loadList()
       if (created?.id) setActiveKurId(created.id)
@@ -472,28 +499,42 @@ const handleEditSubCapaian = async () => {
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-base-content">
-              Tahun Berlaku <span className="text-red-500">*</span>
+              Tahun Akademik <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
+              value={kurForm.tahun}
+              onChange={(e) => setKurForm((p) => ({ ...p, tahun: e.target.value }))}
+              placeholder="Contoh: 2024/2025"
+              className="input w-full"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-base-content">
+              Mulai Berlaku untuk Angkatan <span className="text-error">*</span>
             </label>
             <input
               type="number"
               min="2000"
               max="2100"
               step="1"
-              value={kurForm.tahun}
+              value={kurForm.angkatanMulai}
               onChange={(e) =>
                 setKurForm((p) => ({
                   ...p,
-                  tahun: e.target.value === '' ? '' : parseInt(e.target.value, 10),
+                  angkatanMulai: e.target.value === '' ? '' : parseInt(e.target.value, 10),
                 }))
               }
-              placeholder="Contoh: 2025"
+              placeholder="Contoh: 2024"
               className="input w-full"
             />
-           
+            <p className="mt-1 text-xs text-base-content/50">
+              Berlaku untuk angkatan ini dan seterusnya sampai kurikulum baru dengan tahun mulai lebih besar.
+            </p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-base-content">
-              Nama Kurikulum <span className="text-red-500">*</span>
+              Nama Kurikulum <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -787,7 +828,11 @@ const handleEditSubCapaian = async () => {
           <button
             type="button"
             onClick={() => {
-              setKurForm({ tahun: new Date().getFullYear(), nama: '' })
+              setKurForm({
+                tahun: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+                angkatanMulai: new Date().getFullYear(),
+                nama: '',
+              })
               setShowTambahKurikulum(true)
             }}
             className="btn btn-primary w-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto sm:justify-start"
@@ -823,7 +868,9 @@ const handleEditSubCapaian = async () => {
                     className="flex flex-1 flex-col gap-1.5 text-left"
                   >
                     <p className={`text-sm font-bold ${isActive ? 'text-brand-dark' : 'text-base-content'}`}>{kur.nama}</p>
-                    <p className="text-xs text-base-content/50">Tahun: {kur.tahun}</p>
+                    <p className="text-xs text-base-content/50">
+                      Tahun: {kur.tahun} · {formatCakupanAngkatan(kur, kurikulum)}
+                    </p>
                     <div className="flex items-center gap-3">
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${

@@ -12,6 +12,7 @@ function TambahMatriks() {
 
   const [namaKurikulum, setNamaKurikulum] = useState('')
   const [tahun, setTahun] = useState('')
+  const [angkatanMulai, setAngkatanMulai] = useState('')
   const [loadingCapaian, setLoadingCapaian] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -87,8 +88,13 @@ function TambahMatriks() {
       toast.error('Nama kurikulum tidak boleh kosong.')
       return
     }
-    if (!tahun.trim()) {
-      toast.error('Tahun tidak boleh kosong.')
+    if (!/^\d{4}\/\d{4}$/.test(tahun.trim())) {
+      toast.error('Tahun akademik harus berformat YYYY/YYYY.')
+      return
+    }
+    const angkatan = Number(angkatanMulai)
+    if (!Number.isInteger(angkatan) || angkatan < 2000 || angkatan > 2100) {
+      toast.error('Angkatan mulai harus berupa tahun yang valid.')
       return
     }
     if (baris.length === 0) {
@@ -100,6 +106,7 @@ function TambahMatriks() {
       const created = await createKurikulum({
         nama: namaKurikulum.trim(),
         tahunAkademik: tahun.trim(),
+        angkatanMulai: angkatan,
       })
       const kurikulumId = created?.id || created?.data?.id
       if (!kurikulumId) throw new Error('Gagal mendapatkan ID kurikulum baru.')

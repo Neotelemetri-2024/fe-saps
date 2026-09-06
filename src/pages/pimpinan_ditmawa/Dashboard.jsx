@@ -40,6 +40,7 @@ function Dashboard() {
   const topFakultas = Array.isArray(stats?.topFakultas) ? stats.topFakultas : []
   const kegiatanPending = Array.isArray(stats?.kegiatanMenungguApproval) ? stats.kegiatanMenungguApproval : []
   const ukmChart = Array.isArray(stats?.grafikPoinUkm) ? stats.grafikPoinUkm : []
+  const iku3Widget = stats?.iku3Widget || null
 
   const chartLabels = ukmChart.map((d) => d.ukm || d.label || d.nama || d.organisasi || '')
   const chartValues = ukmChart.map((d) => d.totalPoin ?? d.poin ?? d.nilai ?? 0)
@@ -80,6 +81,46 @@ function Dashboard() {
             small
           />
         </div>
+
+        {iku3Widget || loading ? (
+          <div className="card bg-base-100 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-base-content">Monitoring IKU 3</h3>
+                {loading ? (
+                  <div className="mt-2 space-y-2" aria-hidden>
+                    <div className="skeleton h-4 w-64" />
+                    <div className="skeleton h-2 w-72" />
+                    <div className="skeleton h-4 w-52" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-1 text-sm text-base-content/60">
+                      Capaian {Number(iku3Widget.capaian || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%
+                      {' '}dari target {Number(iku3Widget.target || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%
+                      {' '}({iku3Widget.tahun})
+                    </p>
+                    <div className="mt-3 max-w-md">
+                      <ProgressBar value={iku3Widget.capaian || 0} max={iku3Widget.target || 100} height={6} />
+                    </div>
+                    <p className="mt-2 text-sm text-base-content/60">
+                      {iku3Widget.statusTarget === 'tercapai'
+                        ? 'Target tahun ini sudah tercapai.'
+                        : `Butuh +${Number(iku3Widget.gapMahasiswa || 0).toLocaleString('id-ID')} mahasiswa lagi.`}
+                    </p>
+                  </>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/pimpinan_ditmawa/monitoring-iku3')}
+                className="btn btn-outline btn-primary btn-sm"
+              >
+                Lihat detail
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {/* Progres Capaian Kurikulum */}
         <div className="card bg-base-100 p-5 sm:p-6">

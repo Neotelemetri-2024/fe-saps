@@ -17,7 +17,16 @@ const riwayatColumns = [
   {
     key: 'kegiatan',
     label: 'KEGIATAN',
-    render: (row) => <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} />,
+    render: (row) => (
+      <div className="flex flex-col gap-1">
+        <KegiatanCell nama={row.kegiatan} tanggal={row.diajukanPada} />
+        {row.isIku3 ? (
+          <span className="badge badge-success badge-sm h-auto w-fit shrink-0 whitespace-nowrap">
+            Diakui IKU 3
+          </span>
+        ) : null}
+      </div>
+    ),
   },
   { key: 'jenis', label: 'JENIS' },
   { key: 'peran', label: 'PERAN' },
@@ -76,7 +85,16 @@ function mapRiwayat(item, i) {
     skala: item.skala || '-',
     status,
     alasan: item.alasan || null,
+    isIku3: Boolean(item.isIku3),
+    estimasiBobotIku3: item.estimasiBobotIku3,
+    badgeIku3: item.badgeIku3 || null,
   }
+}
+
+function isPrestasiNasionalJuara(skala, peran) {
+  const s = String(skala || '').toLowerCase()
+  const p = String(peran || '').toLowerCase()
+  return s.includes('nasional') && (p.includes('juara 1') || p.includes('juara i'))
 }
 
 function mapSiapKlaim(item, i) {
@@ -171,6 +189,7 @@ function KlaimPoinCapaian() {
       kegiatan: row.kegiatan,
       peran: row.peran || '-',
       peranId: row.peranId || '',
+      skala: row.skala || '-',
       bukti: null,
     }))
     setKlaimItems(items)
@@ -267,6 +286,14 @@ function KlaimPoinCapaian() {
             </p>
           </div>
 
+          {klaimItems.some((item) => isPrestasiNasionalJuara(item.skala, item.peran)) ? (
+            <div className="alert alert-info">
+              <span className="text-sm">
+                Prestasi juara 1 skala nasional berpotensi diakui sebagai kontributor IKU 3 (estimasi bobot 0,60).
+              </span>
+            </div>
+          ) : null}
+
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {klaimItems.map((item) => (
               <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : 'border-base-300 bg-base-200'}`}>
@@ -349,7 +376,7 @@ function KlaimPoinCapaian() {
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
+                      className="btn btn-ghost btn-sm"
                     >
                       Batal
                     </button>
@@ -357,7 +384,7 @@ function KlaimPoinCapaian() {
                       type="button"
                       onClick={handleOpenKlaimModal}
                       disabled={selected.size === 0}
-                      className="btn btn-primary px-6 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                      className="btn btn-primary btn-sm"
                     >
                       Klaim Poin Capaian
                     </button>
@@ -367,7 +394,7 @@ function KlaimPoinCapaian() {
                 <button
                   type="button"
                   onClick={() => setPilihanMode(true)}
-                  className="btn btn-primary ml-auto px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary btn-sm ml-auto"
                 >
                   Klaim Poin Capaian
                 </button>
@@ -413,7 +440,7 @@ function KlaimPoinCapaian() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="btn btn-ghost btn-sm"
                 >
                   Reset Filter
                 </button>

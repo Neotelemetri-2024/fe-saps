@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import ProgressBar from '../../components/dashboard/ProgressBar'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -64,36 +65,27 @@ function MahasiswaPerluPerhatian() {
   }, [data, search, filterProdi])
 
   const columns = useMemo(() => [
-    { key: 'no', label: 'NO', render: (row) => <span className="text-base-content">{row.no}</span> },
-    { key: 'mahasiswa', label: 'MAHASISWA' },
+    { key: 'no', label: 'No' },
+    { key: 'mahasiswa', label: 'Mahasiswa' },
     { key: 'nim', label: 'NIM' },
     { key: 'ipk', label: 'IPK' },
     {
       key: 'capaian',
-      label: 'CAPAIAN',
+      label: 'Capaian',
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <ProgressBar value={row.capaian} max={100} height={8} color="bg-red-500" />
-          <span className="text-sm text-base-content">{row.capaian}%</span>
+        <div className="min-w-28">
+          <ProgressBar value={row.capaian} max={100} height={6} showPercent />
         </div>
       ),
     },
     {
       key: 'status',
-      label: 'STATUS',
-      render: (row) => (
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-            row.status === 'red' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-          }`}
-        >
-          {row.status === 'red' ? 'Perlu Perhatian' : 'Baik'}
-        </span>
-      ),
+      label: 'Status',
+      render: () => <StatusBadge status="perlu_perhatian" />,
     },
     {
       key: 'aksi',
-      label: 'AKSI',
+      label: 'Aksi',
       stopPropagation: true,
       render: (row) => (
         <ActionMenu
@@ -101,7 +93,6 @@ function MahasiswaPerluPerhatian() {
             {
               label: 'Detail',
               icon: <Eye className="h-4 w-4" />,
-              color: 'text-blue-600',
               onClick: () => navigate(`/dosen/lihat-detail/${row.mahasiswaId || row.nim}`, {
                 state: {
                   mahasiswa: {
@@ -124,52 +115,51 @@ function MahasiswaPerluPerhatian() {
 
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-base-content sm:text-2xl">Mahasiswa yang Perlu Perhatian!</h2>
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-2xl font-extrabold text-base-content">Mahasiswa perlu perhatian</h2>
+            <p className="mt-1 text-sm text-base-content/60">{filtered.length} mahasiswa</p>
+          </div>
 
-          <TableCard title="Mahasiswa Perlu Perhatian">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-2 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-base-content/50" />
+          <TableCard title="Daftar mahasiswa">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="input input-sm flex-1">
+                <Search className="h-4 w-4 shrink-0 opacity-50" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari nama atau NIM..."
-                  className="flex-1 text-sm outline-none"
+                  placeholder="Cari nama atau NIM"
                 />
-              </div>
+              </label>
               <select
                 value={filterProdi}
                 onChange={(e) => setFilterProdi(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-sm outline-none"
+                className="select select-sm sm:w-56"
               >
-                <option value="">Semua Prodi</option>
+                <option value="">Semua prodi</option>
                 {prodiOptions.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
-              {(search || filterProdi) && (
+              {(search || filterProdi) ? (
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterProdi('') }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="btn btn-ghost btn-sm"
                 >
-                  Reset Filter
+                  Reset
                 </button>
-              )}
+              ) : null}
             </div>
             <TableFrame>
-              {loading ? (
-                <p className="py-8 text-center text-sm text-base-content/50">Memuat data…</p>
-              ) : (
-                <>
-                  <DataTable columns={columns} data={filtered} />
-                  <p className="mt-4 text-sm text-base-content/60">
-                    menampilkan {filtered.length === 0 ? 0 : 1} - {filtered.length} dari {data.length} Mahasiswa
-                  </p>
-                </>
-              )}
+              <DataTable
+                columns={columns}
+                data={filtered}
+                loading={loading}
+                emptyText="Tidak ada mahasiswa perlu perhatian."
+                pageSize={15}
+              />
             </TableFrame>
           </TableCard>
         </div>

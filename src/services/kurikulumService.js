@@ -13,9 +13,10 @@ export async function getKurikulumById(id) {
 export async function getKurikulumAktif() {
   try {
     const res = await get('/api/kurikulum/aktif')
-    return res?.data || res
+    const data = res?.data ?? res
+    return Array.isArray(data) ? data : data ? [data] : []
   } catch {
-    return null
+    return []
   }
 }
 
@@ -69,8 +70,9 @@ export async function hapusSubCapaian(subCapaianId) {
   return true
 }
 
-export async function getMatriks() {
-  const res = await get('/api/matriks')
+export async function getMatriks(kurikulumId) {
+  const params = kurikulumId ? { kurikulumId: Number(kurikulumId) } : {}
+  const res = await get('/api/matriks', params)
   return res?.data || res || []
 }
 

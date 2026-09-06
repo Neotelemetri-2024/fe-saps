@@ -17,6 +17,7 @@ import {
   getFakultasList,
   getProdiList,
 } from '../../services/laporanService'
+import { getKurikulumAktif } from '../../services/kurikulumService'
 
 const ROLE_LABEL = {
   pimpinan_utama: 'Pimpinan Utama',
@@ -72,6 +73,8 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
   const [tahunAkademik, setTahunAkademik] = useState('')
   const [angkatan, setAngkatan] = useState('')
+  const [kurikulumId, setKurikulumId] = useState('')
+  const [kurikulumOptions, setKurikulumOptions] = useState([])
   const [fakultasId, setFakultasId] = useState('')
   const [prodiId, setProdiId] = useState('')
   const [fakultasOptions, setFakultasOptions] = useState([])
@@ -92,11 +95,13 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const buildFilter = (overrides = {}) => {
     const nextTahun = overrides.tahunAkademik ?? tahunAkademik
     const nextAngkatan = overrides.angkatan ?? angkatan
+    const nextKurikulum = overrides.kurikulumId ?? kurikulumId
     const nextFakultas = overrides.fakultasId ?? fakultasId
     const nextProdi = overrides.prodiId ?? prodiId
     return {
       tahunAkademik: nextTahun || undefined,
       angkatan: nextAngkatan ? Number(nextAngkatan) : undefined,
+      kurikulumId: nextKurikulum ? Number(nextKurikulum) : undefined,
       fakultasId: nextFakultas ? Number(nextFakultas) : undefined,
       prodiId: nextProdi ? Number(nextProdi) : undefined,
     }
@@ -104,6 +109,9 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
   useEffect(() => {
     getFakultasList().then(setFakultasOptions).catch(() => setFakultasOptions([]))
+    getKurikulumAktif()
+      .then((list) => setKurikulumOptions(Array.isArray(list) ? list : []))
+      .catch(() => setKurikulumOptions([]))
   }, [])
 
   useEffect(() => {
@@ -140,9 +148,10 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const handleResetFilter = () => {
     setTahunAkademik('')
     setAngkatan('')
+    setKurikulumId('')
     setFakultasId('')
     setProdiId('')
-    fetchData({ tahunAkademik: '', angkatan: '', fakultasId: '', prodiId: '' })
+    fetchData({ tahunAkademik: '', angkatan: '', kurikulumId: '', fakultasId: '', prodiId: '' })
   }
 
   const handleDownloadExcel = async () => {
@@ -215,7 +224,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const kpi = laporanData?.kpi
   const scopeNama = laporanData?.scopeNama || 'Universitas Andalas'
   const targetPoin = laporanData?.kurikulum?.targetPoin ?? 200
-  const hasActiveFilter = Boolean(tahunAkademik || angkatan || fakultasId || prodiId)
+  const hasActiveFilter = Boolean(tahunAkademik || angkatan || kurikulumId || fakultasId || prodiId)
   const kurikulumStats = laporanData?.capaianKurikulumStats || []
 
   const content = (
@@ -264,6 +273,15 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
             <option value="">Semua</option>
             {ANGKATAN.map((year) => (
               <option key={year} value={year}>{year}</option>
+            ))}
+          </ToolbarSelect>
+
+          <ToolbarSelect label="Kurikulum" value={kurikulumId} onChange={(e) => setKurikulumId(e.target.value)}>
+            <option value="">Semua / campuran</option>
+            {kurikulumOptions.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
+              </option>
             ))}
           </ToolbarSelect>
 

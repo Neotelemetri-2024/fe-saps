@@ -29,7 +29,14 @@ const statusConfig = {
   'sudah tercatat': { tone: 'success', label: 'Sudah Tercatat' },
   'belum tercatat': { tone: 'info', label: 'Belum Tercatat' },
   tercapai: { tone: 'success', label: 'Tercapai' },
+  belum_tercapai: { tone: 'warning', label: 'Belum Tercapai' },
   'belum tercapai': { tone: 'warning', label: 'Belum Tercapai' },
+  sah: { tone: 'success', label: 'Sah' },
+  lulus: { tone: 'success', label: 'Lulus' },
+  baik: { tone: 'success', label: 'Baik' },
+  on_track: { tone: 'success', label: 'On Track' },
+  perlu_perhatian: { tone: 'error', label: 'Perlu Perhatian' },
+  belum_lulus: { tone: 'warning', label: 'Belum memenuhi syarat' },
 }
 
 function StatusBadge({ status }) {
@@ -39,7 +46,7 @@ function StatusBadge({ status }) {
     label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending',
   }
   return (
-    <span className={`badge badge-sm ${TONE[cfg.tone] || TONE.neutral}`}>
+    <span className={`badge badge-sm h-auto shrink-0 overflow-visible whitespace-nowrap ${TONE[cfg.tone] || TONE.neutral}`}>
       {cfg.label}
     </span>
   )

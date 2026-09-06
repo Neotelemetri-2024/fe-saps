@@ -7,6 +7,7 @@ import {
   syncMatriks,
   getAllHistoriMatriks,
   hapusKategori,
+  getKurikulum,
 } from '../../services/kurikulumService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 
@@ -622,10 +623,17 @@ function BobotPoin() {
   const [loadingMatriks, setLoadingMatriks] = useState(true)
   const [showTambahMatriks, setShowTambahMatriks] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [kurikulumOptions, setKurikulumOptions] = useState([])
+  const [kurikulumId, setKurikulumId] = useState('')
 
-  const loadMatriks = () => {
+  const loadMatriks = (selectedId = kurikulumId) => {
+    if (!selectedId) {
+      setSections([])
+      setLoadingMatriks(false)
+      return Promise.resolve()
+    }
     setLoadingMatriks(true)
-    return getMatriks()
+    return getMatriks(selectedId)
       .then((data) => {
         setSections(apiToSections(data))
       })
@@ -633,10 +641,35 @@ function BobotPoin() {
       .finally(() => setLoadingMatriks(false))
   }
 
-  useEffect(() => { loadMatriks() }, [])
+  useEffect(() => {
+    getKurikulum()
+      .then((list) => {
+        const options = (Array.isArray(list) ? list : []).map((k) => ({
+          id: k.id,
+          label: `${k.nama}${k.angkatanMulai ? ` (angkatan ${k.angkatanMulai}+)` : ''}`,
+          status: k.status,
+        }))
+        setKurikulumOptions(options)
+        const preferred = options.find((k) => k.status === 'aktif') || options[0]
+        if (preferred) {
+          setKurikulumId(String(preferred.id))
+          return loadMatriks(preferred.id)
+        }
+        setLoadingMatriks(false)
+      })
+      .catch(() => setLoadingMatriks(false))
+  }, [])
+
+  useEffect(() => {
+    if (kurikulumId) loadMatriks(kurikulumId)
+  }, [kurikulumId])
 
   async function handleUpdate(idx, updated) {
     setSections((prev) => prev.map((s, i) => (i === idx ? updated : s)))
+    if (!kurikulumId) {
+      toast.error('Pilih kurikulum terlebih dahulu')
+      return
+    }
     try {
       const kategoriNama = updated.title.replace(/^\d+\.\s*/, '')
       const columns = updated.columns.map((c) => ({
@@ -662,6 +695,7 @@ function BobotPoin() {
       })
 
       const res = await syncMatriks({
+        kurikulumId: Number(kurikulumId),
         ...(updated.kategoriId ? { kategoriId: Number(updated.kategoriId) } : {}),
         kategoriNama,
         columns,
@@ -672,7 +706,7 @@ function BobotPoin() {
       toast.success('Bobot poin tersimpan & tersinkronisasi', {
         description: res?.message || `${cells.length} sel diperbarui`,
       })
-      await loadMatriks()
+      await loadMatriks(kurikulumId)
     } catch (err) {
       toast.error('Gagal menyimpan ke server', { description: err.message })
     }
@@ -728,7 +762,20 @@ function BobotPoin() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex min-w-56 flex-col gap-1">
+            <span className="text-xs text-base-content/60">Kurikulum</span>
+            <select
+              className="select select-sm"
+              value={kurikulumId}
+              onChange={(e) => setKurikulumId(e.target.value)}
+            >
+              <option value="">Pilih kurikulum</option>
+              {kurikulumOptions.map((k) => (
+                <option key={k.id} value={k.id}>{k.label}</option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             onClick={() => setShowTambahMatriks(true)}

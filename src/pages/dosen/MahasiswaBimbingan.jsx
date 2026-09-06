@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Clock, Eye } from 'lucide-react'
+import { Search, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import ProgressBar from '../../components/dashboard/ProgressBar'
+import StatusBadge from '../../components/dashboard/StatusBadge'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
@@ -23,34 +25,12 @@ function formatDate(val) {
   }
 }
 
-function CapaianBar({ poin, persen }) {
-  const pct = persen != null
-    ? Math.min(100, Math.round(Number(persen)))
-    : 0
-  const isLow = pct < 50
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-2.5 w-28 overflow-hidden rounded-full bg-base-300">
-        <div
-          className={`h-full rounded-full transition-all ${isLow ? 'bg-red-500' : 'bg-brand-dark'}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-xs font-medium text-base-content/70">{pct}%</span>
-    </div>
-  )
-}
-
-function StatusPill({ poin, persen, status, isLulus }) {
-  if (isLulus || status === 'lulus') {
-    return <span className="badge badge-sm badge-success">Lulus</span>
+function statusMahasiswa(m) {
+  if (m.isLulus || m.status === 'lulus') return 'lulus'
+  if (m.status === 'perlu_perhatian' || (m.capaianPersen != null && m.capaianPersen < 50)) {
+    return 'perlu_perhatian'
   }
-  const isLow = status === 'perlu_perhatian' || (persen != null && persen < 50)
-  return (
-    <span className={`badge badge-sm ${isLow ? 'badge-error' : 'badge-success'}`}>
-      {isLow ? 'Perlu Perhatian' : 'On Track'}
-    </span>
-  )
+  return m.status || 'on_track'
 }
 
 function normalizeMahasiswa(item) {
@@ -116,104 +96,99 @@ function MahasiswaBimbingan() {
 
   return (
     <DashboardLayout role="dosen" userName={user?.nama || 'Dosen Pembimbing'} userRole="Dosen Pembimbing">
-      <div className="space-y-6">
-        <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl mb-2">Mahasiswa Bimbingan</h2>
-
-        <div className="mt-2">
-          <TableCard title="Daftar Mahasiswa Bimbingan">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-2 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-base-content/50" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                  placeholder="Cari mahasiswa..."
-                  className="flex-1 text-sm outline-none"
-                />
-              </div>
-              <select
-                value={filterProdi}
-                onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-sm outline-none"
-              >
-                <option value="">Semua Prodi</option>
-                {prodiOptions.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-              {(search || filterProdi) && (
-                <button
-                  type="button"
-                  onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
-                >
-                  Reset Filter
-                </button>
-              )}
-            </div>
-            <TableFrame>
-              <DataTable
-                columns={[
-                  {
-                    key: '_no',
-                    label: 'No',
-                  },
-                  {
-                    key: 'nama',
-                    label: 'Mahasiswa',
-                    render: (m) => (
-                      <div>
-                        <p className="font-bold uppercase text-base-content">{m.nama}</p>
-                        <p className="text-xs font-normal text-base-content">{m.prodi}</p>
-                        {m.tanggalInput && m.tanggalInput !== '-' && (
-                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-base-content/50">
-                            <Clock className="h-3 w-3 shrink-0" /> {m.tanggalInput}
-                          </p>
-                        )}
-                      </div>
-                    ),
-                  },
-                  { key: 'nim', label: 'NIM' },
-                  { key: 'ipk', label: 'IPK' },
-                  {
-                    key: 'capaian',
-                    label: 'Capaian',
-                    render: (m) => <CapaianBar poin={m.poin} persen={m.capaianPersen} />,
-                  },
-                  {
-                    key: 'status',
-                    label: 'Status',
-                    render: (m) => <StatusPill poin={m.poin} persen={m.capaianPersen} status={m.status} isLulus={m.isLulus} />,
-                  },
-                  {
-                    key: 'aksi',
-                    label: 'Aksi',
-                    stopPropagation: true,
-                    render: (m) => (
-                      <ActionMenu
-                        items={[
-                          {
-                            label: 'Detail',
-                            icon: <Eye className="h-4 w-4" />,
-                            color: 'text-blue-600',
-                            onClick: () => navigate(`/dosen/lihat-detail/${m.mahasiswaId || m.nim}`, { state: { mahasiswa: m } }),
-                          },
-                        ]}
-                      />
-                    ),
-                  },
-                ]}
-                data={pageItems.map((m, i) => ({ ...m, _no: start + i + 1 }))}
-                loading={loading}
-                emptyText="Tidak ada mahasiswa ditemukan."
-                page={currentPage}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </TableFrame>
-          </TableCard>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-base-content">Mahasiswa bimbingan</h2>
+          <p className="mt-1 text-sm text-base-content/60">{filtered.length} mahasiswa</p>
         </div>
+
+        <TableCard title="Daftar mahasiswa">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="input input-sm flex-1">
+              <Search className="h-4 w-4 shrink-0 opacity-50" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                placeholder="Cari nama atau NIM"
+              />
+            </label>
+            <select
+              value={filterProdi}
+              onChange={(e) => { setFilterProdi(e.target.value); setPage(1) }}
+              className="select select-sm sm:w-56"
+            >
+              <option value="">Semua prodi</option>
+              {prodiOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            {(search || filterProdi) ? (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setFilterProdi(''); setPage(1) }}
+                className="btn btn-ghost btn-sm"
+              >
+                Reset
+              </button>
+            ) : null}
+          </div>
+          <TableFrame>
+            <DataTable
+              columns={[
+                { key: '_no', label: 'No' },
+                {
+                  key: 'nama',
+                  label: 'Mahasiswa',
+                  render: (m) => (
+                    <div>
+                      <p className="text-base-content">{m.nama}</p>
+                      <p className="text-xs text-base-content/60">{m.prodi}</p>
+                    </div>
+                  ),
+                },
+                { key: 'nim', label: 'NIM' },
+                { key: 'ipk', label: 'IPK' },
+                {
+                  key: 'capaian',
+                  label: 'Capaian',
+                  render: (m) => (
+                    <div className="min-w-28">
+                      <ProgressBar value={Number(m.capaianPersen) || 0} max={100} height={6} showPercent />
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (m) => <StatusBadge status={statusMahasiswa(m)} />,
+                },
+                {
+                  key: 'aksi',
+                  label: 'Aksi',
+                  stopPropagation: true,
+                  render: (m) => (
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Detail',
+                          icon: <Eye className="h-4 w-4" />,
+                          onClick: () => navigate(`/dosen/lihat-detail/${m.mahasiswaId || m.nim}`, { state: { mahasiswa: m } }),
+                        },
+                      ]}
+                    />
+                  ),
+                },
+              ]}
+              data={pageItems.map((m, i) => ({ ...m, _no: start + i + 1 }))}
+              loading={loading}
+              emptyText="Tidak ada mahasiswa ditemukan."
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </TableFrame>
+        </TableCard>
       </div>
     </DashboardLayout>
   )

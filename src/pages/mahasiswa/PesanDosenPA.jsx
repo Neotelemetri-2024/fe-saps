@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { ListItemSkeleton } from '../../components/dashboard/Skeleton'
 import { getCurrentUser } from '../../services/authService'
 import { get } from '../../services/apiClient'
 
@@ -33,15 +34,15 @@ function PesanDosenPA() {
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Pesan dari Dosen PA</h2>
-          <p className="mt-1 text-sm text-base-content/60">Semua catatan dan saran dari Dosen PA Anda.</p>
+          <h2 className="text-2xl font-extrabold text-base-content">Pesan dari Dosen PA</h2>
+          <p className="mt-1 text-sm text-base-content/60">Catatan dan saran dari Dosen PA</p>
         </div>
 
         <div className="card bg-base-100 p-5">
           {loading ? (
-            <p className="py-6 text-center text-sm text-base-content/50">Memuat pesan…</p>
+            <ListItemSkeleton rows={4} />
           ) : saranPa.length === 0 ? (
             <p className="py-6 text-center text-sm text-base-content/50">Belum ada pesan dari Dosen PA.</p>
           ) : (

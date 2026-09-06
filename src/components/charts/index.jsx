@@ -34,6 +34,27 @@ function formatLabel(label) {
   return String(label ?? '').replace(/\n/g, ' ')
 }
 
+function wrapRadarLabel(label, maxChars = 16) {
+  const words = String(label || '').replace(/\s+/g, ' ').trim().split(' ')
+  const lines = []
+  let current = ''
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (next.length > maxChars && current) {
+      lines.push(current)
+      current = word
+      if (lines.length === 2) {
+        current = ''
+        break
+      }
+    } else {
+      current = next
+    }
+  }
+  if (current && lines.length < 2) lines.push(current)
+  return lines.join('\n') || '-'
+}
+
 export function StackedBarChart({ labels = [], datasets = [], height = 300, horizontal = false }) {
   const skin = useChartSkin()
   const categories = labels.map(formatLabel)
@@ -116,6 +137,47 @@ export function GroupedBarChart({ labels = [], datasets = [], height = 280 }) {
 
   return (
     <ApexChart options={options} series={series} type="bar" height={height} width="100%" />
+  )
+}
+
+export function LineChart({ labels = [], datasets = [], height = 280 }) {
+  const skin = useChartSkin()
+  const categories = labels.map(formatLabel)
+  const series = datasets.map((ds) => ({
+    name: ds.label,
+    data: ds.data,
+  }))
+  const colors = datasets.map((ds) => ds.color).filter(Boolean)
+
+  const options = {
+    chart: baseChart(skin, { type: 'line' }),
+    colors: colors.length ? colors : undefined,
+    stroke: { width: 2, curve: 'smooth' },
+    markers: { size: 4 },
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories,
+      labels: { style: { fontSize: '10px', colors: skin.muted } },
+      axisBorder: { color: skin.grid },
+    },
+    yaxis: {
+      min: 0,
+      labels: {
+        style: { fontSize: '10px', colors: skin.muted },
+        formatter: (val) => `${val}`,
+      },
+    },
+    grid: { borderColor: skin.grid, strokeDashArray: 3 },
+    legend: {
+      position: 'bottom',
+      fontSize: '11px',
+      labels: { colors: skin.foreColor },
+    },
+    tooltip: { theme: skin.tooltipTheme, shared: true, intersect: false },
+  }
+
+  return (
+    <ApexChart options={options} series={series} type="line" height={height} width="100%" />
   )
 }
 
@@ -229,9 +291,16 @@ export function RadarChartCJ({
   const line = darkBg ? 'rgba(255,255,255,0.9)' : color
   const fill = darkBg ? 'rgba(255,255,255,0.22)' : color
   const labelColor = darkBg ? 'rgba(255,255,255,0.85)' : skin.foreColor
+  const categories = labels.map((label) => wrapRadarLabel(label))
+  const radarSize = Math.max(64, Math.round(height * 0.34))
 
   const options = {
-    chart: baseChart(skin, { type: 'radar', background: 'transparent' }),
+    chart: baseChart(skin, {
+      type: 'radar',
+      background: 'transparent',
+      parentHeightOffset: 0,
+      offsetY: 0,
+    }),
     colors: [line],
     fill: { opacity: 0.28, colors: [fill] },
     stroke: { width: 2, colors: [line] },
@@ -242,8 +311,8 @@ export function RadarChartCJ({
       strokeWidth: 1,
     },
     xaxis: {
-      categories: labels,
-      labels: { style: { colors: labels.map(() => labelColor), fontSize: '10px' } },
+      categories,
+      labels: { style: { colors: categories.map(() => labelColor), fontSize: '11px' } },
     },
     yaxis: {
       min: 0,
@@ -253,6 +322,7 @@ export function RadarChartCJ({
     },
     plotOptions: {
       radar: {
+        size: radarSize,
         polygons: {
           strokeColors: darkBg ? 'rgba(255,255,255,0.22)' : skin.grid,
           connectorColors: darkBg ? 'rgba(255,255,255,0.22)' : skin.grid,
@@ -269,7 +339,7 @@ export function RadarChartCJ({
   }
 
   return (
-    <div style={{ height, position: 'relative', width: '100%', minWidth: 0 }}>
+    <div className="overflow-visible" style={{ height: height + 28, position: 'relative', width: '100%', minWidth: 0 }}>
       <ApexChart
         options={options}
         series={[{ name: 'Poin', data: displayValues }]}

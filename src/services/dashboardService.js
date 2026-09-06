@@ -5,18 +5,21 @@ export async function getDashboardAdminDitmawa() {
   return res?.data || res || {}
 }
 
-export async function getDashboardDosen() {
-  const res = await get('/api/dosen/dashboard')
+export async function getDashboardDosen(kurikulumId) {
+  const params = kurikulumId ? { kurikulumId: Number(kurikulumId) } : {}
+  const res = await get('/api/dosen/dashboard', params)
   return res?.data || res || {}
 }
 
-export async function getDashboardPimpinanFakultas() {
-  const res = await get('/api/umum/dashboard/pimpinan-fakultas')
+export async function getDashboardPimpinanFakultas(kurikulumId) {
+  const params = kurikulumId ? { kurikulumId: Number(kurikulumId) } : {}
+  const res = await get('/api/umum/dashboard/pimpinan-fakultas', params)
   return res?.data || res || {}
 }
 
-export async function getDashboardPimpinanUtama() {
-  const res = await get('/api/umum/dashboard/pimpinan-utama')
+export async function getDashboardPimpinanUtama(kurikulumId) {
+  const params = kurikulumId ? { kurikulumId: Number(kurikulumId) } : {}
+  const res = await get('/api/umum/dashboard/pimpinan-utama', params)
   return res?.data || res || {}
 }
 

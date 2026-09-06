@@ -514,7 +514,7 @@ function PersetujuanDosen() {
                 <button
                   type="button"
                   onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
+                  className="btn btn-ghost btn-sm"
                 >
                   Reset Filter
                 </button>
@@ -537,11 +537,7 @@ function PersetujuanDosen() {
                   label: 'Status',
                   render: (row) => {
                     if (row.isUlang && row.status === 'pending') {
-                      return (
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                          Diajukan Ulang
-                        </span>
-                      )
+                      return <StatusBadge status="diajukan_ulang" />
                     }
                     return <StatusBadge status={row.status} />
                   },
@@ -556,7 +552,7 @@ function PersetujuanDosen() {
                         {
                           label: 'Detail',
                           icon: <Eye className="h-4 w-4" />,
-                          color: 'text-blue-600',
+                          color: 'text-primary',
                           onClick: () => {
                             if (row.rowKind === 'siap_pa') {
                               navigate(`/mahasiswa/kegiatan-eksternal/${row.kegiatanId}`, { state: { row } })
@@ -605,7 +601,7 @@ function PersetujuanDosen() {
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
+                      className="btn btn-ghost btn-sm"
                     >
                       Batal
                     </button>
@@ -613,9 +609,9 @@ function PersetujuanDosen() {
                       type="button"
                       disabled={selected.size === 0 || submittingIzin}
                       onClick={handleOpenPeranModal}
-                      className="btn btn-primary px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="btn btn-primary btn-sm"
                     >
-                      Minta Persetujuan Dosen PA
+                      Minta persetujuan Dosen PA
                     </button>
                   </div>
                 </>
@@ -623,9 +619,9 @@ function PersetujuanDosen() {
                 <button
                   type="button"
                   onClick={() => setPilihanMode(true)}
-                  className="btn btn-primary ml-auto px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  className="btn btn-primary btn-sm ml-auto"
                 >
-                  Minta Persetujuan Dosen PA
+                  Minta persetujuan Dosen PA
                 </button>
               )}
             </div>

@@ -50,6 +50,7 @@ import PimpinanUtamaDashboard from './pages/pimpinan_utama/UtamaDashboard'
 import DetailFakultas from './pages/pimpinan_utama/DetailFakultas'
 import DetailFakultasProdi from './pages/pimpinan_utama/DetailFakultasProdi'
 import LaporanPimpinan from './pages/pimpinan/LaporanPimpinan'
+import MonitoringIku3 from './pages/pimpinan/MonitoringIku3'
 import AdminDitmawaDashboard from './pages/admin_ditmawa/Dashboard'
 import AdminDitmawaVerifikasiKlaim from './pages/admin_ditmawa/VerifikasiKlaimPoin'
 import AdminDitmawaVerifikasiPengajuanEksternal from './pages/admin_ditmawa/VerifikasiPengajuanEksternal'
@@ -130,6 +131,7 @@ function App() {
           <Route path="bobot-poin" element={<PimpinanDitmawaBobotPoin />} />
           <Route path="edit-poin/:id" element={<PimpinanDitmawaEditPoin />} />
           <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_ditmawa" embedded />} />
+          <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="pimpinan_ditmawa" embedded />} />
           <Route path="verifikasi-klaim" element={<PimpinanDitmawaValidasiKlaimPoin />} />
           <Route path="verifikasi-klaim/:id" element={<PimpinanDitmawaDetailValidasiKlaim />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />
@@ -151,6 +153,7 @@ function App() {
         <Route path="pimpinan_fakultas" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan_fakultas']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<PimpinanFakultasDashboard />} />
           <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_fakultas" />} />
+          <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="pimpinan_fakultas" />} />
           <Route path="persetujuan" element={<PimpinanFakultasPersetujuan />} />
           <Route path="verifikasi-pengajuan-ukmf" element={<PimpinanFakultasVerifikasiUKMF />} />
           <Route path="verifikasi-pengajuan-ukmf/:id" element={<DetailVerifikasiUKMF />} />
@@ -167,6 +170,7 @@ function App() {
           <Route path="detail-fakultas" element={<DetailFakultas />} />
           <Route path="detail-fakultas/:fakultas" element={<DetailFakultasProdi />} />
           <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_utama" />} />
+          <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="pimpinan_utama" />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
           <Route path="*" element={<NotFoundPage />} />
@@ -175,6 +179,7 @@ function App() {
         {/* Admin Ditmawa */}
         <Route path="admin_ditmawa" element={<AuthGuard><RoleGuard allowedRoles={['admin_ditmawa']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<AdminDitmawaDashboard />} />
+          <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="admin_ditmawa" />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<AdminDitmawaVerifikasiPengajuanEksternal />} />
           <Route path="verifikasi-pengajuan-eksternal/:id" element={<AdminDitmawaDetailVerifikasiPengajuanEksternal />} />
           <Route path="pemetaan-capaian-massal" element={<AdminDitmawaPemetaanCapaianMassal />} />
@@ -194,6 +199,7 @@ function App() {
         {/* Admin Fakultas */}
         <Route path="admin_fakultas" element={<AuthGuard><RoleGuard allowedRoles={['admin_fakultas']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<AdminFakultasDashboardNew />} />
+          <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="admin_fakultas" />} />
           <Route path="manajemen-event" element={<AdminFakultasManajemenEvent />} />
           <Route path="manajemen-event/:id/peserta" element={<AdminFakultasManajemenPesertaEvent />} />
           <Route path="manajemen-akun-ukmf" element={<AdminFakultasManajemenAkunUKMF />} />

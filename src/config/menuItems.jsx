@@ -14,6 +14,9 @@ import {
   Search,
   UserCog,
   History,
+  Target,
+  FolderCheck,
+  Building2,
 } from 'lucide-react'
 
 /* ── MAHASISWA ── */
@@ -56,6 +59,7 @@ export const pimpinanDitmawaMenu = [
   { path: '/pimpinan_ditmawa/manajemen-kurikulum', label: 'Manajemen Kurikulum', icon: <BookOpen className="h-4 w-4" /> },
   { path: '/pimpinan_ditmawa/bobot-poin', label: 'Bobot Poin', icon: <BarChart3 className="h-4 w-4" /> },
   { path: '/pimpinan_ditmawa/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
+  { path: '/pimpinan_ditmawa/monitoring-iku3', label: 'Monitoring IKU 3', icon: <Target className="h-4 w-4" /> },
   {
     path: '#',
     label: 'Verifikasi',
@@ -81,6 +85,7 @@ export const pimpinanDitmawaMenu = [
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_fakultas/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
+  { path: '/pimpinan_fakultas/monitoring-iku3', label: 'Monitoring IKU 3 Fakultas', icon: <Building2 className="h-4 w-4" /> },
   {
     path: '#',
     label: 'Verifikasi',
@@ -95,11 +100,13 @@ export const pimpinanUtamaMenu = [
   { path: '/pimpinan_utama/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   { path: '/pimpinan_utama/detail-fakultas', label: 'Detail Fakultas', icon: <BarChart3 className="h-4 w-4" /> },
   { path: '/pimpinan_utama/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
+  { path: '/pimpinan_utama/monitoring-iku3', label: 'Monitoring IKU 3', icon: <BarChart3 className="h-4 w-4" /> },
 ]
 
 /* ── ADMIN DITMAWA ── */
 export const adminDitmawaMenu = [
   { path: '/admin_ditmawa/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" />, end: true },
+  { path: '/admin_ditmawa/monitoring-iku3', label: 'Monitoring IKU 3', icon: <FolderCheck className="h-4 w-4" /> },
   {
     path: '#',
     label: 'Verifikasi',
@@ -117,6 +124,7 @@ export const adminDitmawaMenu = [
 /* ── ADMIN FAKULTAS ── */
 export const adminFakultasMenu = [
   { path: '/admin_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
+  { path: '/admin_fakultas/monitoring-iku3', label: 'Monitoring IKU 3 Fakultas', icon: <Building2 className="h-4 w-4" /> },
   { path: '/admin_fakultas/verifikasi-pengajuan-ukmf', label: 'Verifikasi Pengajuan UKMF', icon: <CheckCircle className="h-4 w-4" /> },
   { path: '/admin_fakultas/manajemen-event', label: 'Event Fakultas', icon: <Search className="h-4 w-4" /> },
   { path: '/admin_fakultas/manajemen-akun-ukmf', label: 'Manajemen Akun UKMF', icon: <UserCog className="h-4 w-4" /> },
