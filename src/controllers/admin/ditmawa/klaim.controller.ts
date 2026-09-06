@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import prisma from "../../../lib/prisma";
 import { z } from "zod";
 import { logAudit } from "../../../lib/auditLog";
-import { bagiPoin } from "../../../lib/distribusiPoin";
 import { NotifikasiService } from '../../../services/notifikasi.service';
+import { buildSettlementDetails, resolveMatriksMahasiswa } from '../../../services/kurikulumResolver.service';
 
 // ==================== VALIDASI ====================
 const createKlaimSchema = z.object({
@@ -465,49 +465,20 @@ export const validasiKlaim = async (
         return;
       }
 
-      // Lookup matriks poin [BR-030] — berlaku untuk semua asal kegiatan (internal & eksternal)
-      const matriks = await prisma.matriksPoin.findFirst({
-        where: {
-          kurikulumId: kegiatan.kurikulumId,
-          kategoriId: kegiatan.kategoriId,
-          skalaId: kegiatan.skalaId,
-          peranId: peranFinalId,
-        },
-      });
+      const { kurikulum, matriks } = await resolveMatriksMahasiswa(
+        klaim.partisipasi.mahasiswaId,
+        { kategoriId: kegiatan.kategoriId, skalaId: kegiatan.skalaId, peranId: peranFinalId },
+      );
 
       if (!matriks) {
         res.status(404).json({
           success: false,
-          message: `Matriks poin tidak ditemukan untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${peranFinalId}`,
+          message: `Matriks poin tidak ditemukan pada kurikulum mahasiswa untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${peranFinalId}`,
         });
         return;
       }
 
-      // Untuk kegiatan eksternal: ambil subCapaian dari kurikulum aktif jika tidak ada kegiatanCapaian
-      let detailData = bagiPoin(
-        matriks.poin,
-        kegiatan.kegiatanCapaian.map((kc) => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) })),
-      ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-
-      if (detailData.length === 0) {
-        const kurikulum = await prisma.kurikulum.findFirst({
-          where: { status: 'aktif' },
-          include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
-        });
-        const allSub = kurikulum?.capaian.flatMap((c) => c.subCapaian) ?? [];
-        detailData = bagiPoin(
-          matriks.poin,
-          allSub.map((sc) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
-        ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-      }
-
-      if (detailData.length === 0) {
-        res.status(400).json({
-          success: false,
-          message: 'Kurikulum aktif belum memiliki sub capaian, poin tidak dapat dirinci. Hubungi Pimpinan Ditmawa.',
-        });
-        return;
-      }
+      const detailData = await buildSettlementDetails(kegiatan.id, kurikulum.id, matriks.poin);
 
       // Buat perolehan_poin + detail [BR-032] [BR-020]
       const perolehan = await prisma.perolehanPoin.create({
@@ -515,6 +486,7 @@ export const validasiKlaim = async (
           klaimPoinId: BigInt(id),
           mahasiswaId: klaim.partisipasi.mahasiswaId,
           kegiatanId: kegiatan.id,
+          kurikulumId: kurikulum.id,
           totalPoin: matriks.poin,
           status: "sah",
           detail: { create: detailData },
@@ -656,12 +628,6 @@ export const validasiKlaimBulk = async (
     const errors: string[] = [];
 
     // Ambil subCapaian kurikulum aktif sekali untuk fallback kegiatan eksternal
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
-    });
-    const allSubCapaian = kurikulumAktif?.capaian.flatMap((c) => c.subCapaian) ?? [];
-
     // Gunakan transaction untuk memastikan integritas
     await prisma.$transaction(async (tx) => {
       for (const klaim of klaims) {
@@ -674,17 +640,21 @@ export const validasiKlaimBulk = async (
             continue; 
           }
 
-          const matriks = await tx.matriksPoin.findFirst({
-            where: {
-              kurikulumId: kegiatan.kurikulumId,
-              kategoriId: kegiatan.kategoriId,
-              skalaId: kegiatan.skalaId,
-              peranId: peranFinalId,
-            },
-          });
+          let kurikulum;
+          let matriks;
+          try {
+            ({ kurikulum, matriks } = await resolveMatriksMahasiswa(
+              klaim.partisipasi.mahasiswaId,
+              { kategoriId: kegiatan.kategoriId, skalaId: kegiatan.skalaId, peranId: peranFinalId },
+              tx,
+            ));
+          } catch (err: any) {
+            errors.push(`Klaim ID ${klaim.id}: ${err?.message || 'Kurikulum mahasiswa tidak valid'}`);
+            continue;
+          }
 
           if (!matriks) {
-            errors.push(`Klaim ID ${klaim.id}: Matriks poin tidak ditemukan.`);
+            errors.push(`Klaim ID ${klaim.id}: Matriks poin tidak ditemukan pada kurikulum mahasiswa.`);
             continue;
           }
 
@@ -698,20 +668,11 @@ export const validasiKlaimBulk = async (
              continue;
           }
 
-          let bulkDetailData = bagiPoin(
-            matriks.poin,
-            kegiatan.kegiatanCapaian.map((kc) => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) })),
-          ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-
-          if (bulkDetailData.length === 0) {
-            bulkDetailData = bagiPoin(
-              matriks.poin,
-              allSubCapaian.map((sc) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
-            ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-          }
-
-          if (bulkDetailData.length === 0) {
-            errors.push(`Klaim ID ${klaim.id}: Kurikulum aktif belum memiliki sub capaian.`);
+          let bulkDetailData;
+          try {
+            bulkDetailData = await buildSettlementDetails(kegiatan.id, kurikulum.id, matriks.poin, tx);
+          } catch (err: any) {
+            errors.push(`Klaim ID ${klaim.id}: ${err?.message || 'Pemetaan kurikulum tidak valid'}`);
             continue;
           }
 
@@ -720,6 +681,7 @@ export const validasiKlaimBulk = async (
               klaimPoinId: klaim.id,
               mahasiswaId: klaim.partisipasi.mahasiswaId,
               kegiatanId: kegiatan.id,
+              kurikulumId: kurikulum.id,
               totalPoin: matriks.poin,
               status: "sah",
               detail: { create: bulkDetailData },

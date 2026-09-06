@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
+import { resolveKurikulumMahasiswa, CurriculumResolutionError } from '../../services/kurikulumResolver.service';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -22,13 +23,17 @@ async function requireMahasiswaUser(req: Request, res: Response): Promise<bigint
   return BigInt(userId);
 }
 
-async function requireKurikulumAktif(res: Response): Promise<{ id: number } | null> {
-  const kur = await prisma.kurikulum.findFirst({ where: { status: 'aktif' } });
-  if (!kur) {
-    res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
-    return null;
+async function requireKurikulumMahasiswa(userId: bigint, res: Response): Promise<{ id: number } | null> {
+  try {
+    const kur = await resolveKurikulumMahasiswa(userId, prisma, { includeStructure: false });
+    return kur;
+  } catch (err) {
+    if (err instanceof CurriculumResolutionError) {
+      res.status(400).json({ success: false, message: err.message });
+      return null;
+    }
+    throw err;
   }
-  return kur;
 }
 
 //1. Simpan sebagai Draft
@@ -39,7 +44,7 @@ export const simpanDraftKegiatanEksternal = async (req: Request, res: Response, 
 
     const { kategoriId, namaKegiatan, penyelenggara, skalaId, tanggalPelaksanaan, deskripsi, linkWebsite, emailPenyelenggara } = req.body;
 
-    const kur = await requireKurikulumAktif(res);
+    const kur = await requireKurikulumMahasiswa(userIdBig, res);
     if (!kur) return;
 
     const kegiatan = await prisma.kegiatan.create({
@@ -225,7 +230,7 @@ export const ajukanKegiatanEksternal = async (req: Request, res: Response, next:
       return res.status(400).json({ success: false, message: 'Harap isi semua kolom wajib' });
     }
 
-    const kur = await requireKurikulumAktif(res);
+    const kur = await requireKurikulumMahasiswa(userIdBig, res);
     if (!kur) return;
 
     const kegiatan = await prisma.kegiatan.create({

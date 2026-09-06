@@ -3,6 +3,7 @@ import prisma from '../../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../../lib/auditLog';
 import { NotifikasiService } from '../../../services/notifikasi.service';
+import { assertAlokasiCoversActiveKurikulum, CurriculumResolutionError } from '../../../services/kurikulumResolver.service';
 
 // ==================== VALIDASI ====================
 const createKegiatanSchema = z.object({
@@ -203,38 +204,18 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
     const userJabatan = req.user!.jabatan;
     const body = createKegiatanSchema.parse(req.body);
 
-    // Validasi kurikulum aktif [BR-001]
-    const kurikulumAktif = await prisma.kurikulum.findFirst({ where: { status: 'aktif' } });
-    if (!kurikulumAktif) {
-      res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif. Kegiatan tidak bisa dibuat.' });
-      return;
-    }
-
-    // Validasi alokasi: setiap kurikulum yang terlibat harus tepat 100% [BR-032]
-    const subCapaians = await prisma.subCapaian.findMany({
-      where: { id: { in: body.alokasi.map(a => a.subCapaianId) } },
-      include: { capaian: { select: { kurikulumId: true, kurikulum: { select: { nama: true } } } } },
-    });
-
-    const alokasiByKurikulum = new Map<number, { sum: number; nama: string }>();
-    for (const a of body.alokasi) {
-      const sc = subCapaians.find(s => s.id === a.subCapaianId);
-      const kId = sc?.capaian?.kurikulumId || kurikulumAktif.id;
-      const kNama = sc?.capaian?.kurikulum?.nama || 'Kurikulum';
-      const curr = alokasiByKurikulum.get(kId) || { sum: 0, nama: kNama };
-      curr.sum += a.alokasiPersen;
-      alokasiByKurikulum.set(kId, curr);
-    }
-
-    for (const [_, info] of alokasiByKurikulum.entries()) {
-      if (Math.abs(info.sum - 100) > 0.01) {
-        res.status(400).json({
-          success: false,
-          message: `Total alokasi untuk ${info.nama} harus tepat 100%. Saat ini: ${info.sum}%.`,
-        });
+    // Validasi alokasi: setiap kurikulum aktif harus tepat 100% [BR-032]
+    let kurikulumAktifList;
+    try {
+      kurikulumAktifList = await assertAlokasiCoversActiveKurikulum(body.alokasi);
+    } catch (err) {
+      if (err instanceof CurriculumResolutionError) {
+        res.status(400).json({ success: false, message: err.message });
         return;
       }
+      throw err;
     }
+    const defaultKurikulumId = kurikulumAktifList[0]?.id ?? null;
 
     const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
 
@@ -286,7 +267,7 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
         kuota: body.kuota,
         organisasiId: resolvedOrganisasiId ?? undefined,
         penyelenggaraExt: resolvedPenyelenggaraExt,
-        kurikulumId: kurikulumAktif.id,
+        kurikulumId: defaultKurikulumId,
         dibuatOleh,
         status: 'draft',
         kegiatanCapaian: {
@@ -358,30 +339,15 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Validasi alokasi: setiap kurikulum yang terlibat harus tepat 100% [BR-032]
-    const subCapaians = await prisma.subCapaian.findMany({
-      where: { id: { in: body.alokasi.map(a => a.subCapaianId) } },
-      include: { capaian: { select: { kurikulumId: true, kurikulum: { select: { nama: true } } } } },
-    });
-
-    const alokasiByKurikulum = new Map<number, { sum: number; nama: string }>();
-    for (const a of body.alokasi) {
-      const sc = subCapaians.find(s => s.id === a.subCapaianId);
-      const kId = sc?.capaian?.kurikulumId || existing.kurikulumId;
-      const kNama = sc?.capaian?.kurikulum?.nama || 'Kurikulum';
-      const curr = alokasiByKurikulum.get(kId) || { sum: 0, nama: kNama };
-      curr.sum += a.alokasiPersen;
-      alokasiByKurikulum.set(kId, curr);
-    }
-
-    for (const [_, info] of alokasiByKurikulum.entries()) {
-      if (Math.abs(info.sum - 100) > 0.01) {
-        res.status(400).json({
-          success: false,
-          message: `Total alokasi untuk ${info.nama} harus tepat 100%. Saat ini: ${info.sum}%.`,
-        });
+    // Validasi alokasi: setiap kurikulum aktif harus tepat 100% [BR-032]
+    try {
+      await assertAlokasiCoversActiveKurikulum(body.alokasi);
+    } catch (err) {
+      if (err instanceof CurriculumResolutionError) {
+        res.status(400).json({ success: false, message: err.message });
         return;
       }
+      throw err;
     }
 
     const resolvedAsal =

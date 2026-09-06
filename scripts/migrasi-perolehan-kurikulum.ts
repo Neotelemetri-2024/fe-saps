@@ -1,112 +1,98 @@
 /**
- * Migrasi data satu kali:
- *  1. Memetakan PerolehanDetail yang masih menunjuk sub-capaian kurikulum lama
- *     ke sub-capaian setara di kurikulum aktif.
- *  2. Mengisi rincian untuk PerolehanPoin yang sama sekali belum punya
- *     PerolehanDetail, dibagi menurut bobot sub-capaian kurikulum aktif.
+ * Audit/backfill assignment kurikulum berdasarkan angkatan mulai.
  *
- * Jalankan tanpa argumen untuk pratinjau, tambahkan --apply untuk menulis.
+ * Default adalah dry-run. Tambahkan --apply untuk mengisi:
+ * - Mahasiswa.kurikulumId yang masih null
+ * - PerolehanPoin.kurikulumId yang masih null dan dapat dipastikan
+ *
+ * Script ini TIDAK memindahkan PerolehanDetail lintas kurikulum. Konflik histori
+ * dilaporkan untuk ditinjau manual agar makna capaian lama tidak berubah diam-diam.
  */
 import 'dotenv/config';
 import prisma from '../src/lib/prisma';
-import { bagiPoin } from '../src/lib/distribusiPoin';
 
 const APPLY = process.argv.includes('--apply');
 
-const norm = (s: string) => s.trim().toLowerCase();
+type Assignment = { mahasiswaId: bigint; kurikulumId: number };
+type Snapshot = { perolehanId: bigint; kurikulumId: number };
 
 async function main() {
-  const aktif = await prisma.kurikulum.findFirst({
-    where: { status: 'aktif' },
+  const kurikulum = await prisma.kurikulum.findMany({
+    where: { status: 'aktif', angkatanMulai: { not: null } },
+    orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
+    select: { id: true, nama: true, angkatanMulai: true },
+  });
+  if (kurikulum.length === 0) throw new Error('Tidak ada kurikulum aktif dengan angkatanMulai');
+
+  console.log('Urutan kurikulum aktif:');
+  kurikulum.forEach((k) => console.log(`- ${k.id} ${k.nama}: mulai angkatan ${k.angkatanMulai}`));
+
+  const mahasiswa = await prisma.mahasiswa.findMany({
     include: {
-      capaian: { include: { subCapaian: { orderBy: { id: 'asc' } } }, orderBy: { urutan: 'asc' } },
+      perolehanPoin: {
+        include: { detail: { include: { subCapaian: { include: { capaian: true } } } } },
+      },
     },
   });
-  if (!aktif) throw new Error('Tidak ada kurikulum aktif');
 
-  console.log(`Kurikulum aktif: ${aktif.id} "${aktif.nama}"\n`);
+  const assignments: Assignment[] = [];
+  const snapshots: Snapshot[] = [];
+  const conflicts: string[] = [];
 
-  const subAktif = aktif.capaian.flatMap((c) => c.subCapaian);
-  if (subAktif.length === 0) throw new Error('Kurikulum aktif belum punya sub capaian');
+  for (const m of mahasiswa) {
+    const inferred = m.angkatan == null
+      ? null
+      : kurikulum.find((k) => k.angkatanMulai != null && k.angkatanMulai <= m.angkatan) ?? null;
+    const assignedId = m.kurikulumId ?? inferred?.id ?? null;
 
-  // Indeks sub-capaian aktif: "nama capaian::nama sub capaian" dan "nama capaian::urutan"
-  const byNama = new Map<string, number>();
-  const byPosisi = new Map<string, number>();
-  for (const c of aktif.capaian) {
-    c.subCapaian.forEach((sc, i) => {
-      byNama.set(`${norm(c.nama)}::${norm(sc.nama)}`, sc.id);
-      byPosisi.set(`${norm(c.nama)}::${i}`, sc.id);
-    });
-  }
-
-  // ---------- Bagian 1: remap detail dari kurikulum lama ----------
-  const detailLama = await prisma.perolehanDetail.findMany({
-    where: { subCapaian: { capaian: { kurikulumId: { not: aktif.id } } } },
-    include: { subCapaian: { include: { capaian: { include: { subCapaian: { orderBy: { id: 'asc' } } } } } } },
-  });
-
-  console.log(`Detail menunjuk kurikulum lama: ${detailLama.length}`);
-  const remap: { id: bigint; dari: number; ke: number; ket: string }[] = [];
-  const gagalRemap: string[] = [];
-
-  for (const d of detailLama) {
-    const capaianLama = d.subCapaian.capaian;
-    const kunciNama = `${norm(capaianLama.nama)}::${norm(d.subCapaian.nama)}`;
-    let target = byNama.get(kunciNama);
-    let cara = 'nama';
-
-    if (!target) {
-      const posisi = capaianLama.subCapaian.findIndex((sc) => sc.id === d.subCapaianId);
-      target = byPosisi.get(`${norm(capaianLama.nama)}::${posisi}`);
-      cara = `posisi #${posisi}`;
-    }
-
-    if (!target) {
-      gagalRemap.push(`detail ${d.id}: "${capaianLama.nama} / ${d.subCapaian.nama}" tidak punya padanan`);
+    if (assignedId == null) {
+      conflicts.push(`Mahasiswa ${m.nim}: angkatan kosong/lebih lama dari kurikulum pertama`);
       continue;
     }
-    remap.push({ id: d.id, dari: d.subCapaianId, ke: target, ket: `${capaianLama.nama} / ${d.subCapaian.nama} (${cara})` });
+    if (m.kurikulumId == null) assignments.push({ mahasiswaId: m.userId, kurikulumId: assignedId });
+
+    for (const p of m.perolehanPoin) {
+      const detailCurricula = [...new Set(p.detail.map((d) => d.subCapaian.capaian.kurikulumId))];
+      if (detailCurricula.length > 1 || (detailCurricula.length === 1 && detailCurricula[0] !== assignedId)) {
+        conflicts.push(
+          `Perolehan ${p.id} mahasiswa ${m.nim}: assignment=${assignedId}, detail=[${detailCurricula.join(', ')}]`,
+        );
+        continue;
+      }
+      const snapshotId = detailCurricula[0] ?? assignedId;
+      if (p.kurikulumId == null) snapshots.push({ perolehanId: p.id, kurikulumId: snapshotId });
+      else if (p.kurikulumId !== snapshotId) {
+        conflicts.push(`Perolehan ${p.id}: snapshot=${p.kurikulumId}, detail/assignment=${snapshotId}`);
+      }
+    }
   }
 
-  for (const r of remap) console.log(`  remap detail ${r.id}: sub ${r.dari} -> ${r.ke}  [${r.ket}]`);
-  for (const g of gagalRemap) console.log(`  GAGAL ${g}`);
-
-  // ---------- Bagian 2: backfill perolehan tanpa detail ----------
-  const tanpaDetail = await prisma.perolehanPoin.findMany({
-    where: { detail: { none: {} } },
-    include: { kegiatan: { select: { nama: true } } },
-  });
-
-  console.log(`\nPerolehan tanpa detail: ${tanpaDetail.length}`);
-
-  const backfill: { perolehanPoinId: bigint; subCapaianId: number; poin: number }[] = [];
-  for (const p of tanpaDetail) {
-    const baris = bagiPoin(
-      p.totalPoin,
-      subAktif.map((sc) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
-    ).map((b) => ({ perolehanPoinId: p.id, subCapaianId: b.ref, poin: b.poin }));
-    console.log(
-      `  perolehan ${p.id} "${p.kegiatan?.nama ?? '?'}" poin=${p.totalPoin} -> ${baris.length} baris, jumlah=${baris.reduce((s, b) => s + b.poin, 0)}`,
-    );
-    backfill.push(...baris);
-  }
+  console.log(`\nAssignment mahasiswa yang dapat diisi: ${assignments.length}`);
+  console.log(`Snapshot perolehan yang dapat diisi: ${snapshots.length}`);
+  console.log(`Konflik yang memerlukan tinjauan: ${conflicts.length}`);
+  conflicts.forEach((item) => console.log(`  KONFLIK ${item}`));
 
   if (!APPLY) {
-    console.log('\n[PRATINJAU] Tidak ada perubahan ditulis. Tambahkan --apply untuk menerapkan.');
+    console.log('\n[PRATINJAU] Tidak ada perubahan ditulis. Tambahkan --apply setelah meninjau konflik.');
     return;
   }
 
   await prisma.$transaction(async (tx) => {
-    for (const r of remap) {
-      await tx.perolehanDetail.update({ where: { id: r.id }, data: { subCapaianId: r.ke } });
+    for (const item of assignments) {
+      await tx.mahasiswa.updateMany({
+        where: { userId: item.mahasiswaId, kurikulumId: null },
+        data: { kurikulumId: item.kurikulumId },
+      });
     }
-    if (backfill.length > 0) {
-      await tx.perolehanDetail.createMany({ data: backfill });
+    for (const item of snapshots) {
+      await tx.perolehanPoin.updateMany({
+        where: { id: item.perolehanId, kurikulumId: null },
+        data: { kurikulumId: item.kurikulumId },
+      });
     }
   });
 
-  console.log(`\n[SELESAI] ${remap.length} detail dipetakan ulang, ${backfill.length} detail baru dibuat.`);
-  if (gagalRemap.length > 0) console.log(`${gagalRemap.length} detail gagal dipetakan, periksa manual.`);
+  console.log('\n[SELESAI] Assignment dan snapshot aman telah diisi; detail historis tidak diubah.');
 }
 
 main().finally(() => prisma.$disconnect());

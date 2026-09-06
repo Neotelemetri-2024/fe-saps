@@ -195,15 +195,17 @@ model Dosen {
 
 /// 1.5 Profil Mahasiswa — menyimpan tautan ke Dosen PA [BR-016]
 model Mahasiswa {
-  userId    BigInt  @id @map("user_id")
-  nim       String  @unique @db.VarChar(20)
-  prodiId   Int     @map("prodi_id")
-  dosenPaId BigInt? @map("dosen_pa_id")
-  angkatan  Int?    @db.SmallInt
+  userId       BigInt  @id @map("user_id")
+  nim          String  @unique @db.VarChar(20)
+  prodiId      Int     @map("prodi_id")
+  dosenPaId    BigInt? @map("dosen_pa_id")
+  angkatan     Int?    @db.SmallInt
+  kurikulumId  Int?    @map("kurikulum_id")
 
-  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  prodi   ProgramStudi  @relation(fields: [prodiId], references: [id])
-  dosenPA Dosen?        @relation("DosenPAMahasiswa", fields: [dosenPaId], references: [userId])
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prodi      ProgramStudi  @relation(fields: [prodiId], references: [id])
+  dosenPA    Dosen?        @relation("DosenPAMahasiswa", fields: [dosenPaId], references: [userId])
+  kurikulum Kurikulum?     @relation("MahasiswaKurikulum", fields: [kurikulumId], references: [id])
 
   partisipasi   Partisipasi[]
   perolehanPoin PerolehanPoin[]
@@ -216,6 +218,8 @@ model Mahasiswa {
   linkedinAccessToken    String?   @map("linkedin_access_token") @db.Text
   linkedinTokenExpiresAt DateTime? @map("linkedin_token_expires_at")
 
+  @@index([angkatan])
+  @@index([kurikulumId])
   @@map("mahasiswa")
 }
 
@@ -266,6 +270,7 @@ model Kurikulum {
   id            Int             @id @default(autoincrement())
   nama          String          @db.VarChar(150)
   tahunAkademik String          @map("tahun_akademik") @db.VarChar(9)
+  angkatanMulai Int?            @unique @map("angkatan_mulai") @db.SmallInt
   versi         Int             @default(1)
   status        StatusKurikulum @default(draft)
   dibuatOleh    BigInt          @map("dibuat_oleh")
@@ -274,9 +279,12 @@ model Kurikulum {
 
   pembuat     User          @relation("KurikulumDibuat", fields: [dibuatOleh], references: [id])
   capaian     Capaian[]
-  matriksPoin MatriksPoin[]
-  kegiatan    Kegiatan[]
+  matriksPoin    MatriksPoin[]
+  kegiatan       Kegiatan[]
+  mahasiswa      Mahasiswa[]      @relation("MahasiswaKurikulum")
+  perolehanPoin  PerolehanPoin[]  @relation("PerolehanKurikulum")
 
+  @@index([status, angkatanMulai])
   @@map("kurikulum")
 }
 
@@ -409,7 +417,7 @@ model Kegiatan {
   penyelenggaraExt   String?        @map("penyelenggara_ext") @db.VarChar(200)
   linkPenyelenggara  String?        @map("link_penyelenggara") @db.VarChar(255)
   emailPenyelenggara String?        @map("email_penyelenggara") @db.VarChar(255)
-  kurikulumId        Int            @map("kurikulum_id") // pengikat versi [BR-005]
+  kurikulumId        Int?           @map("kurikulum_id") // legacy/default; settlement mengikuti kurikulum mahasiswa
   dibuatOleh      BigInt         @map("dibuat_oleh")
   status          StatusKegiatan @default(draft)
   createdAt       DateTime       @default(now()) @map("created_at")
@@ -417,7 +425,7 @@ model Kegiatan {
   kategori   MpKategori  @relation(fields: [kategoriId], references: [id])
   skala      MpSkala     @relation(fields: [skalaId], references: [id])
   organisasi Organisasi? @relation(fields: [organisasiId], references: [id])
-  kurikulum  Kurikulum   @relation(fields: [kurikulumId], references: [id])
+  kurikulum  Kurikulum?  @relation(fields: [kurikulumId], references: [id])
   pembuat    User        @relation("KegiatanDibuat", fields: [dibuatOleh], references: [id])
 
   kegiatanCapaian  KegiatanCapaian[]
@@ -547,18 +555,21 @@ model PerolehanPoin {
   klaimPoinId  BigInt          @unique @map("klaim_poin_id") // 1:1 dengan klaim
   mahasiswaId  BigInt          @map("mahasiswa_id")
   kegiatanId   Int             @map("kegiatan_id")
+  kurikulumId  Int?            @map("kurikulum_id") // snapshot kurikulum saat poin diterbitkan
   totalPoin    Int             @map("total_poin") // dari lookup matriks [BR-030]
   status       StatusPerolehan @default(sah)
   createdAt    DateTime        @default(now()) @map("created_at")
 
   klaimPoin KlaimPoin @relation(fields: [klaimPoinId], references: [id])
   mahasiswa Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
-  kegiatan  Kegiatan  @relation(fields: [kegiatanId], references: [id])
+  kegiatan  Kegiatan   @relation(fields: [kegiatanId], references: [id])
+  kurikulum Kurikulum? @relation("PerolehanKurikulum", fields: [kurikulumId], references: [id])
 
   detail PerolehanDetail[]
 
   @@unique([mahasiswaId, kegiatanId]) // lapis 3 anti-klaim-ganda
   @@index([mahasiswaId])
+  @@index([kurikulumId])
   @@map("perolehan_poin")
 }
 

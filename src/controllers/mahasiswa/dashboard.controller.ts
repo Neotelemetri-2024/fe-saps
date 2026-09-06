@@ -1,31 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
+import { perolehanUntukKurikulum, resolveKurikulumMahasiswa } from '../../services/kurikulumResolver.service';
 
 // ==================== DASHBOARD MAHASISWA ====================
-
-// Helper untuk mencari kurikulum aktif yang paling sesuai bagi mahasiswa
-export function cariKurikulumMahasiswa(allKurikulumAktif: any[], mahasiswa: any, perolehanPoin: any[]) {
-  if (!allKurikulumAktif || allKurikulumAktif.length === 0) return null;
-
-  // 1. Cek apakah ada poin yang tercatat dengan kurikulumId aktif tertentu
-  const kurikulumIdDariPoin = perolehanPoin.find(p =>
-    p.detail?.some((d: any) => d.subCapaian?.capaian?.kurikulumId)
-  )?.detail?.find((d: any) => d.subCapaian?.capaian?.kurikulumId)?.subCapaian?.capaian?.kurikulumId;
-
-  let match = allKurikulumAktif.find(k => k.id === kurikulumIdDariPoin);
-  if (match) return match;
-
-  // 2. Cocokkan berdasarkan angkatan mahasiswa
-  if (mahasiswa.angkatan) {
-    match = allKurikulumAktif.find(k =>
-      k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
-    );
-    if (match) return match;
-  }
-
-  // 3. Fallback ke kurikulum aktif pertama
-  return allKurikulumAktif[0];
-}
 
 // Helper untuk menghitung progres kurikulum mahasiswa dengan capping poin
 export function hitungProgresKurikulumMahasiswa(kurikulum: any, perolehanPoin: any[]) {
@@ -186,27 +163,9 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ success: false, message: 'Profil mahasiswa tidak ditemukan' });
     }
 
-    // Ambil Kurikulum Aktif (dukung multiple aktif, utamakan sesuai angkatan jika cocok)
-    const allKurikulumAktif = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true }
-        }
-      }
-    });
-
-    if (allKurikulumAktif.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
-    }
-
-    let kurikulumAktif = allKurikulumAktif[0];
-    if (mahasiswa.angkatan) {
-      const match = allKurikulumAktif.find(k =>
-        k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
-      );
-      if (match) kurikulumAktif = match;
+    const kurikulumAktif = await resolveKurikulumMahasiswa(mahasiswa);
+    if (!kurikulumAktif) {
+      return res.status(400).json({ success: false, message: 'Kurikulum mahasiswa tidak ditemukan' });
     }
 
     // Ambil perolehan poin mahasiswa ini
@@ -219,7 +178,8 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
       }
     });
 
-    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
+    const poinKurikulum = perolehanUntukKurikulum(perolehanPoin, kurikulumAktif.id);
+    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, poinKurikulum);
 
     // Riwayat Kegiatan Persetujuan Dosen PA (5 terbaru)
     const riwayatIzinPA = await prisma.izinPA.findMany({
@@ -330,30 +290,15 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
 
     const mahasiswa = await prisma.mahasiswa.findUnique({
       where: { userId: BigInt(userId) },
-      select: { angkatan: true }
+      select: { angkatan: true, kurikulumId: true }
     });
 
-    // Ambil Kurikulum Aktif
-    const allKurikulumAktif = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true }
-        }
-      }
-    });
-
-    if (allKurikulumAktif.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+    if (!mahasiswa) {
+      return res.status(404).json({ success: false, message: 'Profil mahasiswa tidak ditemukan' });
     }
-
-    let kurikulumAktif = allKurikulumAktif[0];
-    if (mahasiswa?.angkatan) {
-      const match = allKurikulumAktif.find(k =>
-        k.tahunAkademik?.includes(String(mahasiswa.angkatan)) || k.nama?.includes(String(mahasiswa.angkatan))
-      );
-      if (match) kurikulumAktif = match;
+    const kurikulumAktif = await resolveKurikulumMahasiswa(mahasiswa);
+    if (!kurikulumAktif) {
+      return res.status(400).json({ success: false, message: 'Kurikulum mahasiswa tidak ditemukan' });
     }
 
     // Ambil semua perolehan poin mahasiswa
@@ -366,7 +311,8 @@ export const getRiwayatPoin = async (req: Request, res: Response, next: NextFunc
       }
     });
 
-    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
+    const poinKurikulum = perolehanUntukKurikulum(perolehanPoin, kurikulumAktif.id);
+    const progresResult = hitungProgresKurikulumMahasiswa(kurikulumAktif, poinKurikulum);
 
     // Filter query params
     const { kategoriId, peranId, status, penyelenggara, tahun, search } = req.query;
@@ -565,11 +511,11 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
     // Estimasi poin dari matriks untuk peserta yang sudah punya peran (belum tentu sudah cair)
     const estimasiEntries = await Promise.all(
       partisipasi
-        .filter((p) => p.peranVerifId)
+        .filter((p) => p.peranVerifId && p.kegiatan.kurikulumId != null)
         .map(async (p) => {
           const matriks = await prisma.matriksPoin.findFirst({
             where: {
-              kurikulumId: p.kegiatan.kurikulumId,
+              kurikulumId: p.kegiatan.kurikulumId as number,
               kategoriId: p.kegiatan.kategoriId,
               skalaId: p.kegiatan.skalaId,
               peranId: p.peranVerifId!,

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
-import { cariKurikulumMahasiswa, hitungProgresKurikulumMahasiswa } from '../mahasiswa/dashboard.controller';
+import { hitungProgresKurikulumMahasiswa } from '../mahasiswa/dashboard.controller';
+import { perolehanUntukKurikulum, resolveKurikulumMahasiswa } from '../../services/kurikulumResolver.service';
 
 // ==================== DASHBOARD DOSEN PA ====================
 
@@ -21,17 +22,6 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
     if (!dosen) {
       return res.status(404).json({ success: false, message: 'Profil dosen tidak ditemukan' });
     }
-
-    // Ambil semua kurikulum aktif dengan capaian dan sub capaian
-    const allKurikulumAktif = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true }
-        }
-      }
-    });
 
     // Total Mahasiswa Bimbingan
     const mahasiswaBimbingan = await prisma.mahasiswa.findMany({
@@ -92,9 +82,15 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
     const kategoriPoinMap: Record<string, number> = {};
 
     for (const mhs of mahasiswaBimbingan) {
-      const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
+      let kurikulumMhs = null;
+      try {
+        kurikulumMhs = await resolveKurikulumMahasiswa(mhs);
+      } catch {
+        kurikulumMhs = null;
+      }
+      const poinKurikulum = kurikulumMhs ? perolehanUntukKurikulum(mhs.perolehanPoin, kurikulumMhs.id) : [];
       const prog = kurikulumMhs
-        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
+        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, poinKurikulum)
         : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
 
       totalPoinSemua += prog.totalPoin;
@@ -189,16 +185,6 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
       ];
     }
 
-    const allKurikulumAktif = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true }
-        }
-      }
-    });
-
     const mahasiswaBimbingan = await prisma.mahasiswa.findMany({
       where: whereClause,
       include: {
@@ -215,10 +201,16 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
       }
     });
 
-    const result = mahasiswaBimbingan.map(mhs => {
-      const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
+    const result = await Promise.all(mahasiswaBimbingan.map(async mhs => {
+      let kurikulumMhs = null;
+      try {
+        kurikulumMhs = await resolveKurikulumMahasiswa(mhs);
+      } catch {
+        kurikulumMhs = null;
+      }
+      const poinKurikulum = kurikulumMhs ? perolehanUntukKurikulum(mhs.perolehanPoin, kurikulumMhs.id) : [];
       const prog = kurikulumMhs
-        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
+        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, poinKurikulum)
         : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
 
       const persentase = prog.persentaseTotal;
@@ -239,7 +231,7 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
         statusKelulusan: prog.statusKelulusan,
         status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'on_track'
       };
-    });
+    }));
 
     res.status(200).json({
       success: true,
@@ -274,19 +266,12 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
       return res.status(403).json({ success: false, message: 'Bukan mahasiswa bimbingan Anda' });
     }
 
-    // Ambil semua kurikulum aktif
-    const allKurikulumAktif = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true }
-        }
-      }
-    });
-
-    if (allKurikulumAktif.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+    // Ambil kurikulum assignment mahasiswa
+    let kurikulumAktif;
+    try {
+      kurikulumAktif = await resolveKurikulumMahasiswa(mahasiswa);
+    } catch {
+      return res.status(400).json({ success: false, message: 'Kurikulum mahasiswa tidak dapat ditentukan' });
     }
 
     // Perolehan poin mahasiswa dengan detail sub capaian & capaian
@@ -301,8 +286,8 @@ export const getDetailMahasiswa = async (req: Request, res: Response, next: Next
       }
     });
 
-    const kurikulumAktif = cariKurikulumMahasiswa(allKurikulumAktif, mahasiswa, perolehanPoin) || allKurikulumAktif[0];
-    const prog = hitungProgresKurikulumMahasiswa(kurikulumAktif, perolehanPoin);
+    const poinKurikulum = perolehanUntukKurikulum(perolehanPoin, kurikulumAktif.id);
+    const prog = hitungProgresKurikulumMahasiswa(kurikulumAktif, poinKurikulum);
 
     // Timeline Aktivitas (partisipasi + izin PA terbaru)
     const aktivitas = await prisma.partisipasi.findMany({
@@ -435,14 +420,20 @@ export const getMahasiswaPerluPerhatian = async (req: Request, res: Response, ne
     });
 
     // Filter hanya mahasiswa yang belum lulus dan capaian target < 50%
-    const result = mahasiswaBimbingan
-      .map(mhs => {
-        const kurikulumMhs = cariKurikulumMahasiswa(allKurikulumAktif, mhs, mhs.perolehanPoin) || allKurikulumAktif[0];
-        const prog = kurikulumMhs
-          ? hitungProgresKurikulumMahasiswa(kurikulumMhs, mhs.perolehanPoin)
-          : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
+    const result = [];
+    for (const mhs of mahasiswaBimbingan) {
+      let kurikulumMhs = null;
+      try {
+        kurikulumMhs = await resolveKurikulumMahasiswa(mhs);
+      } catch {
+        kurikulumMhs = allKurikulumAktif[0] || null;
+      }
+      const poinKurikulum = kurikulumMhs ? perolehanUntukKurikulum(mhs.perolehanPoin, kurikulumMhs.id) : [];
+      const prog = kurikulumMhs
+        ? hitungProgresKurikulumMahasiswa(kurikulumMhs, poinKurikulum)
+        : { totalPoin: 0, totalPoinProgres: 0, totalTarget: 0, persentaseTotal: 0, isLulus: false, statusKelulusan: 'Belum Memenuhi Syarat' };
 
-        return {
+      result.push({
           mahasiswaId: mhs.userId.toString(),
           nama: mhs.user.nama,
           nim: mhs.nim,
@@ -450,20 +441,21 @@ export const getMahasiswaPerluPerhatian = async (req: Request, res: Response, ne
           angkatan: mhs.angkatan,
           ipk: '-',
           capaianPersen: prog.persentaseTotal,
-          totalPoin: prog.totalPoin,                   // Total riil
-          totalPoinProgres: prog.totalPoinProgres,     // Poin target kelulusan (capped)
+          totalPoin: prog.totalPoin,
+          totalPoinProgres: prog.totalPoinProgres,
           totalTarget: prog.totalTarget,
           isLulus: prog.isLulus,
           statusKelulusan: prog.statusKelulusan,
           status: 'perlu_perhatian'
-        };
-      })
-      .filter(m => !m.isLulus && m.capaianPersen < 50);
+        });
+    }
+
+    const filtered = result.filter((m) => !m.isLulus && m.capaianPersen < 50);
 
     res.status(200).json({
       success: true,
-      data: result,
-      total: result.length
+      data: filtered,
+      total: filtered.length
     });
 
   } catch (error: any) {

@@ -15,7 +15,7 @@ export const getPreviewLaporan = async (req: Request, res: Response, next: NextF
     }
 
     const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
-    const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
+    const { fakultasId, prodiId, angkatan, tahunAkademik, kurikulumId } = req.query;
 
     const data = await getLaporanData({
       role: effectiveRole,
@@ -24,6 +24,7 @@ export const getPreviewLaporan = async (req: Request, res: Response, next: NextF
       prodiId: prodiId ? Number(prodiId) : undefined,
       angkatan: angkatan ? Number(angkatan) : undefined,
       tahunAkademik: tahunAkademik ? String(tahunAkademik) : undefined,
+      kurikulumId: kurikulumId ? Number(kurikulumId) : undefined,
     });
 
     res.status(200).json({
@@ -49,7 +50,7 @@ export const downloadExcelLaporan = async (req: Request, res: Response, next: Ne
     }
 
     const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
-    const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
+    const { fakultasId, prodiId, angkatan, tahunAkademik, kurikulumId } = req.query;
 
     const data = await getLaporanData({
       role: effectiveRole,
@@ -58,6 +59,7 @@ export const downloadExcelLaporan = async (req: Request, res: Response, next: Ne
       prodiId: prodiId ? Number(prodiId) : undefined,
       angkatan: angkatan ? Number(angkatan) : undefined,
       tahunAkademik: tahunAkademik ? String(tahunAkademik) : undefined,
+      kurikulumId: kurikulumId ? Number(kurikulumId) : undefined,
     });
 
     const csvBuffer = await generateExcelLaporan(data);
@@ -89,7 +91,7 @@ export const downloadPdfLaporan = async (req: Request, res: Response, next: Next
     }
 
     const effectiveRole = user.peran === 'staff' && user.jabatan ? user.jabatan : user.peran;
-    const { fakultasId, prodiId, angkatan, tahunAkademik } = req.query;
+    const { fakultasId, prodiId, angkatan, tahunAkademik, kurikulumId } = req.query;
 
     const data = await getLaporanData({
       role: effectiveRole,
@@ -98,6 +100,7 @@ export const downloadPdfLaporan = async (req: Request, res: Response, next: Next
       prodiId: prodiId ? Number(prodiId) : undefined,
       angkatan: angkatan ? Number(angkatan) : undefined,
       tahunAkademik: tahunAkademik ? String(tahunAkademik) : undefined,
+      kurikulumId: kurikulumId ? Number(kurikulumId) : undefined,
     });
 
     const pdfBuffer = await generatePdfLaporan(data);

@@ -50,6 +50,7 @@ const batchUpsertItemSchema = z.object({
 });
 
 const syncMatriksSchema = z.object({
+  kurikulumId: z.number().int().positive(),
   kategoriId: z.number().int().positive().optional(),
   kategoriNama: z.string().min(1),
   columns: z.array(z.object({
@@ -108,9 +109,9 @@ export const syncMatriksPoin = async (req: Request, res: Response): Promise<void
     const aktorId = BigInt(req.user!.id);
     const payload = syncMatriksSchema.parse(req.body);
 
-    const kurikulum = await prisma.kurikulum.findFirst({ where: { status: 'aktif' } });
+    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: payload.kurikulumId } });
     if (!kurikulum) {
-      res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+      res.status(400).json({ success: false, message: 'Kurikulum tidak ditemukan' });
       return;
     }
     const kurikulumId = kurikulum.id;
@@ -364,12 +365,16 @@ export const upsertMatriksPoin = async (req: Request, res: Response): Promise<vo
     if (Array.isArray(body)) {
       const items = batchUpsertItemSchema.array().parse(body);
 
-      const kurikulum = await prisma.kurikulum.findFirst({ where: { status: 'aktif' } });
-      if (!kurikulum) {
-        res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
+      const kurikulumId = Number(req.query.kurikulumId || req.body?.kurikulumId);
+      if (!kurikulumId) {
+        res.status(400).json({ success: false, message: 'kurikulumId wajib diisi' });
         return;
       }
-      const kurikulumId = kurikulum.id;
+      const kurikulum = await prisma.kurikulum.findUnique({ where: { id: kurikulumId } });
+      if (!kurikulum) {
+        res.status(400).json({ success: false, message: 'Kurikulum tidak ditemukan' });
+        return;
+      }
 
       const results: any[] = [];
       const errors: string[] = [];

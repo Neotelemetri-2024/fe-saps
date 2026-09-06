@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma';
-import { bagiPoin } from '../lib/distribusiPoin';
 import { NotifikasiService } from './notifikasi.service';
+import { buildSettlementDetails, resolveMatriksMahasiswa } from './kurikulumResolver.service';
 
 export interface AutoClaimResult {
   claimed: boolean;
@@ -81,44 +81,24 @@ export async function cairkanPoinPartisipasi(
 
   const kegiatan = partisipasi.kegiatan;
 
-  // Lookup Matriks Poin
-  const matriks = await db.matriksPoin.findFirst({
-    where: {
-      kurikulumId: kegiatan.kurikulumId,
+  const { kurikulum, matriks } = await resolveMatriksMahasiswa(
+    partisipasi.mahasiswaId,
+    {
       kategoriId: kegiatan.kategoriId,
       skalaId: kegiatan.skalaId,
       peranId: partisipasi.peranVerifId,
     },
-  });
+    db,
+  );
 
   if (!matriks) {
-    return { 
-      claimed: false, 
-      reason: `Matriks poin tidak ditemukan untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${partisipasi.peranVerifId}` 
+    return {
+      claimed: false,
+      reason: `Matriks poin tidak ditemukan pada kurikulum mahasiswa untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${partisipasi.peranVerifId}`,
     };
   }
 
-  // Hitung distribusi ke sub capaian kurikulum
-  let detailData = bagiPoin(
-    matriks.poin,
-    kegiatan.kegiatanCapaian.map((kc: any) => ({ ref: kc.subCapaianId, bobot: Number(kc.alokasiPersen) })),
-  ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-
-  if (detailData.length === 0) {
-    const kurikulum = await db.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: { capaian: { include: { subCapaian: true }, orderBy: { urutan: 'asc' } } },
-    });
-    const allSub = kurikulum?.capaian.flatMap((c: any) => c.subCapaian) ?? [];
-    detailData = bagiPoin(
-      matriks.poin,
-      allSub.map((sc: any) => ({ ref: sc.id, bobot: Number(sc.bobotPersen) })),
-    ).map((b) => ({ subCapaianId: b.ref, poin: b.poin }));
-  }
-
-  if (detailData.length === 0) {
-    return { claimed: false, reason: 'Kurikulum aktif belum memiliki sub capaian untuk distribusi poin' };
-  }
+  const detailData = await buildSettlementDetails(kegiatan.id, kurikulum.id, matriks.poin, db);
 
   // Buat / Update KlaimPoin
   let klaimId: bigint;
@@ -154,6 +134,7 @@ export async function cairkanPoinPartisipasi(
       klaimPoinId: klaimId,
       mahasiswaId: partisipasi.mahasiswaId,
       kegiatanId: kegiatan.id,
+      kurikulumId: kurikulum.id,
       totalPoin: matriks.poin,
       status: 'sah',
       detail: { create: detailData },

@@ -319,6 +319,7 @@ async function main() {
     data: {
       nama: 'Kurikulum Merdeka 2024',
       tahunAkademik: '2024/2025',
+      angkatanMulai: 2020,
       versi: 1,
       status: 'aktif',
       dibuatOleh: pimpinanUser.id,
@@ -326,6 +327,12 @@ async function main() {
     },
   });
   console.log(`✅ Kurikulum: ${kurikulum.nama} (ID: ${kurikulum.id})`);
+
+  await prisma.mahasiswa.updateMany({
+    where: { kurikulumId: null },
+    data: { kurikulumId: kurikulum.id },
+  });
+  console.log('✅ Assignment kurikulum mahasiswa diisi');
 
   const capaianData = [
     { nama: 'Pondasi', jumlahPoin: 100, urutan: 1 },
