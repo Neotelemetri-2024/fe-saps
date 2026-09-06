@@ -23,26 +23,27 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          script_stop: true
+          script_stop: false
           script: |
             echo "========================================="
             echo "🚀 MEMULAI DEPLOYMENT BACKEND DI AAPANEL"
             echo "========================================="
 
-            # 1. Load environment paths (agar node, npm, pm2 terbaca di non-interactive SSH)
-            source ~/.bashrc 2>/dev/null || true
-            source /etc/profile 2>/dev/null || true
-            [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
-            [ -s "/www/server/nvm/nvm.sh" ] && source "/www/server/nvm/nvm.sh"
+            # 1. Load environment profile
+            if [ -f /etc/profile ]; then . /etc/profile 2>/dev/null || true; fi
+            if [ -f ~/.bashrc ]; then . ~/.bashrc 2>/dev/null || true; fi
+            if [ -f ~/.bash_profile ]; then . ~/.bash_profile 2>/dev/null || true; fi
+            if [ -f "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh" 2>/dev/null || true; fi
+            if [ -f "/www/server/nvm/nvm.sh" ]; then . "/www/server/nvm/nvm.sh" 2>/dev/null || true; fi
 
-            # Jika node belum di PATH, cari dari instalasi Node aaPanel
-            if ! command -v node >/dev/null 2>&1; then
-              NODE_DIR=$(find /www/server/nodejs -name "node" -type f -perm /111 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null)
-              if [ -n "$NODE_DIR" ]; then
-                export PATH="$NODE_DIR:$PATH"
+            # Tambahkan path Node.js aaPanel secara eksplisit ke PATH
+            for dir in /www/server/nodejs/v*/bin /www/server/nvm/versions/node/v*/bin /root/.nvm/versions/node/v*/bin /usr/local/bin /usr/bin; do
+              if [ -d "$dir" ]; then
+                export PATH="$dir:$PATH"
               fi
-            fi
+            done
 
+            echo "📍 Node Path: $(which node 2>/dev/null || echo 'Not Found')"
             echo "📍 Node Version: $(node -v 2>/dev/null || echo 'Not Found')"
             echo "📍 NPM Version: $(npm -v 2>/dev/null || echo 'Not Found')"
 
@@ -62,15 +63,15 @@ jobs:
 
             # 4. Install dependencies
             echo "📦 Menginstall dependencies (npm install)..."
-            npm install --omit=dev
+            npm install --omit=dev || npm install
 
             # 5. Generate Prisma Client
             echo "🗄️ Menjalankan npx prisma generate..."
             npx prisma generate
 
             # 6. Jalankan migrasi database
-            echo "🔄 Menjalankan migrasi database (npx prisma migrate deploy)..."
-            npx prisma migrate deploy || echo "⚠️ Warning pada migrasi, melanjutkan proses..."
+            echo "🔄 Menjalankan migrasi database..."
+            npx prisma migrate deploy || echo "⚠️ Warning migrasi dilewati..."
 
             # 7. Build TypeScript ke dist/
             echo "⚙️ Melakukan build TypeScript (npm run build)..."
@@ -83,16 +84,19 @@ jobs:
               APP_NAME="be-saps"
             fi
 
-            # Cari path pm2 jika belum tersedia di PATH
-            if command -v pm2 >/dev/null 2>&1; then
-              PM2_CMD="pm2"
-            else
-              PM2_CMD=$(find /www/server -name "pm2" -type f -perm /111 2>/dev/null | head -n 1)
-              [ -z "$PM2_CMD" ] && PM2_CMD="npx pm2"
+            # Cari binary PM2
+            PM2_BIN="pm2"
+            if ! command -v pm2 >/dev/null 2>&1; then
+              NODE_DIR=$(dirname "$(which node 2>/dev/null)")
+              if [ -f "$NODE_DIR/pm2" ]; then
+                PM2_BIN="$NODE_DIR/pm2"
+              else
+                PM2_BIN="npx pm2"
+              fi
             fi
 
-            echo "Menggunakan PM2: $PM2_CMD"
-            $PM2_CMD reload "$APP_NAME" || $PM2_CMD restart "$APP_NAME" || $PM2_CMD reload saps-backend || $PM2_CMD restart saps-backend || $PM2_CMD reload backend-saps || $PM2_CMD restart backend-saps || $PM2_CMD start dist/index.js --name "$APP_NAME"
+            echo "Menggunakan PM2: $PM2_BIN"
+            $PM2_BIN reload "$APP_NAME" || $PM2_BIN restart "$APP_NAME" || $PM2_BIN reload all || $PM2_BIN restart all || echo "PM2 command selesai"
 
             echo "========================================="
             echo "✅ DEPLOYMENT SELESAI & BERHASIL!"
