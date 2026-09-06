@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import prisma from '../../lib/prisma';
+import { Request, Response } from "express";
+import prisma from "../../lib/prisma";
 
 function getAuthUserId(req: Request): bigint | null {
   const fromToken = req.user?.id;
@@ -12,21 +12,26 @@ function getAuthUserId(req: Request): bigint | null {
 }
 
 // GET /api/umum/notifikasi — Daftar notifikasi pengguna login
-export const getNotifikasi = async (req: Request, res: Response): Promise<void> => {
+export const getNotifikasi = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const userId = getAuthUserId(req);
     if (!userId) {
-      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      res
+        .status(401)
+        .json({ success: false, message: "User tidak terautentikasi" });
       return;
     }
 
     const { dibaca } = req.query;
     const where: { userId: bigint; dibaca?: boolean } = { userId };
-    if (dibaca !== undefined) where.dibaca = dibaca === 'true';
+    if (dibaca !== undefined) where.dibaca = dibaca === "true";
 
     const data = await prisma.notifikasi.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
 
@@ -45,23 +50,34 @@ export const getNotifikasi = async (req: Request, res: Response): Promise<void> 
     res.json({ success: true, data: normalized, unreadCount });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada server" });
   }
 };
 
 // PUT /api/umum/notifikasi/:id/baca
-export const bacaNotifikasi = async (req: Request, res: Response): Promise<void> => {
+export const bacaNotifikasi = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const userId = getAuthUserId(req);
     if (!userId) {
-      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      res
+        .status(401)
+        .json({ success: false, message: "User tidak terautentikasi" });
       return;
     }
 
     const id = BigInt(req.params.id as string);
-    const existing = await prisma.notifikasi.findFirst({ where: { id, userId } });
+    const existing = await prisma.notifikasi.findFirst({
+      where: { id, userId },
+    });
     if (!existing) {
-      res.status(404).json({ success: false, message: 'Notifikasi tidak ditemukan' });
+      res
+        .status(404)
+        .json({ success: false, message: "Notifikasi tidak ditemukan" });
       return;
     }
 
@@ -81,16 +97,23 @@ export const bacaNotifikasi = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada server" });
   }
 };
 
 // PUT /api/umum/notifikasi/baca-semua
-export const bacaSemuaNotifikasi = async (req: Request, res: Response): Promise<void> => {
+export const bacaSemuaNotifikasi = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const userId = getAuthUserId(req);
     if (!userId) {
-      res.status(401).json({ success: false, message: 'User tidak terautentikasi' });
+      res
+        .status(401)
+        .json({ success: false, message: "User tidak terautentikasi" });
       return;
     }
 
@@ -98,18 +121,38 @@ export const bacaSemuaNotifikasi = async (req: Request, res: Response): Promise<
       where: { userId, dibaca: false },
       data: { dibaca: true },
     });
-    res.json({ success: true, message: 'Semua notifikasi ditandai dibaca' });
+    res.json({ success: true, message: "Semua notifikasi ditandai dibaca" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada server" });
   }
 };
 
-// ==================== AUDIT LOG (DINONAKTIFKAN SEMENTARA) ====================
+// ==================== AUDIT LOG ====================
 
 export const getAuditLog = async (req: Request, res: Response) => {
-  res.status(403).json({
-    success: false,
-    message: 'Fitur audit log sistem sedang dinonaktifkan sementara.',
-  });
+  try {
+    const { entitas, aktorId, aksi } = req.query;
+    const where: any = {};
+    if (entitas) where.entitas = entitas as string;
+    if (aktorId) where.aktorId = BigInt(aktorId as string);
+    if (aksi) where.aksi = { contains: aksi as string };
+
+    const data = await prisma.auditLog.findMany({
+      where,
+      include: {
+        aktor: { select: { id: true, nama: true, peran: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada server" });
+  }
 };
