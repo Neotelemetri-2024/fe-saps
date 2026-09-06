@@ -38,7 +38,7 @@ import PimpinanDitmawaValidasiKlaimPoin from './pages/pimpinan_ditmawa/ValidasiK
 import PimpinanDitmawaDetailValidasiKlaim from './pages/pimpinan_ditmawa/DetailValidasiKlaim'
 import PimpinanDitmawaManajemenAkunUKM from './pages/pimpinan_ditmawa/ManajemenAkunUKM'
 import PimpinanDitmawaManajemenAkunUKMF from './pages/pimpinan_ditmawa/ManajemenAkunUKMF'
-import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
+// import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
 import PimpinanDitmawaLayout from './layouts/PimpinanDitmawaLayout'
 import PimpinanFakultasDashboard from './pages/pimpinan_fakultas/FakultasDashboard'
 import PimpinanFakultasPersetujuan from './pages/pimpinan_fakultas/FakultasPersetujuan'
