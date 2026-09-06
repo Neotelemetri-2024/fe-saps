@@ -105,27 +105,11 @@ export const bacaSemuaNotifikasi = async (req: Request, res: Response): Promise<
   }
 };
 
-// ==================== AUDIT LOG ====================
+// ==================== AUDIT LOG (DINONAKTIFKAN SEMENTARA) ====================
 
 export const getAuditLog = async (req: Request, res: Response) => {
-  try {
-    const { entitas, aktorId, aksi } = req.query;
-    const where: any = {};
-    if (entitas) where.entitas = entitas as string;
-    if (aktorId) where.aktorId = BigInt(aktorId as string);
-    if (aksi) where.aksi = { contains: aksi as string };
-
-    const data = await prisma.auditLog.findMany({
-      where,
-      include: {
-        aktor: { select: { id: true, nama: true, peran: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-    res.json({ success: true, data });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
-  }
+  res.status(403).json({
+    success: false,
+    message: 'Fitur audit log sistem sedang dinonaktifkan sementara.',
+  });
 };
