@@ -143,7 +143,7 @@ function App() {
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
           <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
-          <Route path="audit-log" element={<PimpinanDitmawaAuditLog />} />
+          {/* <Route path="audit-log" element={<PimpinanDitmawaAuditLog />} /> */}
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
           <Route path="*" element={<NotFoundPage />} />

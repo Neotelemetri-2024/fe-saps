@@ -80,7 +80,7 @@ export const pimpinanDitmawaMenu = [
     ],
   },
   { path: '/pimpinan_ditmawa/manajemen-event', label: 'Event Global', icon: <Search className="h-4 w-4" /> },
-  { path: '/pimpinan_ditmawa/audit-log', label: 'Audit Log Sistem', icon: <History className="h-4 w-4" /> },
+  // { path: '/pimpinan_ditmawa/audit-log', label: 'Audit Log Sistem', icon: <History className="h-4 w-4" /> }, // Dinonaktifkan sementara untuk role Pimpinan Ditmawa
 ]
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
