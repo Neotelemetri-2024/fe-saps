@@ -27,8 +27,8 @@ router.get('/notifikasi', getNotifikasi);
 router.put('/notifikasi/baca-semua', bacaSemuaNotifikasi);
 router.put('/notifikasi/:id/baca', bacaNotifikasi);
 
-// ─── AUDIT LOG (Pimpinan & Admin) ────────────────────────────────────────────
-router.get('/audit-log', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), getAuditLog);
+// ─── AUDIT LOG (Admin Ditmawa) ────────────────────────────────────────────────
+router.get('/audit-log', authorizeRole('admin_ditmawa'), getAuditLog);
 
 // ─── DASHBOARD per ROLE ───────────────────────────────────────────────────────
 router.get('/dashboard/admin-ditmawa', authorizeRole('admin_ditmawa'), dashboardAdminDitmawa);

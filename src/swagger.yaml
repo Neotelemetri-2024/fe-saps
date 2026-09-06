@@ -1888,8 +1888,8 @@ paths:
   # =================================================================
   /api/umum/audit-log:
     get:
-      summary: (Pimpinan / Admin Ditmawa) Melihat Histori Log Aktivitas Penting
-      tags: ["Role: Admin Ditmawa", "Role: Pimpinan Ditmawa"]
+      summary: (Admin Ditmawa) Melihat Histori Log Aktivitas Penting
+      tags: ["Role: Admin Ditmawa"]
       security:
         - bearerAuth: []
       responses:
