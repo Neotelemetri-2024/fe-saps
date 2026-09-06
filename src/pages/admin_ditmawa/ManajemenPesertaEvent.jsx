@@ -182,7 +182,9 @@ function ManajemenPesertaEvent() {
     }
   }
 
-  const belumDisetujui = !['disetujui', 'terpublikasi'].includes(eventStatus)
+  const belumDisetujui = role === 'pimpinan_ditmawa'
+    ? ['ditolak', 'dibatalkan'].includes(eventStatus)
+    : !['disetujui', 'terpublikasi', 'berlangsung', 'selesai', 'aktif'].includes(eventStatus)
 
   const pageContent = (
     <>
