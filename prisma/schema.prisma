@@ -124,7 +124,7 @@ model Fakultas {
   nama String @unique @db.VarChar(150)
 
   createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
   programStudi ProgramStudi[]
@@ -142,7 +142,7 @@ model ProgramStudi {
   nama       String @db.VarChar(150)
 
   createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
   fakultas  Fakultas    @relation(fields: [fakultasId], references: [id])
@@ -164,7 +164,7 @@ model User {
   alamat        String?  @map("alamat") @db.VarChar(255)
   fcmToken      String?  @map("fcm_token") @db.VarChar(500)
   createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedAt     DateTime @updatedAt @default(now()) @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
   // Relasi 1:1 ke profil
@@ -194,7 +194,7 @@ model Dosen {
   fakultasId Int?    @map("fakultas_id")
 
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -217,7 +217,7 @@ model Mahasiswa {
   kurikulumId  Int?    @map("kurikulum_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -248,7 +248,7 @@ model Staff {
   fakultasId Int?          @map("fakultas_id") // NULL = tingkat universitas (Ditmawa)
 
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -265,7 +265,7 @@ model Organisasi {
   fakultasId Int?    @map("fakultas_id") // Wajib UKMF, NULL untuk UKM
 
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   fakultas Fakultas? @relation(fields: [fakultasId], references: [id])
@@ -282,7 +282,7 @@ model OrganisasiOperator {
   organisasiId Int   @map("organisasi_id")
 
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedAt   DateTime @updatedAt @default(now()) @map("updated_at")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   organisasi Organisasi @relation(fields: [organisasiId], references: [id])
@@ -305,7 +305,7 @@ model Kurikulum {
   dibuatOleh    BigInt          @map("dibuat_oleh")
   activatedAt   DateTime?       @map("activated_at")
   createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
+  updatedAt     DateTime        @updatedAt @default(now()) @map("updated_at")
   deletedAt     DateTime?       @map("deleted_at")
 
   pembuat     User          @relation("KurikulumDibuat", fields: [dibuatOleh], references: [id])
@@ -328,7 +328,7 @@ model Capaian {
   urutan       Int?   @db.SmallInt
 
   createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  updatedAt    DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
   kurikulum  Kurikulum   @relation(fields: [kurikulumId], references: [id], onDelete: Cascade)
@@ -345,7 +345,7 @@ model SubCapaian {
   bobotPersen Decimal @map("bobot_persen") @db.Decimal(5, 2) // jumlah 100% per capaian [BR-002]
 
   createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  updatedAt   DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
 
   capaian         Capaian           @relation(fields: [capaianId], references: [id], onDelete: Cascade)
@@ -361,7 +361,7 @@ model MpKategori {
   nama String @unique @db.VarChar(80)
 
   createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  updatedAt   DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
 
   matriksPoin MatriksPoin[]
@@ -380,7 +380,7 @@ model MpSkala {
   urutan     Int    @db.SmallInt // hierarki skala (validasi monotonisitas)
 
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   kategori MpKategori @relation(fields: [kategoriId], references: [id])
@@ -400,7 +400,7 @@ model MpPeran {
   urutan     Int    @db.SmallInt
 
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   kategori MpKategori @relation(fields: [kategoriId], references: [id])
@@ -423,7 +423,7 @@ model MatriksPoin {
   poin         Int
 
   createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  updatedAt    DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
   kurikulum Kurikulum  @relation(fields: [kurikulumId], references: [id])
@@ -446,7 +446,7 @@ model MatriksPoinHistori {
   diubahOleh     BigInt   @map("diubah_oleh")
   diubahPada     DateTime @default(now()) @map("diubah_pada")
   createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  updatedAt      DateTime @updatedAt @default(now()) @map("updated_at")
 
   matriksPoin MatriksPoin @relation(fields: [matriksPoinId], references: [id])
   pengubah    User        @relation(fields: [diubahOleh], references: [id])
@@ -478,7 +478,7 @@ model Kegiatan {
   dibuatOleh      BigInt         @map("dibuat_oleh")
   status          StatusKegiatan @default(draft)
   createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  updatedAt       DateTime       @updatedAt @default(now()) @map("updated_at")
   deletedAt       DateTime?      @map("deleted_at")
 
   kategori   MpKategori  @relation(fields: [kategoriId], references: [id])
@@ -504,7 +504,7 @@ model KegiatanCapaian {
   subCapaianId  Int      @map("sub_capaian_id")
   alokasiPersen Decimal  @map("alokasi_persen") @db.Decimal(5, 2) // jumlah = 100% per kegiatan
   createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedAt     DateTime @updatedAt @default(now()) @map("updated_at")
 
   kegiatan   Kegiatan   @relation(fields: [kegiatanId], references: [id])
   subCapaian SubCapaian @relation(fields: [subCapaianId], references: [id])
@@ -522,7 +522,7 @@ model KegiatanApproval {
   keputusan  KeputusanApproval
   alasan     String?           @db.Text // wajib bila revisi/tolak
   createdAt  DateTime          @default(now()) @map("created_at")
-  updatedAt  DateTime          @updatedAt @map("updated_at")
+  updatedAt  DateTime          @updatedAt @default(now()) @map("updated_at")
 
   kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
   aktor    User     @relation(fields: [aktorId], references: [id])
@@ -543,7 +543,7 @@ model Partisipasi {
   kehadiran     Boolean?           // via upload CSV [BR-022]
   peranVerifId  Int?               @map("peran_verif_id") // hasil crosscheck [BR-030]
   createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  updatedAt     DateTime           @updatedAt @default(now()) @map("updated_at")
 
   kegiatan     Kegiatan  @relation(fields: [kegiatanId], references: [id])
   mahasiswa    Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
@@ -566,7 +566,7 @@ model IzinPA {
   status         StatusIzin @default(diajukan)
   alasan         String?   @db.Text
   createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  updatedAt      DateTime  @updatedAt @default(now()) @map("updated_at")
   decidedAt      DateTime? @map("decided_at")
 
   partisipasi Partisipasi @relation(fields: [partisipasiId], references: [id])
@@ -588,7 +588,7 @@ model KlaimPoin {
   validatorId     BigInt?     @map("validator_id") // penyelenggara [BR-018]
   alasan          String?     @db.Text
   createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  updatedAt       DateTime    @updatedAt @default(now()) @map("updated_at")
 
   partisipasi   Partisipasi @relation(fields: [partisipasiId], references: [id])
   peranUsulan   MpPeran?    @relation("PeranUsulan", fields: [peranUsulanId], references: [id])
@@ -609,7 +609,7 @@ model Bukti {
   url          String   @db.VarChar(500)
   uploadedAt   DateTime @default(now()) @map("uploaded_at")
   createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedAt    DateTime @updatedAt @default(now()) @map("updated_at")
 
   klaimPoin KlaimPoin @relation(fields: [klaimPoinId], references: [id], onDelete: Cascade)
 
@@ -626,7 +626,7 @@ model PerolehanPoin {
   totalPoin    Int             @map("total_poin") // dari lookup matriks [BR-030]
   status       StatusPerolehan @default(sah)
   createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  updatedAt    DateTime        @updatedAt @default(now()) @map("updated_at")
 
   klaimPoin KlaimPoin @relation(fields: [klaimPoinId], references: [id])
   mahasiswa Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
@@ -648,7 +648,7 @@ model PerolehanDetail {
   subCapaianId    Int      @map("sub_capaian_id")
   poin            Int      // total_poin × alokasi_persen
   createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  updatedAt       DateTime @updatedAt @default(now()) @map("updated_at")
 
   perolehanPoin PerolehanPoin @relation(fields: [perolehanPoinId], references: [id], onDelete: Cascade)
   subCapaian    SubCapaian    @relation(fields: [subCapaianId], references: [id])
@@ -668,7 +668,7 @@ model SaranPA {
   mahasiswaId BigInt   @map("mahasiswa_id")
   isi         String   @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedAt   DateTime @updatedAt @default(now()) @map("updated_at")
 
   dosenPA   Dosen     @relation("DosenSaran", fields: [dosenPaId], references: [userId])
   mahasiswa Mahasiswa @relation("MahasiswaSaran", fields: [mahasiswaId], references: [userId])
@@ -686,7 +686,7 @@ model Notifikasi {
   refId     BigInt?  @map("ref_id")
   dibaca    Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -704,7 +704,7 @@ model AuditLog {
   statusBaru String?  @map("status_baru") @db.VarChar(40)
   aktorId    BigInt?  @map("aktor_id") // NULL bila oleh Sistem
   createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  updatedAt  DateTime @updatedAt @default(now()) @map("updated_at")
 
   aktor User? @relation(fields: [aktorId], references: [id])
 
@@ -718,7 +718,7 @@ model CvGenerated {
   mahasiswaId BigInt   @map("mahasiswa_id")
   filePath    String   @map("file_path") @db.VarChar(500)
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedAt   DateTime @updatedAt @default(now()) @map("updated_at")
 
   mahasiswa Mahasiswa @relation(fields: [mahasiswaId], references: [userId])
 
@@ -737,7 +737,7 @@ model Iku3Target {
   keterangan    String?   @db.VarChar(255)
   diubahOleh    BigInt?   @map("diubah_oleh")
   createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  updatedAt     DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
   pengubah User? @relation("Iku3TargetPengubah", fields: [diubahOleh], references: [id])
@@ -759,7 +759,7 @@ model Iku3BobotRule {
   keterangan   String?   @db.VarChar(255)
   diubahOleh   BigInt?   @map("diubah_oleh")
   createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  updatedAt    DateTime  @updatedAt @default(now()) @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
   pengubah User? @relation("Iku3BobotRulePengubah", fields: [diubahOleh], references: [id])
