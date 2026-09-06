@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../../../lib/prisma';
+import { calculateIku3Dashboard } from '../../../services/iku3/iku3Calculation.service';
 
 // GET /api/umum/dashboard/pimpinan-ditmawa — Dashboard Monitoring & Command Center Super Admin
 export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Promise<void> => {
@@ -254,6 +255,22 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       diajukanPada: kp.createdAt,
     }));
 
+    // 6.5 Ringkasan Cepat IKU 3 (Quick Widget Super Admin)
+    let iku3Widget = null;
+    try {
+      const iku3Data = await calculateIku3Dashboard({ tahun: new Date().getFullYear() });
+      iku3Widget = {
+        tahun: iku3Data.kpi.tahun,
+        capaian: iku3Data.kpi.capaian,
+        target: iku3Data.kpi.target,
+        statusTarget: iku3Data.kpi.statusTarget,
+        gapMahasiswa: iku3Data.kpi.gapMahasiswa,
+        totalKontributor: iku3Data.kpi.totalKontributor,
+      };
+    } catch (e) {
+      console.error('[iku3Widget]', e);
+    }
+
     // 7. Konstruksi Data Respon Lengkap Dashboard Super Admin
     const data = {
       statistik: {
@@ -272,6 +289,7 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       grafikPoinUkm: grafikPoinUkm.slice(0, 10),
       kegiatanMenungguApproval: formattedKegiatanPending,
       klaimMenungguValidasi: formattedKlaimPending,
+      iku3Widget,
     };
 
     res.json({

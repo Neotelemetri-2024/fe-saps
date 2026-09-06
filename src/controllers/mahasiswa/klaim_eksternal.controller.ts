@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../lib/prisma';
 import { z } from 'zod';
+import { resolveBobotPrestasi, resolveBobotPembelajaran, normalize } from '../../services/iku3/iku3Bobot.constants';
 
 const submitKlaimEksternalSchema = z.object({
   partisipasiId: z.number().int().positive(),
@@ -203,6 +204,23 @@ export const getRiwayatKlaimEksternal = async (req: Request, res: Response, next
         poin = estimasi ?? null;
       }
 
+      // Deteksi & Estimasi Bobot IKU 3
+      const katNama = normalize(k.partisipasi?.kegiatan?.kategori?.nama);
+      const skNama = k.partisipasi?.kegiatan?.skala?.nama || '';
+      const prNama = k.peranUsulan?.nama || '';
+      const isLomba = katNama.includes('kompetisi') || katNama.includes('lomba') || 
+                      normalize(prNama).includes('juara') || normalize(prNama).includes('finalis');
+
+      let estimasiBobotIku3 = 0;
+      if (isLomba) {
+        estimasiBobotIku3 = resolveBobotPrestasi(skNama, prNama);
+      } else {
+        estimasiBobotIku3 = resolveBobotPembelajaran(20);
+      }
+
+      const isIku3Eligible = estimasiBobotIku3 > 0;
+      const badgeIku3 = isIku3Eligible ? `Diakui IKU 3 (Bobot: ${estimasiBobotIku3})` : null;
+
       return {
         id: k.id.toString(),
         namaKegiatan: k.partisipasi.kegiatan.nama,
@@ -214,7 +232,10 @@ export const getRiwayatKlaimEksternal = async (req: Request, res: Response, next
         poin,
         status: statusStr,
         alasan: k.alasan || null,
-        tanggalKlaim: k.createdAt
+        tanggalKlaim: k.createdAt,
+        isIku3: isIku3Eligible,
+        estimasiBobotIku3,
+        badgeIku3,
       };
     });
 

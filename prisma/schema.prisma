@@ -171,6 +171,8 @@ model User {
   matriksPoinHistori   MatriksPoinHistori[]
   auditLog             AuditLog[]
   notifikasi           Notifikasi[]
+  iku3TargetPengubah   Iku3Target[]         @relation("Iku3TargetPengubah")
+  iku3BobotRulePengubah Iku3BobotRule[]     @relation("Iku3BobotRulePengubah")
 
   @@map("users")
 }
@@ -637,3 +639,44 @@ model CvGenerated {
 
   @@map("cv_generated")
 }
+
+// =================================================================
+// KELOMPOK 7 · MONITORING IKU 3 DIKTI (KEPMEN 358/M/KEP/2025)
+// =================================================================
+
+/// 7.1 Target Tahunan IKU 3 Universitas
+model Iku3Target {
+  id            Int       @id @default(autoincrement())
+  tahun         Int       @unique
+  targetPersen  Decimal   @map("target_persen") @db.Decimal(5, 2)
+  keterangan    String?   @db.VarChar(255)
+  diubahOleh    BigInt?   @map("diubah_oleh")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  pengubah User? @relation("Iku3TargetPengubah", fields: [diubahOleh], references: [id])
+
+  @@map("iku3_target")
+}
+
+/// 7.2 Aturan Bobot Dinamis IKU 3 (Configurable Rule Engine)
+model Iku3BobotRule {
+  id           Int       @id @default(autoincrement())
+  tahunMulai   Int       @default(2026) @map("tahun_mulai")
+  jenis        String    @db.VarChar(30) // 'prestasi' | 'pembelajaran'
+  skala        String?   @db.VarChar(50) // 'Internasional', 'Nasional', 'Provinsi'
+  peran        String?   @db.VarChar(50) // 'Juara 1', 'Juara 2/3/Favorit', 'Finalis', dll
+  sksMin       Int?      @map("sks_min")
+  sksMax       Int?      @map("sks_max")
+  bobot        Decimal   @db.Decimal(4, 2)
+  aktif        Boolean   @default(true)
+  keterangan   String?   @db.VarChar(255)
+  diubahOleh   BigInt?   @map("diubah_oleh")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  pengubah User? @relation("Iku3BobotRulePengubah", fields: [diubahOleh], references: [id])
+
+  @@map("iku3_bobot_rule")
+}
+

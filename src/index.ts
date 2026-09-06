@@ -140,6 +140,10 @@ app.use('/api/umum', umumRoutes);
 import laporanRoutes from './routes/laporan.routes';
 app.use('/api/pimpinan/laporan', laporanRoutes);
 
+// Monitoring IKU 3 Kemdiktisaintek Berdampak 2026
+import iku3Routes from './routes/iku3.routes';
+app.use('/api/iku3', iku3Routes);
+
 // ==================== GLOBAL ERROR HANDLER ====================
 app.use((err: any, req: Request, res: Response, next: any) => {
   console.error('[ERROR]', err?.stack || err?.message || err);

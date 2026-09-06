@@ -397,6 +397,52 @@ async function main() {
   console.log(`✅ ${matriksContoh.length} entri Matriks Poin (Kompetisi)`);
 
   // ============================================================
+  // 8. IKU 3 KEMDIKTISAINTEK BERDAMPAK 2026 (KEPMEN 358/2025)
+  // ============================================================
+  await prisma.iku3Target.upsert({
+    where: { tahun: 2026 },
+    update: {},
+    create: {
+      tahun: 2026,
+      targetPersen: 50.00,
+      keterangan: 'Target Resmi IKU 3 Tahun Anggaran 2026 (Kepmen 358/2025)',
+      diubahOleh: pimpinanUser.id,
+    },
+  });
+
+  const defaultIku3Rules = [
+    // Prestasi Internasional
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara 1', bobot: 1.00, keterangan: 'Juara 1 Tingkat Internasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara 2/3/Favorit', bobot: 0.50, keterangan: 'Juara 2, 3, atau Favorit Internasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara Harapan', bobot: 0.30, keterangan: 'Juara Harapan Internasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Finalis', bobot: 0.20, keterangan: 'Finalis Internasional' },
+    // Prestasi Nasional
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara 1', bobot: 0.60, keterangan: 'Juara 1 Tingkat Nasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara 2/3/Favorit', bobot: 0.30, keterangan: 'Juara 2, 3, atau Favorit Nasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara Harapan', bobot: 0.20, keterangan: 'Juara Harapan Nasional' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Finalis', bobot: 0.10, keterangan: 'Finalis Nasional' },
+    // Prestasi Provinsi
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara 1', bobot: 0.40, keterangan: 'Juara 1 Tingkat Provinsi' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara 2/3/Favorit', bobot: 0.20, keterangan: 'Juara 2, 3, atau Favorit Provinsi' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara Harapan', bobot: 0.10, keterangan: 'Juara Harapan Provinsi' },
+    { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Finalis', bobot: 0.05, keterangan: 'Finalis Provinsi' },
+    // Pembelajaran di Luar Kampus
+    { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 0, sksMax: 5, bobot: 0.40, keterangan: 'Pembelajaran Luar Kampus <= 5 SKS' },
+    { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 6, sksMax: 10, bobot: 0.60, keterangan: 'Pembelajaran Luar Kampus 6-10 SKS' },
+    { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 11, sksMax: null, bobot: 1.00, keterangan: 'Pembelajaran Luar Kampus >= 10 SKS (MBKM Penuh)' },
+  ];
+
+  for (const r of defaultIku3Rules) {
+    await prisma.iku3BobotRule.create({
+      data: {
+        ...r,
+        diubahOleh: pimpinanUser.id,
+      },
+    });
+  }
+  console.log(`✅ Target 2026 & ${defaultIku3Rules.length} Aturan Bobot Dinamis IKU 3`);
+
+  // ============================================================
   console.log('\n🎉 Seeding selesai! Database siap digunakan.');
   console.log('\n📋 Ringkasan akun:');
   console.log(`   Pimpinan Ditmawa  : pimpinan.ditmawa@unand.ac.id (ID: ${pimpinanUser.id})`);
