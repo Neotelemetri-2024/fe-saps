@@ -1,0 +1,99 @@
+name: Deploy Backend to aaPanel
+
+on:
+  push:
+    branches:
+      - backend
+  workflow_dispatch: # Memungkinkan trigger manual dari tab Actions di GitHub
+
+jobs:
+  deploy:
+    name: Deploy Backend via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Execute Remote Deployment via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "========================================="
+            echo "🚀 MEMULAI DEPLOYMENT BACKEND DI AAPANEL"
+            echo "========================================="
+
+            # 1. Load environment paths (agar node, npm, pm2 terbaca di non-interactive SSH)
+            source ~/.bashrc 2>/dev/null || true
+            source /etc/profile 2>/dev/null || true
+            [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
+            [ -s "/www/server/nvm/nvm.sh" ] && source "/www/server/nvm/nvm.sh"
+
+            # Jika node belum di PATH, cari dari instalasi Node aaPanel
+            if ! command -v node >/dev/null 2>&1; then
+              NODE_DIR=$(find /www/server/nodejs -name "node" -type f -perm /111 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null)
+              if [ -n "$NODE_DIR" ]; then
+                export PATH="$NODE_DIR:$PATH"
+              fi
+            fi
+
+            echo "📍 Node Version: $(node -v 2>/dev/null || echo 'Not Found')"
+            echo "📍 NPM Version: $(npm -v 2>/dev/null || echo 'Not Found')"
+
+            # 2. Masuk ke direktori project
+            TARGET_DIR="${{ secrets.PROJECT_PATH }}"
+            if [ -z "$TARGET_DIR" ]; then
+              TARGET_DIR="/www/wwwroot/api.saps.unand.ac.id"
+            fi
+
+            echo "📁 Masuk ke folder: $TARGET_DIR"
+            cd "$TARGET_DIR" || { echo "❌ Direktori $TARGET_DIR tidak ditemukan!"; exit 1; }
+
+            # 3. Tarik update terbaru dari branch backend
+            echo "📥 Mengambil kode terbaru dari GitHub (branch: backend)..."
+            git fetch origin backend
+            git reset --hard origin/backend
+
+            # 4. Install dependencies
+            echo "📦 Menginstall dependencies (npm install)..."
+            npm install --omit=dev
+
+            # 5. Generate Prisma Client
+            echo "🗄️ Menjalankan npx prisma generate..."
+            npx prisma generate
+
+            # 6. Jalankan migrasi database
+            echo "🔄 Menjalankan migrasi database (npx prisma migrate deploy)..."
+            npx prisma migrate deploy || echo "⚠️ Warning pada migrasi, melanjutkan proses..."
+
+            # 7. Build TypeScript ke dist/
+            echo "⚙️ Melakukan build TypeScript (npm run build)..."
+            npm run build
+
+            # 8. Restart aplikasi dengan PM2
+            echo "🔄 Merestart aplikasi di PM2..."
+            APP_NAME="${{ secrets.PM2_APP_NAME }}"
+            if [ -z "$APP_NAME" ]; then
+              APP_NAME="saps-backend"
+            fi
+
+            # Cari path pm2 jika belum tersedia di PATH
+            if command -v pm2 >/dev/null 2>&1; then
+              PM2_CMD="pm2"
+            else
+              PM2_CMD=$(find /www/server -name "pm2" -type f -perm /111 2>/dev/null | head -n 1)
+              [ -z "$PM2_CMD" ] && PM2_CMD="npx pm2"
+            fi
+
+            echo "Menggunakan PM2: $PM2_CMD"
+            $PM2_CMD reload "$APP_NAME" || $PM2_CMD restart "$APP_NAME" || $PM2_CMD start dist/index.js --name "$APP_NAME"
+
+            echo "========================================="
+            echo "✅ DEPLOYMENT SELESAI & BERHASIL!"
+            echo "========================================="
