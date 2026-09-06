@@ -14,9 +14,9 @@ import {
 const router = Router();
 const uploadXlsx = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-// Middleware: Hanya role operator_org (UKM/UKMF) yang bisa mengakses rute ini
+// Middleware: Role operator_org (UKM/UKMF), Admin Ditmawa/Fakultas, dan Pimpinan Ditmawa (Superadmin)
 router.use(authenticateJWT);
-router.use(authorizeRole('operator_org'));
+router.use(authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'));
 
 // Dashboard UKM
 router.get('/dashboard', getDashboardUKM);
