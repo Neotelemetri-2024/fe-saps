@@ -23,7 +23,7 @@ async function requireMahasiswaUser(req: Request, res: Response): Promise<bigint
 }
 
 async function requireKurikulumAktif(res: Response): Promise<{ id: number } | null> {
-  const kur = await prisma.kurikulum.findFirst({ where: { status: 'aktif' } });
+  const kur = await prisma.kurikulum.findFirst({ where: { status: 'aktif', deletedAt: null } });
   if (!kur) {
     res.status(400).json({ success: false, message: 'Tidak ada kurikulum aktif' });
     return null;
@@ -158,7 +158,7 @@ export const hapusDraftKegiatanEksternal = async (req: Request, res: Response, n
     const { id } = req.params;
 
     const existing = await prisma.kegiatan.findFirst({
-      where: { id: parseInt(id as string), dibuatOleh: userIdBig, asal: 'eksternal' }
+      where: { id: parseInt(id as string), dibuatOleh: userIdBig, asal: 'eksternal', deletedAt: null }
     });
 
     if (!existing) {
@@ -168,7 +168,10 @@ export const hapusDraftKegiatanEksternal = async (req: Request, res: Response, n
       return res.status(400).json({ success: false, message: 'Hanya draft yang dapat dihapus' });
     }
 
-    await prisma.kegiatan.delete({ where: { id: parseInt(id as string) } });
+    await prisma.kegiatan.update({
+      where: { id: parseInt(id as string) },
+      data: { deletedAt: new Date(), status: 'dibatalkan' },
+    });
 
     res.json({ success: true, message: 'Draft dihapus' });
   } catch (error: any) {

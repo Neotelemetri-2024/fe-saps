@@ -19,7 +19,7 @@ export const getMatriksPoin = async (req: Request, res: Response) => {
   try {
     const { kurikulumId, kategoriId, skalaId } = req.query;
 
-    const where: any = {};
+    const where: any = { deletedAt: null };
     if (kurikulumId) where.kurikulumId = Number(kurikulumId);
     if (kategoriId) where.kategoriId = Number(kategoriId);
     if (skalaId) where.skalaId = Number(skalaId);
@@ -308,8 +308,10 @@ export const syncMatriksPoin = async (req: Request, res: Response): Promise<void
       for (const cell of existingCells) {
         const key = `${cell.peranId}-${cell.skalaId}`;
         if (!activePairs.has(key) && (!keptPeranIds.has(cell.peranId) || !keptSkalaIds.has(cell.skalaId))) {
-          await tx.matriksPoinHistori.deleteMany({ where: { matriksPoinId: cell.id } });
-          await tx.matriksPoin.delete({ where: { id: cell.id } });
+          await tx.matriksPoin.update({
+            where: { id: cell.id },
+            data: { deletedAt: new Date() },
+          });
         }
       }
 
@@ -596,21 +598,21 @@ export const deleteKategori = async (req: Request, res: Response) => {
       for (const p of perans) {
         await tx.mpPeran.update({
           where: { id: p.id },
-          data: { nama: softDeleteName(p.nama, p.id) },
+          data: { nama: softDeleteName(p.nama, p.id), deletedAt: new Date() },
         });
       }
       const skalas = await tx.mpSkala.findMany({ where: { kategoriId } });
       for (const s of skalas) {
         await tx.mpSkala.update({
           where: { id: s.id },
-          data: { nama: softDeleteName(s.nama, s.id) },
+          data: { nama: softDeleteName(s.nama, s.id), deletedAt: new Date() },
         });
       }
 
       // Soft-delete kategori itu sendiri
       await tx.mpKategori.update({
         where: { id: kategoriId },
-        data: { nama: softDeleteName(kategori.nama, kategoriId) },
+        data: { nama: softDeleteName(kategori.nama, kategoriId), deletedAt: new Date() },
       });
 
       await logAudit({
@@ -640,7 +642,13 @@ export const deleteKategori = async (req: Request, res: Response) => {
 // GET /api/matriks/kategori
 export const getKategori = async (req: Request, res: Response) => {
   try {
-    const data = await prisma.mpKategori.findMany({ orderBy: { id: 'asc' } });
+    const data = await prisma.mpKategori.findMany({
+      where: {
+        deletedAt: null,
+        NOT: { nama: { startsWith: '(tidak digunakan)' } },
+      },
+      orderBy: { id: 'asc' },
+    });
     res.json({ success: true, data });
   } catch (error) {
     console.error(error);
@@ -687,7 +695,10 @@ export const createKategori = async (req: Request, res: Response) => {
 export const getSkala = async (req: Request, res: Response) => {
   try {
     const { kategoriId } = req.query;
-    const where: any = {};
+    const where: any = {
+      deletedAt: null,
+      NOT: { nama: { startsWith: '(tidak digunakan)' } },
+    };
     if (kategoriId) where.kategoriId = Number(kategoriId);
 
     const data = await prisma.mpSkala.findMany({ 
@@ -753,14 +764,14 @@ export const updateSkala = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE /api/matriks/skala/:id
+// DELETE /api/matriks/skala/:id (Soft Delete)
 export const deleteSkala = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Prisma akan melempar error referential integrity jika ada relasi yang menghalangi
-    await prisma.mpSkala.delete({
-      where: { id: Number(id) }
+    await prisma.mpSkala.update({
+      where: { id: Number(id) },
+      data: { deletedAt: new Date() }
     });
 
     res.json({ success: true, message: 'Skala berhasil dihapus' });
@@ -768,10 +779,6 @@ export const deleteSkala = async (req: Request, res: Response) => {
     console.error(error);
     if (error.code === 'P2025') {
       res.status(404).json({ success: false, message: 'Skala tidak ditemukan' });
-      return;
-    }
-    if (error.code === 'P2003') {
-      res.status(400).json({ success: false, message: 'Gagal dihapus: Skala ini sedang digunakan pada Kegiatan atau Matriks Poin.' });
       return;
     }
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -782,7 +789,10 @@ export const deleteSkala = async (req: Request, res: Response) => {
 export const getPeran = async (req: Request, res: Response) => {
   try {
     const { kategoriId } = req.query;
-    const where: any = {};
+    const where: any = {
+      deletedAt: null,
+      NOT: { nama: { startsWith: '(tidak digunakan)' } },
+    };
     if (kategoriId) where.kategoriId = Number(kategoriId);
 
     const data = await prisma.mpPeran.findMany({
@@ -848,14 +858,14 @@ export const updatePeran = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE /api/matriks/peran/:id
+// DELETE /api/matriks/peran/:id (Soft Delete)
 export const deletePeran = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Prisma akan melempar error referential integrity jika ada relasi yang menghalangi
-    await prisma.mpPeran.delete({
-      where: { id: Number(id) }
+    await prisma.mpPeran.update({
+      where: { id: Number(id) },
+      data: { deletedAt: new Date() }
     });
 
     res.json({ success: true, message: 'Peran berhasil dihapus' });
@@ -863,10 +873,6 @@ export const deletePeran = async (req: Request, res: Response) => {
     console.error(error);
     if (error.code === 'P2025') {
       res.status(404).json({ success: false, message: 'Peran tidak ditemukan' });
-      return;
-    }
-    if (error.code === 'P2003') {
-      res.status(400).json({ success: false, message: 'Gagal dihapus: Peran ini sedang digunakan pada Partisipasi atau Matriks Poin.' });
       return;
     }
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });

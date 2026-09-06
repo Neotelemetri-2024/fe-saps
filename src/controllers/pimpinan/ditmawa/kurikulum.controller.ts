@@ -34,11 +34,11 @@ const updateSubCapaianSchema = z.object({
 
 // ==================== KURIKULUM CRUD ====================
 
-// GET /api/kurikulum â€” Daftar semua kurikulum
+// GET /api/kurikulum — Daftar semua kurikulum
 export const getAllKurikulum = async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
-    const where: any = {};
+    const where: any = { deletedAt: null };
     if (status) where.status = status as string;
 
     const data = await prisma.kurikulum.findMany({
@@ -56,14 +56,19 @@ export const getAllKurikulum = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/kurikulum/aktif â€” Kurikulum yang sedang aktif
+// GET /api/kurikulum/aktif — Kurikulum yang sedang aktif
 export const getKurikulumAktif = async (req: Request, res: Response) => {
   try {
     const data = await prisma.kurikulum.findMany({
-      where: { status: 'aktif' },
+      where: { status: 'aktif', deletedAt: null },
       include: {
         capaian: {
-          include: { subCapaian: true },
+          where: { deletedAt: null },
+          include: {
+            subCapaian: {
+              where: { deletedAt: null },
+            },
+          },
           orderBy: { urutan: 'asc' },
         },
       },
@@ -80,16 +85,22 @@ export const getKurikulumAktif = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/kurikulum/:id â€” Detail kurikulum + capaian + sub_capaian
+// GET /api/kurikulum/:id — Detail kurikulum + capaian + sub_capaian
 export const getKurikulumById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const data = await prisma.kurikulum.findUnique({
-      where: { id: Number(id) },
+    const data = await prisma.kurikulum.findFirst({
+      where: { id: Number(id), deletedAt: null },
       include: {
         pembuat: { select: { id: true, nama: true } },
         capaian: {
-          include: { subCapaian: { orderBy: { id: 'asc' } } },
+          where: { deletedAt: null },
+          include: {
+            subCapaian: {
+              where: { deletedAt: null },
+              orderBy: { id: 'asc' },
+            },
+          },
           orderBy: { urutan: 'asc' },
         },
       },
@@ -140,13 +151,13 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
   }
 };
 
-// PUT /api/kurikulum/:id/aktivasi â€” Aktifkan kurikulum (arsipkan yg lama) [BR-001]
+// PUT /api/kurikulum/:id/aktivasi — Aktifkan kurikulum (arsipkan yg lama) [BR-001]
 export const aktivasiKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const aktorId = BigInt(req.user!.id);
 
-    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
+    const kurikulum = await prisma.kurikulum.findFirst({ where: { id: Number(id), deletedAt: null } });
     if (!kurikulum) {
       res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
       return;
@@ -178,13 +189,13 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// PUT /api/kurikulum/:id/non-aktif â€” Non-aktifkan kurikulum
+// PUT /api/kurikulum/:id/non-aktif — Non-aktifkan kurikulum
 export const nonAktifKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const aktorId = BigInt(req.user!.id);
 
-    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
+    const kurikulum = await prisma.kurikulum.findFirst({ where: { id: Number(id), deletedAt: null } });
     if (!kurikulum) {
       res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
       return;
@@ -215,13 +226,13 @@ export const nonAktifKurikulum = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/kurikulum/:id â€” Hapus kurikulum (Hanya jika tidak aktif)
+// DELETE /api/kurikulum/:id — Hapus kurikulum (Soft Delete)
 export const deleteKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const aktorId = BigInt(req.user!.id);
 
-    const kurikulum = await prisma.kurikulum.findUnique({ where: { id: Number(id) } });
+    const kurikulum = await prisma.kurikulum.findFirst({ where: { id: Number(id), deletedAt: null } });
     if (!kurikulum) {
       res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
       return;
@@ -231,14 +242,16 @@ export const deleteKurikulum = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    await prisma.kurikulum.delete({
+    // Soft delete kurikulum
+    await prisma.kurikulum.update({
       where: { id: Number(id) },
+      data: { deletedAt: new Date() },
     });
 
     await logAudit({
       entitas: 'kurikulum',
       entitasId: BigInt(id as string),
-      aksi: 'delete',
+      aksi: 'soft_delete',
       statusLama: kurikulum.status,
       aktorId,
     });
@@ -246,7 +259,7 @@ export const deleteKurikulum = async (req: Request, res: Response): Promise<void
     res.json({ success: true, message: 'Kurikulum berhasil dihapus' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (kurikulum mungkin masih terkait dengan data poin mahasiswa)' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -304,14 +317,14 @@ export const updateCapaian = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// DELETE /api/capaian/:id
+// DELETE /api/capaian/:id (Soft Delete)
 export const deleteCapaian = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
-    // Pastikan kurikulum parent bukan 'aktif' (opsional, tapi disarankan)
-    const capaian = await prisma.capaian.findUnique({
-      where: { id: Number(id) },
+    // Pastikan kurikulum parent bukan 'aktif'
+    const capaian = await prisma.capaian.findFirst({
+      where: { id: Number(id), deletedAt: null },
       include: { kurikulum: true }
     });
 
@@ -325,13 +338,14 @@ export const deleteCapaian = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    await prisma.capaian.delete({
+    await prisma.capaian.update({
       where: { id: Number(id) },
+      data: { deletedAt: new Date() },
     });
     res.json({ success: true, message: 'Capaian berhasil dihapus' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (capaian mungkin memiliki data terkait)' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -343,9 +357,9 @@ export const createSubCapaian = async (req: Request, res: Response): Promise<voi
     const { capaianId } = req.params;
     const data = createSubCapaianSchema.parse(req.body);
 
-    const capaian = await prisma.capaian.findUnique({
-      where: { id: Number(capaianId) },
-      include: { subCapaian: true },
+    const capaian = await prisma.capaian.findFirst({
+      where: { id: Number(capaianId), deletedAt: null },
+      include: { subCapaian: { where: { deletedAt: null } } },
     });
     if (!capaian) {
       res.status(404).json({ success: false, message: 'Capaian tidak ditemukan' });
@@ -388,9 +402,9 @@ export const updateSubCapaian = async (req: Request, res: Response): Promise<voi
     const { id } = req.params;
     const data = updateSubCapaianSchema.parse(req.body);
 
-    const subCapaian = await prisma.subCapaian.findUnique({
-      where: { id: Number(id) },
-      include: { capaian: { include: { subCapaian: true } } }
+    const subCapaian = await prisma.subCapaian.findFirst({
+      where: { id: Number(id), deletedAt: null },
+      include: { capaian: { include: { subCapaian: { where: { deletedAt: null } } } } }
     });
 
     if (!subCapaian) {
@@ -427,13 +441,13 @@ export const updateSubCapaian = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// DELETE /api/sub-capaian/:id
+// DELETE /api/sub-capaian/:id (Soft Delete)
 export const deleteSubCapaian = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
-    const subCapaian = await prisma.subCapaian.findUnique({
-      where: { id: Number(id) },
+    const subCapaian = await prisma.subCapaian.findFirst({
+      where: { id: Number(id), deletedAt: null },
       include: { capaian: { include: { kurikulum: true } } }
     });
 
@@ -447,8 +461,9 @@ export const deleteSubCapaian = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    await prisma.subCapaian.delete({
+    await prisma.subCapaian.update({
       where: { id: Number(id) },
+      data: { deletedAt: new Date() },
     });
 
     res.json({ 
@@ -457,6 +472,6 @@ export const deleteSubCapaian = async (req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server (sub capaian mungkin memiliki data terkait)' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };

@@ -8,6 +8,7 @@ export { getMatriksPoin, getKategori, getSkala, getPeran } from '../pimpinan/dit
 export const getFakultas = async (_req: Request, res: Response): Promise<void> => {
   try {
     const data = await prisma.fakultas.findMany({
+      where: { deletedAt: null },
       orderBy: { nama: 'asc' },
       select: { id: true, nama: true },
     });
@@ -22,7 +23,7 @@ export const getFakultas = async (_req: Request, res: Response): Promise<void> =
 export const getProdi = async (req: Request, res: Response): Promise<void> => {
   try {
     const { fakultasId } = req.query;
-    const where: { fakultasId?: number } = {};
+    const where: any = { deletedAt: null };
     if (fakultasId) where.fakultasId = Number(fakultasId);
 
     const data = await prisma.programStudi.findMany({
@@ -46,7 +47,7 @@ export const getProdi = async (req: Request, res: Response): Promise<void> => {
 export const getOrganisasi = async (req: Request, res: Response): Promise<void> => {
   try {
     const { tipe } = req.query;
-    const where: { tipe?: 'UKM' | 'UKMF' } = {};
+    const where: any = { deletedAt: null };
     if (tipe === 'UKM' || tipe === 'UKMF') where.tipe = tipe;
 
     const data = await prisma.organisasi.findMany({

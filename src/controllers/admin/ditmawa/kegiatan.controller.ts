@@ -1414,24 +1414,25 @@ export const hapusKegiatan = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Gunakan transaksi untuk menghapus data terkait yang terhubung (KegiatanCapaian, KegiatanApproval)
-    // Walaupun Cascade OnDelete di Prisma biasa di-setting, ini lebih aman secara eksplisit
-    await prisma.$transaction([
-      prisma.kegiatanApproval.deleteMany({ where: { kegiatanId: Number(id) } }),
-      prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } }),
-      prisma.kegiatan.delete({ where: { id: Number(id) } }),
-    ]);
+    // Soft-delete kegiatan agar riwayat audit log dan data terkait tetap utuh
+    await prisma.kegiatan.update({
+      where: { id: Number(id) },
+      data: {
+        deletedAt: new Date(),
+        status: 'dibatalkan',
+      },
+    });
 
     await logAudit({
       entitas: 'kegiatan',
       entitasId: Number(id),
-      aksi: 'delete',
+      aksi: 'soft_delete',
       statusLama: kegiatan.status,
-      statusBaru: 'deleted',
+      statusBaru: 'dibatalkan',
       aktorId,
     });
 
-    res.json({ success: true, message: 'Kegiatan beserta alokasi capaiannya berhasil dihapus permanen' });
+    res.json({ success: true, message: 'Kegiatan berhasil dihapus' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server saat menghapus kegiatan' });

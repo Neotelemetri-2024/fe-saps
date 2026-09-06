@@ -25,6 +25,10 @@ export const getAkunUKM = async (req: Request, res: Response): Promise<void> => 
       where: {
         organisasi: {
           tipe: 'UKM', // Admin Ditmawa hanya mengurus UKM
+          deletedAt: null,
+        },
+        user: {
+          deletedAt: null,
         },
       },
       include: {
@@ -224,20 +228,25 @@ export const hapusAkun = async (req: Request, res: Response): Promise<void> => {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.organisasiOperator.delete({ where: { userId: BigInt(userId as string) } });
-      await tx.organisasi.delete({ where: { id: operator.organisasiId } });
-      await tx.user.delete({ where: { id: BigInt(userId as string) } });
+      await tx.organisasi.update({
+        where: { id: operator.organisasiId },
+        data: { deletedAt: new Date() },
+      });
+      await tx.user.update({
+        where: { id: BigInt(userId as string) },
+        data: { aktif: false, deletedAt: new Date() },
+      });
     });
 
     await logAudit({
       entitas: 'organisasi',
       entitasId: operator.organisasiId,
-      aksi: 'delete',
+      aksi: 'soft_delete',
       statusBaru: 'deleted',
       aktorId,
     });
 
-    res.json({ success: true, message: 'Akun UKM berhasil dihapus beserta datanya' });
+    res.json({ success: true, message: 'Akun UKM berhasil dihapus' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
