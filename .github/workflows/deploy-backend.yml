@@ -49,7 +49,7 @@ jobs:
             # 2. Masuk ke direktori project
             TARGET_DIR="${{ secrets.PROJECT_PATH }}"
             if [ -z "$TARGET_DIR" ]; then
-              TARGET_DIR="/www/wwwroot/api.saps.unand.ac.id"
+              TARGET_DIR="/www/wwwroot/backend-saps/be-saps"
             fi
 
             echo "📁 Masuk ke folder: $TARGET_DIR"
@@ -80,7 +80,7 @@ jobs:
             echo "🔄 Merestart aplikasi di PM2..."
             APP_NAME="${{ secrets.PM2_APP_NAME }}"
             if [ -z "$APP_NAME" ]; then
-              APP_NAME="saps-backend"
+              APP_NAME="be-saps"
             fi
 
             # Cari path pm2 jika belum tersedia di PATH
@@ -92,7 +92,7 @@ jobs:
             fi
 
             echo "Menggunakan PM2: $PM2_CMD"
-            $PM2_CMD reload "$APP_NAME" || $PM2_CMD restart "$APP_NAME" || $PM2_CMD start dist/index.js --name "$APP_NAME"
+            $PM2_CMD reload "$APP_NAME" || $PM2_CMD restart "$APP_NAME" || $PM2_CMD reload saps-backend || $PM2_CMD restart saps-backend || $PM2_CMD reload backend-saps || $PM2_CMD restart backend-saps || $PM2_CMD start dist/index.js --name "$APP_NAME"
 
             echo "========================================="
             echo "✅ DEPLOYMENT SELESAI & BERHASIL!"
