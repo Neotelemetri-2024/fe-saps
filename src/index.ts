@@ -142,7 +142,7 @@ app.use('/api/pimpinan/laporan', laporanRoutes);
 
 // Monitoring IKU 3 Kemdiktisaintek Berdampak 2026
 import iku3Routes from './routes/iku3.routes';
-app.use('/api/iku3', iku3Routes);
+app.use('/api/iku3', iku3Routes); // Prisma client must include Iku3Target / Iku3BobotRule
 
 // ==================== GLOBAL ERROR HANDLER ====================
 app.use((err: any, req: Request, res: Response, next: any) => {

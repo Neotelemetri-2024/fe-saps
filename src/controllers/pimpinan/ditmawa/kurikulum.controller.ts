@@ -7,8 +7,40 @@ import { logAudit } from '../../../lib/auditLog';
 const createKurikulumSchema = z.object({
   nama: z.string().min(3),
   tahunAkademik: z.string().regex(/^\d{4}\/\d{4}$/, 'Format: 2024/2025'),
+  angkatanMulai: z.number().int().min(1900).max(2200),
   versi: z.number().int().positive().optional(),
 });
+
+const updateKurikulumSchema = createKurikulumSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  'Tidak ada data yang diperbarui',
+);
+
+async function assertAngkatanMulaiUnique(angkatanMulai: number, excludeId?: number) {
+  const duplicate = await prisma.kurikulum.findFirst({
+    where: {
+      angkatanMulai,
+      ...(excludeId ? { NOT: { id: excludeId } } : {}),
+    },
+    select: { id: true },
+  });
+  if (duplicate) throw new Error('ANGKATAN_MULAI_DUPLICATE');
+}
+
+async function getReadinessProblem(kurikulumId: number): Promise<string | null> {
+  const kurikulum = await prisma.kurikulum.findUnique({
+    where: { id: kurikulumId },
+    include: { capaian: { include: { subCapaian: true } }, matriksPoin: { take: 1 } },
+  });
+  if (!kurikulum?.angkatanMulai) return 'Angkatan mulai wajib diisi sebelum aktivasi';
+  if (kurikulum.capaian.length === 0) return 'Kurikulum harus memiliki minimal satu capaian';
+  const incomplete = kurikulum.capaian.find(
+    (c) => c.subCapaian.length === 0 || Math.abs(c.subCapaian.reduce((sum, s) => sum + Number(s.bobotPersen), 0) - 100) > 0.01,
+  );
+  if (incomplete) return `Total bobot sub capaian "${incomplete.nama}" harus tepat 100%`;
+  if (kurikulum.matriksPoin.length === 0) return 'Matriks poin kurikulum belum tersedia';
+  return null;
+}
 
 const createCapaianSchema = z.object({
   nama: z.string().min(3),
@@ -122,22 +154,23 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
     const dibuatOleh = BigInt(req.user!.id);
     const data = createKurikulumSchema.parse(req.body);
 
-    const newKurikulum = await prisma.kurikulum.create({
-      data: {
-        nama: data.nama,
-        tahunAkademik: data.tahunAkademik,
-        versi: data.versi ?? 1,
-        status: 'draft',
-        dibuatOleh,
-      },
-    });
-
-    await logAudit({
-      entitas: 'kurikulum',
-      entitasId: newKurikulum.id,
-      aksi: 'create',
-      statusBaru: 'draft',
-      aktorId: dibuatOleh,
+    await assertAngkatanMulaiUnique(data.angkatanMulai);
+    const newKurikulum = await prisma.$transaction(async (tx) => {
+      const created = await tx.kurikulum.create({
+        data: {
+          nama: data.nama,
+          tahunAkademik: data.tahunAkademik,
+          angkatanMulai: data.angkatanMulai,
+          versi: data.versi ?? 1,
+          status: 'draft',
+          dibuatOleh,
+        },
+      });
+      await tx.auditLog.create({ data: {
+        entitas: 'kurikulum', entitasId: BigInt(created.id), aksi: 'create',
+        statusBaru: 'draft', aktorId: dibuatOleh,
+      } });
+      return created;
     });
 
     res.status(201).json({ success: true, data: newKurikulum });
@@ -151,7 +184,7 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
   }
 };
 
-// PUT /api/kurikulum/:id/aktivasi — Aktifkan kurikulum (arsipkan yg lama) [BR-001]
+// PUT /api/kurikulum/:id/aktivasi — Aktifkan kurikulum tanpa menonaktifkan yang lama
 export const aktivasiKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -167,23 +200,39 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Aktifkan kurikulum
-    const updated = await prisma.kurikulum.update({
-      where: { id: Number(id) },
-      data: { status: 'aktif', activatedAt: new Date() },
-    });
+    const readiness = await getReadinessProblem(Number(id));
+    if (readiness) {
+      res.status(400).json({ success: false, message: readiness });
+      return;
+    }
+    if (kurikulum.angkatanMulai != null) {
+      await assertAngkatanMulaiUnique(kurikulum.angkatanMulai, Number(id));
+    }
 
-    await logAudit({
-      entitas: 'kurikulum',
-      entitasId: updated.id,
-      aksi: 'aktivasi',
-      statusLama: kurikulum.status,
-      statusBaru: 'aktif',
-      aktorId,
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.kurikulum.update({
+        where: { id: Number(id) },
+        data: { status: 'aktif', activatedAt: new Date() },
+      });
+      await tx.auditLog.create({
+        data: {
+          entitas: 'kurikulum',
+          entitasId: BigInt(row.id),
+          aksi: 'aktivasi',
+          statusLama: kurikulum.status,
+          statusBaru: 'aktif',
+          aktorId,
+        },
+      });
+      return row;
     });
 
     res.json({ success: true, data: updated, message: 'Kurikulum berhasil diaktifkan' });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'ANGKATAN_MULAI_DUPLICATE') {
+      res.status(400).json({ success: false, message: 'Angkatan mulai sudah dipakai kurikulum lain' });
+      return;
+    }
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
@@ -205,18 +254,31 @@ export const nonAktifKurikulum = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const updated = await prisma.kurikulum.update({
-      where: { id: Number(id) },
-      data: { status: 'arsip' },
-    });
+    const masihDipakai = await prisma.mahasiswa.count({ where: { kurikulumId: Number(id) } });
+    if (masihDipakai > 0) {
+      res.status(400).json({
+        success: false,
+        message: `Kurikulum masih digunakan ${masihDipakai} mahasiswa dan tidak dapat diarsipkan`,
+      });
+      return;
+    }
 
-    await logAudit({
-      entitas: 'kurikulum',
-      entitasId: updated.id,
-      aksi: 'non_aktif',
-      statusLama: 'aktif',
-      statusBaru: 'arsip',
-      aktorId,
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.kurikulum.update({
+        where: { id: Number(id) },
+        data: { status: 'arsip' },
+      });
+      await tx.auditLog.create({
+        data: {
+          entitas: 'kurikulum',
+          entitasId: BigInt(row.id),
+          aksi: 'non_aktif',
+          statusLama: 'aktif',
+          statusBaru: 'arsip',
+          aktorId,
+        },
+      });
+      return row;
     });
 
     res.json({ success: true, data: updated, message: 'Kurikulum berhasil dinonaktifkan' });

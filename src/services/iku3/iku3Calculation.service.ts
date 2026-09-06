@@ -269,7 +269,7 @@ export async function calculateIku3Dashboard(filter: Iku3Filter): Promise<Iku3Da
       existing.effectiveBobot = Math.min(1.00, existing.totalRawBobot);
       existing.activities.push({
         id: item.id.toString(),
-        kegiatanNama: item.kegiatan.nama,
+        kegiatanNama: item.kegiatan?.nama || '-',
         bobot,
         jenisRumpun,
       });
@@ -493,12 +493,12 @@ export async function getIku3ActivitiesDetail(
     return {
       id: p.id.toString(),
       mahasiswaId: p.mahasiswaId.toString(),
-      nim: p.mahasiswa.nim,
-      namaMahasiswa: p.mahasiswa.user.nama,
-      fakultas: p.mahasiswa.prodi.fakultas.nama,
-      prodi: p.mahasiswa.prodi.nama,
-      namaKegiatan: p.kegiatan.nama,
-      kategori: p.kegiatan.kategori?.nama || 'Aktivitas Eksternal',
+      nim: p.mahasiswa?.nim || '-',
+      namaMahasiswa: p.mahasiswa?.user?.nama || '-',
+      fakultas: p.mahasiswa?.prodi?.fakultas?.nama || '-',
+      prodi: p.mahasiswa?.prodi?.nama || '-',
+      namaKegiatan: p.kegiatan?.nama || '-',
+      kategori: p.kegiatan?.kategori?.nama || 'Aktivitas Eksternal',
       jenisRumpun,
       skala: skalaNama,
       peran: peranNama,

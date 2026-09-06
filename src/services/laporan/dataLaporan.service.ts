@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { getKurikulumByFilter, resolveKurikulumMahasiswa, resolveKurikulumMahasiswaMap, targetPoinKurikulum } from '../kurikulumResolver.service';
 
 export interface FilterLaporan {
   role: string;
@@ -7,6 +8,7 @@ export interface FilterLaporan {
   prodiId?: number;
   angkatan?: number;
   tahunAkademik?: string;
+  kurikulumId?: number;
   startDate?: Date;
   endDate?: Date;
 }
@@ -22,6 +24,7 @@ export interface LaporanDataResult {
     prodiNama?: string;
     angkatan?: number;
     tahunAkademik?: string;
+    kurikulumId?: number;
   };
   kurikulum: {
     id: number;
@@ -139,30 +142,33 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
     if (fak) scopeNama = `${fak.nama} - Universitas Andalas`;
   }
 
-  // 2. Ambil Kurikulum Aktif & Capaiannya
-  const kurikulumAktif = await prisma.kurikulum.findFirst({
-    where: { status: 'aktif' },
-    include: {
-      capaian: {
-        orderBy: { urutan: 'asc' },
-        include: { subCapaian: true },
-      },
-    },
-  });
+  // 2. Ambil kurikulum filter atau biarkan per-mahasiswa
+  const kurikulumFilter = filter.kurikulumId
+    ? await getKurikulumByFilter(filter.kurikulumId)
+    : null;
+  if (filter.kurikulumId && !kurikulumFilter) {
+    throw new Error('Kurikulum filter tidak ditemukan');
+  }
 
-  const targetPoinTotal = kurikulumAktif?.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0) || 200;
-  const capaianList = (kurikulumAktif?.capaian || []).map((c, i) => ({
+  const kurikulumMeta = kurikulumFilter || {
+    id: 0,
+    nama: 'Campuran (per mahasiswa)',
+    capaian: [],
+  };
+
+  const targetPoinTotalDefault = targetPoinKurikulum(kurikulumFilter) || 200;
+  const capaianList = (kurikulumFilter?.capaian || []).map((c: any, i: number) => ({
     id: c.id,
     nama: c.nama,
     tahun: c.urutan || (i + 1),
     targetPoin: c.jumlahPoin,
   }));
 
-  // Mapping subCapaian ID ke tahun capaian
+  // Mapping subCapaian ID ke tahun capaian (untuk kurikulum filter)
   const subCapaianTahunMap = new Map<number, number>();
-  kurikulumAktif?.capaian.forEach((c, idx) => {
+  kurikulumFilter?.capaian?.forEach((c: any, idx: number) => {
     const th = c.urutan || (idx + 1);
-    c.subCapaian.forEach((sc) => subCapaianTahunMap.set(sc.id, th));
+    c.subCapaian.forEach((sc: any) => subCapaianTahunMap.set(sc.id, th));
   });
 
   // 3. Query Mahasiswa sesuai Scope & Filter
@@ -175,6 +181,9 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
   }
   if (filter.angkatan) {
     mhsWhere.angkatan = filter.angkatan;
+  }
+  if (filter.kurikulumId) {
+    mhsWhere.kurikulumId = filter.kurikulumId;
   }
 
   const mahasiswaRaw = await prisma.mahasiswa.findMany({
@@ -206,17 +215,43 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
   let totalPoinSahGlobal = 0;
   let totalMahasiswaLulusTarget = 0;
   const sumPoinPerTahun = [0, 0, 0, 0, 0]; // index 1..4
+  const kurikulumMap = filter.kurikulumId
+    ? null
+    : await resolveKurikulumMahasiswaMap(
+        mahasiswaRaw.map((m) => ({
+          userId: m.userId,
+          angkatan: m.angkatan,
+          kurikulumId: (m as any).kurikulumId,
+        })),
+      );
 
   const mahasiswaList = mahasiswaRaw.map((m) => {
+    const kurikulumMhs = kurikulumFilter || kurikulumMap?.get(String(m.userId)) || null;
+    const targetPoinTotal = targetPoinKurikulum(kurikulumMhs) || targetPoinTotalDefault;
+    const localSubMap = new Map<number, number>();
+    if (kurikulumMhs?.capaian) {
+      kurikulumMhs.capaian.forEach((c: any, idx: number) => {
+        const th = c.urutan || (idx + 1);
+        c.subCapaian?.forEach((sc: any) => localSubMap.set(sc.id, th));
+      });
+    }
+
     let mhsTotalPoin = 0;
     const poinPerTahun = [0, 0, 0, 0, 0];
+    const perolehanFiltered = kurikulumMhs
+      ? m.perolehanPoin.filter((pp: any) =>
+          pp.kurikulumId != null
+            ? Number(pp.kurikulumId) === Number(kurikulumMhs.id)
+            : true,
+        )
+      : m.perolehanPoin;
 
-    m.perolehanPoin.forEach((pp) => {
+    perolehanFiltered.forEach((pp: any) => {
       mhsTotalPoin += pp.totalPoin;
 
       if (pp.detail && pp.detail.length > 0) {
-        pp.detail.forEach((d) => {
-          const th = subCapaianTahunMap.get(d.subCapaianId) || 1;
+        pp.detail.forEach((d: any) => {
+          const th = localSubMap.get(d.subCapaianId) || subCapaianTahunMap.get(d.subCapaianId) || 1;
           if (th >= 1 && th <= 4) {
             poinPerTahun[th] += d.poin;
           } else {
@@ -237,7 +272,9 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       totalMahasiswaLulusTarget++;
     }
 
-    const persentase = Math.min(Math.round((mhsTotalPoin / targetPoinTotal) * 100), 100);
+    const persentase = targetPoinTotal > 0
+      ? Math.min(Math.round((mhsTotalPoin / targetPoinTotal) * 100), 100)
+      : 0;
 
     return {
       nim: m.nim,
@@ -245,6 +282,8 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       fakultas: m.prodi?.fakultas?.nama || '-',
       prodi: m.prodi?.nama || '-',
       angkatan: m.angkatan,
+      kurikulumId: kurikulumMhs?.id ?? null,
+      kurikulumNama: kurikulumMhs?.nama ?? null,
       poinTahun1: poinPerTahun[1],
       poinTahun2: poinPerTahun[2],
       poinTahun3: poinPerTahun[3],
@@ -258,11 +297,13 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
 
   const totalMahasiswa = mahasiswaRaw.length;
   const rataRataPoin = totalMahasiswa > 0 ? Math.round(totalPoinSahGlobal / totalMahasiswa) : 0;
-  const rataRataPersentase = totalMahasiswa > 0 ? Math.min(Math.round((rataRataPoin / targetPoinTotal) * 100), 100) : 0;
+  const rataRataPersentase = totalMahasiswa > 0
+    ? Math.min(Math.round((rataRataPoin / (targetPoinTotalDefault || 1)) * 100), 100)
+    : 0;
   const persentaseLulusTarget = totalMahasiswa > 0 ? Math.round((totalMahasiswaLulusTarget / totalMahasiswa) * 100) : 0;
 
   // 5. Statistik Capaian per Pilar Kurikulum
-  const capaianKurikulumStats = capaianList.map((c) => {
+  const capaianKurikulumStats = capaianList.map((c: { id: number; nama: string; tahun: number; targetPoin: number }) => {
     const th = c.tahun;
     const avgTerkumpul = totalMahasiswa > 0 ? Math.round(sumPoinPerTahun[th] / totalMahasiswa) : 0;
     const persen = c.targetPoin > 0 ? Math.min(Math.round((avgTerkumpul / c.targetPoin) * 100), 100) : 0;
@@ -309,7 +350,7 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       });
 
       const avgPoin = mhsCount > 0 ? Math.round(totalPoinProdi / mhsCount) : 0;
-      const avgPersen = Math.min(Math.round((avgPoin / targetPoinTotal) * 100), 100);
+      const avgPersen = Math.min(Math.round((avgPoin / (targetPoinTotalDefault || 1)) * 100), 100);
 
       komparasiItems.push({
         id: p.id,
@@ -358,7 +399,7 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       });
 
       const avgPoin = mhsCount > 0 ? Math.round(totalPoinFak / mhsCount) : 0;
-      const avgPersen = Math.min(Math.round((avgPoin / targetPoinTotal) * 100), 100);
+      const avgPersen = Math.min(Math.round((avgPoin / (targetPoinTotalDefault || 1)) * 100), 100);
 
       komparasiItems.push({
         id: f.id,
@@ -496,11 +537,12 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       prodiNama: filter.prodiId ? (await prisma.programStudi.findUnique({ where: { id: filter.prodiId } }))?.nama : undefined,
       angkatan: filter.angkatan,
       tahunAkademik: filter.tahunAkademik,
+      kurikulumId: filter.kurikulumId,
     },
     kurikulum: {
-      id: kurikulumAktif?.id || 1,
-      nama: kurikulumAktif?.nama || 'Kurikulum SAPS Standar',
-      targetPoin: targetPoinTotal,
+      id: kurikulumMeta.id || 0,
+      nama: kurikulumMeta.nama || 'Campuran (per mahasiswa)',
+      targetPoin: targetPoinTotalDefault,
       capaianList,
     },
     kpi: {
