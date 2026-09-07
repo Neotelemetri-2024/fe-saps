@@ -150,25 +150,58 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
     throw new Error('Kurikulum filter tidak ditemukan');
   }
 
+  // Jika filter kurikulumId tidak dipilih, ambil kurikulum aktif sebagai acuan capaian pilar
+  const kurikulumAktif = !kurikulumFilter
+    ? (await prisma.kurikulum.findFirst({
+        where: { status: 'aktif' },
+        orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
+        include: {
+          capaian: {
+            orderBy: { urutan: 'asc' },
+            include: { subCapaian: { orderBy: { id: 'asc' } } },
+          },
+        },
+      })) ||
+      (await prisma.kurikulum.findFirst({
+        orderBy: { id: 'desc' },
+        include: {
+          capaian: {
+            orderBy: { urutan: 'asc' },
+            include: { subCapaian: { orderBy: { id: 'asc' } } },
+          },
+        },
+      }))
+    : null;
+
+  const kurikulumAcuan = kurikulumFilter || kurikulumAktif;
+
   const kurikulumMeta = kurikulumFilter || {
-    id: 0,
-    nama: 'Campuran (per mahasiswa)',
-    capaian: [],
+    id: kurikulumAktif?.id || 0,
+    nama: kurikulumAktif ? kurikulumAktif.nama : 'Campuran (per mahasiswa)',
+    capaian: kurikulumAktif?.capaian || [],
   };
 
-  const targetPoinTotalDefault = targetPoinKurikulum(kurikulumFilter) || 200;
-  const capaianList = (kurikulumFilter?.capaian || []).map((c: any, i: number) => ({
-    id: c.id,
-    nama: c.nama,
-    tahun: c.urutan || (i + 1),
-    targetPoin: c.jumlahPoin,
-  }));
+  const targetPoinTotalDefault = targetPoinKurikulum(kurikulumAcuan) || 200;
+  const rawCapaian = kurikulumAcuan?.capaian || [];
+  const capaianList = rawCapaian.length > 0
+    ? rawCapaian.map((c: any, i: number) => ({
+        id: c.id,
+        nama: c.nama || `Tahun ${c.urutan || (i + 1)}`,
+        tahun: c.urutan || (i + 1),
+        targetPoin: c.jumlahPoin,
+      }))
+    : [
+        { id: 1, nama: 'Tahun 1', tahun: 1, targetPoin: Math.round(targetPoinTotalDefault / 4) },
+        { id: 2, nama: 'Tahun 2', tahun: 2, targetPoin: Math.round(targetPoinTotalDefault / 4) },
+        { id: 3, nama: 'Tahun 3', tahun: 3, targetPoin: Math.round(targetPoinTotalDefault / 4) },
+        { id: 4, nama: 'Tahun 4', tahun: 4, targetPoin: Math.round(targetPoinTotalDefault / 4) },
+      ];
 
-  // Mapping subCapaian ID ke tahun capaian (untuk kurikulum filter)
+  // Mapping subCapaian ID ke tahun capaian (untuk kurikulum acuan)
   const subCapaianTahunMap = new Map<number, number>();
-  kurikulumFilter?.capaian?.forEach((c: any, idx: number) => {
+  kurikulumAcuan?.capaian?.forEach((c: any, idx: number) => {
     const th = c.urutan || (idx + 1);
-    c.subCapaian.forEach((sc: any) => subCapaianTahunMap.set(sc.id, th));
+    c.subCapaian?.forEach((sc: any) => subCapaianTahunMap.set(sc.id, th));
   });
 
   // 3. Query Mahasiswa sesuai Scope & Filter
@@ -226,7 +259,7 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       );
 
   const mahasiswaList = mahasiswaRaw.map((m) => {
-    const kurikulumMhs = kurikulumFilter || kurikulumMap?.get(String(m.userId)) || null;
+    const kurikulumMhs = kurikulumFilter || kurikulumMap?.get(String(m.userId)) || kurikulumAcuan || null;
     const targetPoinTotal = targetPoinKurikulum(kurikulumMhs) || targetPoinTotalDefault;
     const localSubMap = new Map<number, number>();
     if (kurikulumMhs?.capaian) {
@@ -304,12 +337,13 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
 
   // 5. Statistik Capaian per Pilar Kurikulum
   const capaianKurikulumStats = capaianList.map((c: { id: number; nama: string; tahun: number; targetPoin: number }) => {
-    const th = c.tahun;
-    const avgTerkumpul = totalMahasiswa > 0 ? Math.round(sumPoinPerTahun[th] / totalMahasiswa) : 0;
+    const th = (c.tahun >= 1 && c.tahun <= 4) ? c.tahun : 1;
+    const poinTahun = sumPoinPerTahun[th] || 0;
+    const avgTerkumpul = totalMahasiswa > 0 ? Math.round(poinTahun / totalMahasiswa) : 0;
     const persen = c.targetPoin > 0 ? Math.min(Math.round((avgTerkumpul / c.targetPoin) * 100), 100) : 0;
     return {
       nama: c.nama,
-      tahun: th,
+      tahun: c.tahun,
       targetPoin: c.targetPoin,
       rataRataTerkumpul: avgTerkumpul,
       persentaseCapaian: persen,
