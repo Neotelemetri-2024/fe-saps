@@ -166,13 +166,24 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
             mahasiswa: {
               select: {
                 nim: true,
-                prodi: { select: { nama: true, fakultas: { select: { nama: true } } } }
+                prodi: { select: { nama: true, fakultas: { select: { nama: true } } } },
+                kurikulum: { select: { id: true, nama: true } },
               }
             }
           } 
         },
         kegiatanCapaian: {
-          include: { subCapaian: { include: { capaian: true } } },
+          include: {
+            subCapaian: {
+              include: {
+                capaian: {
+                  include: {
+                    kurikulum: { select: { id: true, nama: true } },
+                  },
+                },
+              },
+            },
+          },
         },
         kegiatanApproval: {
           include: { aktor: { select: { id: true, nama: true } } },
@@ -185,7 +196,21 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
       res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan' });
       return;
     }
-    res.json({ success: true, data });
+
+    const kurikulumNama =
+      data.kurikulum?.nama ||
+      data.kegiatanCapaian?.[0]?.subCapaian?.capaian?.kurikulum?.nama ||
+      data.pembuat?.mahasiswa?.kurikulum?.nama ||
+      (await prisma.kurikulum.findFirst({ where: { aktif: true, deletedAt: null }, select: { nama: true } }))?.nama ||
+      null;
+
+    const resData = {
+      ...data,
+      kurikulumNama,
+      kurikulum: data.kurikulum || (kurikulumNama ? { nama: kurikulumNama } : null),
+    };
+
+    res.json({ success: true, data: resData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });

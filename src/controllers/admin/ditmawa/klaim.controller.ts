@@ -177,11 +177,16 @@ export const getKlaimById = async (
               include: {
                 kategori: true,
                 skala: true,
+                kurikulum: { select: { id: true, nama: true } },
                 kegiatanCapaian: {
                   include: {
                     subCapaian: {
                       include: {
-                        capaian: true,
+                        capaian: {
+                          include: {
+                            kurikulum: { select: { id: true, nama: true } },
+                          },
+                        },
                       },
                     },
                   },
@@ -192,6 +197,7 @@ export const getKlaimById = async (
               include: {
                 user: { select: { nama: true, email: true } },
                 prodi: { select: { nama: true, fakultas: { select: { nama: true } } } },
+                kurikulum: { select: { id: true, nama: true } },
               },
             },
             peranVerif: true,
@@ -199,7 +205,11 @@ export const getKlaimById = async (
         },
         peranUsulan: true,
         bukti: true,
-        perolehanPoin: true,
+        perolehanPoin: {
+          include: {
+            kurikulum: { select: { id: true, nama: true } },
+          },
+        },
         validator: { select: { nama: true } },
       },
     });
@@ -211,7 +221,21 @@ export const getKlaimById = async (
       return;
     }
 
-    res.json({ success: true, data });
+    const kurikulumNama =
+      data.perolehanPoin?.kurikulum?.nama ||
+      data.partisipasi?.kegiatan?.kegiatanCapaian?.[0]?.subCapaian?.capaian?.kurikulum?.nama ||
+      data.partisipasi?.kegiatan?.kurikulum?.nama ||
+      data.partisipasi?.mahasiswa?.kurikulum?.nama ||
+      (await prisma.kurikulum.findFirst({ where: { aktif: true, deletedAt: null }, select: { nama: true } }))?.nama ||
+      null;
+
+    const resData = {
+      ...data,
+      kurikulumNama,
+      kurikulum: data.partisipasi?.kegiatan?.kurikulum || data.partisipasi?.mahasiswa?.kurikulum || (kurikulumNama ? { nama: kurikulumNama } : null),
+    };
+
+    res.json({ success: true, data: resData });
   } catch (error) {
     console.error(error);
     res
