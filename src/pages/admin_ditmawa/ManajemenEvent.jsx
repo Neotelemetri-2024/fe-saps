@@ -109,13 +109,16 @@ function formatTanggal(start, end) {
 function normalizeEvent(item) {
   const rawStatus = String(item.status || '').toLowerCase()
   const pesertaCount = item._count?.partisipasi ?? 0
+  const kuota = item.kuota != null ? Number(item.kuota) : null
   return {
     id: item.id,
     nama: item.nama || '-',
     jenis: item.kategori?.nama || item.jenis || '-',
     skala: item.skala?.nama || item.skala || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
-    peserta: pesertaCount || item.kuota || '-',
+    pesertaCount,
+    kuota,
+    peserta: kuota != null ? `${pesertaCount} / ${kuota}` : `${pesertaCount}`,
     status: mapStatus(item.status),
     rawStatus,
     dibuatPada: formatDate(item.createdAt),
@@ -231,7 +234,14 @@ function ManajemenEvent() {
     { key: 'jenis', label: 'Jenis', render: (row) => <span className="text-base-content">{row.jenis}</span> },
     { key: 'skala', label: 'Skala', render: (row) => <span className="text-base-content">{row.skala}</span> },
     { key: 'tanggal', label: 'Tanggal', render: (row) => <span className="text-base-content">{row.tanggal}</span> },
-    { key: 'peserta', label: 'Peserta', center: true, render: (row) => <span className="text-base-content">{row.peserta}</span> },
+    { key: 'peserta', label: 'Peserta', center: true, render: (row) => (
+      <span className="text-base-content font-medium">
+        <span>{row.pesertaCount}</span>
+        {row.kuota != null ? (
+          <span className="text-base-content/50 font-normal"> / {row.kuota}</span>
+        ) : null}
+      </span>
+    )},
     { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu

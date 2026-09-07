@@ -92,6 +92,7 @@ function formatTanggal(start, end) {
 function normalizeEvent(item) {
   const rawStatus = String(item.status || '').toLowerCase()
   const pesertaCount = item._count?.partisipasi ?? 0
+  const kuota = item.kuota != null ? Number(item.kuota) : null
 
   return {
     id: item.id,
@@ -100,7 +101,9 @@ function normalizeEvent(item) {
     kategori: item.kategori?.nama || '-',
     skala: item.skala?.nama || '-',
     tanggal: formatTanggal(item.tanggalMulai, item.tanggalSelesai),
-    peserta: pesertaCount || item.kuota || '-',
+    pesertaCount,
+    kuota,
+    peserta: kuota != null ? `${pesertaCount} / ${kuota}` : `${pesertaCount}`,
     status: mapStatusLabel(item.status),
     rawStatus,
   }
@@ -388,8 +391,11 @@ function ManajemenEvent() {
         label: 'PESERTA',
         center: true,
         render: (row) => (
-          <span className="text-base-content">
-            {row.peserta}
+          <span className="text-base-content font-medium">
+            <span>{row.pesertaCount}</span>
+            {row.kuota != null ? (
+              <span className="text-base-content/50 font-normal"> / {row.kuota}</span>
+            ) : null}
           </span>
         ),
       },
