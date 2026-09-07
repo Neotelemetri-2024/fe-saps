@@ -46,7 +46,7 @@ async function resolvePenyelenggaraAdmin(
   if (explicit?.trim()) return explicit.trim();
   if (organisasiId) return undefined;
 
-  if (effectiveRole === 'admin_ditmawa') {
+  if (effectiveRole === 'admin_ditmawa' || effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama') {
     return PENYELENGGARA_ADMIN_DITMAWA;
   }
 
@@ -223,7 +223,12 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
     let resolvedAsal: 'kurikuler_ukm' | 'kurikuler_ukmf' | 'universitas' | 'eksternal' =
       body.asal === 'internal' ? 'kurikuler_ukm' : body.asal;
 
-    if (effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas') {
+    if (
+      effectiveRole === 'admin_ditmawa' ||
+      effectiveRole === 'admin_fakultas' ||
+      effectiveRole === 'pimpinan_ditmawa' ||
+      effectiveRole === 'pimpinan_utama'
+    ) {
       if (body.asal === 'internal') {
         resolvedAsal = effectiveRole === 'admin_fakultas' ? 'kurikuler_ukmf' : 'universitas';
       }
@@ -328,13 +333,16 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
     }
 
     // Cek otorisasi
+    const isSuperAdmin = effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama';
+    const isAdmin = effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas' || isSuperAdmin;
+
     if (userPeran === 'operator_org') {
       const operatorData = await prisma.organisasiOperator.findUnique({ where: { userId } });
       if (!operatorData || operatorData.organisasiId !== existing.organisasiId) {
         res.status(403).json({ success: false, message: 'Tidak diizinkan mengedit kegiatan milik organisasi lain' });
         return;
       }
-    } else if (existing.dibuatOleh !== userId) {
+    } else if (!isAdmin && existing.dibuatOleh !== userId) {
       res.status(403).json({ success: false, message: 'Tidak diizinkan mengedit kegiatan ini' });
       return;
     }
@@ -588,22 +596,20 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
     const userJabatan = req.user!.jabatan;
     const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
 
+    const isSuperAdmin = effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama';
+    const isAdmin = effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas' || isSuperAdmin;
+
     if (userPeran === 'operator_org') {
       const operatorData = await prisma.organisasiOperator.findUnique({ where: { userId: aktorId } });
       if (!operatorData || operatorData.organisasiId !== kegiatan.organisasiId) {
         res.status(403).json({ success: false, message: 'Tidak diizinkan mengajukan kegiatan milik organisasi lain' });
         return;
       }
-    } else if (
-      effectiveRole !== 'admin_ditmawa' &&
-      effectiveRole !== 'admin_fakultas' &&
-      kegiatan.dibuatOleh !== aktorId
-    ) {
+    } else if (!isAdmin && kegiatan.dibuatOleh !== aktorId) {
       res.status(403).json({ success: false, message: 'Tidak diizinkan mengajukan kegiatan ini' });
       return;
     }
 
-    const isAdmin = effectiveRole === 'admin_ditmawa' || effectiveRole === 'admin_fakultas';
     const statusBaru = isAdmin ? 'terverifikasi' : 'diajukan';
 
     let notifTargets: { userId: bigint }[] = [];
@@ -739,6 +745,11 @@ export const getKegiatanForVerifikasi = async (req: Request, res: Response) => {
         if (staffData?.fakultasId) {
           where.organisasi = { fakultasId: staffData.fakultasId };
           where.asal = 'kurikuler_ukmf';
+        }
+      } else if (userJabatan === 'pimpinan_ditmawa' || userJabatan === 'pimpinan_utama') {
+        // Super Admin: dapat melihat seluruh lingkup verifikasi kegiatan
+        if (asal && asal !== 'semua') {
+          where.asal = asal;
         }
       } else {
         // Admin Ditmawa: UKM + universitas
@@ -986,24 +997,20 @@ export const getKegiatanForApproval = async (req: Request, res: Response) => {
         }
       }
     } else {
-      // Pimpinan Ditmawa: kegiatan UKM, universitas, dan eksternal mahasiswa
-      where.asal = { in: ['kurikuler_ukm', 'universitas', 'eksternal'] };
+      // Pimpinan Ditmawa & Pimpinan Utama (Super Admin):
+      if (asal) {
+        if (asal === 'internal') {
+          where.asal = { in: ['universitas', 'kurikuler_ukm', 'kurikuler_ukmf'] };
+        } else {
+          where.asal = asal;
+        }
+      } else {
+        where.asal = { in: ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas', 'eksternal'] };
+      }
     }
 
     if (kategoriId) where.kategoriId = Number(kategoriId);
     if (skalaId) where.skalaId = Number(skalaId);
-
-    if (userJabatan !== 'pimpinan_fakultas') {
-      if (asal === 'internal') {
-        where.asal = { in: ['universitas', 'kurikuler_ukm'] };
-      } else if (asal === 'universitas') {
-        where.asal = 'universitas';
-      } else if (asal === 'kurikuler_ukm') {
-        where.asal = 'kurikuler_ukm';
-      } else if (asal === 'eksternal') {
-        where.asal = 'eksternal';
-      }
-    }
 
     // Filter berdasarkan tahun (dari tanggalMulai)
     if (tahun) {

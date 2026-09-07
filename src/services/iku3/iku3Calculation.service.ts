@@ -115,14 +115,14 @@ export async function calculateIku3Dashboard(filter: Iku3Filter): Promise<Iku3Da
   const { startDate, endDate, labelTriwulan } = getDateRange(tahun, filter.triwulan);
 
   // 1. Ambil Target Tahunan dari Database (atau fallback default)
-  const targetDb = await prisma.iku3Target.findUnique({
-    where: { tahun },
+  const targetDb = await prisma.iku3Target.findFirst({
+    where: { tahun, deletedAt: null },
   });
   const targetVal = targetDb ? Number(targetDb.targetPersen) : DEFAULT_TARGET_IKU3_2026;
 
   // 2. Ambil Dynamic Rules dari Database
   const dynamicRules = await prisma.iku3BobotRule.findMany({
-    where: { aktif: true },
+    where: { aktif: true, deletedAt: null },
   });
 
   // 3. Filter Scope Fakultas & Prodi
@@ -422,7 +422,7 @@ export async function getIku3ActivitiesDetail(
   const limit = Math.max(1, Math.min(100, Number(filter.limit || 15)));
   const skip = (page - 1) * limit;
 
-  const dynamicRules = await prisma.iku3BobotRule.findMany({ where: { aktif: true } });
+  const dynamicRules = await prisma.iku3BobotRule.findMany({ where: { aktif: true, deletedAt: null } });
 
   const whereCondition: any = {
     status: 'sah',

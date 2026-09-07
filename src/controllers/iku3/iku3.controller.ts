@@ -127,6 +127,7 @@ export const getActivitiesIku3 = async (req: Request, res: Response, next: NextF
 export const getTargetsIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const targets = await prisma.iku3Target.findMany({
+      where: { deletedAt: null },
       orderBy: { tahun: 'desc' },
       include: {
         pengubah: { select: { id: true, nama: true } },
@@ -170,6 +171,7 @@ export const upsertTargetIku3 = async (req: Request, res: Response, next: NextFu
         targetPersen: Number(targetPersen),
         keterangan: keterangan || null,
         diubahOleh: userId,
+        deletedAt: null,
       },
       create: {
         tahun: Number(tahun),
@@ -198,7 +200,7 @@ export const upsertTargetIku3 = async (req: Request, res: Response, next: NextFu
 export const getRulesIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { jenis } = req.query;
-    const whereClause: any = { aktif: true };
+    const whereClause: any = { aktif: true, deletedAt: null };
     if (jenis) whereClause.jenis = String(jenis);
 
     const rules = await prisma.iku3BobotRule.findMany({

@@ -84,15 +84,22 @@ export const authorizeRole = (...allowedRoles: string[]) => {
       ? req.user.jabatan
       : req.user.peran;
 
-    if (!allowedRoles.includes(effectiveRole)) {
-      res.status(403).json({
-        success: false,
-        message: `Akses ditolak. Role Anda (${effectiveRole}) tidak memiliki izin untuk mengakses fitur ini.`,
-      });
-      return;
+    // Super Admin: Pimpinan Ditmawa dan Pimpinan Utama memiliki wewenang penuh
+    // untuk mengakses semua fitur administratif & operasional
+    const isSuperAdmin = effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama';
+    const isStaffOrAdminFeature = allowedRoles.some(r =>
+      ['admin_ditmawa', 'admin_fakultas', 'operator_org', 'pimpinan_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama', 'staff'].includes(r)
+    );
+
+    if (allowedRoles.includes(effectiveRole) || (isSuperAdmin && isStaffOrAdminFeature)) {
+      return next();
     }
 
-    next();
+    res.status(403).json({
+      success: false,
+      message: `Akses ditolak. Role Anda (${effectiveRole}) tidak memiliki izin untuk mengakses fitur ini.`,
+    });
+    return;
   };
 };
 

@@ -60,9 +60,23 @@ router.post(
   submitPoinPeserta
 );
 
+// POST /api/kegiatan/:id/peserta/submit — Alias untuk submit poin
+router.post(
+  '/:id/peserta/submit',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'),
+  submitPoinPeserta
+);
+
 // PUT /api/kegiatan/:id/peserta/update — Update kehadiran & peran peserta
 router.put(
   '/:id/peserta/update',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'),
+  updatePeserta
+);
+
+// PUT /api/kegiatan/:id/peserta — Alias untuk update kehadiran & peran peserta
+router.put(
+  '/:id/peserta',
   authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'),
   updatePeserta
 );

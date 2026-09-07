@@ -13,20 +13,28 @@ async function getOrganisasiOperator(userId: bigint) {
   return operator;
 }
 
+function getEffectiveRole(req: Request): string | undefined {
+  if (!req.user) return undefined;
+  if (req.user.peran === 'staff' && req.user.jabatan) {
+    return req.user.jabatan;
+  }
+  return req.user.jabatan || req.user.peran;
+}
+
 // Helper: Cek apakah user memiliki peran Admin (Ditmawa/Fakultas) atau Superadmin (Pimpinan Ditmawa/Utama)
 function checkIsAdminOrSuper(req: Request): boolean {
-  const jabatan = req.user?.jabatan;
+  const role = getEffectiveRole(req);
   return (
-    jabatan === 'admin_ditmawa' ||
-    jabatan === 'admin_fakultas' ||
-    jabatan === 'pimpinan_ditmawa' ||
-    jabatan === 'pimpinan_utama'
+    role === 'admin_ditmawa' ||
+    role === 'admin_fakultas' ||
+    role === 'pimpinan_ditmawa' ||
+    role === 'pimpinan_utama'
   );
 }
 
 function checkIsSuperAdmin(req: Request): boolean {
-  const jabatan = req.user?.jabatan;
-  return jabatan === 'pimpinan_ditmawa' || jabatan === 'pimpinan_utama';
+  const role = getEffectiveRole(req);
+  return role === 'pimpinan_ditmawa' || role === 'pimpinan_utama';
 }
 
 // ==================== DAFTAR KEGIATAN UKM ====================
@@ -38,16 +46,28 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const operator = await getOrganisasiOperator(BigInt(userId));
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+    const isAdminOrSuper = checkIsAdminOrSuper(req);
+    let operator: any = null;
+    let organisasiId: number | undefined;
+
+    if (!isAdminOrSuper) {
+      operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      organisasiId = operator.organisasiId;
+    } else if (req.query.organisasiId) {
+      organisasiId = parseInt(req.query.organisasiId as string);
+      operator = await prisma.organisasi.findUnique({ where: { id: organisasiId } });
     }
 
-    const organisasiId = operator.organisasiId;
     const { search, skalaId, kategoriId, status, page = '1', limit = '10' } = req.query;
 
     // Build where clause
-    const where: any = { organisasiId };
+    const where: any = {};
+    if (organisasiId) {
+      where.organisasiId = organisasiId;
+    }
 
     if (search) {
       where.nama = { contains: search as string };
@@ -86,18 +106,22 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
 
     // Statistik cards
     const currentDate = new Date();
+    const whereStats: any = {};
+    if (organisasiId) {
+      whereStats.organisasiId = organisasiId;
+    }
 
     const [pendingCount, disetujuiCount, statusCount, eventAktifCount] = await Promise.all([
       prisma.kegiatan.count({
-        where: { organisasiId, status: { in: ['diajukan', 'terverifikasi', 'perlu_revisi'] } }
+        where: { ...whereStats, status: { in: ['diajukan', 'terverifikasi', 'perlu_revisi'] } }
       }),
       prisma.kegiatan.count({
-        where: { organisasiId, status: { in: ['disetujui', 'terpublikasi'] } }
+        where: { ...whereStats, status: { in: ['disetujui', 'terpublikasi'] } }
       }),
-      prisma.kegiatan.count({ where: { organisasiId } }),
+      prisma.kegiatan.count({ where: whereStats }),
       prisma.kegiatan.count({
         where: {
-          organisasiId,
+          ...whereStats,
           status: { in: ['disetujui', 'terpublikasi'] },
           tanggalSelesai: { gte: currentDate }
         }
@@ -107,7 +131,7 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
     // Cek apakah ada kegiatan yang perlu submit peserta (sudah disetujui tapi belum ada klaim)
     const kegiatanPerluSubmit = await prisma.kegiatan.findMany({
       where: {
-        organisasiId,
+        ...whereStats,
         status: { in: ['disetujui', 'terpublikasi'] },
         tanggalSelesai: { lt: currentDate }
       },
@@ -147,8 +171,8 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
       success: true,
       data: {
         organisasi: {
-          id: organisasiId,
-          nama: operator.organisasi.nama
+          id: organisasiId || null,
+          nama: operator?.organisasi?.nama || operator?.nama || 'Seluruh Ormawa'
         },
         statistik: {
           pending: pendingCount,

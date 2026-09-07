@@ -77,7 +77,7 @@ router.get(
 // ─── PORTOFOLIO / CV ──────────────────────────────────────────────────────────
 router.get(
   "/portofolio/:mahasiswaId",
-  authorizeRole("mahasiswa", "dosen", "admin_ditmawa"),
+  authorizeRole("mahasiswa", "dosen", "admin_ditmawa", "pimpinan_ditmawa", "pimpinan_utama"),
   getPortofolio,
 );
 
