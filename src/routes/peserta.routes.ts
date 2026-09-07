@@ -9,6 +9,7 @@ import {
   updatePesertaUKM as updatePeserta,
   cariMahasiswaPeserta,
   tambahPesertaManual,
+  hapusPeserta,
 } from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
@@ -88,4 +89,19 @@ router.post(
   tambahPesertaManual
 );
 
+// DELETE /api/kegiatan/:id/peserta/:partisipasiId — Hapus peserta dari kegiatan
+router.delete(
+  '/:id/peserta/:partisipasiId',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'),
+  hapusPeserta
+);
+
+// DELETE /api/kegiatan/:id/peserta — Hapus peserta (query / body)
+router.delete(
+  '/:id/peserta',
+  authorizeRole('operator_org', 'admin_ditmawa', 'admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'),
+  hapusPeserta
+);
+
 export default router;
+

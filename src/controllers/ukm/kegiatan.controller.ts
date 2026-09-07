@@ -1261,4 +1261,118 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
   }
 };
 
+// ==================== HAPUS PESERTA ====================
+
+// DELETE /api/kegiatan/:id/peserta/:partisipasiId
+// DELETE /api/ukm/kegiatan/:kegiatanId/peserta/:partisipasiId
+export const hapusPeserta = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
+    const partisipasiIdRaw = req.params.partisipasiId || (req.body as any)?.partisipasiId || (req.query as any)?.partisipasiId;
+    if (!partisipasiIdRaw) {
+      return res.status(400).json({ success: false, message: 'ID partisipasi/peserta tidak valid.' });
+    }
+
+    const isSuperAdmin = checkIsSuperAdmin(req);
+    const isAdmin = checkIsAdminOrSuper(req);
+
+    let kegiatan: any;
+    if (isAdmin) {
+      kegiatan = await prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
+    } else {
+      const operator = await getOrganisasiOperator(BigInt(userId));
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      kegiatan = await prisma.kegiatan.findFirst({
+        where: { id: kegiatanId, organisasiId: operator.organisasiId }
+      });
+    }
+
+    if (!kegiatan) {
+      return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan atau bukan milik UKM Anda.' });
+    }
+
+    // Cari data partisipasi berdasarkan ID partisipasi atau mahasiswaId
+    let partisipasi = await prisma.partisipasi.findFirst({
+      where: {
+        id: BigInt(String(partisipasiIdRaw)),
+        kegiatanId: kegiatanId,
+      },
+      include: {
+        mahasiswa: {
+          include: { user: { select: { nama: true } } }
+        }
+      }
+    });
+
+    if (!partisipasi) {
+      partisipasi = await prisma.partisipasi.findFirst({
+        where: {
+          mahasiswaId: BigInt(String(partisipasiIdRaw)),
+          kegiatanId: kegiatanId,
+        },
+        include: {
+          mahasiswa: {
+            include: { user: { select: { nama: true } } }
+          }
+        }
+      });
+    }
+
+    if (!partisipasi) {
+      return res.status(404).json({ success: false, message: 'Peserta tidak ditemukan pada kegiatan ini.' });
+    }
+
+    const namaMahasiswa = partisipasi.mahasiswa?.user?.nama || 'Peserta';
+
+    // Hapus relasi klaimPoin, perolehanPoin, bukti, izinPA, lalu partisipasi
+    await prisma.$transaction(async (tx) => {
+      const klaim = await tx.klaimPoin.findUnique({
+        where: { partisipasiId: partisipasi.id },
+        include: { perolehanPoin: true }
+      });
+
+      if (klaim) {
+        if (klaim.perolehanPoin) {
+          await tx.perolehanDetail.deleteMany({
+            where: { perolehanPoinId: klaim.perolehanPoin.id }
+          });
+          await tx.perolehanPoin.delete({
+            where: { id: klaim.perolehanPoin.id }
+          });
+        }
+        await tx.bukti.deleteMany({
+          where: { klaimPoinId: klaim.id }
+        });
+        await tx.klaimPoin.delete({
+          where: { id: klaim.id }
+        });
+      }
+
+      await tx.izinPA.deleteMany({
+        where: { partisipasiId: partisipasi.id }
+      });
+
+      await tx.partisipasi.delete({
+        where: { id: partisipasi.id }
+      });
+    });
+
+    res.json({
+      success: true,
+      message: `${namaMahasiswa} berhasil dihapus dari daftar peserta.`,
+    });
+  } catch (error: any) {
+    console.error('[hapusPeserta]', error?.stack || error?.message || error);
+    next(error);
+  }
+};
+
+export const hapusPesertaUKM = hapusPeserta;
+
+
 

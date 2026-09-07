@@ -8,7 +8,8 @@ import {
   importPesertaUKM,
   downloadTemplatePesertaUKM,
   updatePesertaUKM,
-  submitPoinPesertaUKM
+  submitPoinPesertaUKM,
+  hapusPesertaUKM,
 } from '../controllers/ukm/kegiatan.controller';
 
 const router = Router();
@@ -30,5 +31,8 @@ router.get('/kegiatan/:kegiatanId/peserta/template', downloadTemplatePesertaUKM)
 router.post('/kegiatan/:kegiatanId/peserta/import', uploadXlsx.single('file'), importPesertaUKM);
 router.put('/kegiatan/:kegiatanId/peserta', updatePesertaUKM);
 router.post('/kegiatan/:kegiatanId/peserta/submit', submitPoinPesertaUKM);
+router.delete('/kegiatan/:kegiatanId/peserta/:partisipasiId', hapusPesertaUKM);
+router.delete('/kegiatan/:kegiatanId/peserta', hapusPesertaUKM);
+
 
 export default router;
