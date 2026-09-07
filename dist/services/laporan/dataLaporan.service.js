@@ -58,9 +58,10 @@ async function getLaporanData(filter) {
     if (filter.kurikulumId && !kurikulumFilter) {
         throw new Error('Kurikulum filter tidak ditemukan');
     }
-    // Jika filter kurikulumId tidak dipilih, ambil kurikulum aktif sebagai acuan capaian pilar
-    const kurikulumAktif = !kurikulumFilter
-        ? (await prisma_1.default.kurikulum.findFirst({
+    // Jika filter kurikulumId tidak dipilih, ambil SEMUA kurikulum aktif
+    const semuaKurikulumAktif = [];
+    if (!kurikulumFilter) {
+        const aktifList = await prisma_1.default.kurikulum.findMany({
             where: { status: 'aktif' },
             orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
             include: {
@@ -69,8 +70,13 @@ async function getLaporanData(filter) {
                     include: { subCapaian: { orderBy: { id: 'asc' } } },
                 },
             },
-        })) ||
-            (await prisma_1.default.kurikulum.findFirst({
+        });
+        if (aktifList.length > 0) {
+            semuaKurikulumAktif.push(...aktifList);
+        }
+        else {
+            // Fallback: ambil kurikulum terakhir jika tidak ada yang aktif
+            const fallback = await prisma_1.default.kurikulum.findFirst({
                 orderBy: { id: 'desc' },
                 include: {
                     capaian: {
@@ -78,13 +84,18 @@ async function getLaporanData(filter) {
                         include: { subCapaian: { orderBy: { id: 'asc' } } },
                     },
                 },
-            }))
-        : null;
-    const kurikulumAcuan = kurikulumFilter || kurikulumAktif;
+            });
+            if (fallback)
+                semuaKurikulumAktif.push(fallback);
+        }
+    }
+    const kurikulumAcuan = kurikulumFilter || semuaKurikulumAktif[0] || null;
     const kurikulumMeta = kurikulumFilter || {
-        id: kurikulumAktif?.id || 0,
-        nama: kurikulumAktif ? kurikulumAktif.nama : 'Campuran (per mahasiswa)',
-        capaian: kurikulumAktif?.capaian || [],
+        id: kurikulumAcuan?.id || 0,
+        nama: semuaKurikulumAktif.length > 1
+            ? 'Campuran (semua kurikulum aktif)'
+            : (kurikulumAcuan ? kurikulumAcuan.nama : 'Campuran (per mahasiswa)'),
+        capaian: kurikulumAcuan?.capaian || [],
     };
     const targetPoinTotalDefault = (0, kurikulumResolver_service_1.targetPoinKurikulum)(kurikulumAcuan) || 200;
     const rawCapaian = kurikulumAcuan?.capaian || [];
@@ -101,11 +112,19 @@ async function getLaporanData(filter) {
             { id: 3, nama: 'Tahun 3', tahun: 3, targetPoin: Math.round(targetPoinTotalDefault / 4) },
             { id: 4, nama: 'Tahun 4', tahun: 4, targetPoin: Math.round(targetPoinTotalDefault / 4) },
         ];
-    // Mapping subCapaian ID ke tahun capaian (untuk kurikulum acuan)
+    // Mapping subCapaian ID ke tahun capaian (untuk SEMUA kurikulum aktif)
     const subCapaianTahunMap = new Map();
-    kurikulumAcuan?.capaian?.forEach((c, idx) => {
-        const th = c.urutan || (idx + 1);
-        c.subCapaian?.forEach((sc) => subCapaianTahunMap.set(sc.id, th));
+    const kurikulumSources = kurikulumFilter ? [kurikulumFilter] : semuaKurikulumAktif;
+    kurikulumSources.forEach((k) => {
+        k.capaian?.forEach((c, idx) => {
+            const th = c.urutan || (idx + 1);
+            c.subCapaian?.forEach((sc) => subCapaianTahunMap.set(sc.id, th));
+        });
+    });
+    // Per-kurikulum stats tracking untuk grafik capaian multi-kurikulum
+    const perKurikulumPoin = new Map();
+    kurikulumSources.forEach((k) => {
+        perKurikulumPoin.set(k.id, { sumPerTahun: [0, 0, 0, 0, 0], count: 0 });
     });
     // 3. Query Mahasiswa sesuai Scope & Filter
     const mhsWhere = {};
@@ -204,6 +223,15 @@ async function getLaporanData(filter) {
         for (let th = 1; th <= 4; th++) {
             sumPoinPerTahun[th] += poinPerTahun[th];
         }
+        // Accumulate per-kurikulum stats untuk grafik multi-kurikulum
+        const kurikulumMhsId = kurikulumMhs?.id;
+        if (kurikulumMhsId && perKurikulumPoin.has(kurikulumMhsId)) {
+            const pkStats = perKurikulumPoin.get(kurikulumMhsId);
+            pkStats.count++;
+            for (let th = 1; th <= 4; th++) {
+                pkStats.sumPerTahun[th] += poinPerTahun[th];
+            }
+        }
         totalPoinSahGlobal += mhsTotalPoin;
         if (mhsTotalPoin >= targetPoinTotal) {
             totalMahasiswaLulusTarget++;
@@ -235,20 +263,41 @@ async function getLaporanData(filter) {
         ? Math.min(Math.round((rataRataPoin / (targetPoinTotalDefault || 1)) * 100), 100)
         : 0;
     const persentaseLulusTarget = totalMahasiswa > 0 ? Math.round((totalMahasiswaLulusTarget / totalMahasiswa) * 100) : 0;
-    // 5. Statistik Capaian per Pilar Kurikulum
-    const capaianKurikulumStats = capaianList.map((c) => {
-        const th = (c.tahun >= 1 && c.tahun <= 4) ? c.tahun : 1;
-        const poinTahun = sumPoinPerTahun[th] || 0;
-        const avgTerkumpul = totalMahasiswa > 0 ? Math.round(poinTahun / totalMahasiswa) : 0;
-        const persen = c.targetPoin > 0 ? Math.min(Math.round((avgTerkumpul / c.targetPoin) * 100), 100) : 0;
-        return {
-            nama: c.nama,
-            tahun: c.tahun,
-            targetPoin: c.targetPoin,
-            rataRataTerkumpul: avgTerkumpul,
-            persentaseCapaian: persen,
-        };
-    });
+    // 5. Statistik Capaian per Pilar Kurikulum (multi-kurikulum support)
+    const capaianKurikulumStats = [];
+    const isMultiKurikulum = !kurikulumFilter && semuaKurikulumAktif.length > 1;
+    for (const kur of kurikulumSources) {
+        const pkStats = perKurikulumPoin.get(kur.id);
+        const kurCapaian = kur.capaian || [];
+        const kurTargetTotal = (0, kurikulumResolver_service_1.targetPoinKurikulum)(kur) || targetPoinTotalDefault;
+        const entries = kurCapaian.length > 0
+            ? kurCapaian.map((c, i) => ({
+                nama: c.nama || `Tahun ${c.urutan || (i + 1)}`,
+                tahun: c.urutan || (i + 1),
+                targetPoin: c.jumlahPoin,
+            }))
+            : [
+                { nama: 'Tahun 1', tahun: 1, targetPoin: Math.round(kurTargetTotal / 4) },
+                { nama: 'Tahun 2', tahun: 2, targetPoin: Math.round(kurTargetTotal / 4) },
+                { nama: 'Tahun 3', tahun: 3, targetPoin: Math.round(kurTargetTotal / 4) },
+                { nama: 'Tahun 4', tahun: 4, targetPoin: Math.round(kurTargetTotal / 4) },
+            ];
+        const mhsCount = pkStats?.count || 0;
+        for (const c of entries) {
+            const th = (c.tahun >= 1 && c.tahun <= 4) ? c.tahun : 1;
+            const poinTahun = pkStats?.sumPerTahun[th] || 0;
+            const avgTerkumpul = mhsCount > 0 ? Math.round(poinTahun / mhsCount) : 0;
+            const persen = c.targetPoin > 0 ? Math.min(Math.round((avgTerkumpul / c.targetPoin) * 100), 100) : 0;
+            capaianKurikulumStats.push({
+                nama: isMultiKurikulum ? `${kur.nama} - ${c.nama}` : c.nama,
+                tahun: c.tahun,
+                targetPoin: c.targetPoin,
+                rataRataTerkumpul: avgTerkumpul,
+                persentaseCapaian: persen,
+                kurikulumNama: isMultiKurikulum ? kur.nama : undefined,
+            });
+        }
+    }
     // 6. Komparasi Unit (Fakultas atau Prodi)
     let komparasiUnit = 'fakultas';
     const komparasiItems = [];
