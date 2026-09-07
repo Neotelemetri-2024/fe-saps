@@ -23,6 +23,8 @@ function normalizeDetail(raw) {
   if (!raw) return null
   const capaianList = []
   const subCapaianList = []
+  const kurikulumList = (raw.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
+  const kurikulumNama = raw.kurikulumNama || raw.kurikulum?.nama || kurikulumList[0] || (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
   ;(raw.kegiatanCapaian || []).forEach((kc) => {
     const capNama = kc.subCapaian?.capaian?.nama
     if (capNama && !capaianList.includes(capNama)) capaianList.push(capNama)
@@ -38,6 +40,7 @@ function normalizeDetail(raw) {
     deskripsi: raw.deskripsi || '-',
     capaian: capaianList.length ? capaianList : (raw.capaian || []),
     subCapaian: subCapaianList.length ? subCapaianList : (raw.subCapaian || []),
+    kurikulum: kurikulumNama,
     status: mapUiStatus(raw.status),
     alasan: raw.alasan || raw.kegiatanApproval?.[0]?.alasan || '',
   }
@@ -129,6 +132,7 @@ function DetailVerifikasiPengajuanInternal() {
 
         <SectionCard title="Detail kegiatan">
           <InfoRow label="Nama kegiatan" value={item.kegiatan} />
+          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label="Penyelenggara" value={item.namaOrganisasi} />
           <InfoRow label="Jenis kegiatan" value={item.jenis} />
           <InfoRow label="Skala" value={item.skala} />
@@ -136,13 +140,30 @@ function DetailVerifikasiPengajuanInternal() {
           {item.deskripsi && item.deskripsi !== '-' ? <InfoRow label="Deskripsi" value={item.deskripsi} multiline /> : null}
         </SectionCard>
 
-        {item.capaian?.length > 0 ? (
-          <SectionCard title="Capaian kurikulum">
-            {item.capaian.map((c, i) => (
-              <p key={i} className="text-sm text-base-content">{typeof c === 'string' ? c : c.label}</p>
-            ))}
-          </SectionCard>
-        ) : null}
+        <SectionCard title="Capaian Kurikulum">
+          {item.kurikulum && item.kurikulum !== '-' ? (
+            <div className="mb-3 pb-3 border-b border-base-200">
+              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                Kurikulum Terkait
+              </span>
+              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
+                {item.kurikulum}
+              </span>
+            </div>
+          ) : null}
+          {item.capaian?.length > 0 ? (
+            <div>
+              {item.kurikulum && item.kurikulum !== '-' && (
+                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                  Daftar Capaian
+                </span>
+              )}
+              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{typeof c === 'string' ? c : c.label}</p>)}
+            </div>
+          ) : (
+            <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>
+          )}
+        </SectionCard>
 
         {item.subCapaian?.length > 0 ? (
           <SectionCard title="Sub capaian">

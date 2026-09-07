@@ -36,6 +36,8 @@ function normalizeKegiatanDetail(k) {
   const latestApproval = approval[0]
   const capaianList = []
   const subCapaianList = []
+  const kurikulumList = (k.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
+  const kurikulumNama = k.kurikulumNama || k.kurikulum?.nama || mhs.kurikulum?.nama || kurikulumList[0] || (typeof k.kurikulum === 'string' ? k.kurikulum : '-')
   ;(k.kegiatanCapaian || []).forEach((kc) => {
     const nama = kc.subCapaian?.capaian?.nama
     if (nama && !capaianList.find((c) => c.label === nama)) capaianList.push({ label: nama })
@@ -60,6 +62,7 @@ function normalizeKegiatanDetail(k) {
     alasan: latestApproval?.alasan || '',
     capaian: capaianList,
     subCapaian: subCapaianList,
+    kurikulum: kurikulumNama,
   }
 }
 
@@ -163,6 +166,7 @@ function DetailVerifikasiPengajuanEksternal() {
 
         <SectionCard title="Detail kegiatan">
           <InfoRow label="Nama kegiatan" value={item.kegiatan} />
+          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label="Kategori" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
           <InfoRow label="Tanggal pelaksanaan" value={item.tanggal} />
@@ -173,11 +177,30 @@ function DetailVerifikasiPengajuanEksternal() {
         </SectionCard>
 
         {item.capaian?.length > 0 ? (
-          <SectionCard title="Capaian kurikulum">
-            {item.capaian.map((c, i) => (
-              <p key={i} className="text-sm text-base-content">{c.label}</p>
-            ))}
-          </SectionCard>
+          <SectionCard title="Capaian Kurikulum">
+          {item.kurikulum && item.kurikulum !== '-' ? (
+            <div className="mb-3 pb-3 border-b border-base-200">
+              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                Kurikulum Terkait
+              </span>
+              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
+                {item.kurikulum}
+              </span>
+            </div>
+          ) : null}
+          {item.capaian?.length > 0 ? (
+            <div>
+              {item.kurikulum && item.kurikulum !== '-' && (
+                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                  Daftar Capaian
+                </span>
+              )}
+              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c.label || c}</p>)}
+            </div>
+          ) : (
+            <p className="text-sm text-base-content/50">Belum ada pemetaan capaian</p>
+          )}
+        </SectionCard>
         ) : null}
 
         {item.subCapaian?.length > 0 ? (

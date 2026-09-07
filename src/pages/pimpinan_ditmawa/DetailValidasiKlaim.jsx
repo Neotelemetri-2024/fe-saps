@@ -34,6 +34,8 @@ function normalizeDetail(raw) {
   const kegiatan = part.kegiatan || {}
   const mahasiswa = part.mahasiswa || {}
   const capaianList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.nama).filter(Boolean)
+  const kurikulumList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
+  const kurikulumNama = raw.kurikulumNama || raw.kurikulum?.nama || kegiatan.kurikulum?.nama || mahasiswa.kurikulum?.nama || kurikulumList[0] || (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
   const buktiUrl = raw.bukti?.[0]?.url || raw.buktiUrl || null
   const apiBase = getApiBase()
   return {
@@ -52,6 +54,7 @@ function normalizeDetail(raw) {
     linkWebsite: kegiatan.linkWebsiteExt || '-',
     deskripsi: kegiatan.deskripsi || '-',
     bukti: buktiUrl ? (buktiUrl.startsWith('http') ? buktiUrl : `${apiBase}${buktiUrl}`) : null,
+    kurikulum: kurikulumNama,
     capaian: [...new Set(capaianList)],
     subCapaian: (kegiatan.kegiatanCapaian || []).map((kc) => ({
       label: kc.subCapaian?.nama || '-',
@@ -161,6 +164,7 @@ function DetailValidasiKlaim() {
 
         <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
+          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label="Kategori" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
           <InfoRow label="Peran" value={item.peran} />
@@ -181,10 +185,31 @@ function DetailValidasiKlaim() {
           )}
         </SectionCard>
 
-        {item.capaian?.length > 0 && (
+        {((item.kurikulum && item.kurikulum !== '-') || item.capaian?.length > 0) && (
           <SectionCard title="Capaian Kurikulum">
-            {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c}</p>)}
-          </SectionCard>
+          {item.kurikulum && item.kurikulum !== '-' ? (
+            <div className="mb-3 pb-3 border-b border-base-200">
+              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                Kurikulum Terkait
+              </span>
+              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
+                {item.kurikulum}
+              </span>
+            </div>
+          ) : null}
+          {item.capaian?.length > 0 ? (
+            <div>
+              {item.kurikulum && item.kurikulum !== '-' && (
+                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
+                  Daftar Capaian
+                </span>
+              )}
+              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c}</p>)}
+            </div>
+          ) : (
+            <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>
+          )}
+        </SectionCard>
         )}
 
         {item.subCapaian?.length > 0 && (
