@@ -61,9 +61,9 @@ jobs:
             git fetch origin backend
             git reset --hard origin/backend
 
-            # 4. Install dependencies
+            # 4. Install dependencies (termasuk typescript & prisma untuk build)
             echo "📦 Menginstall dependencies (npm install)..."
-            npm install --omit=dev || npm install
+            npm install
 
             # 5. Generate Prisma Client
             echo "🗄️ Menjalankan npx prisma generate..."
