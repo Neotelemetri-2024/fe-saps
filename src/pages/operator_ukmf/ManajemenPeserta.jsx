@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Info, Search, Download, UploadCloud, UserPlus } from 'lucide-react'
+import { Info, Search, Download, UploadCloud, UserPlus, Trash2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import DataTable from '../../components/dashboard/DataTable'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { DetailBackButton } from '../../components/ui/DetailComponents'
 import { KehadiranSelect, PeranSelect } from '../../components/dashboard/PesertaFields'
 import { getCurrentUser } from '../../services/authService'
@@ -15,6 +16,7 @@ import {
   importPesertaCSV,
   downloadTemplatePeserta,
   submitPoinPeserta,
+  hapusPesertaKegiatan,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -75,6 +77,8 @@ function ManajemenPeserta() {
   const [search, setSearch] = useState('')
   const [filterKehadiran, setFilterKehadiran] = useState('semua')
   const [isEditing, setIsEditing] = useState(false)
+  const [pesertaToDelete, setPesertaToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const [showTambahModal, setShowTambahModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -208,6 +212,18 @@ function ManajemenPeserta() {
 
   return (
     <DashboardLayout role="operator_ukmf" userName={user?.nama || 'Operator UKMF'} userRole="Operator UKMF">
+
+      <ConfirmModal
+        isOpen={!!pesertaToDelete}
+        title="Hapus Peserta"
+        message={`Apakah Anda yakin ingin menghapus ${pesertaToDelete?.nama || 'peserta ini'} (${pesertaToDelete?.nim || ''}) dari daftar peserta kegiatan ini?`}
+        confirmText={deleting ? 'Menghapus…' : 'Hapus'}
+        confirmClassName="btn btn-error text-white"
+        cancelText="Batal"
+        onConfirm={handleConfirmDeletePeserta}
+        onCancel={() => setPesertaToDelete(null)}
+      />
+
       <div className="space-y-5">
         <DetailBackButton onClick={() => navigate(-1)} />
 
@@ -334,6 +350,21 @@ function ManajemenPeserta() {
                     />
                   ),
                 },
+                ...(isEditing ? [{
+                  key: '_aksi',
+                  label: 'Aksi',
+                  center: true,
+                  render: (p) => (
+                    <button
+                      type="button"
+                      onClick={() => setPesertaToDelete(p)}
+                      className="btn btn-ghost btn-xs text-error hover:bg-error/10"
+                      title="Hapus peserta"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ),
+                }] : []),
               ]}
               data={filtered.map((p, i) => ({ ...p, _no: i + 1 }))}
               loading={loading}

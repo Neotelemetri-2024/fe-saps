@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Search, Download, UploadCloud, UserPlus } from 'lucide-react'
+import { Search, Download, UploadCloud, UserPlus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
@@ -14,6 +14,7 @@ import {
   importPesertaCSV,
   downloadTemplatePeserta,
   submitPoinPeserta,
+  hapusPesertaKegiatan,
 } from '../../services/kegiatanService'
 import { getPeranKegiatan } from '../../services/matriksService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -75,6 +76,8 @@ function ManajemenPesertaEvent() {
   const [showTambahModal, setShowTambahModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [pesertaToDelete, setPesertaToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadData = () => {
     setLoading(true)
@@ -137,6 +140,23 @@ function ManajemenPesertaEvent() {
       ...(p.peranVerifId ? { peranVerifId: Number(p.peranVerifId) } : {}),
     }))
 
+
+  async function handleConfirmDeletePeserta() {
+    if (!pesertaToDelete) return
+    setDeleting(true)
+    try {
+      const pid = pesertaToDelete.partisipasiId ?? pesertaToDelete.id
+      await hapusPesertaKegiatan(id, pid)
+      toast.success(`Peserta ${pesertaToDelete.nama} berhasil dihapus`)
+      setPesertaList((prev) => prev.filter((p) => (p.partisipasiId ?? p.id) !== pid && p.id !== pid))
+      setPesertaToDelete(null)
+    } catch (err) {
+      toast.error('Gagal menghapus peserta', { description: err.message })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   function handleBatalEdit() {
     setIsEditing(false)
     loadData()
@@ -188,6 +208,18 @@ function ManajemenPesertaEvent() {
         cancelText="Batal"
         onConfirm={handleSubmitConfirm}
         onCancel={() => setShowSubmitModal(false)}
+      />
+
+
+      <ConfirmModal
+        isOpen={!!pesertaToDelete}
+        title="Hapus Peserta"
+        message={`Apakah Anda yakin ingin menghapus ${pesertaToDelete?.nama || 'peserta ini'} (${pesertaToDelete?.nim || ''}) dari daftar peserta kegiatan ini?`}
+        confirmText={deleting ? 'Menghapus…' : 'Hapus'}
+        confirmClassName="btn btn-error text-white"
+        cancelText="Batal"
+        onConfirm={handleConfirmDeletePeserta}
+        onCancel={() => setPesertaToDelete(null)}
       />
 
       <TambahPesertaModal
@@ -310,6 +342,21 @@ function ManajemenPesertaEvent() {
                     />
                   ),
                 },
+                ...(isEditing ? [{
+                  key: '_aksi',
+                  label: 'Aksi',
+                  center: true,
+                  render: (p) => (
+                    <button
+                      type="button"
+                      onClick={() => setPesertaToDelete(p)}
+                      className="btn btn-ghost btn-xs text-error hover:bg-error/10"
+                      title="Hapus peserta"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ),
+                }] : []),
               ]}
               data={filtered.map((p, i) => ({ ...p, _no: i + 1 }))}
               loading={loading}

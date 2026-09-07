@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 
-function ConfirmModal({ isOpen, title, message, confirmText, cancelText, onConfirm, onCancel }) {
+function ConfirmModal({ isOpen, title, message, confirmText, cancelText, onConfirm, onCancel, confirmClassName }) {
   const dialogRef = useRef(null)
 
   useEffect(() => {
@@ -40,7 +40,7 @@ function ConfirmModal({ isOpen, title, message, confirmText, cancelText, onConfi
         ) : null}
 
         <div className="modal-action justify-center">
-          <button type="button" onClick={onConfirm} className="btn btn-primary">
+          <button type="button" onClick={onConfirm} className={confirmClassName || "btn btn-primary"}>
             {confirmText || 'Submit'}
           </button>
           <button type="button" onClick={onCancel} className="btn btn-outline">

@@ -211,3 +211,8 @@ export async function downloadTemplatePeserta(kegiatanId) {
   a.remove()
   URL.revokeObjectURL(objectUrl)
 }
+
+export async function hapusPesertaKegiatan(kegiatanId, partisipasiId) {
+  const res = await del(`/api/kegiatan/${kegiatanId}/peserta/${partisipasiId}`)
+  return res?.data || res
+}
