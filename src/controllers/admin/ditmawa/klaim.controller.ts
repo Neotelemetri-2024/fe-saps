@@ -226,7 +226,7 @@ export const getKlaimById = async (
       data.partisipasi?.kegiatan?.kegiatanCapaian?.[0]?.subCapaian?.capaian?.kurikulum?.nama ||
       data.partisipasi?.kegiatan?.kurikulum?.nama ||
       data.partisipasi?.mahasiswa?.kurikulum?.nama ||
-      (await prisma.kurikulum.findFirst({ where: { aktif: true, deletedAt: null }, select: { nama: true } }))?.nama ||
+      (await prisma.kurikulum.findFirst({ where: { status: 'aktif', deletedAt: null }, select: { nama: true } }))?.nama ||
       null;
 
     const resData = {

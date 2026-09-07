@@ -201,7 +201,7 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
       data.kurikulum?.nama ||
       data.kegiatanCapaian?.[0]?.subCapaian?.capaian?.kurikulum?.nama ||
       data.pembuat?.mahasiswa?.kurikulum?.nama ||
-      (await prisma.kurikulum.findFirst({ where: { aktif: true, deletedAt: null }, select: { nama: true } }))?.nama ||
+      (await prisma.kurikulum.findFirst({ where: { status: 'aktif', deletedAt: null }, select: { nama: true } }))?.nama ||
       null;
 
     const resData = {
