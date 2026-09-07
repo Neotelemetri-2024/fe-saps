@@ -372,8 +372,28 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
 
   const totalMahasiswa = mahasiswaRaw.length;
   const rataRataPoin = totalMahasiswa > 0 ? Math.round(totalPoinSahGlobal / totalMahasiswa) : 0;
+
+  // Hitung target rata-rata tertimbang berdasarkan distribusi mahasiswa per kurikulum
+  const isMultiKurikulum = !kurikulumFilter && semuaKurikulumAktif.length > 1;
+  let effectiveTarget = targetPoinTotalDefault;
+  if (isMultiKurikulum && totalMahasiswa > 0) {
+    let totalWeightedTarget = 0;
+    let totalStudentsWithKurikulum = 0;
+    for (const kur of kurikulumSources) {
+      const pkStats = perKurikulumPoin.get(kur.id);
+      const kurTarget = targetPoinKurikulum(kur) || targetPoinTotalDefault;
+      const count = pkStats?.count || 0;
+      totalWeightedTarget += kurTarget * count;
+      totalStudentsWithKurikulum += count;
+    }
+    if (totalStudentsWithKurikulum > 0) {
+      effectiveTarget = Math.round(totalWeightedTarget / totalStudentsWithKurikulum);
+    }
+  }
+
+  // Gunakan rata-rata persentase individu (lebih akurat untuk campuran)
   const rataRataPersentase = totalMahasiswa > 0
-    ? Math.min(Math.round((rataRataPoin / (targetPoinTotalDefault || 1)) * 100), 100)
+    ? Math.round(mahasiswaList.reduce((sum, m) => sum + m.persentase, 0) / totalMahasiswa)
     : 0;
   const persentaseLulusTarget = totalMahasiswa > 0 ? Math.round((totalMahasiswaLulusTarget / totalMahasiswa) * 100) : 0;
 
@@ -386,7 +406,6 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
     persentaseCapaian: number;
     kurikulumNama?: string;
   }[] = [];
-  const isMultiKurikulum = !kurikulumFilter && semuaKurikulumAktif.length > 1;
 
   for (const kur of kurikulumSources) {
     const pkStats = perKurikulumPoin.get(kur.id);
@@ -630,7 +649,7 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
     kurikulum: {
       id: kurikulumMeta.id || 0,
       nama: kurikulumMeta.nama || 'Campuran (per mahasiswa)',
-      targetPoin: targetPoinTotalDefault,
+      targetPoin: effectiveTarget,
       capaianList,
     },
     kpi: {
