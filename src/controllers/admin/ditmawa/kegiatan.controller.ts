@@ -845,8 +845,10 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // Maker â‰  checker [BR-012]
-    if (kegiatan.dibuatOleh === aktorId) {
+    // Maker !== checker [BR-012]
+    const userJabatan = req.user?.jabatan;
+    const isSuperAdmin = userJabatan === 'pimpinan_ditmawa' || userJabatan === 'pimpinan_utama';
+    if (!isSuperAdmin && kegiatan.dibuatOleh === aktorId) {
       res.status(403).json({ success: false, message: 'Pembuat kegiatan tidak boleh memverifikasi sendiri [BR-012]' });
       return;
     }

@@ -109,22 +109,33 @@ export const buildPimpinanDashboard = async (fakultasId?: number) => {
 export const dashboardPimpinanFakultas = async (req: Request, res: Response): Promise<void> => {
   try {
     const userJabatan = req.user!.jabatan;
-    if (userJabatan !== 'pimpinan_fakultas') {
+    const isSuperAdmin = userJabatan === 'pimpinan_ditmawa' || userJabatan === 'pimpinan_utama';
+    let targetFakultasId: number | null = null;
+
+    if (isSuperAdmin) {
+      if (req.query.fakultasId) {
+        targetFakultasId = Number(req.query.fakultasId);
+      } else {
+        const firstFak = await prisma.fakultas.findFirst({ select: { id: true } });
+        targetFakultasId = firstFak?.id || 1;
+      }
+    } else if (userJabatan === 'pimpinan_fakultas') {
+      const staffData = await prisma.staff.findUnique({
+        where: { userId: BigInt(req.user!.id) },
+        select: { fakultasId: true }
+      });
+      targetFakultasId = staffData?.fakultasId || null;
+    } else {
       res.status(403).json({ success: false, message: 'Akses ditolak' });
       return;
     }
 
-    const staffData = await prisma.staff.findUnique({
-      where: { userId: BigInt(req.user!.id) },
-      select: { fakultasId: true }
-    });
-
-    if (!staffData || !staffData.fakultasId) {
+    if (!targetFakultasId) {
       res.status(400).json({ success: false, message: 'Fakultas tidak ditemukan untuk user ini' });
       return;
     }
 
-    const data = await buildPimpinanDashboard(staffData.fakultasId);
+    const data = await buildPimpinanDashboard(targetFakultasId);
     res.json({ success: true, data });
   } catch (error) {
     console.error(error);

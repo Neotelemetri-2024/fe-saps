@@ -16,12 +16,30 @@ export const getDashboardUKM = async (req: Request, res: Response, next: NextFun
       }
     });
 
-    if (!operator) {
-      return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
-    }
+    const userRole = req.user?.peran === 'staff' && req.user?.jabatan ? req.user.jabatan : req.user?.peran;
+    const isStaffOrAdmin = ['pimpinan_ditmawa', 'pimpinan_utama', 'admin_ditmawa', 'admin_fakultas'].includes(userRole as string);
 
-    const organisasiId = operator.organisasiId;
-    const namaOrganisasi = operator.organisasi.nama;
+    let organisasiId: number;
+    let namaOrganisasi: string;
+
+    if (isStaffOrAdmin && !operator) {
+      const targetOrgId = req.query.organisasiId ? Number(req.query.organisasiId) : undefined;
+      const org = targetOrgId
+        ? await prisma.organisasi.findUnique({ where: { id: targetOrgId } })
+        : await prisma.organisasi.findFirst({ where: { deletedAt: null } });
+
+      if (!org) {
+        return res.status(404).json({ success: false, message: 'Data organisasi tidak ditemukan.' });
+      }
+      organisasiId = org.id;
+      namaOrganisasi = org.nama;
+    } else {
+      if (!operator) {
+        return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
+      }
+      organisasiId = operator.organisasiId;
+      namaOrganisasi = operator.organisasi.nama;
+    }
 
     const draftCount = await prisma.kegiatan.count({
       where: {

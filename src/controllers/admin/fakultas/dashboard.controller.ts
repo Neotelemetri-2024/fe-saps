@@ -10,19 +10,36 @@ export const getDashboardFakultas = async (req: Request, res: Response) => {
       return;
     }
 
+    const userRole = req.user?.peran === 'staff' && req.user?.jabatan ? req.user.jabatan : req.user?.peran;
+    const isSuperAdmin = userRole === 'pimpinan_ditmawa' || userRole === 'pimpinan_utama';
+
     // Ambil data admin fakultas
     const staff = await prisma.staff.findUnique({
       where: { userId: BigInt(userId) },
       include: { fakultas: true }
     });
 
-    if (!staff || !staff.fakultasId) {
+    let fakultasId = staff?.fakultasId;
+    let namaFakultas = staff?.fakultas?.nama || 'Fakultas';
+
+    if (isSuperAdmin) {
+      const targetFakId = req.query.fakultasId ? Number(req.query.fakultasId) : undefined;
+      const targetFak = targetFakId
+        ? await prisma.fakultas.findUnique({ where: { id: targetFakId } })
+        : await prisma.fakultas.findFirst();
+      if (targetFak) {
+        fakultasId = targetFak.id;
+        namaFakultas = targetFak.nama;
+      }
+    } else if (!staff || !staff.fakultasId) {
       res.status(403).json({ success: false, message: 'Akses Ditolak: Anda bukan Admin Fakultas' });
       return;
     }
 
-    const fakultasId = staff.fakultasId;
-    const namaFakultas = staff.fakultas?.nama || 'Fakultas';
+    if (!fakultasId) {
+      res.status(404).json({ success: false, message: 'Data fakultas tidak ditemukan' });
+      return;
+    }
 
     // 1. Ambil 4 Metrik Kartu (Berdasarkan kegiatan dari UKMF di fakultas ini)
     const [pendingCount, disetujuiCount, menungguPimpinanCount, ditolakCount] = await Promise.all([

@@ -146,11 +146,14 @@ export const toggleStatusAkun = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    if (operator.organisasi.tipe !== 'UKM') {
+    const userRole = req.user?.peran === 'staff' && req.user?.jabatan ? req.user.jabatan : req.user?.peran;
+    const isSuperAdmin = userRole === 'pimpinan_ditmawa' || userRole === 'pimpinan_utama';
+
+    if (!isSuperAdmin && operator.organisasi.tipe !== 'UKM') {
       res.status(403).json({ success: false, message: 'Akses ditolak. Anda hanya dapat mengatur UKM.' });
       return;
     }
-
+ 
     const newStatus = !operator.user.aktif;
     
     await prisma.user.update({
@@ -177,18 +180,20 @@ export const toggleStatusAkun = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// PUT /api/organisasi/akun/:userId/reset-password â€” Reset password akun UKM
+// PUT /api/organisasi/akun/:userId/reset-password — Reset password akun UKM
 export const resetPasswordAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const body = resetPasswordSchema.parse(req.body);
+    const userRole = req.user?.peran === 'staff' && req.user?.jabatan ? req.user.jabatan : req.user?.peran;
+    const isSuperAdmin = userRole === 'pimpinan_ditmawa' || userRole === 'pimpinan_utama';
 
     const operator = await prisma.organisasiOperator.findUnique({
       where: { userId: BigInt(userId as string) },
       include: { organisasi: true },
     });
 
-    if (!operator || operator.organisasi.tipe !== 'UKM') {
+    if (!operator || (!isSuperAdmin && operator.organisasi.tipe !== 'UKM')) {
       res.status(403).json({ success: false, message: 'Akses ditolak atau akun tidak ditemukan.' });
       return;
     }
@@ -211,18 +216,20 @@ export const resetPasswordAkun = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// DELETE /api/organisasi/akun/:userId â€” Hapus Akun & UKM
+// DELETE /api/organisasi/akun/:userId — Hapus Akun & UKM
 export const hapusAkun = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const aktorId = BigInt(req.user!.id);
+    const userRole = req.user?.peran === 'staff' && req.user?.jabatan ? req.user.jabatan : req.user?.peran;
+    const isSuperAdmin = userRole === 'pimpinan_ditmawa' || userRole === 'pimpinan_utama';
 
     const operator = await prisma.organisasiOperator.findUnique({
       where: { userId: BigInt(userId as string) },
       include: { organisasi: true },
     });
 
-    if (!operator || operator.organisasi.tipe !== 'UKM') {
+    if (!operator || (!isSuperAdmin && operator.organisasi.tipe !== 'UKM')) {
       res.status(403).json({ success: false, message: 'Akses ditolak atau akun tidak ditemukan.' });
       return;
     }
