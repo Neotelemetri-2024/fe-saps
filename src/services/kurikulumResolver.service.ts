@@ -37,13 +37,19 @@ export async function resolveKurikulumForAngkatan(
   db: DbClient = prisma,
 ) {
   if (angkatan == null) return null;
-  return db.kurikulum.findFirst({
-    where: {
-      status: 'aktif',
-      angkatanMulai: { lte: angkatan },
-    },
-    orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
-  });
+  return (
+    (await db.kurikulum.findFirst({
+      where: {
+        status: 'aktif',
+        angkatanMulai: { lte: angkatan },
+      },
+      orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
+    })) ||
+    (await db.kurikulum.findFirst({
+      where: { status: 'aktif', angkatanMulai: { not: null } },
+      orderBy: [{ angkatanMulai: 'asc' }, { id: 'asc' }],
+    }))
+  );
 }
 
 export async function resolveKurikulumIdForAngkatan(
@@ -102,14 +108,20 @@ export async function resolveKurikulumMahasiswa(
     throw new CurriculumResolutionError('ANGKATAN_REQUIRED', 'Angkatan mahasiswa wajib diisi untuk menentukan kurikulum');
   }
 
-  const inferred = await db.kurikulum.findFirst({
-    where: {
-      status: 'aktif',
-      angkatanMulai: { lte: row.angkatan },
-    },
-    orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
-    include: includeStructure ? kurikulumInclude : undefined,
-  });
+  const inferred =
+    (await db.kurikulum.findFirst({
+      where: {
+        status: 'aktif',
+        angkatanMulai: { lte: row.angkatan },
+      },
+      orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
+      include: includeStructure ? kurikulumInclude : undefined,
+    })) ||
+    (await db.kurikulum.findFirst({
+      where: { status: 'aktif', angkatanMulai: { not: null } },
+      orderBy: [{ angkatanMulai: 'asc' }, { id: 'asc' }],
+      include: includeStructure ? kurikulumInclude : undefined,
+    }));
 
   if (!inferred) {
     throw new CurriculumResolutionError(
@@ -153,7 +165,9 @@ export async function resolveKurikulumMahasiswaMap(
       continue;
     }
     if (m.angkatan == null) continue;
-    const match = aktif.find((k: any) => k.angkatanMulai != null && k.angkatanMulai <= m.angkatan!);
+    const match =
+      aktif.find((k: any) => k.angkatanMulai != null && k.angkatanMulai <= m.angkatan!) ||
+      aktif[aktif.length - 1];
     if (match) map.set(key, match);
   }
   return map;
