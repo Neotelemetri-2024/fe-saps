@@ -48,9 +48,9 @@ function formatNumber(value) {
 
 function ToolbarSelect({ label, value, onChange, children, className = '' }) {
   return (
-    <label className={`flex min-w-36 flex-1 flex-col gap-1 ${className}`}>
-      <span className="text-xs text-base-content/60">{label}</span>
-      <select value={value} onChange={onChange} className="select select-sm w-full">
+    <label className={`flex flex-col gap-1 ${className}`}>
+      <span className="text-xs font-medium text-base-content/70">{label}</span>
+      <select value={value} onChange={onChange} className="select select-sm w-full font-normal">
         {children}
       </select>
     </label>
@@ -256,10 +256,11 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
         </div>
       </div>
 
-      <form onSubmit={handleApplyFilter} className="card bg-base-100 p-4">
-        <div className="flex flex-wrap items-end gap-2">
+      <form onSubmit={handleApplyFilter} className="card bg-base-100 p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-3">
           <ToolbarSelect
             label="Tahun akademik"
+            className="w-36 shrink-0"
             value={tahunAkademik}
             onChange={(e) => setTahunAkademik(e.target.value)}
           >
@@ -269,14 +270,14 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
             ))}
           </ToolbarSelect>
 
-          <ToolbarSelect label="Angkatan" value={angkatan} onChange={(e) => setAngkatan(e.target.value)}>
+          <ToolbarSelect label="Angkatan" className="w-28 shrink-0" value={angkatan} onChange={(e) => setAngkatan(e.target.value)}>
             <option value="">Semua</option>
             {ANGKATAN.map((year) => (
               <option key={year} value={year}>{year}</option>
             ))}
           </ToolbarSelect>
 
-          <ToolbarSelect label="Kurikulum" value={kurikulumId} onChange={(e) => setKurikulumId(e.target.value)}>
+          <ToolbarSelect label="Kurikulum" className="min-w-[260px] flex-1" value={kurikulumId} onChange={(e) => setKurikulumId(e.target.value)}>
             <option value="">Semua / campuran</option>
             {kurikulumOptions.map((k) => (
               <option key={k.id} value={k.id}>
@@ -286,7 +287,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
           </ToolbarSelect>
 
           {isGlobalScope ? (
-            <ToolbarSelect label="Fakultas" value={fakultasId} onChange={(e) => setFakultasId(e.target.value)}>
+            <ToolbarSelect label="Fakultas" className="min-w-[200px] flex-1" value={fakultasId} onChange={(e) => setFakultasId(e.target.value)}>
               <option value="">Semua</option>
               {fakultasOptions.map((f) => (
                 <option key={f.id} value={f.id}>{f.nama}</option>
@@ -299,14 +300,14 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
             </label>
           )}
 
-          <ToolbarSelect label="Program studi" value={prodiId} onChange={(e) => setProdiId(e.target.value)}>
+          <ToolbarSelect label="Program studi" className="min-w-[200px] flex-1" value={prodiId} onChange={(e) => setProdiId(e.target.value)}>
             <option value="">Semua</option>
             {prodiOptions.map((p) => (
               <option key={p.id} value={p.id}>{p.nama}</option>
             ))}
           </ToolbarSelect>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 pb-0.5">
             <button type="submit" className="btn btn-primary btn-sm">
               <Filter className="h-4 w-4" />
               Terapkan
