@@ -313,10 +313,10 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
     const tabelPeserta = peserta.map((p, i) => ({
       no: skip + i + 1,
       partisipasiId: p.id.toString(),
-      nim: p.mahasiswa.nim,
-      namaMahasiswa: p.mahasiswa.user.nama,
-      fakultas: p.mahasiswa.prodi.fakultas?.nama || '-',
-      programStudi: p.mahasiswa.prodi.nama,
+      nim: p.mahasiswa?.nim || '-',
+      namaMahasiswa: p.mahasiswa?.user?.nama || '-',
+      fakultas: p.mahasiswa?.prodi?.fakultas?.nama || '-',
+      programStudi: p.mahasiswa?.prodi?.nama || '-',
       kehadiran: p.kehadiran,
       peran: p.peranVerif ? { id: p.peranVerif.id, nama: p.peranVerif.nama } : null
     }));
@@ -1137,9 +1137,9 @@ export const cariMahasiswaPeserta = async (req: Request, res: Response, next: Ne
     const data = mahasiswa.map((m) => ({
       userId: m.userId.toString(),
       nim: m.nim,
-      nama: m.user.nama,
-      fakultas: m.prodi.fakultas?.nama || '-',
-      prodi: m.prodi.nama
+      nama: m.user?.nama || '-',
+      fakultas: m.prodi?.fakultas?.nama || '-',
+      prodi: m.prodi?.nama || '-'
     }));
 
     res.status(200).json({ success: true, data });
@@ -1250,9 +1250,9 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
       data: {
         userId: mahasiswa.userId.toString(),
         nim: mahasiswa.nim,
-        nama: mahasiswa.user.nama,
-        fakultas: mahasiswa.prodi.fakultas?.nama || '-',
-        prodi: mahasiswa.prodi.nama
+        nama: mahasiswa.user?.nama || '-',
+        fakultas: mahasiswa.prodi?.fakultas?.nama || '-',
+        prodi: mahasiswa.prodi?.nama || '-'
       }
     });
   } catch (error: any) {
