@@ -414,7 +414,7 @@ export async function calculateIku3Trend(fakultasId?: number): Promise<Iku3Trend
  * Service: Daftar Detail Mahasiswa Kontributor (Data Auditability)
  */
 export async function getIku3ActivitiesDetail(
-  filter: Iku3Filter & { search?: string; page?: number; limit?: number }
+  filter: Iku3Filter & { search?: string; page?: number; limit?: number; baseUrl?: string }
 ): Promise<{ total: number; page: number; totalPages: number; data: Iku3ActivityDetailItem[] }> {
   const tahun = filter.tahun || new Date().getFullYear();
   const { startDate, endDate } = getDateRange(tahun, filter.triwulan);
@@ -504,7 +504,13 @@ export async function getIku3ActivitiesDetail(
       peran: peranNama,
       bobot,
       tanggal: p.createdAt.toISOString().split('T')[0],
-      buktiUrl: p.klaimPoin?.bukti[0]?.url || null,
+      buktiUrl: (() => {
+        const raw = p.klaimPoin?.bukti[0]?.url || null;
+        if (!raw) return null;
+        if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+        const base = (filter.baseUrl || process.env.BACKEND_URL || '').replace(/\/$/, '');
+        return base ? `${base}${raw.startsWith('/') ? '' : '/'}${raw}` : raw;
+      })(),
       status: 'Sah',
     };
   });

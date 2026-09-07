@@ -98,6 +98,10 @@ export const getActivitiesIku3 = async (req: Request, res: Response, next: NextF
     const { enforcedFakultasId } = await resolveRoleAndScope(req);
     const { tahun, triwulan, fakultasId, prodiId, search, page, limit } = req.query;
 
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.get('host');
+    const baseUrl = process.env.BACKEND_URL || (host ? `${protocol}://${host}` : '');
+
     const result = await getIku3ActivitiesDetail({
       tahun: tahun ? Number(tahun) : undefined,
       triwulan: triwulan ? Number(triwulan) : undefined,
@@ -106,6 +110,7 @@ export const getActivitiesIku3 = async (req: Request, res: Response, next: NextF
       search: search ? String(search) : undefined,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 15,
+      baseUrl,
     });
 
     res.status(200).json({

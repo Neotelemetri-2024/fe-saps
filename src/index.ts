@@ -60,7 +60,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10kb' }));
 
 // Serve uploaded files statically
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ==================== ROUTES ====================
 // Health Check
