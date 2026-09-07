@@ -1,0 +1,468 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateFcmToken = exports.gantiPassword = exports.updateProfil = exports.hashPassword = exports.getMe = exports.login = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const prisma_1 = __importDefault(require("../lib/prisma"));
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const zod_1 = require("zod");
+// ==================== VALIDASI ====================
+const loginSchema = zod_1.z.object({
+    email: zod_1.z.string().email("Format email tidak valid"),
+    password: zod_1.z.string().min(1, "Password wajib diisi"),
+});
+const registerSchema = zod_1.z.object({
+    nama: zod_1.z.string().min(2, "Nama minimal 2 karakter"),
+    email: zod_1.z.string().email("Format email tidak valid"),
+    password: zod_1.z.string().min(6, "Password minimal 6 karakter"),
+});
+// ==================== LOGIN ====================
+/**
+ * POST /api/auth/login
+ *
+ * Menerima email + password, memverifikasi, dan mengembalikan JWT token.
+ * Token berisi: id, peran, jabatan (jika staff), dan nama.
+ *
+ * Alur penentuan role di token:
+ * - Jika user.peran === 'staff', kita query tabel Staff untuk mendapatkan jabatan
+ *   (admin_ditmawa, pimpinan_ditmawa, admin_fakultas, pimpinan_fakultas)
+ * - Jika user.peran === 'operator_org', kita query tabel OrganisasiOperator
+ *   untuk mendapatkan organisasiId
+ * - Jika user.peran === 'mahasiswa' atau 'dosen', cukup simpan peran saja
+ */
+const login = async (req, res) => {
+    try {
+        const data = loginSchema.parse(req.body);
+        // 1. Cari user berdasarkan email
+        const user = await prisma_1.default.user.findUnique({
+            where: { email: data.email },
+        });
+        if (!user) {
+            res.status(401).json({
+                success: false,
+                message: "Email atau password salah.",
+            });
+            return;
+        }
+        // 2. Cek apakah akun aktif
+        if (!user.aktif) {
+            res.status(403).json({
+                success: false,
+                message: "Akun Anda dinonaktifkan. Hubungi admin.",
+            });
+            return;
+        }
+        // 3. Verifikasi password
+        const isPasswordValid = await bcryptjs_1.default.compare(data.password, user.passwordHash);
+        if (!isPasswordValid) {
+            res.status(401).json({
+                success: false,
+                message: "Password salah. Silakan coba lagi.",
+            });
+            return;
+        }
+        // 4. Bangun JWT payload berdasarkan role
+        const tokenPayload = {
+            id: user.id.toString(),
+            peran: user.peran,
+            nama: user.nama,
+        };
+        // Jika staff, ambil jabatan spesifik
+        if (user.peran === "staff") {
+            const staff = await prisma_1.default.staff.findUnique({
+                where: { userId: user.id },
+            });
+            if (staff) {
+                tokenPayload.jabatan = staff.jabatan;
+            }
+        }
+        // Jika operator_org, ambil organisasi terkait
+        if (user.peran === "operator_org") {
+            const operator = await prisma_1.default.organisasiOperator.findUnique({
+                where: { userId: user.id },
+                include: { organisasi: { select: { id: true, nama: true } } },
+            });
+            if (operator) {
+                tokenPayload.organisasiId = operator.organisasiId;
+                tokenPayload.namaOrganisasi = operator.organisasi.nama;
+            }
+        }
+        // 5. Generate JWT token (berlaku 24 jam)
+        const token = jsonwebtoken_1.default.sign(tokenPayload, auth_middleware_1.JWT_SECRET, { expiresIn: "24h" });
+        res.json({
+            success: true,
+            message: "Login berhasil!",
+            data: {
+                token,
+                user: {
+                    id: user.id.toString(),
+                    nama: user.nama,
+                    email: user.email,
+                    peran: user.peran,
+                    jabatan: tokenPayload.jabatan || null,
+                    organisasiId: tokenPayload.organisasiId || null,
+                    namaOrganisasi: tokenPayload.namaOrganisasi || null,
+                },
+            },
+        });
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: error.issues,
+            });
+        }
+        else {
+            console.error(error);
+            res.status(500).json({
+                success: false,
+                message: "Terjadi kesalahan pada server",
+            });
+        }
+    }
+};
+exports.login = login;
+// ==================== GET PROFILE (ME) ====================
+/**
+ * GET /api/auth/me
+ *
+ * Mengembalikan profil lengkap user yang sedang login.
+ * Membutuhkan token JWT yang valid.
+ */
+const getMe = async (req, res) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const userId = BigInt(req.user.id);
+        const user = await prisma_1.default.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                nama: true,
+                email: true,
+                peran: true,
+                aktif: true,
+                nomorTelepon: true,
+                alamat: true,
+                createdAt: true,
+                mahasiswa: {
+                    select: {
+                        nim: true,
+                        angkatan: true,
+                        prodiId: true,
+                        prodi: {
+                            select: {
+                                id: true,
+                                nama: true,
+                                fakultasId: true,
+                                fakultas: { select: { id: true, nama: true } },
+                            },
+                        },
+                        dosenPA: { select: { user: { select: { nama: true } } } },
+                    },
+                },
+                dosen: {
+                    select: {
+                        nidn: true,
+                        fakultas: { select: { id: true, nama: true } },
+                    },
+                },
+                staff: {
+                    select: {
+                        jabatan: true,
+                        fakultas: { select: { id: true, nama: true } },
+                    },
+                },
+                organisasiOperator: {
+                    select: {
+                        organisasi: { select: { id: true, nama: true, tipe: true } },
+                    },
+                },
+            },
+        });
+        if (!user) {
+            res.status(404).json({ success: false, message: "User tidak ditemukan" });
+            return;
+        }
+        res.json({ success: true, data: user });
+    }
+    catch (error) {
+        console.error(error);
+        res
+            .status(500)
+            .json({ success: false, message: "Terjadi kesalahan pada server" });
+    }
+};
+exports.getMe = getMe;
+// ==================== HASH PASSWORD HELPER ====================
+/**
+ * Fungsi bantuan: Hash password menggunakan bcrypt.
+ * Digunakan saat membuat user baru atau reset password.
+ */
+const hashPassword = async (plainPassword) => {
+    const salt = await bcryptjs_1.default.genSalt(12);
+    return bcryptjs_1.default.hash(plainPassword, salt);
+};
+exports.hashPassword = hashPassword;
+// ==================== UPDATE PROFIL ====================
+const updateProfilSchema = zod_1.z.object({
+    nama: zod_1.z.string().min(2, "Nama minimal 2 karakter").optional(),
+    email: zod_1.z
+        .union([zod_1.z.string().email("Format email tidak valid"), zod_1.z.null()])
+        .optional(),
+    nomorTelepon: zod_1.z
+        .coerce.string()
+        .max(30, "Nomor telepon maksimal 30 karakter")
+        .nullable()
+        .optional(),
+    alamat: zod_1.z
+        .string()
+        .max(255, "Alamat maksimal 255 karakter")
+        .nullable()
+        .optional(),
+    prodiId: zod_1.z.coerce.number().int().positive().optional(),
+});
+/**
+ * PUT /api/auth/profil
+ *
+ * Memperbarui profil user yang sedang login:
+ * - nama, email, nomorTelepon, alamat (tabel users)
+ * - prodiId (tabel mahasiswa, hanya peran mahasiswa)
+ *
+ * Membutuhkan token JWT yang valid.
+ */
+const updateProfil = async (req, res) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const data = updateProfilSchema.parse(req.body);
+        if (Object.keys(data).length === 0) {
+            res
+                .status(400)
+                .json({ success: false, message: "Tidak ada data yang dikirim." });
+            return;
+        }
+        const userId = BigInt(req.user.id);
+        // Jika email diubah, pastikan tidak dipakai user lain
+        if (data.email) {
+            const existing = await prisma_1.default.user.findFirst({
+                where: { email: data.email, NOT: { id: userId } },
+            });
+            if (existing) {
+                res.status(400).json({
+                    success: false,
+                    message: "Email sudah digunakan oleh akun lain.",
+                });
+                return;
+            }
+        }
+        if (data.prodiId !== undefined) {
+            const current = await prisma_1.default.user.findUnique({
+                where: { id: userId },
+                select: { peran: true, mahasiswa: { select: { userId: true } } },
+            });
+            if (current?.peran !== "mahasiswa" || !current.mahasiswa) {
+                res.status(400).json({
+                    success: false,
+                    message: "Hanya mahasiswa yang dapat mengubah program studi.",
+                });
+                return;
+            }
+            const prodi = await prisma_1.default.programStudi.findUnique({
+                where: { id: data.prodiId },
+            });
+            if (!prodi) {
+                res.status(400).json({
+                    success: false,
+                    message: "Program studi tidak ditemukan.",
+                });
+                return;
+            }
+            await prisma_1.default.mahasiswa.update({
+                where: { userId },
+                data: { prodiId: data.prodiId },
+            });
+        }
+        const user = await prisma_1.default.user.update({
+            where: { id: userId },
+            data: {
+                ...(data.nama !== undefined && { nama: data.nama }),
+                ...(data.email ? { email: data.email } : {}),
+                ...(data.nomorTelepon !== undefined && {
+                    nomorTelepon: data.nomorTelepon,
+                }),
+                ...(data.alamat !== undefined && { alamat: data.alamat }),
+            },
+            select: {
+                id: true,
+                nama: true,
+                email: true,
+                peran: true,
+                nomorTelepon: true,
+                alamat: true,
+                mahasiswa: {
+                    select: {
+                        nim: true,
+                        prodiId: true,
+                        prodi: {
+                            select: {
+                                id: true,
+                                nama: true,
+                                fakultasId: true,
+                                fakultas: { select: { id: true, nama: true } },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        res.json({
+            success: true,
+            message: "Profil berhasil diperbarui.",
+            data: {
+                ...user,
+                id: user.id.toString(),
+            },
+        });
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: error.issues,
+            });
+        }
+        else {
+            console.error(error);
+            res.status(500).json({
+                success: false,
+                message: "Terjadi kesalahan pada server",
+            });
+        }
+    }
+};
+exports.updateProfil = updateProfil;
+// ==================== GANTI PASSWORD ====================
+const gantiPasswordSchema = zod_1.z
+    .object({
+    passwordLama: zod_1.z.string().min(1, "Password lama wajib diisi"),
+    passwordBaru: zod_1.z.string().min(6, "Password baru minimal 6 karakter"),
+    konfirmasiPassword: zod_1.z.string().min(1, "Konfirmasi password wajib diisi"),
+})
+    .refine((d) => d.passwordBaru === d.konfirmasiPassword, {
+    message: "Konfirmasi password tidak cocok.",
+    path: ["konfirmasiPassword"],
+});
+/**
+ * PUT /api/auth/ganti-password
+ *
+ * Mengganti password user yang sedang login.
+ * Password lama harus benar sebelum password baru disimpan.
+ *
+ * Membutuhkan token JWT yang valid.
+ */
+const gantiPassword = async (req, res) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const data = gantiPasswordSchema.parse(req.body);
+        const userId = BigInt(req.user.id);
+        const user = await prisma_1.default.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            res.status(404).json({ success: false, message: "User tidak ditemukan" });
+            return;
+        }
+        // Verifikasi password lama
+        const isMatch = await bcryptjs_1.default.compare(data.passwordLama, user.passwordHash);
+        if (!isMatch) {
+            res.status(400).json({ success: false, message: "Password lama salah." });
+            return;
+        }
+        // Jangan mengubah password jika sama dengan yang lama
+        const sameAsOld = await bcryptjs_1.default.compare(data.passwordBaru, user.passwordHash);
+        if (sameAsOld) {
+            res.status(400).json({
+                success: false,
+                message: "Password baru tidak boleh sama dengan password lama.",
+            });
+            return;
+        }
+        const passwordHash = await (0, exports.hashPassword)(data.passwordBaru);
+        await prisma_1.default.user.update({
+            where: { id: userId },
+            data: { passwordHash },
+        });
+        res.json({ success: true, message: "Password berhasil diubah." });
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: error.issues,
+            });
+        }
+        else {
+            console.error(error);
+            res.status(500).json({
+                success: false,
+                message: "Terjadi kesalahan pada server",
+            });
+        }
+    }
+};
+exports.gantiPassword = gantiPassword;
+// ==================== UPDATE FCM TOKEN ====================
+const fcmTokenSchema = zod_1.z.object({
+    fcmToken: zod_1.z.string().min(1, "FCM Token wajib diisi"),
+});
+/**
+ * PUT /api/auth/fcm-token
+ *
+ * Menyimpan/memperbarui FCM device token untuk push notification.
+ * Dipanggil oleh Frontend setelah user login dan mendapatkan izin notifikasi browser.
+ */
+const updateFcmToken = async (req, res) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const data = fcmTokenSchema.parse(req.body);
+        const userId = BigInt(req.user.id);
+        await prisma_1.default.user.update({
+            where: { id: userId },
+            data: { fcmToken: data.fcmToken },
+        });
+        res.json({ success: true, message: "FCM Token berhasil disimpan." });
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: error.issues,
+            });
+        }
+        else {
+            console.error(error);
+            res.status(500).json({
+                success: false,
+                message: "Terjadi kesalahan pada server",
+            });
+        }
+    }
+};
+exports.updateFcmToken = updateFcmToken;

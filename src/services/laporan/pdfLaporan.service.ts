@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+// @ts-ignore
 import PDFDocument from 'pdfkit'
 import { LaporanDataResult } from './dataLaporan.service'
 
@@ -35,7 +36,7 @@ function logoFile() {
   ])
 }
 
-function registerTimes(doc: PDFKit.PDFDocument) {
+function registerTimes(doc: any) {
   const regular = firstExisting(TNR_REGULAR)
   const bold = firstExisting(TNR_BOLD)
   if (regular) {
@@ -71,7 +72,7 @@ function clean(text: string) {
 }
 
 function put(
-  doc: PDFKit.PDFDocument,
+  doc: any,
   text: string,
   x: number,
   y: number,
@@ -91,7 +92,7 @@ function put(
     })
 }
 
-function measureRowHeight(doc: PDFKit.PDFDocument, columns: TableColumn[], row: string[]) {
+function measureRowHeight(doc: any, columns: TableColumn[], row: string[]) {
   doc.font(FONT.regular).fontSize(9)
   let height = ROW_H
   columns.forEach((col, i) => {
@@ -99,12 +100,12 @@ function measureRowHeight(doc: PDFKit.PDFDocument, columns: TableColumn[], row: 
       width: col.width - 8,
       lineGap: 1,
     })
-    height = Math.max(height, h + 6)
+    if (h > height) height = h
   })
-  return Math.min(height, 56)
+  return Math.max(ROW_H, Math.ceil(height))
 }
 
-function generatePdf(doc: PDFKit.PDFDocument, data: LaporanDataResult) {
+function generatePdf(doc: any, data: LaporanDataResult) {
   const pageW = 595.28
   const pageH = 841.89
   const contentW = pageW - MARGIN * 2

@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const organisasi_controller_1 = require("../controllers/admin/fakultas/organisasi.controller");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticateJWT);
+router.use((0, auth_middleware_1.authorizeRole)('admin_fakultas', 'pimpinan_ditmawa', 'pimpinan_utama'));
+router.get('/akun', organisasi_controller_1.getAkunUKMF);
+router.post('/akun', organisasi_controller_1.createAkunUKMF);
+router.put('/akun/:userId/toggle-status', organisasi_controller_1.toggleStatusAkunUKMF);
+router.put('/akun/:userId/reset-password', organisasi_controller_1.resetPasswordUKMF);
+router.delete('/akun/:userId', organisasi_controller_1.hapusAkunUKMF);
+exports.default = router;

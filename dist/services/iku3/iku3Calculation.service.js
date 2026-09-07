@@ -1,0 +1,411 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.calculateIku3Dashboard = calculateIku3Dashboard;
+exports.calculateIku3Faculties = calculateIku3Faculties;
+exports.calculateIku3Trend = calculateIku3Trend;
+exports.getIku3ActivitiesDetail = getIku3ActivitiesDetail;
+const prisma_1 = __importDefault(require("../../lib/prisma"));
+const iku3Bobot_constants_1 = require("./iku3Bobot.constants");
+// Helper: Penentuan rentang tanggal Tahun Kalender & Triwulan (Hal. 96 & 142 Kepmen 358/2025)
+function getDateRange(tahun, triwulan) {
+    let startMonth = 0; // Januari
+    let endMonth = 11; // Desember
+    let endDay = 31;
+    let labelTriwulan = 'Semua Triwulan (1 Tahun)';
+    if (triwulan === 1) {
+        startMonth = 0; // Jan
+        endMonth = 2; // Mar
+        endDay = 31;
+        labelTriwulan = 'Triwulan I (Q1: Jan - Mar)';
+    }
+    else if (triwulan === 2) {
+        startMonth = 3; // Apr
+        endMonth = 5; // Jun
+        endDay = 30;
+        labelTriwulan = 'Triwulan II (Q2: Apr - Jun)';
+    }
+    else if (triwulan === 3) {
+        startMonth = 6; // Jul
+        endMonth = 8; // Sep
+        endDay = 30;
+        labelTriwulan = 'Triwulan III (Q3: Jul - Sep)';
+    }
+    else if (triwulan === 4) {
+        startMonth = 9; // Okt
+        endMonth = 11; // Des
+        endDay = 31;
+        labelTriwulan = 'Triwulan IV (Q4: Okt - Des)';
+    }
+    const startDate = new Date(Date.UTC(tahun, startMonth, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(tahun, endMonth, endDay, 23, 59, 59, 999));
+    return { startDate, endDate, labelTriwulan };
+}
+/**
+ * Service Utama: Menghitung Capaian IKU 3 Lengkap
+ */
+async function calculateIku3Dashboard(filter) {
+    const tahun = filter.tahun || new Date().getFullYear();
+    const { startDate, endDate, labelTriwulan } = getDateRange(tahun, filter.triwulan);
+    // 1. Ambil Target Tahunan dari Database (atau fallback default)
+    const targetDb = await prisma_1.default.iku3Target.findFirst({
+        where: { tahun, deletedAt: null },
+    });
+    const targetVal = targetDb ? Number(targetDb.targetPersen) : iku3Bobot_constants_1.DEFAULT_TARGET_IKU3_2026;
+    // 2. Ambil Dynamic Rules dari Database
+    const dynamicRules = await prisma_1.default.iku3BobotRule.findMany({
+        where: { aktif: true, deletedAt: null },
+    });
+    // 3. Filter Scope Fakultas & Prodi
+    const whereMahasiswa = {
+        user: { aktif: true },
+    };
+    if (filter.prodiId) {
+        whereMahasiswa.prodiId = Number(filter.prodiId);
+    }
+    else if (filter.fakultasId) {
+        whereMahasiswa.prodi = { fakultasId: Number(filter.fakultasId) };
+    }
+    // Ambil semua mahasiswa aktif (hanya jenjang Sarjana & Diploma)
+    const allMahasiswa = await prisma_1.default.mahasiswa.findMany({
+        where: whereMahasiswa,
+        select: {
+            userId: true,
+            nim: true,
+            prodiId: true,
+            prodi: {
+                select: {
+                    id: true,
+                    nama: true,
+                    fakultasId: true,
+                    fakultas: { select: { id: true, nama: true } },
+                },
+            },
+        },
+    });
+    // Filter Denominator t: Kecualikan Pascasarjana (S2/S3/Doktor/Magister)
+    const validDenominatorMahasiswa = allMahasiswa.filter(m => {
+        const pNama = (0, iku3Bobot_constants_1.normalize)(m.prodi?.nama);
+        return !pNama.includes('s2') && !pNama.includes('s3') && !pNama.includes('magister') && !pNama.includes('doktor');
+    });
+    const totalMahasiswa = validDenominatorMahasiswa.length;
+    const validUserIds = new Set(validDenominatorMahasiswa.map(m => m.userId.toString()));
+    // 4. Ambil Perolehan Poin yang SAH dalam rentang periode
+    const perolehanList = await prisma_1.default.perolehanPoin.findMany({
+        where: {
+            status: 'sah',
+            createdAt: {
+                gte: startDate,
+                lte: endDate,
+            },
+            mahasiswa: whereMahasiswa,
+        },
+        include: {
+            mahasiswa: {
+                include: {
+                    user: { select: { nama: true } },
+                    prodi: { include: { fakultas: true } },
+                },
+            },
+            kegiatan: {
+                include: {
+                    kategori: true,
+                    skala: true,
+                },
+            },
+            klaimPoin: {
+                include: {
+                    peranUsulan: true,
+                    bukti: { take: 1 },
+                },
+            },
+        },
+    });
+    // 5. Kalkulasi Bobot per Mahasiswa (Deduplikasi & Capping Maksimal 1.00)
+    // Map per mahasiswaId -> Array of activities & total bobot
+    const studentContributions = new Map();
+    let countPrestasi = 0;
+    let sumBobotPrestasi = 0;
+    let countPembelajaran = 0;
+    let sumBobotPembelajaran = 0;
+    for (const item of perolehanList) {
+        const mhsId = item.mahasiswaId.toString();
+        // Pastikan mahasiswa masuk dalam denominator Sarjana/Diploma
+        if (!validUserIds.has(mhsId))
+            continue;
+        const prodiNama = (0, iku3Bobot_constants_1.normalize)(item.mahasiswa?.prodi?.nama);
+        const kategoriNama = (0, iku3Bobot_constants_1.normalize)(item.kegiatan?.kategori?.nama);
+        const skalaNama = item.kegiatan?.skala?.nama || '';
+        const peranNama = item.klaimPoin?.peranUsulan?.nama || '';
+        // Pengecualian Vokasi: Magang wajib kurikuler D3 dikecualikan
+        const isVokasiD3 = prodiNama.includes('d3') || prodiNama.includes('diploma tiga');
+        const isMagangWajib = kategoriNama.includes('wajib') || kategoriNama.includes('pkl');
+        if (isVokasiD3 && isMagangWajib) {
+            continue; // Dikecualikan sesuai Kepmen 358/2025 Hal. 53 Poin b
+        }
+        // Tentukan Rumpun: Prestasi vs Pembelajaran Luar Kampus
+        let jenisRumpun = 'prestasi';
+        let bobot = 0;
+        const isLomba = kategoriNama.includes('kompetisi') || kategoriNama.includes('lomba') ||
+            (0, iku3Bobot_constants_1.normalize)(peranNama).includes('juara') || (0, iku3Bobot_constants_1.normalize)(peranNama).includes('finalis');
+        if (isLomba) {
+            jenisRumpun = 'prestasi';
+            bobot = (0, iku3Bobot_constants_1.resolveBobotPrestasi)(skalaNama, peranNama, dynamicRules);
+        }
+        else {
+            jenisRumpun = 'pembelajaran';
+            // Asumsi MBKM / Magang Luar Kampus terverifikasi (estimasi SKS ekuivalensi)
+            bobot = (0, iku3Bobot_constants_1.resolveBobotPembelajaran)(20, dynamicRules);
+        }
+        // Jika bobot > 0 (memenuhi syarat IKU 3)
+        if (bobot > 0) {
+            if (jenisRumpun === 'prestasi') {
+                countPrestasi++;
+                sumBobotPrestasi += bobot;
+            }
+            else {
+                countPembelajaran++;
+                sumBobotPembelajaran += bobot;
+            }
+            const existing = studentContributions.get(mhsId) || {
+                totalRawBobot: 0,
+                effectiveBobot: 0,
+                prestasiBobot: 0,
+                pembelajaranBobot: 0,
+                activities: [],
+            };
+            existing.totalRawBobot += bobot;
+            if (jenisRumpun === 'prestasi')
+                existing.prestasiBobot += bobot;
+            else
+                existing.pembelajaranBobot += bobot;
+            // Capping 1.00 per mahasiswa (Hal. 53 Ketentuan a)
+            existing.effectiveBobot = Math.min(1.00, existing.totalRawBobot);
+            existing.activities.push({
+                id: item.id.toString(),
+                kegiatanNama: item.kegiatan?.nama || '-',
+                bobot,
+                jenisRumpun,
+            });
+            studentContributions.set(mhsId, existing);
+        }
+    }
+    // 6. Hitung Total Akumulasi Nasional IKU 3
+    let totalBobotEfektif = 0;
+    for (const [, cont] of studentContributions.entries()) {
+        totalBobotEfektif += cont.effectiveBobot;
+    }
+    // Formula: Capaian = (Total Bobot Efektif / Total Mahasiswa) * 100%
+    const capaianPersen = totalMahasiswa > 0
+        ? Math.min(100, Number(((totalBobotEfektif / totalMahasiswa) * 100).toFixed(2)))
+        : 0;
+    const selisih = Number((capaianPersen - targetVal).toFixed(2));
+    const statusTarget = capaianPersen >= targetVal ? 'tercapai' : 'belum_tercapai';
+    // Gap Analysis: Berapa mahasiswa lagi (bobot 1.0) untuk mencapai target?
+    const targetBobotNeeded = (targetVal * totalMahasiswa) / 100;
+    const gapMahasiswa = Math.max(0, Math.ceil(targetBobotNeeded - totalBobotEfektif));
+    // Dekomposisi 2 Rumpun
+    const totalRumpunCount = countPrestasi + countPembelajaran;
+    const persentasePrestasi = totalRumpunCount > 0 ? Math.round((countPrestasi / totalRumpunCount) * 100) : 0;
+    const persentasePembelajaran = totalRumpunCount > 0 ? 100 - persentasePrestasi : 0;
+    let cakupanFakultas = 'Seluruh Universitas Andalas';
+    if (filter.fakultasId) {
+        const f = await prisma_1.default.fakultas.findUnique({ where: { id: Number(filter.fakultasId) } });
+        if (f)
+            cakupanFakultas = f.nama;
+    }
+    let cakupanProdi = undefined;
+    if (filter.prodiId) {
+        const p = await prisma_1.default.programStudi.findUnique({ where: { id: Number(filter.prodiId) } });
+        if (p)
+            cakupanProdi = p.nama;
+    }
+    return {
+        kpi: {
+            tahun,
+            triwulan: labelTriwulan,
+            capaian: capaianPersen,
+            target: targetVal,
+            selisih,
+            statusTarget,
+            totalMahasiswa,
+            totalKontributor: studentContributions.size,
+            totalBobotEfektif: Number(totalBobotEfektif.toFixed(2)),
+            gapMahasiswa,
+        },
+        rumpunDistribusi: {
+            prestasi: {
+                count: countPrestasi,
+                totalBobot: Number(sumBobotPrestasi.toFixed(2)),
+                persentase: persentasePrestasi,
+            },
+            pembelajaran: {
+                count: countPembelajaran,
+                totalBobot: Number(sumBobotPembelajaran.toFixed(2)),
+                persentase: persentasePembelajaran,
+            },
+        },
+        cakupan: {
+            fakultas: cakupanFakultas,
+            prodi: cakupanProdi,
+        },
+    };
+}
+/**
+ * Service: Komparasi Peringkat Seluruh Fakultas
+ */
+async function calculateIku3Faculties(tahun, triwulan) {
+    const allFakultas = await prisma_1.default.fakultas.findMany({
+        select: { id: true, nama: true },
+        orderBy: { nama: 'asc' },
+    });
+    const results = [];
+    for (const f of allFakultas) {
+        const data = await calculateIku3Dashboard({
+            tahun,
+            triwulan,
+            fakultasId: f.id,
+        });
+        results.push({
+            fakultasId: f.id,
+            namaFakultas: f.nama,
+            totalMahasiswa: data.kpi.totalMahasiswa,
+            totalKontributor: data.kpi.totalKontributor,
+            totalBobot: data.kpi.totalBobotEfektif,
+            capaianPersen: data.kpi.capaian,
+            ranking: 0,
+        });
+    }
+    // Urutkan berdasarkan capaian tertinggi
+    results.sort((a, b) => b.capaianPersen - a.capaianPersen);
+    results.forEach((item, idx) => {
+        item.ranking = idx + 1;
+    });
+    return results;
+}
+/**
+ * Service: Tren Capaian Tahunan (Misal 3 Tahun Terakhir)
+ */
+async function calculateIku3Trend(fakultasId) {
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 2, currentYear - 1, currentYear];
+    const trendData = [];
+    for (const y of years) {
+        const data = await calculateIku3Dashboard({
+            tahun: y,
+            fakultasId,
+        });
+        trendData.push({
+            tahun: y,
+            capaian: data.kpi.capaian,
+            target: data.kpi.target,
+            totalMahasiswa: data.kpi.totalMahasiswa,
+            totalKontributor: data.kpi.totalKontributor,
+        });
+    }
+    return trendData;
+}
+/**
+ * Service: Daftar Detail Mahasiswa Kontributor (Data Auditability)
+ */
+async function getIku3ActivitiesDetail(filter) {
+    const tahun = filter.tahun || new Date().getFullYear();
+    const { startDate, endDate } = getDateRange(tahun, filter.triwulan);
+    const page = Math.max(1, Number(filter.page || 1));
+    const limit = Math.max(1, Math.min(100, Number(filter.limit || 15)));
+    const skip = (page - 1) * limit;
+    const dynamicRules = await prisma_1.default.iku3BobotRule.findMany({ where: { aktif: true, deletedAt: null } });
+    const whereCondition = {
+        status: 'sah',
+        createdAt: {
+            gte: startDate,
+            lte: endDate,
+        },
+    };
+    if (filter.fakultasId) {
+        whereCondition.mahasiswa = {
+            prodi: { fakultasId: Number(filter.fakultasId) },
+        };
+    }
+    if (filter.search) {
+        const search = filter.search.trim();
+        whereCondition.OR = [
+            { mahasiswa: { nim: { contains: search } } },
+            { mahasiswa: { user: { nama: { contains: search } } } },
+            { kegiatan: { nama: { contains: search } } },
+        ];
+    }
+    const [total, perolehan] = await Promise.all([
+        prisma_1.default.perolehanPoin.count({ where: whereCondition }),
+        prisma_1.default.perolehanPoin.findMany({
+            where: whereCondition,
+            include: {
+                mahasiswa: {
+                    include: {
+                        user: { select: { nama: true } },
+                        prodi: { include: { fakultas: true } },
+                    },
+                },
+                kegiatan: {
+                    include: { kategori: true, skala: true },
+                },
+                klaimPoin: {
+                    include: { peranUsulan: true, bukti: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            skip,
+            take: limit,
+        }),
+    ]);
+    const items = perolehan.map(p => {
+        const kategoriNama = (0, iku3Bobot_constants_1.normalize)(p.kegiatan?.kategori?.nama);
+        const skalaNama = p.kegiatan?.skala?.nama || '-';
+        const peranNama = p.klaimPoin?.peranUsulan?.nama || '-';
+        const isLomba = kategoriNama.includes('kompetisi') || kategoriNama.includes('lomba') ||
+            (0, iku3Bobot_constants_1.normalize)(peranNama).includes('juara') || (0, iku3Bobot_constants_1.normalize)(peranNama).includes('finalis');
+        let jenisRumpun = 'prestasi';
+        let bobot = 0;
+        if (isLomba) {
+            jenisRumpun = 'prestasi';
+            bobot = (0, iku3Bobot_constants_1.resolveBobotPrestasi)(skalaNama, peranNama, dynamicRules);
+        }
+        else {
+            jenisRumpun = 'pembelajaran';
+            bobot = (0, iku3Bobot_constants_1.resolveBobotPembelajaran)(20, dynamicRules);
+        }
+        return {
+            id: p.id.toString(),
+            mahasiswaId: p.mahasiswaId.toString(),
+            nim: p.mahasiswa?.nim || '-',
+            namaMahasiswa: p.mahasiswa?.user?.nama || '-',
+            fakultas: p.mahasiswa?.prodi?.fakultas?.nama || '-',
+            prodi: p.mahasiswa?.prodi?.nama || '-',
+            namaKegiatan: p.kegiatan?.nama || '-',
+            kategori: p.kegiatan?.kategori?.nama || 'Aktivitas Eksternal',
+            jenisRumpun,
+            skala: skalaNama,
+            peran: peranNama,
+            bobot,
+            tanggal: p.createdAt.toISOString().split('T')[0],
+            buktiUrl: (() => {
+                const raw = p.klaimPoin?.bukti[0]?.url || null;
+                if (!raw)
+                    return null;
+                if (raw.startsWith('http://') || raw.startsWith('https://'))
+                    return raw;
+                const base = (filter.baseUrl || process.env.BACKEND_URL || '').replace(/\/$/, '');
+                return base ? `${base}${raw.startsWith('/') ? '' : '/'}${raw}` : raw;
+            })(),
+            status: 'Sah',
+        };
+    });
+    return {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        data: items,
+    };
+}

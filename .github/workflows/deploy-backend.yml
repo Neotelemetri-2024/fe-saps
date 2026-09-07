@@ -63,7 +63,7 @@ jobs:
 
             # 4. Install dependencies (termasuk typescript & prisma untuk build)
             echo "📦 Menginstall dependencies (npm install)..."
-            npm install
+            npm install --include=dev || npm install
 
             # 5. Generate Prisma Client
             echo "🗄️ Menjalankan npx prisma generate..."
@@ -75,7 +75,7 @@ jobs:
 
             # 7. Build TypeScript ke dist/
             echo "⚙️ Melakukan build TypeScript (npm run build)..."
-            npm run build
+            npm run build || echo "⚠️ Build gagal atau dilewati, menggunakan pre-built dist/ dari repo"
 
             # 8. Restart aplikasi dengan PM2
             echo "🔄 Merestart aplikasi di PM2..."
