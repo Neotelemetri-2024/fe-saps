@@ -85,7 +85,7 @@ function DetailValidasiKlaim() {
       .finally(() => setLoading(false))
   }, [id])
 
-  const backToList = () => navigate('/pimpinan_ditmawa/validasi-klaim')
+  const backToList = () => navigate('/pimpinan_ditmawa/verifikasi-klaim')
 
   const handleSetujui = async () => {
     setSubmitting(true)

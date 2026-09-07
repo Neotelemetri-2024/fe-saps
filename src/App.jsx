@@ -134,6 +134,8 @@ function App() {
           <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="pimpinan_ditmawa" embedded />} />
           <Route path="verifikasi-klaim" element={<PimpinanDitmawaValidasiKlaimPoin />} />
           <Route path="verifikasi-klaim/:id" element={<PimpinanDitmawaDetailValidasiKlaim />} />
+          <Route path="validasi-klaim" element={<PimpinanDitmawaValidasiKlaimPoin />} />
+          <Route path="validasi-klaim/:id" element={<PimpinanDitmawaDetailValidasiKlaim />} />
           <Route path="verifikasi-pengajuan-eksternal" element={<PimpinanDitmawaVerifikasiEksternal />} />
           <Route path="verifikasi-pengajuan-eksternal/:id" element={<PimpinanDitmawaDetailVerifikasiEksternal />} />
           <Route path="verifikasi-pengajuan-internal" element={<PimpinanDitmawaVerifikasiInternal />} />

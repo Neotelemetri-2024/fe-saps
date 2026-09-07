@@ -161,7 +161,7 @@ function ValidasiKlaimPoin() {
         label: 'Detail & Validasi',
         icon: <Eye className="h-4 w-4" />,
         color: 'text-blue-600',
-        onClick: () => navigate(`/pimpinan_ditmawa/validasi-klaim/${row.id}`, { state: { item: row } }),
+        onClick: () => navigate(`/pimpinan_ditmawa/verifikasi-klaim/${row.id}`, { state: { item: row } }),
       }]} />
     )},
   ], [pageItems, start, navigate])

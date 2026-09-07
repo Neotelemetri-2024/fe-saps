@@ -62,6 +62,7 @@ const ACTION_ROUTES = {
   klaim_poin: {
     mahasiswa: () => '/mahasiswa/klaim-poin',
     admin_ditmawa: (id) => `/admin_ditmawa/verifikasi-klaim/${id}`,
+      pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-klaim/${id}`,
   },
   perolehan_poin: {
     mahasiswa: () => '/mahasiswa/riwayat-poin',
