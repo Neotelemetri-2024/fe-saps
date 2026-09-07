@@ -191,7 +191,7 @@ export const getKlaimById = async (
             mahasiswa: {
               include: {
                 user: { select: { nama: true, email: true } },
-                prodi: { select: { nama: true } },
+                prodi: { select: { nama: true, fakultas: { select: { nama: true } } } },
               },
             },
             peranVerif: true,
