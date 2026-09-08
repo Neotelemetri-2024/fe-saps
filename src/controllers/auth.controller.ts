@@ -7,14 +7,14 @@ import { z } from "zod";
 
 // ==================== VALIDASI ====================
 const loginSchema = z.object({
-  email: z.string().email("Format email tidak valid"),
-  password: z.string().min(1, "Password wajib diisi"),
+  email: z.string({ message: "Email wajib diisi" }).email("Format email tidak valid"),
+  password: z.string({ message: "Password wajib diisi" }).min(1, "Password wajib diisi"),
 });
 
 const registerSchema = z.object({
-  nama: z.string().min(2, "Nama minimal 2 karakter"),
-  email: z.string().email("Format email tidak valid"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
+  nama: z.string({ message: "Nama wajib diisi" }).min(2, "Nama minimal 2 karakter"),
+  email: z.string({ message: "Email wajib diisi" }).email("Format email tidak valid"),
+  password: z.string({ message: "Password wajib diisi" }).min(8, "Password minimal 8 karakter"),
 });
 
 // ==================== LOGIN ====================
@@ -121,9 +121,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {
@@ -241,7 +242,7 @@ const updateProfilSchema = z.object({
     .max(255, "Alamat maksimal 255 karakter")
     .nullable()
     .optional(),
-  prodiId: z.coerce.number().int().positive().optional(),
+  prodiId: z.coerce.number().int("ID Program Studi harus bilangan bulat").positive("ID Program Studi tidak valid").optional(),
 });
 
 /**
@@ -360,9 +361,10 @@ export const updateProfil = async (
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {
@@ -379,9 +381,9 @@ export const updateProfil = async (
 
 const gantiPasswordSchema = z
   .object({
-    passwordLama: z.string().min(1, "Password lama wajib diisi"),
-    passwordBaru: z.string().min(6, "Password baru minimal 6 karakter"),
-    konfirmasiPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
+    passwordLama: z.string({ message: "Password lama wajib diisi" }).min(1, "Password lama wajib diisi"),
+    passwordBaru: z.string({ message: "Password baru wajib diisi" }).min(8, "Password baru minimal 8 karakter"),
+    konfirmasiPassword: z.string({ message: "Konfirmasi password wajib diisi" }).min(1, "Konfirmasi password wajib diisi"),
   })
   .refine((d) => d.passwordBaru === d.konfirmasiPassword, {
     message: "Konfirmasi password tidak cocok.",
@@ -445,9 +447,10 @@ export const gantiPassword = async (
     res.json({ success: true, message: "Password berhasil diubah." });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {
@@ -493,9 +496,10 @@ export const updateFcmToken = async (
     res.json({ success: true, message: "FCM Token berhasil disimpan." });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {

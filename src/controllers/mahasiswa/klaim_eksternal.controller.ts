@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { resolveBobotPrestasi, resolveBobotPembelajaran, normalize } from '../../services/iku3/iku3Bobot.constants';
 
 const submitKlaimEksternalSchema = z.object({
-  partisipasiId: z.number().int().positive(),
-  peranUsulanId: z.number().int().positive(),
-  buktiUrl: z.string().url(),
+  partisipasiId: z.number({ message: 'Partisipasi ID wajib diisi' }).int().positive('Partisipasi ID tidak valid'),
+  peranUsulanId: z.number({ message: 'Peran usulan wajib dipilih' }).int().positive('Peran usulan tidak valid'),
+  buktiUrl: z.string({ message: 'URL bukti wajib diisi' }).url('Format URL bukti tidak valid'),
 });
 
 // 1. Mengambil Kegiatan Eksternal yang tersedia untuk diklaim
@@ -134,7 +134,8 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
 
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       next(error);
     }

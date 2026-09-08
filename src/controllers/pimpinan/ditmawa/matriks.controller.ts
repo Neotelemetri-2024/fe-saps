@@ -5,11 +5,11 @@ import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const upsertMatriksSchema = z.object({
-  kurikulumId: z.number().int().positive(),
-  kategoriId: z.number().int().positive(),
-  skalaId: z.number().int().positive(),
-  peranId: z.number().int().positive(),
-  poin: z.number().int().min(0),
+  kurikulumId: z.number({ message: 'Kurikulum ID wajib diisi' }).int().positive('Kurikulum ID harus berupa angka positif'),
+  kategoriId: z.number({ message: 'Kategori ID wajib diisi' }).int().positive('Kategori ID harus berupa angka positif'),
+  skalaId: z.number({ message: 'Skala ID wajib diisi' }).int().positive('Skala ID harus berupa angka positif'),
+  peranId: z.number({ message: 'Peran ID wajib diisi' }).int().positive('Peran ID harus berupa angka positif'),
+  poin: z.number({ message: 'Poin wajib diisi' }).int('Poin harus berupa bilangan bulat').min(0, 'Poin tidak boleh negatif'),
 });
 
 // ==================== MATRIKS POIN CRUD ====================
@@ -43,28 +43,28 @@ export const getMatriksPoin = async (req: Request, res: Response) => {
 
 // Schema untuk batch upsert (dengan nama string untuk resolve)
 const batchUpsertItemSchema = z.object({
-  kategori: z.string().min(1),
-  peran: z.string().min(1),
-  skala: z.string().min(1),
-  poin: z.number().int().min(0),
+  kategori: z.string({ message: 'Kategori wajib diisi' }).min(1, 'Kategori tidak boleh kosong'),
+  peran: z.string({ message: 'Peran wajib diisi' }).min(1, 'Peran tidak boleh kosong'),
+  skala: z.string({ message: 'Skala wajib diisi' }).min(1, 'Skala tidak boleh kosong'),
+  poin: z.number({ message: 'Poin wajib diisi' }).int('Poin harus berupa bilangan bulat').min(0, 'Poin tidak boleh negatif'),
 });
 
 const syncMatriksSchema = z.object({
-  kurikulumId: z.number().int().positive(),
-  kategoriId: z.number().int().positive().optional(),
-  kategoriNama: z.string().min(1),
+  kurikulumId: z.number({ message: 'Kurikulum ID wajib diisi' }).int().positive('Kurikulum ID harus berupa angka positif'),
+  kategoriId: z.number().int().positive('Kategori ID harus berupa angka positif').optional(),
+  kategoriNama: z.string({ message: 'Nama kategori wajib diisi' }).min(1, 'Nama kategori tidak boleh kosong'),
   columns: z.array(z.object({
-    id: z.number().int().positive().optional(),
-    nama: z.string().min(1),
-  })).min(1),
+    id: z.number().int().positive('ID skala harus positif').optional(),
+    nama: z.string({ message: 'Nama skala wajib diisi' }).min(1, 'Nama kolom skala tidak boleh kosong'),
+  })).min(1, 'Minimal harus ada 1 kolom skala'),
   rows: z.array(z.object({
-    id: z.number().int().positive().optional(),
-    nama: z.string().min(1),
-  })).min(1),
+    id: z.number().int().positive('ID peran harus positif').optional(),
+    nama: z.string({ message: 'Nama peran wajib diisi' }).min(1, 'Nama baris peran tidak boleh kosong'),
+  })).min(1, 'Minimal harus ada 1 baris peran'),
   cells: z.array(z.object({
-    peranKey: z.union([z.number().int().positive(), z.string().min(1)]),
-    skalaKey: z.union([z.number().int().positive(), z.string().min(1)]),
-    poin: z.number().int().min(0),
+    peranKey: z.union([z.number().int().positive('Kunci peran harus positif'), z.string().min(1, 'Kunci peran tidak boleh kosong')]),
+    skalaKey: z.union([z.number().int().positive('Kunci skala harus positif'), z.string().min(1, 'Kunci skala tidak boleh kosong')]),
+    poin: z.number({ message: 'Poin sel wajib diisi' }).int('Poin harus berupa bilangan bulat').min(0, 'Poin tidak boleh negatif'),
   })),
 });
 
@@ -340,7 +340,8 @@ export const syncMatriksPoin = async (req: Request, res: Response): Promise<void
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else if (error?.code === 'P2002') {
       res.status(400).json({
         success: false,
@@ -508,7 +509,8 @@ export const upsertMatriksPoin = async (req: Request, res: Response): Promise<vo
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });

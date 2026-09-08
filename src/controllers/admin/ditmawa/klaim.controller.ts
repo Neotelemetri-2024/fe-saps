@@ -7,27 +7,33 @@ import { buildSettlementDetails, resolveMatriksMahasiswa } from '../../../servic
 
 // ==================== VALIDASI ====================
 const createKlaimSchema = z.object({
-  peranUsulanId: z.number().int().positive(),
+  peranUsulanId: z.number({ message: "Peran usulan wajib dipilih" }).int().positive("Peran usulan tidak valid"),
   bukti: z
     .array(
       z.object({
-        tipe: z.enum(["pdf", "link"]),
-        url: z.string().min(3),
+        tipe: z.enum(["pdf", "link"] as const, {
+          message: "Tipe bukti harus berupa pdf atau link",
+        }),
+        url: z.string({ message: "URL atau link bukti wajib diisi" }).min(3, "Link bukti minimal 3 karakter"),
       }),
     )
     .optional(),
 });
 
 const validasiKlaimSchema = z.object({
-  keputusan: z.enum(["disetujui", "perlu_revisi", "ditolak"]),
-  alasan: z.string().optional(),
-  peranVerifId: z.number().int().positive().optional(), // crosscheck peran
+  keputusan: z.enum(["disetujui", "perlu_revisi", "ditolak"] as const, {
+    message: "Keputusan harus berupa disetujui, perlu_revisi, atau ditolak",
+  }),
+  alasan: z.string().max(500, "Alasan maksimal 500 karakter").optional(),
+  peranVerifId: z.number().int().positive("Peran verifikasi tidak valid").optional(), // crosscheck peran
 });
 
 const validasiKlaimBulkSchema = z.object({
-  klaimIds: z.array(z.number().or(z.string().transform(v => Number(v)))).min(1),
-  keputusan: z.enum(["disetujui", "perlu_revisi", "ditolak"]),
-  alasan: z.string().optional(),
+  klaimIds: z.array(z.number().or(z.string().transform(v => Number(v)))).min(1, "Minimal pilih 1 klaim"),
+  keputusan: z.enum(["disetujui", "perlu_revisi", "ditolak"] as const, {
+    message: "Keputusan harus berupa disetujui, perlu_revisi, atau ditolak",
+  }),
+  alasan: z.string().max(500, "Alasan maksimal 500 karakter").optional(),
 });
 
 // ==================== KLAIM POIN ====================
@@ -120,9 +126,10 @@ export const createKlaim = async (
         message: "Klaim sudah pernah diajukan untuk partisipasi ini [BR-020]",
       });
     } else if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {
@@ -590,9 +597,10 @@ export const validasiKlaim = async (
         message: "Poin sudah pernah diberikan untuk kegiatan ini [BR-020]",
       });
     } else if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
       res.status(400).json({
         success: false,
-        message: "Validasi gagal",
+        message: errorMsg,
         errors: error.issues,
       });
     } else {
@@ -782,7 +790,8 @@ export const validasiKlaimBulk = async (
 
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: "Validasi gagal", errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(", ") || "Validasi gagal";
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: error.message || "Terjadi kesalahan pada server" });

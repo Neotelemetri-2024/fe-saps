@@ -7,8 +7,10 @@ import { cairkanPoinPartisipasi } from '../../services/poin.service';
 
 // ==================== VALIDASI ====================
 const izinDecisionSchema = z.object({
-  status: z.enum(['disetujui', 'ditolak', 'revisi']),
-  alasan: z.string().optional(),
+  status: z.enum(['disetujui', 'ditolak', 'revisi'] as const, {
+    message: 'Status keputusan harus berupa disetujui, ditolak, atau revisi',
+  }),
+  alasan: z.string().max(500, 'Alasan maksimal 500 karakter').optional(),
 });
 
 // ==================== DAFTAR PERMINTAAN IZIN ====================
@@ -87,7 +89,7 @@ export const getIzinForDosen = async (req: Request, res: Response, next: NextFun
 // ==================== KEPUTUSAN IZIN (BULK) ====================
 
 const izinBulkSchema = z.object({
-  ids: z.array(z.union([z.string(), z.number()])).min(1),
+  ids: z.array(z.union([z.string(), z.number()])).min(1, 'Minimal pilih 1 pengajuan izin'),
 });
 
 // PUT /api/dosen/persetujuan-bulk — Dosen PA menyetujui beberapa izin (status diajukan) sekaligus
@@ -155,7 +157,8 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
     res.json({ success: true, message: `${ids.length} izin berhasil disetujui.` });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     }
     next(error);
   }
@@ -241,7 +244,8 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
     res.json({ success: true, data: { ...updatedIzin, id: updatedIzin.id.toString(), partisipasiId: updatedIzin.partisipasiId.toString(), dosenPaId: updatedIzin.dosenPaId.toString() } });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     }
     next(error);
   }

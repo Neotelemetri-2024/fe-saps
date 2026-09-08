@@ -6,14 +6,14 @@ import bcrypt from 'bcryptjs';
 
 // ==================== VALIDASI ====================
 const createAkunLengkapSchema = z.object({
-  namaUkm: z.string().min(3, 'Nama UKM minimal 3 karakter'),
-  email: z.string().email('Format email tidak valid'),
-  password: z.string().min(8, 'Password minimal 8 karakter'),
-  status: z.boolean(), // true = Aktif, false = Non Aktif
+  namaUkm: z.string({ message: 'Nama UKM wajib diisi' }).min(3, 'Nama UKM minimal 3 karakter'),
+  email: z.string({ message: 'Email wajib diisi' }).email('Format email tidak valid'),
+  password: z.string({ message: 'Password wajib diisi' }).min(8, 'Password minimal 8 karakter'),
+  status: z.boolean({ message: 'Status akun wajib dipilih' }), // true = Aktif, false = Non Aktif
 });
 
 const resetPasswordSchema = z.object({
-  passwordBaru: z.string().min(8, 'Password baru minimal 8 karakter'),
+  passwordBaru: z.string({ message: 'Password baru wajib diisi' }).min(8, 'Password baru minimal 8 karakter'),
 });
 
 // ==================== OPERATOR UKM CRUD (ADMIN DITMAWA) ====================

@@ -5,10 +5,10 @@ import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const createKurikulumSchema = z.object({
-  nama: z.string(),
-  tahunAkademik: z.string().regex(/^(\d{4}|\d{4}\/\d{4})$/, 'Format: 2026 atau 2026/2027'),
-  angkatanMulai: z.number().int().min(1900).max(2200),
-  versi: z.number().int().positive().optional(),
+  nama: z.string({ message: 'Nama kurikulum wajib diisi' }).min(1, 'Nama kurikulum wajib diisi'),
+  tahunAkademik: z.string({ message: 'Tahun akademik wajib diisi' }).regex(/^(\d{4}|\d{4}\/\d{4})$/, 'Format tahun akademik: 2026 atau 2026/2027'),
+  angkatanMulai: z.number({ message: 'Angkatan mulai wajib diisi' }).int('Angkatan mulai harus bilangan bulat').min(1900, 'Tahun angkatan minimal 1900').max(2200, 'Tahun angkatan maksimal 2200'),
+  versi: z.number().int('Versi harus bilangan bulat').positive('Versi harus berupa angka positif').optional(),
 });
 
 const updateKurikulumSchema = createKurikulumSchema.partial().refine(
@@ -43,25 +43,25 @@ async function getReadinessProblem(kurikulumId: number): Promise<string | null> 
 }
 
 const createCapaianSchema = z.object({
-  nama: z.string().min(3),
-  jumlahPoin: z.number().int().positive(),
-  urutan: z.number().int().positive().optional(),
+  nama: z.string({ message: 'Nama capaian wajib diisi' }).min(3, 'Nama capaian minimal 3 karakter'),
+  jumlahPoin: z.number({ message: 'Jumlah poin wajib diisi' }).int('Jumlah poin harus bilangan bulat').positive('Jumlah poin harus lebih dari 0'),
+  urutan: z.number().int('Urutan harus bilangan bulat').positive('Urutan harus berupa angka positif').optional(),
 });
 
 const createSubCapaianSchema = z.object({
-  nama: z.string().min(3),
-  bobotPersen: z.number().int().min(1).max(100),
+  nama: z.string({ message: 'Nama sub capaian wajib diisi' }).min(3, 'Nama sub capaian minimal 3 karakter'),
+  bobotPersen: z.number({ message: 'Bobot persen wajib diisi' }).int('Bobot persen harus bilangan bulat').min(1, 'Bobot minimal 1%').max(100, 'Bobot maksimal 100%'),
 });
 
 const updateCapaianSchema = z.object({
-  nama: z.string().min(3).optional(),
-  jumlahPoin: z.number().int().positive().optional(),
-  urutan: z.number().int().positive().optional(),
+  nama: z.string().min(3, 'Nama capaian minimal 3 karakter').optional(),
+  jumlahPoin: z.number().int('Jumlah poin harus bilangan bulat').positive('Jumlah poin harus lebih dari 0').optional(),
+  urutan: z.number().int('Urutan harus bilangan bulat').positive('Urutan harus berupa angka positif').optional(),
 });
 
 const updateSubCapaianSchema = z.object({
-  nama: z.string().min(3).optional(),
-  bobotPersen: z.number().int().min(1).max(100).optional(),
+  nama: z.string().min(3, 'Nama sub capaian minimal 3 karakter').optional(),
+  bobotPersen: z.number().int('Bobot persen harus bilangan bulat').min(1, 'Bobot minimal 1%').max(100, 'Bobot maksimal 100%').optional(),
 });
 
 // ==================== KURIKULUM CRUD ====================
@@ -176,7 +176,8 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
     res.status(201).json({ success: true, data: newKurikulum });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -350,7 +351,8 @@ export const createCapaian = async (req: Request, res: Response): Promise<void> 
     res.status(201).json({ success: true, data: newCapaian });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -371,7 +373,8 @@ export const updateCapaian = async (req: Request, res: Response): Promise<void> 
     res.json({ success: true, data: updated, message: 'Capaian berhasil diperbarui' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -450,7 +453,8 @@ export const createSubCapaian = async (req: Request, res: Response): Promise<voi
     res.status(201).json({ success: true, data: newSubCapaian });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -495,7 +499,8 @@ export const updateSubCapaian = async (req: Request, res: Response): Promise<voi
     res.json({ success: true, data: updated, message: 'Sub Capaian berhasil diperbarui' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });

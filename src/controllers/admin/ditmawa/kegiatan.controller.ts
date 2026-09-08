@@ -7,31 +7,35 @@ import { assertAlokasiCoversActiveKurikulum, CurriculumResolutionError } from '.
 
 // ==================== VALIDASI ====================
 const createKegiatanSchema = z.object({
-  nama: z.string().min(3),
-  kategoriId: z.number().int().positive(),
-  skalaId: z.number().int().positive(),
+  nama: z.string({ message: 'Nama kegiatan wajib diisi' }).min(3, 'Nama kegiatan minimal 3 karakter'),
+  kategoriId: z.number({ message: 'Kategori kegiatan wajib dipilih' }).int().positive('Kategori tidak valid'),
+  skalaId: z.number({ message: 'Skala kegiatan wajib dipilih' }).int().positive('Skala tidak valid'),
   // 'internal' diterima sebagai alias FE lama → dipetakan ke kurikuler_ukm/ukmf di controller
-  asal: z.enum(['kurikuler_ukm', 'kurikuler_ukmf', 'universitas', 'eksternal', 'internal']),
-  deskripsi: z.string().max(500).optional(),
-  tanggalMulai: z.string().refine(v => !isNaN(Date.parse(v))),
-  tanggalSelesai: z.string().refine(v => !isNaN(Date.parse(v))),
-  lokasi: z.string().max(200).optional(),
-  kuota: z.number().int().positive().optional(),
-  organisasiId: z.number().int().positive().optional(),
+  asal: z.enum(['kurikuler_ukm', 'kurikuler_ukmf', 'universitas', 'eksternal', 'internal'] as const, {
+    message: 'Asal kegiatan tidak valid',
+  }),
+  deskripsi: z.string().max(500, 'Deskripsi maksimal 500 karakter').optional(),
+  tanggalMulai: z.string({ message: 'Tanggal mulai wajib diisi' }).refine(v => !isNaN(Date.parse(v)), 'Format tanggal mulai tidak valid'),
+  tanggalSelesai: z.string({ message: 'Tanggal selesai wajib diisi' }).refine(v => !isNaN(Date.parse(v)), 'Format tanggal selesai tidak valid'),
+  lokasi: z.string().max(200, 'Lokasi maksimal 200 karakter').optional(),
+  kuota: z.number().int('Kuota harus berupa bilangan bulat').positive('Kuota harus berupa angka positif').optional(),
+  organisasiId: z.number().int().positive('Organisasi ID tidak valid').optional(),
   penyelenggaraExt: z.string().optional(),
   // Alokasi capaian
   alokasi: z.array(z.object({
-    subCapaianId: z.number().int().positive(),
-    alokasiPersen: z.number().min(0.01).max(100),
-  })).min(1),
+    subCapaianId: z.number({ message: 'Sub capaian wajib dipilih' }).int().positive('Sub capaian tidak valid'),
+    alokasiPersen: z.number({ message: 'Persentase alokasi wajib diisi' }).min(0.01, 'Alokasi minimal 0.01%').max(100, 'Alokasi maksimal 100%'),
+  })).min(1, 'Minimal harus ada 1 alokasi sub capaian'),
 });
 
 const approvalSchema = z.object({
-  keputusan: z.enum(['setuju', 'revisi', 'tolak']),
+  keputusan: z.enum(['setuju', 'revisi', 'tolak'] as const, {
+    message: 'Keputusan harus berupa setuju, revisi, atau tolak',
+  }),
   alasan: z.string().max(500, 'Alasan maksimal 500 karakter').optional(),
   alokasi: z.array(z.object({
-    subCapaianId: z.number(),
-    alokasiPersen: z.number().min(0).max(100),
+    subCapaianId: z.number({ message: 'Sub capaian wajib dipilih' }).int().positive('Sub capaian tidak valid'),
+    alokasiPersen: z.number({ message: 'Persentase alokasi wajib diisi' }).min(0, 'Alokasi minimal 0%').max(100, 'Alokasi maksimal 100%'),
   })).optional(),
 });
 
@@ -325,7 +329,8 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -427,7 +432,8 @@ export const editKegiatan = async (req: Request, res: Response): Promise<void> =
     res.json({ success: true, message: 'Kegiatan berhasil diperbarui' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Data tidak valid', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Data tidak valid';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -586,7 +592,8 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
     res.json({ success: true, message: `${successCount} kegiatan berhasil diproses secara bulk.` });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     }
     next(error);
   }
@@ -969,7 +976,8 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -1204,7 +1212,8 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -1213,9 +1222,11 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
 };
 
 const bulkApprovalSchema = z.object({
-  kegiatanIds: z.array(z.number().int().positive()).min(1, 'Minimal 1 kegiatan'),
-  keputusan: z.enum(['setuju', 'revisi', 'tolak']),
-  alasan: z.string().max(500).optional(),
+  kegiatanIds: z.array(z.number({ message: 'ID kegiatan wajib diisi' }).int().positive('ID kegiatan tidak valid')).min(1, 'Minimal pilih 1 kegiatan'),
+  keputusan: z.enum(['setuju', 'revisi', 'tolak'] as const, {
+    message: 'Keputusan harus berupa setuju, revisi, atau tolak',
+  }),
+  alasan: z.string().max(500, 'Alasan maksimal 500 karakter').optional(),
 });
 
 export const approvalKegiatanBulk = async (req: Request, res: Response, next: NextFunction) => {
@@ -1302,7 +1313,8 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
