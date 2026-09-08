@@ -89,16 +89,28 @@ export async function cairkanPoinPartisipasi(
       peranId: partisipasi.peranVerifId,
     },
     db,
+    {
+      preferredKurikulumId: kegiatan.kurikulumId,
+      kegiatanId: kegiatan.id,
+    },
   );
 
   if (!matriks) {
     return {
       claimed: false,
-      reason: `Matriks poin tidak ditemukan pada kurikulum mahasiswa untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${partisipasi.peranVerifId}`,
+      reason: `Matriks poin tidak ditemukan untuk kombinasi: kategori=${kegiatan.kategoriId}, skala=${kegiatan.skalaId}, peran=${partisipasi.peranVerifId}`,
     };
   }
 
-  const detailData = await buildSettlementDetails(kegiatan.id, kurikulum.id, matriks.poin, db);
+  let detailData;
+  try {
+    detailData = await buildSettlementDetails(kegiatan.id, kurikulum.id, matriks.poin, db);
+  } catch (err: any) {
+    return {
+      claimed: false,
+      reason: err?.message || 'Pemetaan capaian kegiatan tidak valid untuk pencairan poin',
+    };
+  }
 
   // Buat / Update KlaimPoin
   let klaimId: bigint;

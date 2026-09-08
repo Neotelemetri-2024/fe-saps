@@ -267,20 +267,67 @@ export async function resolveMatriksMahasiswa(
   mahasiswaId: bigint,
   dims: { kategoriId: number; skalaId: number; peranId: number },
   db: DbClient = prisma,
+  options?: { preferredKurikulumId?: number | null; kegiatanId?: number | null },
 ) {
-  const kurikulum = await resolveKurikulumMahasiswa(mahasiswaId, db, {
+  const kurikulumMhs = await resolveKurikulumMahasiswa(mahasiswaId, db, {
     includeStructure: false,
     requireActive: true,
   });
-  const matriks = await db.matriksPoin.findFirst({
+
+  const candidateIds: number[] = [];
+  const pushId = (id?: number | null) => {
+    if (id == null) return;
+    const n = Number(id);
+    if (!Number.isFinite(n) || candidateIds.includes(n)) return;
+    candidateIds.push(n);
+  };
+
+  // Urutan: kurikulum mahasiswa → kurikulum kegiatan → kurikulum aktif lain yang punya matriks
+  pushId(kurikulumMhs.id);
+  pushId(options?.preferredKurikulumId ?? null);
+
+  const extras = await db.matriksPoin.findMany({
     where: {
-      kurikulumId: kurikulum.id,
       kategoriId: dims.kategoriId,
       skalaId: dims.skalaId,
       peranId: dims.peranId,
+      kurikulum: { status: 'aktif' },
     },
+    select: { kurikulumId: true },
+    distinct: ['kurikulumId'],
   });
-  return { kurikulum, matriks };
+  for (const row of extras) pushId(row.kurikulumId);
+
+  for (const kurikulumId of candidateIds) {
+    const matriks = await db.matriksPoin.findFirst({
+      where: {
+        kurikulumId,
+        kategoriId: dims.kategoriId,
+        skalaId: dims.skalaId,
+        peranId: dims.peranId,
+      },
+    });
+    if (!matriks) continue;
+
+    // Jika kegiatan punya alokasi capaian, pastikan kurikulum ini punya mapping 100%
+    if (options?.kegiatanId) {
+      try {
+        await filterKegiatanCapaianForKurikulum(options.kegiatanId, kurikulumId, db);
+      } catch {
+        continue;
+      }
+    }
+
+    const kurikulum =
+      kurikulumId === kurikulumMhs.id
+        ? kurikulumMhs
+        : await db.kurikulum.findUnique({ where: { id: kurikulumId } });
+    if (!kurikulum) continue;
+
+    return { kurikulum, matriks };
+  }
+
+  return { kurikulum: kurikulumMhs, matriks: null };
 }
 
 export async function assertKurikulumNotReferencedByMahasiswa(

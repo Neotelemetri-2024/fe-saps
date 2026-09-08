@@ -275,6 +275,7 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
         const kg = item.partisipasi.kegiatan;
         const klaim = item.partisipasi.klaimPoin;
         const sudahDiklaim = klaim ? (klaim.status !== 'draft') : false;
+        const asal = kg.asal || null;
         return {
           id: item.id.toString(),
           partisipasiId: item.partisipasi.id.toString(),
@@ -287,6 +288,9 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
             ? new Date(item.createdAt).toISOString()
             : null,
           sudahDiklaim,
+          // true hanya untuk eksternal yang masih perlu klaim manual
+          perluKlaimEksternal: asal === 'eksternal' && !sudahDiklaim && item.status === 'disetujui',
+          asal,
           skala: kg.skala?.nama || null,
           tanggal: kg.tanggalMulai
             ? new Date(kg.tanggalMulai).toISOString()

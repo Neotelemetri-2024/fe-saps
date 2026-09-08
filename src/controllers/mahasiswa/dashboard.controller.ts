@@ -565,9 +565,11 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
       const isIzinDisetujui = izin?.status === 'disetujui';
       const isHadir = p.kehadiran === true;
       const isPeranAda = Boolean(p.peranVerifId);
-      const isPoinTerklaim = Boolean(p.klaimPoin?.perolehanPoin && p.klaimPoin.perolehanPoin.status === 'sah');
+      // Poin sah lewat klaim, atau fallback perolehan langsung di kegiatan
+      const isPoinTerklaim = poinDariKlaim != null || poinDariKegiatan != null;
 
-      let statusPoin = 'Menunggu Syarat';
+      // Status poin = tahap yang masih kurang untuk pencairan otomatis
+      let statusPoin = 'Belum Cair';
       if (isPoinTerklaim) {
         statusPoin = 'Terklaim';
       } else if (!isIzinDisetujui) {
