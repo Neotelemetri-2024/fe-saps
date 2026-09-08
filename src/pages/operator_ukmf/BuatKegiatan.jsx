@@ -154,6 +154,10 @@ function BuatKegiatan() {
   const validateForm = () => {
     if (!form.kategoriId) { toast.error('Pilih jenis kegiatan'); return false }
     if (!form.skalaId) { toast.error('Pilih skala kegiatan'); return false }
+    if (form.tanggalMulai && form.tanggalSelesai && new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
+      toast.error('Tanggal berakhir tidak boleh lebih awal dari tanggal mulai.')
+      return false
+    }
     if (kurikulumList.length === 0) {
       toast.error('Tidak ada kurikulum aktif.')
       return false
@@ -351,6 +355,7 @@ function BuatKegiatan() {
                   label="Tanggal Selesai"
                   value={form.tanggalSelesai}
                   onChange={(d) => setForm((p) => ({ ...p, tanggalSelesai: d }))}
+                  minDate={form.tanggalMulai || undefined}
                   required
                 />
               </div>

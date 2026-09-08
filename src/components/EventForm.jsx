@@ -121,6 +121,10 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
       toast.error('Lengkapi semua field yang wajib diisi.')
       return false
     }
+    if (form.tanggalMulai && form.tanggalSelesai && new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
+      toast.error('Tanggal berakhir tidak boleh lebih awal dari tanggal mulai.')
+      return false
+    }
     if (kurikulumList.length === 0) {
       toast.error('Tidak ada kurikulum aktif.')
       return false
@@ -315,6 +319,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
                 label="Tanggal Selesai"
                 value={form.tanggalSelesai}
                 onChange={(date) => setForm((prev) => ({ ...prev, tanggalSelesai: date }))}
+                minDate={form.tanggalMulai || undefined}
                 placeholder="Pilih tanggal"
               />
             </div>
