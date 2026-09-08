@@ -7,7 +7,11 @@ import { createKegiatan, updateKegiatan, getKegiatanById, ajukanKegiatan } from 
 import { getKurikulumAktif } from '../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../services/matriksService'
 import PemetaanCapaianKurikulumSection from './PemetaanCapaianKurikulumSection'
+<<<<<<< HEAD
 import { getCurrentUser } from '../services/authService'
+=======
+import { batalBtnClass } from './ui/buttonStyles'
+>>>>>>> 954ad8f (revisi)
 
 const EMPTY_FORM = {
   nama: '',
@@ -230,10 +234,10 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         <button
           type="button"
           onClick={onCancel}
-          className="btn btn-ghost btn-sm text-primary"
+          className="btn btn-ghost btn-sm text-base-content"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke Daftar
+          Kembali
         </button>
       </div>
 
@@ -252,9 +256,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         <div className="card bg-base-100 p-6">
           <p className="text-sm text-base-content/60">Lengkapi informasi kegiatan terlebih dahulu</p>
 
-          <ol className="mt-3 list-decimal pl-5 text-base font-semibold text-base-content">
-            <li>Informasi Kegiatan</li>
-          </ol>
+          <h3 className="mt-3 text-base font-semibold text-base-content">Informasi Kegiatan</h3>
 
           <div className="mt-5 space-y-5">
             <div>
@@ -371,7 +373,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         </div>
 
         <div className="card bg-base-100 p-6">
-          <h3 className="text-base font-semibold text-base-content">2. Pemetaan Capaian Kurikulum</h3>
+          <h3 className="text-base font-semibold text-base-content">Pemetaan Capaian Kurikulum</h3>
           <p className="mt-0.5 mb-5 text-sm text-base-content/60">
             Tentukan capaian kurikulum yang dicapai melalui kegiatan ini
           </p>
@@ -425,7 +427,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
           >
             {loading ? (isPimpinan ? 'Mempublikasikan...' : 'Mengirim...') : (isPimpinan ? 'Publikasikan Sekarang' : 'Ajukan Sekarang')}
           </button>
-          <button type="button" onClick={onCancel} className="btn btn-ghost">
+          <button type="button" onClick={onCancel} className={batalBtnClass}>
             Batal
           </button>
         </div>

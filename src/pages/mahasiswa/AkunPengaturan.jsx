@@ -208,7 +208,7 @@ function AkunPengaturan() {
           {/* Informasi Pribadi */}
           <div className="card bg-base-100 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <User className="h-5 w-5 text-primary" />
+              <User className="h-5 w-5 text-base-content" />
               <h3 className="text-sm font-semibold text-base-content">Informasi pribadi</h3>
             </div>
 
@@ -275,8 +275,8 @@ function AkunPengaturan() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-base-content">Alamat</label>
-                  <textarea
-                    rows={3}
+                  <input
+                    type="text"
                     value={form.alamat}
                     onChange={(e) => setForm((p) => ({ ...p, alamat: e.target.value }))}
                     className="input mt-1 w-full"
@@ -299,7 +299,7 @@ function AkunPengaturan() {
           {/* Ganti Password */}
           <div className="card bg-base-100 p-6">
             <div className="mb-5 flex items-center gap-3">
-              <Lock className="h-5 w-5 text-primary" />
+              <Lock className="h-5 w-5 text-base-content" />
               <h3 className="text-sm font-semibold text-base-content">Ganti password</h3>
             </div>
             <div className="space-y-4">

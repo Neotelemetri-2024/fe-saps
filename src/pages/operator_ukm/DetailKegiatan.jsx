@@ -79,7 +79,7 @@ function DetailKegiatan({ role, userRole }) {
   return (
     <DashboardLayout role={role} userName={user?.nama || userRole} userRole={userRole}>
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail kegiatan"
           description={`Informasi lengkap kegiatan ${userRole}.`}

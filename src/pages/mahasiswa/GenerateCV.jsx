@@ -7,6 +7,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getCurrentUser } from '../../services/authService'
 import { getPortofolio } from '../../services/dashboardService'
 import { shareCvToLinkedIn, getLinkedInConnectUrl, getLinkedInStatus, disconnectLinkedIn } from '../../services/cvService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function LinkedInIcon(props) {
   return (
@@ -484,9 +485,7 @@ function GenerateCV() {
           <button
             type="button"
             onClick={() => setShareModalOpen(false)}
-            disabled={sharingLinkedIn}
-            className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-base-200 disabled:opacity-60"
-          >
+            disabled={sharingLinkedIn} className={batalBtnClass}>
             Batal
           </button>
           <button

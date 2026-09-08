@@ -1,6 +1,7 @@
 import { Children } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import StatusBadge from '../dashboard/StatusBadge'
+import { batalBtnClass } from './buttonStyles'
 
 export function InfoRow({ label, sublabel, value, href, multiline = false }) {
   const display = value || '—'
@@ -48,7 +49,11 @@ export function SectionCard({ title, icon: Icon, children }) {
 
 export function DetailBackButton({ onClick, children = 'Kembali' }) {
   return (
-    <button type="button" onClick={onClick} className="btn btn-ghost btn-sm -ml-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className="btn btn-ghost btn-sm -ml-2 text-base-content hover:bg-base-200"
+    >
       <ArrowLeft className="h-4 w-4" />
       {children}
     </button>
@@ -101,12 +106,12 @@ export function DecisionActions({
   return (
     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       {onReject ? (
-        <button type="button" onClick={onReject} className="btn btn-outline btn-error btn-sm">
+        <button type="button" onClick={onReject} className="btn btn-error btn-sm text-white">
           {rejectLabel}
         </button>
       ) : null}
       {onRevise ? (
-        <button type="button" onClick={onRevise} className="btn btn-outline btn-warning btn-sm">
+        <button type="button" onClick={onRevise} className="btn btn-warning btn-sm text-white">
           {reviseLabel}
         </button>
       ) : null}
@@ -123,7 +128,10 @@ export function EmptyDetail({ onBack, message = 'Data tidak ditemukan.' }) {
   return (
     <div className="space-y-4 py-16 text-center">
       <p className="text-sm text-base-content/60">{message}</p>
-      <button type="button" onClick={onBack} className="btn btn-primary btn-sm">Kembali</button>
+      <button type="button" onClick={onBack} className="btn btn-ghost btn-sm text-base-content">
+        <ArrowLeft className="h-4 w-4" />
+        Kembali
+      </button>
     </div>
   )
 }
@@ -140,7 +148,9 @@ export function RejectForm({
   onCancel,
   submitting,
 }) {
-  const submitClass = variant === 'warning' ? 'btn btn-warning btn-sm' : 'btn btn-error btn-sm'
+  const submitClass = variant === 'warning'
+    ? 'btn btn-warning btn-sm text-white'
+    : 'btn btn-error btn-sm text-white'
 
   return (
     <div className="space-y-4">
@@ -156,7 +166,7 @@ export function RejectForm({
         onChange={(e) => onChange(e.target.value)}
       />
       <div className="flex justify-end gap-2">
-        <button type="button" disabled={submitting} onClick={onCancel} className="btn btn-ghost btn-sm">
+        <button type="button" disabled={submitting} onClick={onCancel} className={batalBtnClass}>
           Batal
         </button>
         <button type="button" disabled={submitting} onClick={onSubmit} className={submitClass}>

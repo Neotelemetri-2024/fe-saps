@@ -15,6 +15,7 @@ import { getCurrentUser } from '../../services/authService'
 import { getKlaimForValidasi, validasiBulk } from '../../services/poinService'
 import { subscribeDataUpdate } from '../../services/pengajuanService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const PAGE_SIZE = 10
 
@@ -344,9 +345,7 @@ function VerifikasiKlaimPoin() {
                   onClick={() => {
                     setPilihanMode(false)
                     setSelected(new Set())
-                  }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60"
-                >
+                  }} className={batalBtnClass}>
                   Batal Pilih
                 </button>
                 <button

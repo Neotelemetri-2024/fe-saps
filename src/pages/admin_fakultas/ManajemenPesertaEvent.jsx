@@ -230,9 +230,7 @@ function ManajemenPesertaEvent() {
       />
 
       <div className="space-y-5">
-        <DetailBackButton onClick={() => navigate('/admin_fakultas/manajemen-event')}>
-          Kembali ke manajemen event
-        </DetailBackButton>
+        <DetailBackButton onClick={() => navigate('/admin_fakultas/manajemen-event')} />
 
         <div>
           <h2 className="text-2xl font-extrabold text-base-content">Manajemen peserta</h2>

@@ -166,7 +166,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card bg-base-100 p-6">
             <div className="mb-4 flex items-center gap-3">
-              <User className="h-5 w-5 text-primary" />
+              <User className="h-5 w-5 text-base-content" />
               <h3 className="text-sm font-semibold text-base-content">Informasi akun</h3>
             </div>
 
@@ -233,9 +233,9 @@ function AkunPengaturan({ role: roleProp } = {}) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-base-content">Alamat</label>
-                  <textarea
+                  <input
+                    type="text"
                     name="alamat"
-                    rows={3}
                     value={form.alamat}
                     onChange={handleChange}
                     placeholder="Masukkan alamat"
@@ -253,7 +253,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
 
           <div className="card bg-base-100 p-6">
             <div className="mb-5 flex items-center gap-3">
-              <Lock className="h-5 w-5 text-primary" />
+              <Lock className="h-5 w-5 text-base-content" />
               <h3 className="text-sm font-semibold text-base-content">Ganti password</h3>
             </div>
             <div className="space-y-4">

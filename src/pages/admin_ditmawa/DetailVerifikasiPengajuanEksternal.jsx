@@ -18,6 +18,7 @@ import {
   DecisionActions,
   EmptyDetail,
 } from '../../components/ui/DetailComponents'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatDate(val) {
   if (!val) return '-'
@@ -215,7 +216,7 @@ function DetailVerifikasiPengajuanEksternal() {
       </Modal>
 
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail pengajuan eksternal"
           description="Tinjau informasi kegiatan sebelum memberi keputusan."
@@ -340,9 +341,7 @@ function DetailVerifikasiPengajuanEksternal() {
                   setShowCapaianForm(false)
                   setSelectedCapaianIds([])
                   setAlokasi([])
-                }}
-                className="btn btn-ghost btn-sm"
-              >
+                }} className={batalBtnClass}>
                 Batal
               </button>
               <button

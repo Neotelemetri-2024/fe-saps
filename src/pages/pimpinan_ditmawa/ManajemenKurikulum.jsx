@@ -19,6 +19,7 @@ import {
   updateSubCapaian,
   hapusSubCapaian,
 } from '../../services/kurikulumService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function normalizeKurikulum(k) {
   return {
@@ -547,9 +548,7 @@ const handleEditSubCapaian = async () => {
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => setShowTambahKurikulum(false)}
-            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-          >
+            onClick={() => setShowTambahKurikulum(false)} className={batalBtnClass}>
             Batal
           </button>
           <button
@@ -594,9 +593,7 @@ const handleEditSubCapaian = async () => {
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => setShowTambahCapaian(false)}
-            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-          >
+            onClick={() => setShowTambahCapaian(false)} className={batalBtnClass}>
             Batal
           </button>
           <button
@@ -679,9 +676,7 @@ const handleEditSubCapaian = async () => {
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => setShowTambahSubCapaian(false)}
-            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-          >
+            onClick={() => setShowTambahSubCapaian(false)} className={batalBtnClass}>
             Batal
           </button>
           <button
@@ -728,9 +723,7 @@ const handleEditSubCapaian = async () => {
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => setEditCapaian(null)}
-            className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-          >
+            onClick={() => setEditCapaian(null)} className={batalBtnClass}>
             Batal
           </button>
           <button
@@ -798,9 +791,7 @@ const handleEditSubCapaian = async () => {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setEditSubCapaian(null)}
-                className="rounded-lg border border-base-300 px-5 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-              >
+                onClick={() => setEditSubCapaian(null)} className={batalBtnClass}>
                 Batal
               </button>
               <button

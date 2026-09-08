@@ -16,6 +16,7 @@ import {
 } from "../../services/pengajuanService";
 import { getCurrentUser } from "../../services/authService";
 import { statusOptionsFromRows } from "../../utils/statusFilter";
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const labelMap = {
   prestasi: "Prestasi/Kompetisi",
@@ -256,9 +257,7 @@ function PermintaanPersetujuan() {
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <button
                 type="button"
-                onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                className="btn btn-ghost btn-sm"
-              >
+                onClick={() => { setPilihanMode(false); setSelected(new Set()) }} className={batalBtnClass}>
                 Batal
               </button>
               <button

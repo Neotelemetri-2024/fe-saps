@@ -7,6 +7,7 @@ import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiBulk } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatTanggal(tanggal) {
   if (!tanggal) return '-'
@@ -232,9 +233,9 @@ function PemetaanCapaianMassal() {
           <button
             type="button"
             onClick={backToList}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-base-content hover:underline"
           >
-            <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
+            <ArrowLeft className="h-4 w-4" /> Kembali
           </button>
           <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center shadow-sm">
             <p className="text-base font-semibold text-base-content">Tidak Ada Kegiatan yang Dipilih</p>
@@ -258,8 +259,8 @@ function PemetaanCapaianMassal() {
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
       <div className="space-y-5">
         <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-base-content hover:underline">
+          <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -416,8 +417,7 @@ function PemetaanCapaianMassal() {
             <button
               type="button"
               onClick={backToList}
-              className="rounded-xl border border-base-300 bg-base-100 px-5 py-2.5 text-sm font-semibold text-base-content/80 transition hover:bg-base-200"
-            >
+             className={batalBtnClass}>
               Batal
             </button>
             <button

@@ -11,7 +11,11 @@ import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 import { getKlaim, klaimPoin } from '../../services/poinService'
 import { getIzinPAMahasiswa, subscribeDataUpdate } from '../../services/pengajuanService'
+<<<<<<< HEAD
 import { getPeranKegiatan } from '../../services/matriksService'
+=======
+import { batalBtnClass } from '../../components/ui/buttonStyles'
+>>>>>>> 954ad8f (revisi)
 
 const riwayatColumns = [
   { key: 'no', label: 'NO' },
@@ -145,8 +149,14 @@ function KlaimPoinCapaian() {
           .filter((item) => {
             const statusRaw = (item.statusIzin || item.status || '').toLowerCase()
             const asal = String(item.kegiatan?.asal || item.asal || '').toLowerCase()
+<<<<<<< HEAD
             const isEksternal = asal === 'eksternal'
             return isEksternal && statusRaw === 'disetujui' && !item.sudahDiklaim
+=======
+            // Klaim manual hanya untuk kegiatan eksternal; internal cair otomatis setelah PA
+            if (asal !== 'eksternal') return false
+            return statusRaw === 'disetujui' && !item.sudahDiklaim
+>>>>>>> 954ad8f (revisi)
           })
           .map(mapSiapKlaim)
           .map((row, i) => ({ ...row, no: i + 1 }))
@@ -534,9 +544,7 @@ function KlaimPoinCapaian() {
             <button
               type="button"
               disabled={submittingKlaim}
-              onClick={() => setShowKlaimModal(false)}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
-            >
+              onClick={() => setShowKlaimModal(false)} className={`${batalBtnClass} flex-1`}>
               Batal
             </button>
           </div>
@@ -583,8 +591,7 @@ function KlaimPoinCapaian() {
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="btn btn-ghost btn-sm"
-                    >
+                     className={batalBtnClass}>
                       Batal
                     </button>
                     <button

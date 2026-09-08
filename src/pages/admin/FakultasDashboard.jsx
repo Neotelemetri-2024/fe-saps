@@ -64,7 +64,7 @@ function AdminFakultasDashboard() {
             Setujui
           </button>
           <button
-            className="rounded-lg border border-red-500 px-4 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+            className="btn btn-error btn-sm text-white"
             onClick={async () => {
               try {
                 await updateKegiatan(row.id, { status: 'ditolak' })

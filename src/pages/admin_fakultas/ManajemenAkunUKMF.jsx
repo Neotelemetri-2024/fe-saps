@@ -15,6 +15,7 @@ import {
   hapusAkunUKMF,
   toggleStatusAkunUKMF,
 } from '../../services/organisasiService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -254,8 +255,7 @@ function TambahAkunModal({ onClose, onSave }) {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+           className={batalBtnClass}>
             Batal
           </button>
 
@@ -370,8 +370,7 @@ function ResetPasswordModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+           className={batalBtnClass}>
             Batal
           </button>
 

@@ -14,6 +14,7 @@ import { getCurrentUser } from '../../services/authService'
 import ActionMenu from '../../components/ui/ActionMenu'
 import InfoTooltip from '../../components/ui/InfoTooltip'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatDate(val) {
   if (!val) return '-'
@@ -289,9 +290,7 @@ function VerifikasiPengajuanEksternal() {
               <div className="ml-auto flex gap-2">
                 <button
                   type="button"
-                  onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100"
-                >
+                  onClick={() => { setPilihanMode(false); setSelected(new Set()) }} className={batalBtnClass}>
                   Batal Pilih
                 </button>
                 <button

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { getCurrentUser } from '../../services/authService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKurikulumAktif, createKurikulum, tambahCapaian, tambahSubCapaian } from '../../services/kurikulumService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function TambahMatriks() {
   const navigate = useNavigate()
@@ -146,7 +147,7 @@ function TambahMatriks() {
         <button
           type="button"
           onClick={() => navigate('/pimpinan_ditmawa/manajemen-kurikulum')}
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-medium text-base-content hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
@@ -283,9 +284,7 @@ function TambahMatriks() {
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => navigate('/pimpinan_ditmawa/manajemen-kurikulum')}
-            className="rounded-lg border border-base-300 px-6 py-2.5 text-sm font-semibold text-base-content shadow-sm transition hover:bg-base-200"
-          >
+            onClick={() => navigate('/pimpinan_ditmawa/manajemen-kurikulum')} className={batalBtnClass}>
             Batal
           </button>
           <button

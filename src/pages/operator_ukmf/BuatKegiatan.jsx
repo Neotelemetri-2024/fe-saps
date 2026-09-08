@@ -10,6 +10,7 @@ import { createKegiatan, updateKegiatan, ajukanKegiatan, getKegiatanById } from 
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
 import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const EMPTY_FORM = {
   nama: '',
@@ -255,7 +256,7 @@ function BuatKegiatan() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-base-content hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
@@ -273,7 +274,7 @@ function BuatKegiatan() {
 
         <form onSubmit={handleSimpanDraft} className="space-y-5">
           <div className="card bg-base-100 p-6">
-            <h3 className="text-base font-bold text-base-content">1. Informasi Kegiatan</h3>
+            <h3 className="text-base font-bold text-base-content">Informasi Kegiatan</h3>
             <p className="mt-0.5 mb-5 text-sm text-base-content/60">Lengkapi informasi kegiatan terlebih dahulu</p>
 
             <div className="space-y-5">
@@ -399,7 +400,7 @@ function BuatKegiatan() {
           </div>
 
           <div className="card bg-base-100 p-6">
-            <h3 className="text-base font-bold text-base-content">2. Pemetaan Capaian Kurikulum</h3>
+            <h3 className="text-base font-bold text-base-content">Pemetaan Capaian Kurikulum</h3>
             <p className="mt-0.5 mb-5 text-sm text-base-content/60">
               Tentukan capaian kurikulum yang dicapai melalui kegiatan ini
             </p>            {loadingKur ? (
@@ -450,9 +451,7 @@ function BuatKegiatan() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/operator_ukmf/daftar-kegiatan')}
-              className="rounded-lg border border-base-300 bg-base-100 px-6 py-2.5 text-sm font-semibold text-base-content/80 shadow-sm transition hover:bg-base-200"
-            >
+              onClick={() => navigate('/operator_ukmf/daftar-kegiatan')} className={batalBtnClass}>
               Batal
             </button>
           </div>

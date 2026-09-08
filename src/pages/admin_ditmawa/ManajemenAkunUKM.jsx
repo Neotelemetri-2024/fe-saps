@@ -14,6 +14,7 @@ import {
   hapusAkunUKM,
   toggleStatusAkunUKM,
 } from '../../services/organisasiService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -122,8 +123,7 @@ function TambahAkunModal({ onClose, onSave }) {
             className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
             {saving ? 'Menyimpan…' : 'Buat'}
           </button>
-          <button type="button" onClick={onClose}
-            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50">
+          <button type="button" onClick={onClose} className={batalBtnClass}>
             Batal
           </button>
         </div>
@@ -174,8 +174,7 @@ function ResetPasswordModal({ item, onClose, onReset }) {
             className="btn btn-primary flex-1 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
             {saving ? 'Memproses…' : 'Reset Password'}
           </button>
-          <button type="button" onClick={onClose}
-            className="rounded-lg border border-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-green-50">
+          <button type="button" onClick={onClose} className={batalBtnClass}>
             Batal
           </button>
         </div>

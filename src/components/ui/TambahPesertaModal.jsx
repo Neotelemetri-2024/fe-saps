@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Search, Loader2, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cariMahasiswaPeserta, tambahPesertaManual } from '../../services/kegiatanService'
+import { batalBtnClass } from './buttonStyles'
 
 function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
   const dialogRef = useRef(null)
@@ -172,7 +173,7 @@ function TambahPesertaModal({ isOpen, kegiatanId, onClose, onAdded }) {
         <div className="modal-action items-center justify-between">
           <span className="text-xs text-base-content/50">{selected.size} mahasiswa dipilih</span>
           <div className="flex gap-2">
-            <button type="button" onClick={onClose} disabled={adding} className="btn btn-ghost btn-sm">
+            <button type="button" onClick={onClose} disabled={adding} className={batalBtnClass}>
               Batal
             </button>
             <button

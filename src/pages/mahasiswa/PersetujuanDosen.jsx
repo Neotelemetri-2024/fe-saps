@@ -18,6 +18,7 @@ import {
 import { getPeranKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatTanggal(value) {
   if (value == null || value === '') return '-'
@@ -399,9 +400,7 @@ function PersetujuanDosen() {
             </button>
             <button
               type="button"
-              onClick={() => setShowPeranModal(false)}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
-            >
+              onClick={() => setShowPeranModal(false)} className={`${batalBtnClass} flex-1`}>
               Batal
             </button>
           </div>
@@ -458,8 +457,7 @@ function PersetujuanDosen() {
             <button
               type="button"
               onClick={handleCloseRevisi}
-              className="flex-1 rounded-xl border border-base-300 py-2.5 text-sm font-semibold text-base-content hover:bg-base-200"
-            >
+             className={`${batalBtnClass} flex-1`}>
               Batal
             </button>
           </div>
@@ -601,8 +599,7 @@ function PersetujuanDosen() {
                     <button
                       type="button"
                       onClick={handleBatalPilih}
-                      className="btn btn-ghost btn-sm"
-                    >
+                     className={batalBtnClass}>
                       Batal
                     </button>
                     <button

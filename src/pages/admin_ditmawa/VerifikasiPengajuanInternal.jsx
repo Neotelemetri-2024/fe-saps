@@ -14,6 +14,7 @@ import InfoTooltip from '../../components/ui/InfoTooltip'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanVerifikasi, verifikasiBulk } from '../../services/kegiatanService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const PAGE_SIZE = 10
 
@@ -260,8 +261,7 @@ function VerifikasiPengajuanInternal() {
             <div className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-200 px-4 py-3">
               <span className="text-sm text-base-content/60">{selected.size} dipilih</span>
               <div className="ml-auto flex gap-2">
-                <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }}
-                  className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 transition hover:bg-base-100">
+                <button type="button" onClick={() => { setPilihanMode(false); setSelected(new Set()) }} className={batalBtnClass}>
                   Batal Pilih
                 </button>
                 <button type="button" onClick={() => { if (selected.size === 0) { toast.error('Pilih minimal satu.'); return }; setShowBulkConfirm(true) }}

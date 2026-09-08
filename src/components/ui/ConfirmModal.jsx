@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import { batalBtnClass } from './buttonStyles'
 
 function ConfirmModal({ isOpen, title, message, confirmText, cancelText, onConfirm, onCancel, confirmClassName }) {
   const dialogRef = useRef(null)
@@ -43,7 +44,7 @@ function ConfirmModal({ isOpen, title, message, confirmText, cancelText, onConfi
           <button type="button" onClick={onConfirm} className={confirmClassName || "btn btn-primary"}>
             {confirmText || 'Submit'}
           </button>
-          <button type="button" onClick={onCancel} className="btn btn-outline">
+          <button type="button" onClick={onCancel} className={batalBtnClass}>
             {cancelText || 'Batal'}
           </button>
         </div>

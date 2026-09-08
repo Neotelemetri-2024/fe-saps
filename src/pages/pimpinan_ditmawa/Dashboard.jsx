@@ -6,7 +6,7 @@ import { VerticalBarChart } from '../../components/charts'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import DataTable from '../../components/dashboard/DataTable'
 import PanduanCard from '../../components/dashboard/PanduanCard'
-import { CardGridSkeleton, ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
+import { ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
@@ -142,62 +142,44 @@ function Dashboard() {
           </div>
         ) : null}
 
-        {/* Progres Capaian Kurikulum */}
-        <div className="card bg-base-100 p-5 sm:p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-base-content">Progres Capaian Kurikulum</h3>
-              <p className="mt-0.5 text-xs text-base-content/60">
-                Rata-rata pemenuhan poin kompetensi mahasiswa pada setiap tahun kurikulum
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {kurikulumOptions.length > 0 ? (
-                <label className="flex min-w-52 flex-col gap-1">
-                  <span className="text-xs text-base-content/60">Kurikulum</span>
-                  <select
-                    className="select select-sm"
-                    value={kurikulumId}
-                    onChange={(e) => setKurikulumId(e.target.value)}
-                    aria-label="Filter kurikulum"
-                  >
-                    {kurikulumOptions.map((k) => (
-                      <option key={k.id} value={k.id}>
-                        {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              <span className="text-xs text-base-content/60 sm:pt-5">
-                Target Minimum: <strong className="text-base-content">{statistik.targetPoinKurikulum ?? 200} poin</strong>
+        {/* Kurikulum & Capaian */}
+        <div className="flex flex-col gap-4" style={{ gap: '16px' }}>
+          {/* Kartu Kurikulum Mahasiswa */}
+          <div className="rounded-xl bg-white p-5 shadow-sm sm:p-6" style={{ borderRadius: '10px' }}>
+            <h3 className="text-base font-bold" style={{ color: '#1F2937' }}>Kurikulum Mahasiswa</h3>
+            <div className="mt-3 flex items-center gap-6">
+              <span className="text-sm" style={{ color: '#9CA3AF' }}>Kurikulum</span>
+              <span className="text-sm font-medium" style={{ color: '#1F2937' }}>
+                {loading
+                  ? '...'
+                  : kurikulumOptions.find((k) => String(k.id) === String(kurikulumId))
+                    ? `${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).nama}${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).angkatanMulai ? ` (${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).angkatanMulai}+)` : ''}`
+                    : '-'}
               </span>
             </div>
           </div>
 
-          {loading ? (
-            <CardGridSkeleton />
-          ) : capaianKurikulum.length === 0 ? (
-            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data kurikulum aktif.</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {capaianKurikulum.map((pilar) => (
-                <div key={pilar.id || pilar.pilar} className="rounded-lg border border-base-300 p-4 text-center">
-                  <p className="text-xs font-semibold uppercase text-base-content/60">{pilar.pilar}</p>
-                  <p className="mt-1 text-2xl font-bold text-base-content">
-                    {pilar.rataRataPoin ?? 0}
-                    <span className="text-sm font-normal text-base-content/60">/{pilar.targetPoin} poin</span>
-                  </p>
-                  <div className="mt-2 flex justify-center">
-                    <ProgressBar value={pilar.rataRataPoin ?? 0} max={pilar.targetPoin || 1} height={6} />
-                  </div>
-                  <p className="mt-2 text-xs font-medium text-base-content/60">
-                    {pilar.persenCapaian}% Tercapai
-                  </p>
+          {/* Kartu Capaian Kurikulum */}
+          <div className="rounded-xl bg-white p-5 shadow-sm sm:p-6" style={{ borderRadius: '10px' }}>
+            <h3 className="text-base font-bold" style={{ color: '#1F2937' }}>Capaian Kurikulum</h3>
+            <div className="mt-3 flex flex-col gap-2">
+              {loading ? (
+                <div className="space-y-2" aria-hidden>
+                  <div className="skeleton h-4 w-32" />
+                  <div className="skeleton h-4 w-28" />
+                  <div className="skeleton h-4 w-20" />
                 </div>
-              ))}
+              ) : capaianKurikulum.length === 0 ? (
+                <p className="py-4 text-center text-sm" style={{ color: '#9CA3AF' }}>Belum ada data kurikulum aktif.</p>
+              ) : (
+                capaianKurikulum.map((pilar) => (
+                  <p key={pilar.id || pilar.pilar} className="text-sm" style={{ color: '#1F2937' }}>
+                    {pilar.pilar}
+                  </p>
+                ))
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Middle Section: Top Fakultas & Grafik UKM */}

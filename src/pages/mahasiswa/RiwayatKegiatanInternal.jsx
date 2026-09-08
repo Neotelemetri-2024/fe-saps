@@ -8,6 +8,7 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getCurrentUser } from '../../services/authService'
 import { getRiwayatKegiatanInternal } from '../../services/kegiatanService'
 import { mintaPersetujuanDosenInternal } from '../../services/pengajuanService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatTanggal(start, end) {
   if (!start) return '-'
@@ -49,10 +50,12 @@ function StatusPoinBadge({ label }) {
         ? { bg: 'bg-blue-100', text: 'text-blue-800' }
         : s.includes('kehadiran') || s.includes('peran')
           ? { bg: 'bg-amber-100', text: 'text-amber-800' }
-          : { bg: 'bg-gray-100', text: 'text-gray-700' }
+          : s.includes('belum cair')
+            ? { bg: 'bg-orange-100', text: 'text-orange-800' }
+            : { bg: 'bg-gray-100', text: 'text-gray-700' }
   return (
     <span className={`inline-flex max-w-[11rem] items-center justify-center rounded-full px-3 py-1 text-center text-xs font-medium leading-snug ${cfg.bg} ${cfg.text}`}>
-      {label || 'Menunggu Syarat'}
+      {label || 'Belum Cair'}
     </span>
   )
 }
@@ -332,8 +335,7 @@ function RiwayatKegiatanInternal() {
                       type="button"
                       onClick={handleBatalPilih}
                       disabled={submittingIzin}
-                      className="rounded-lg border border-base-300 px-4 py-2 text-sm font-semibold text-base-content/60 hover:bg-base-200"
-                    >
+                     className={batalBtnClass}>
                       Batal
                     </button>
                     <button

@@ -145,7 +145,7 @@ function DetailVerifikasiPengajuanEksternal() {
       </Modal>
 
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail pengajuan eksternal"
           description="Tinjau informasi kegiatan sebelum memberi keputusan."
@@ -179,32 +179,13 @@ function DetailVerifikasiPengajuanEksternal() {
           <InfoRow label="Kurikulum" value={item.kurikulumNama || '-'} />
         </SectionCard>
 
-        {item.capaian?.length > 0 ? (
-          <SectionCard title="Capaian Kurikulum">
-          {item.kurikulum && item.kurikulum !== '-' ? (
-            <div className="mb-3 pb-3 border-b border-base-200">
-              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                Kurikulum Terkait
-              </span>
-              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
-                {item.kurikulum}
-              </span>
-            </div>
-          ) : null}
-          {item.capaian?.length > 0 ? (
-            <div>
-              {item.kurikulum && item.kurikulum !== '-' && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                  Daftar Capaian
-                </span>
-              )}
-              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c.label || c}</p>)}
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/50">Belum ada pemetaan capaian</p>
-          )}
+        <SectionCard title="Capaian Kurikulum">
+          {item.capaian?.length > 0
+            ? item.capaian.map((c, i) => (
+                <p key={i} className="text-sm text-base-content">{c.label || c}</p>
+              ))
+            : <p className="text-sm text-base-content/50">Belum ada pemetaan capaian</p>}
         </SectionCard>
-        ) : null}
 
         {item.subCapaian?.length > 0 ? (
           <SectionCard title="Sub capaian">

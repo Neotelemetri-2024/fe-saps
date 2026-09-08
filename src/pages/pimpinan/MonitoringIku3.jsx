@@ -21,6 +21,7 @@ import {
   getIku3Rules,
   updateIku3Rule,
 } from '../../services/iku3Service'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const ROLE_LABEL = {
   pimpinan_utama: 'Pimpinan Utama',
@@ -147,7 +148,7 @@ function TargetModal({ isOpen, onClose, tahun, onSaved }) {
           />
         </label>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-sm" disabled={saving}>
+          <button type="button" onClick={onClose} disabled={saving} className={batalBtnClass}>
             Batal
           </button>
           <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>

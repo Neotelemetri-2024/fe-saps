@@ -153,7 +153,7 @@ function DetailValidasiKlaim() {
       </Modal>
 
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail klaim poin"
           description="Tinjau informasi klaim sebelum memberi keputusan."
@@ -192,32 +192,17 @@ function DetailValidasiKlaim() {
           )}
         </SectionCard>
 
-        {((item.kurikulum && item.kurikulum !== '-') || item.capaian?.length > 0) && (
-          <SectionCard title="Capaian Kurikulum">
-          {item.kurikulum && item.kurikulum !== '-' ? (
-            <div className="mb-3 pb-3 border-b border-base-200">
-              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                Kurikulum Terkait
-              </span>
-              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
-                {item.kurikulum}
-              </span>
-            </div>
-          ) : null}
-          {item.capaian?.length > 0 ? (
-            <div>
-              {item.kurikulum && item.kurikulum !== '-' && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                  Daftar Capaian
-                </span>
-              )}
-              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c}</p>)}
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>
-          )}
+        <SectionCard title="Kurikulum Mahasiswa">
+          <InfoRow label="Kurikulum" value={item.kurikulum || '-'} />
         </SectionCard>
-        )}
+
+        <SectionCard title="Capaian Kurikulum">
+          {item.capaian?.length > 0
+            ? item.capaian.map((c, i) => (
+                <p key={i} className="text-sm text-base-content">{c}</p>
+              ))
+            : <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>}
+        </SectionCard>
 
         {item.subCapaian?.length > 0 && (
           <SectionCard title="Sub Capaian & Bobot">

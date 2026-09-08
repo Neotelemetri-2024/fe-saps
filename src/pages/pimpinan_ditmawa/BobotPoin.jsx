@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { History, X, Trash2, Plus } from 'lucide-react'
+import { Database, History, Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import Modal from '../../components/ui/Modal'
 import {
   getMatriks,
   syncMatriks,
@@ -10,6 +11,7 @@ import {
   getKurikulum,
 } from '../../services/kurikulumService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, onClose }) {
   const [val, setVal] = useState(defaultValue)
@@ -22,47 +24,25 @@ function InputModal({ isOpen, title, placeholder, defaultValue = '', onConfirm, 
     }
   }, [isOpen, defaultValue])
 
-  if (!isOpen) return null
-
   function handleConfirm() {
     if (val.trim()) { onConfirm(val.trim()); onClose() }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-base-100 p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h4 className="text-sm font-bold text-base-content">{title}</h4>
-          <button type="button" onClick={onClose} className="text-base-content/50 hover:text-base-content">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <input
-          ref={inputRef}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm() }}
-          placeholder={placeholder}
-          className="input w-full"
-        />
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-base-300 px-4 py-2 text-sm font-medium text-base-content/80 hover:bg-base-200"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="btn btn-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Simpan
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+      <input
+        ref={inputRef}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm() }}
+        placeholder={placeholder}
+        className="input w-full"
+      />
+      <div className="mt-4 flex justify-end gap-2">
+        <button type="button" onClick={onClose} className={batalBtnClass}>Batal</button>
+        <button type="button" onClick={handleConfirm} className="btn btn-primary btn-sm">Simpan</button>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -97,7 +77,7 @@ function EditableCell({ value, onChange, editing }) {
         onChange={(e) => setVal(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') commit() }}
-        className="w-full rounded border border-brand-dark px-1 py-0.5 text-center text-sm outline-none"
+        className="input input-sm w-full min-w-20 text-center"
       />
     )
   }
@@ -135,7 +115,7 @@ function EditableRowLabel({ value, onChange, editing }) {
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit() } }}
         rows={2}
-        className="w-full resize-none rounded border border-brand-dark px-1 py-0.5 text-xs font-semibold outline-none"
+        className="textarea textarea-sm w-full resize-none text-xs font-semibold"
       />
     )
   }
@@ -293,50 +273,35 @@ function SectionTable({ section, onUpdate, onDelete }) {
         onCancel={() => setDeleteConfirm(null)}
       />
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-bold text-base-content">{draft.title}</h3>
+      <TableCard
+        title={draft.title}
+        description={editing ? 'Klik nama atau nilai untuk mengedit matriks.' : 'Daftar bobot poin berdasarkan peran dan skala kegiatan.'}
+        headerRight={(
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleEdit}
-              className="flex items-center gap-1 rounded-lg border border-brand-dark px-3 py-1.5 text-xs font-medium text-brand-dark hover:bg-brand-dark hover:text-white"
-            >Edit Tabel
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteConfirm({ type: 'matriks' })}
-              className="flex items-center gap-1 rounded-lg border border-red-300 bg-base-100 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-            ><Trash2 className="h-3.5 w-3.5" /> Hapus Matriks
-            </button>
-            <button
-              type="button"
-              disabled={!editing}
-              onClick={() => setModal({
-                title: 'Tambah Baris',
-                placeholder: 'Nama baris baru...',
-                defaultValue: '',
-                onConfirm: addRow,
-              })}
-              className="flex items-center gap-1 rounded-lg border border-base-300 bg-base-100 px-3 py-1.5 text-xs font-medium text-base-content/80 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            ><Plus className="h-3.5 w-3.5" /> Tambah Baris
-            </button>
-            <button
-              type="button"
-              disabled={!editing}
-              onClick={() => setModal({
-                title: 'Tambah Kolom',
-                placeholder: 'Nama kolom baru...',
-                defaultValue: '',
-                onConfirm: addCol,
-              })}
-              className="flex items-center gap-1 rounded-lg border border-base-300 bg-base-100 px-3 py-1.5 text-xs font-medium text-base-content/80 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            ><Plus className="h-3.5 w-3.5" /> Tambah Kolom
+            {!editing ? (
+              <button type="button" onClick={handleEdit} className="btn btn-outline btn-primary btn-sm">
+                <Pencil className="h-4 w-4" /> Edit
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setModal({ title: 'Tambah Baris', placeholder: 'Nama baris baru...', defaultValue: '', onConfirm: addRow })}
+                  className="btn btn-outline btn-sm"
+                ><Plus className="h-4 w-4" /> Tambah Baris</button>
+                <button
+                  type="button"
+                  onClick={() => setModal({ title: 'Tambah Kolom', placeholder: 'Nama kolom baru...', defaultValue: '', onConfirm: addCol })}
+                  className="btn btn-outline btn-sm"
+                ><Plus className="h-4 w-4" /> Tambah Kolom</button>
+              </>
+            )}
+            <button type="button" onClick={() => setDeleteConfirm({ type: 'matriks' })} className="btn btn-error btn-sm text-white">
+              <Trash2 className="h-4 w-4" /> Hapus
             </button>
           </div>
-        </div>
-
-        <TableCard title="Bobot Poin">
+        )}
+      >
         <TableFrame>
           <div className="overflow-x-auto">
             <table className="w-full min-w-max text-sm">
@@ -411,27 +376,15 @@ function SectionTable({ section, onUpdate, onDelete }) {
               </tbody>
             </table>
           </div>
-        </TableFrame></TableCard>
+        </TableFrame>
 
         {editing && (
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={handleBatal}
-              className="rounded-lg border border-base-300 px-5 py-2 text-sm font-medium text-base-content/80 hover:bg-base-200"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={handleSimpan}
-              className="btn btn-primary px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
-            >
-              Simpan
-            </button>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={handleBatal} className={batalBtnClass}>Batal</button>
+            <button type="button" onClick={handleSimpan} className="btn btn-primary btn-sm">Simpan</button>
           </div>
         )}
-      </div>
+      </TableCard>
     </>
   )
 }
@@ -451,45 +404,23 @@ function TambahMatriksModal({ isOpen, onClose, onNext }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h4 className="text-lg font-bold text-base-content">Tambah Matriks</h4>
-          <button type="button" onClick={onClose} className="text-base-content/50 hover:text-base-content">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="mb-6">
-          <label className="mb-1.5 block text-sm font-semibold text-base-content">
-            Nama Matriks <span className="text-red-500">*</span>
-          </label>
-          <input
-            ref={inputRef}
-            value={nama}
-            onChange={(e) => setNama(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleNext() }}
-            placeholder="Masukkan nama matriks"
-            className="input w-full"
-          />
-        </div>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-base-300 py-3 text-sm font-bold uppercase text-base-content/80 hover:bg-base-200"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            className="btn btn-primary flex-1 py-3 text-sm font-bold uppercase text-white hover:opacity-90"
-          >
-            Selanjutnya
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title="Tambah Matriks" size="md">
+      <label className="mb-1.5 block text-sm font-medium text-base-content">
+        Nama Matriks <span className="text-error">*</span>
+      </label>
+      <input
+        ref={inputRef}
+        value={nama}
+        onChange={(e) => setNama(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleNext() }}
+        placeholder="Masukkan nama matriks"
+        className="input w-full"
+      />
+      <div className="mt-6 flex justify-end gap-2">
+        <button type="button" onClick={onClose} className={batalBtnClass}>Batal</button>
+        <button type="button" onClick={handleNext} className="btn btn-primary btn-sm">Selanjutnya</button>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -506,54 +437,47 @@ function HistoryModal({ isOpen, onClose }) {
       .finally(() => setLoading(false))
   }, [isOpen])
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-base-100">
-      <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col px-4 py-6 sm:px-8">
-        <div className="flex items-center justify-between border-b border-base-300 pb-4">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-base-content/60" />
-            <h4 className="text-lg font-bold text-base-content">Histori Perubahan</h4>
+    <Modal isOpen={isOpen} onClose={onClose} title="Histori Perubahan" size="4xl">
+      <div className="max-h-[65vh] overflow-y-auto pr-1">
+        {loading ? (
+          <div className="space-y-3" aria-label="Memuat histori">
+            {[1, 2, 3].map((item) => <div key={item} className="skeleton h-20 w-full" />)}
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm font-semibold text-base-content/80 transition hover:bg-base-200">
-            Tutup
-          </button>
-        </div>
-        <div className="flex-1 py-6">
-          {loading ? (
-            <p className="text-sm text-base-content/50">Memuat histori...</p>
-          ) : history.length === 0 ? (
-            <p className="text-sm text-base-content/50">Belum ada histori perubahan.</p>
-          ) : (
-            <ul className="space-y-6">
-              {history.map((event, index) => (
-                <li key={event.id || index} className="flex items-start gap-4 card bg-base-100 p-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-base-content">
-                      {event.kategori || event.kategoriNama || '-'}
-                      {event.peran ? ` · ${event.peran}` : ''}
-                      {event.skala ? ` · ${event.skala}` : ''}
-                    </p>
-                    <p className="mt-0.5 text-sm text-base-content/70">
-                      {event.keterangan || event.desc || `${event.poinLama ?? '-'} → ${event.poinBaru ?? '-'} Poin`}
-                    </p>
-                    <p className="mt-1 text-xs text-base-content/50">
-                      {event.tanggal || event.diubahPada
-                        ? new Date(event.diubahPada || event.tanggal).toLocaleString('id-ID', {
-                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                          })
-                        : '-'}
-                      {event.oleh || event.namaPengubah ? ` • oleh ${event.oleh || event.namaPengubah}` : ''}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        ) : history.length === 0 ? (
+          <div className="py-10 text-center">
+            <History className="mx-auto h-8 w-8 text-base-content/30" />
+            <p className="mt-2 text-sm text-base-content/50">Belum ada histori perubahan.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-base-300">
+            {history.map((event, index) => (
+              <li key={event.id || index} className="py-4 first:pt-0 last:pb-0">
+                <p className="text-sm font-semibold text-base-content">
+                  {event.kategori || event.kategoriNama || '-'}
+                  {event.peran ? ` · ${event.peran}` : ''}
+                  {event.skala ? ` · ${event.skala}` : ''}
+                </p>
+                <p className="mt-0.5 text-sm text-base-content/70">
+                  {event.keterangan || event.desc || `${event.poinLama ?? '-'} → ${event.poinBaru ?? '-'} Poin`}
+                </p>
+                <p className="mt-1 text-xs text-base-content/50">
+                  {event.tanggal || event.diubahPada
+                    ? new Date(event.diubahPada || event.tanggal).toLocaleString('id-ID', {
+                        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                      })
+                    : '-'}
+                  {event.oleh || event.namaPengubah ? ` • oleh ${event.oleh || event.namaPengubah}` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+      <div className="mt-5 flex justify-end">
+        <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">Tutup</button>
+      </div>
+    </Modal>
   )
 }
 
@@ -610,7 +534,7 @@ function apiToSections(data) {
     return {
       id: `api-${kategoriId || i}`,
       kategoriId,
-      title: `${i + 1}. ${kat}`,
+      title: kat,
       rowHeader: 'PERAN',
       columns,
       rows,
@@ -651,11 +575,8 @@ function BobotPoin() {
         }))
         setKurikulumOptions(options)
         const preferred = options.find((k) => k.status === 'aktif') || options[0]
-        if (preferred) {
-          setKurikulumId(String(preferred.id))
-          return loadMatriks(preferred.id)
-        }
-        setLoadingMatriks(false)
+        if (preferred) setKurikulumId(String(preferred.id))
+        else setLoadingMatriks(false)
       })
       .catch(() => setLoadingMatriks(false))
   }, [])
@@ -714,13 +635,12 @@ function BobotPoin() {
 
   function handleNextMatriks(namaMatriks) {
     setShowTambahMatriks(false)
-    const idx = sections.length + 1
     setSections((prev) => [
       ...prev,
       {
         id: `s${Date.now()}`,
         kategoriId: undefined,
-        title: `${idx}. ${namaMatriks}`,
+        title: namaMatriks,
         rowHeader: 'PERAN',
         columns: [{ id: undefined, nama: 'Kolom 1' }],
         rows: [{ id: undefined, label: 'Baris 1', values: ['0'] }],
@@ -754,49 +674,51 @@ function BobotPoin() {
         isOpen={showHistory}
         onClose={() => setShowHistory(false)}
       />
-      <div className="space-y-8">
+      <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Bobot Poin</h2>
-          <p className="mt-1 text-sm text-base-content/60">
-            Klik nilai poin untuk mengedit langsung. Tekan Enter atau klik di luar untuk konfirmasi.
-          </p>
+          <h2 className="text-2xl font-extrabold text-base-content">Bobot Poin</h2>
+          <p className="mt-1 text-sm text-base-content/60">Kelola bobot poin berdasarkan kurikulum, kategori, peran, dan skala kegiatan.</p>
         </div>
 
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex min-w-56 flex-col gap-1">
-            <span className="text-xs text-base-content/60">Kurikulum</span>
-            <select
-              className="select select-sm"
-              value={kurikulumId}
-              onChange={(e) => setKurikulumId(e.target.value)}
-            >
-              <option value="">Pilih kurikulum</option>
-              {kurikulumOptions.map((k) => (
-                <option key={k.id} value={k.id}>{k.label}</option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => setShowTambahMatriks(true)}
-            className="btn btn-primary btn-sm px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >Matriks
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowHistory(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm font-semibold text-base-content hover:bg-base-200"
-          >Histori Perubahan
-          </button>
+        <div className="card border border-base-300 bg-base-100 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <label className="flex min-w-64 flex-col gap-1">
+              <span className="text-xs text-base-content/60">Kurikulum</span>
+              <select className="select select-sm w-full" value={kurikulumId} onChange={(e) => setKurikulumId(e.target.value)}>
+                <option value="">Pilih kurikulum</option>
+                {kurikulumOptions.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setShowHistory(true)} className="btn btn-outline btn-sm">
+                <History className="h-4 w-4" /> Histori Perubahan
+              </button>
+              <button type="button" onClick={() => setShowTambahMatriks(true)} className="btn btn-primary btn-sm" disabled={!kurikulumId}>
+                <Plus className="h-4 w-4" /> Tambah Matriks
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-10">
+        <div className="space-y-5">
           {loadingMatriks ? (
-            <p className="text-sm text-base-content/50">Memuat data bobot poin...</p>
+            <div className="space-y-4" aria-label="Memuat data bobot poin">
+              {[1, 2].map((item) => (
+                <div key={item} className="card bg-base-100 p-6">
+                  <div className="skeleton h-5 w-40" />
+                  <div className="mt-5 skeleton h-44 w-full" />
+                </div>
+              ))}
+            </div>
           ) : sections.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-base-300 bg-base-100 px-6 py-10 text-center text-sm text-base-content/50">
-              Belum ada data matriks poin. Klik tombol Matriks untuk menambah kategori baru.
-            </p>
+            <div className="rounded-lg border border-dashed border-base-300 bg-base-100 px-6 py-10 text-center">
+              <Database className="mx-auto h-9 w-9 text-base-content/30" />
+              <p className="mt-3 text-sm font-medium text-base-content">Belum ada matriks poin</p>
+              <p className="mt-1 text-sm text-base-content/50">Tambahkan matriks pertama untuk kurikulum yang dipilih.</p>
+              <button type="button" onClick={() => setShowTambahMatriks(true)} className="btn btn-primary btn-sm mt-4" disabled={!kurikulumId}>
+                <Plus className="h-4 w-4" /> Tambah Matriks
+              </button>
+            </div>
           ) : (
             sections.map((sec, idx) => (
               <SectionTable

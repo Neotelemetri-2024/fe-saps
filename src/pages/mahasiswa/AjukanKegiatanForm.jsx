@@ -15,6 +15,7 @@ import {
 } from '../../services/pengajuanService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 const EMPTY_FORM = {
   kategoriId: '',
@@ -341,9 +342,7 @@ function AjukanKegiatanForm() {
 
               <button
                 type="button"
-                onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
-                className="btn btn-ghost btn-sm"
-              >
+                onClick={() => navigate('/mahasiswa/kegiatan-eksternal')} className={batalBtnClass}>
                 Batal
               </button>
             </div>

@@ -168,7 +168,7 @@ function DetailVerifikasiKlaimPoin() {
       </Modal>
 
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail klaim poin"
           description="Tinjau informasi klaim sebelum memberi keputusan."

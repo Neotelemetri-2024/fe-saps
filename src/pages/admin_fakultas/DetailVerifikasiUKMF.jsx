@@ -145,7 +145,7 @@ function DetailVerifikasiUKMF() {
       </Modal>
 
       <div className="space-y-5">
-        <DetailBackButton onClick={backToList}>Kembali ke daftar</DetailBackButton>
+        <DetailBackButton onClick={backToList} />
         <DetailHeader
           title="Detail pengajuan UKMF"
           description="Tinjau informasi kegiatan sebelum memberi keputusan."

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function EditPoin() {
   const navigate = useNavigate()
@@ -39,9 +40,9 @@ function EditPoin() {
         <button
           type="button"
           onClick={() => navigate('/pimpinan_ditmawa/bobot-poin')}
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-medium text-base-content hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Bobot Poin
+          <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
 
         <div className="max-w-lg card bg-base-100 p-6 space-y-5">
@@ -84,9 +85,7 @@ function EditPoin() {
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate('/pimpinan_ditmawa/bobot-poin')}
-              className="rounded-lg border border-base-300 px-6 py-2.5 text-sm font-semibold text-base-content shadow-sm transition hover:bg-base-200"
-            >
+              onClick={() => navigate('/pimpinan_ditmawa/bobot-poin')} className={batalBtnClass}>
               Batal
             </button>
             <button
