@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, FileText, UploadCloud, X } from 'lucide-react'
+import { Search, FileText, UploadCloud, X, Loader2 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -11,6 +11,7 @@ import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 import { getKlaim, klaimPoin } from '../../services/poinService'
 import { getIzinPAMahasiswa, subscribeDataUpdate } from '../../services/pengajuanService'
+import { getPeranKegiatan } from '../../services/matriksService'
 
 const riwayatColumns = [
   { key: 'no', label: 'NO' },
@@ -103,7 +104,9 @@ function mapSiapKlaim(item, i) {
     no: i + 1,
     id: item.id ?? i,
     partisipasiId: item.partisipasiId || null,
-    peranId: item.peranId || null,
+    kegiatanId: kegiatan.id || item.kegiatanId || null,
+    kategoriId: kegiatan.kategoriId || item.kategoriId || null,
+    peranId: item.peranId ? String(item.peranId) : '',
     kegiatan: kegiatan.nama || item.namaKegiatan || item.kegiatan || '-',
     diajukanPada: formatDate(item.tanggalDiajukan || item.createdAt || item.dibuatPada),
     jenis: kegiatan.kategori || item.jenis || '-',
@@ -183,7 +186,7 @@ function KlaimPoinCapaian() {
     setSelected(new Set())
   }
 
-  const handleOpenKlaimModal = () => {
+  const handleOpenKlaimModal = async () => {
     if (selected.size === 0) {
       toast.error('Pilih minimal satu kegiatan')
       return
@@ -192,14 +195,73 @@ function KlaimPoinCapaian() {
     const items = selectedRows.map((row) => ({
       id: row.id,
       partisipasiId: row.partisipasiId,
+      kegiatanId: row.kegiatanId,
+      kategoriId: row.kategoriId,
       kegiatan: row.kegiatan,
       peran: row.peran || '-',
-      peranId: row.peranId || '',
+      peranId: row.peranId ? String(row.peranId) : '',
       skala: row.skala || '-',
       bukti: null,
+      buktiError: null,
+      peranList: [],
+      loadingPeran: true,
     }))
     setKlaimItems(items)
     setShowKlaimModal(true)
+
+    // Ambil daftar peran berdasarkan kategoriId untuk masing-masing kegiatan
+    const cacheKat = {}
+    const updated = await Promise.all(
+      items.map(async (it) => {
+        if (!it.kategoriId) {
+          return { ...it, loadingPeran: false }
+        }
+        if (!(it.kategoriId in cacheKat)) {
+          try {
+            const list = await getPeranKegiatan(it.kategoriId)
+            cacheKat[it.kategoriId] = Array.isArray(list) ? list : []
+          } catch {
+            cacheKat[it.kategoriId] = []
+          }
+        }
+        const peranList = cacheKat[it.kategoriId] || []
+        let peranId = it.peranId
+        // Jika belum ada peranId tapi ada peran nama bukan '-', cari kecocokannya
+        if (!peranId && it.peran && it.peran !== '-') {
+          const matched = peranList.find(
+            (p) => p.nama.toLowerCase().trim() === it.peran.toLowerCase().trim()
+          )
+          if (matched) peranId = String(matched.id)
+        }
+        let peranNama = it.peran
+        if (peranId) {
+          const matched = peranList.find((p) => String(p.id) === String(peranId))
+          if (matched) peranNama = matched.nama
+        }
+        return {
+          ...it,
+          peranList,
+          peranId: peranId || '',
+          peran: peranNama,
+          loadingPeran: false,
+        }
+      })
+    )
+    setKlaimItems(updated)
+  }
+
+  const handlePeranChange = (itemId, newPeranId) => {
+    setKlaimItems((prev) =>
+      prev.map((it) => {
+        if (it.id !== itemId) return it
+        const matched = it.peranList.find((p) => String(p.id) === String(newPeranId))
+        return {
+          ...it,
+          peranId: newPeranId,
+          peran: matched ? matched.nama : '-',
+        }
+      })
+    )
   }
 
   const handleKlaimFileChange = (itemId, e) => {
@@ -241,16 +303,26 @@ function KlaimPoinCapaian() {
     )
   }
 
+  const semuaPeranDipilih = klaimItems.length > 0 && klaimItems.every((it) => !!it.peranId)
   const semuaBuktiLengkap = klaimItems.length > 0 && klaimItems.every((it) => !!it.bukti)
+  const formKlaimSiap = semuaPeranDipilih && semuaBuktiLengkap
 
   const handleSubmitKlaim = async () => {
-    if (!semuaBuktiLengkap) {
-      toast.error('Upload bukti PDF untuk setiap kegiatan terlebih dahulu')
-      return
+    for (const item of klaimItems) {
+      if (!item.peranId) {
+        toast.error(`Pilih peran capaian untuk kegiatan "${item.kegiatan}" terlebih dahulu`)
+        return
+      }
+      if (!item.bukti) {
+        toast.error(`Upload bukti PDF untuk kegiatan "${item.kegiatan}" terlebih dahulu`)
+        return
+      }
     }
+
     setSubmittingKlaim(true)
     let berhasil = 0
     let gagal = 0
+    const pesanError = []
     try {
       for (const item of klaimItems) {
         try {
@@ -260,15 +332,23 @@ function KlaimPoinCapaian() {
             bukti: item.bukti,
           })
           berhasil++
-        } catch {
+        } catch (err) {
           gagal++
+          const msg =
+            err?.message ||
+            err?.data?.message ||
+            (typeof err === 'string' ? err : 'Gagal mengajukan klaim')
+          if (!pesanError.includes(msg)) {
+            pesanError.push(msg)
+          }
         }
       }
       if (berhasil > 0) {
         toast.success(`${berhasil} klaim poin berhasil diajukan ke Admin Ditmawa!`)
       }
       if (gagal > 0) {
-        toast.error(`${gagal} klaim gagal diajukan (mungkin sudah pernah diklaim).`)
+        const detailError = pesanError.length > 0 ? `: ${pesanError.join(', ')}` : ''
+        toast.error(`${gagal} klaim gagal diajukan${detailError}`)
       }
       setShowKlaimModal(false)
       setSelected(new Set())
@@ -313,7 +393,7 @@ function KlaimPoinCapaian() {
           <div>
             <h3 className="text-base font-bold text-base-content">Ajukan Klaim Poin Capaian</h3>
             <p className="mt-0.5 text-sm text-base-content/60">
-              Upload bukti PDF untuk masing-masing kegiatan yang dipilih. Kegiatan tanpa bukti tidak dapat diklaim.
+              Pilih peran capaian dan unggah bukti PDF untuk masing-masing kegiatan yang dipilih.
             </p>
           </div>
 
@@ -325,45 +405,117 @@ function KlaimPoinCapaian() {
             </div>
           ) : null}
 
-          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
             {klaimItems.map((item) => (
-              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : item.buktiError ? 'border-error/40 bg-error/5' : 'border-base-300 bg-base-200'}`}>
-                <p className="text-sm font-medium text-base-content">{item.kegiatan}</p>
-                <p className="text-xs text-base-content/60 mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
+              <div
+                key={item.id}
+                className={`rounded-xl border p-3.5 transition-all ${
+                  item.bukti && item.peranId
+                    ? 'border-green-200 bg-green-50/40'
+                    : item.buktiError || !item.peranId
+                    ? 'border-amber-200 bg-amber-50/20'
+                    : 'border-base-300 bg-base-200/60'
+                }`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-base-content">{item.kegiatan}</p>
+                  <p className="text-xs text-base-content/60 mt-0.5">
+                    Skala: <span className="font-medium text-base-content">{item.skala}</span>
+                  </p>
+                </div>
 
-                <div className="mt-2 flex items-center gap-1.5">
-                  <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed bg-base-100 px-3 py-2 transition ${item.buktiError ? 'border-error/50 hover:border-error' : 'border-base-300 hover:border-primary hover:bg-base-200'}`}>
-                    {item.bukti ? (
-                      <FileText className="h-4 w-4 shrink-0 text-primary" />
-                    ) : (
-                      <UploadCloud className={`h-4 w-4 shrink-0 ${item.buktiError ? 'text-error' : 'text-base-content/50'}`} />
-                    )}
-                    <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-base-content' : item.buktiError ? 'text-error' : 'text-base-content/50'}`}>
-                      {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 1 MB)'}
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf"
-                      onChange={(e) => handleKlaimFileChange(item.id, e)}
-                    />
+                {/* Dropdown Pilihan Peran Capaian */}
+                <div className="mt-2.5">
+                  <label className="block text-xs font-semibold text-base-content mb-1">
+                    Peran Capaian <span className="text-error">*</span>
                   </label>
-                  {item.bukti ? (
-                    <button
-                      type="button"
-                      onClick={() => handleClearBukti(item.id)}
-                      disabled={submittingKlaim}
-                      className="btn btn-ghost btn-xs btn-circle shrink-0 text-base-content/50 hover:bg-error/10 hover:text-error"
-                      title="Hapus file"
-                      aria-label="Hapus file bukti"
+                  {item.loadingPeran ? (
+                    <div className="flex items-center gap-2 py-2 px-3 rounded-lg border border-base-300 bg-base-100 text-xs text-base-content/60">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                      <span>Memuat opsi peran...</span>
+                    </div>
+                  ) : item.peranList && item.peranList.length > 0 ? (
+                    <select
+                      value={item.peranId || ''}
+                      onChange={(e) => handlePeranChange(item.id, e.target.value)}
+                      className={`select select-sm w-full rounded-lg border text-xs ${
+                        !item.peranId ? 'border-amber-400 bg-amber-50/40 font-medium' : 'border-base-300 bg-base-100'
+                      }`}
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+                      <option value="">-- Pilih Peran Capaian Anda --</option>
+                      {item.peranList.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.nama}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="py-1.5 px-3 rounded-lg border border-base-300 bg-base-100 text-xs text-base-content font-medium">
+                      {item.peran && item.peran !== '-' ? item.peran : 'Peserta'}
+                    </div>
+                  )}
+                  {!item.peranId && !item.loadingPeran && item.peranList.length > 0 && (
+                    <p className="text-[11px] text-amber-600 mt-1 font-medium">
+                      ⚠️ Wajib pilih peran capaian untuk kegiatan ini.
+                    </p>
+                  )}
+                </div>
+
+                {/* Upload Bukti PDF */}
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-base-content mb-1">
+                    Bukti Dokumen (PDF) <span className="text-error">*</span>
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <label
+                      className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed bg-base-100 px-3 py-2 transition ${
+                        item.buktiError
+                          ? 'border-error/50 hover:border-error'
+                          : 'border-base-300 hover:border-primary hover:bg-base-200'
+                      }`}
+                    >
+                      {item.bukti ? (
+                        <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      ) : (
+                        <UploadCloud
+                          className={`h-4 w-4 shrink-0 ${item.buktiError ? 'text-error' : 'text-base-content/50'}`}
+                        />
+                      )}
+                      <span
+                        className={`truncate text-xs ${
+                          item.bukti
+                            ? 'font-semibold text-base-content'
+                            : item.buktiError
+                            ? 'text-error'
+                            : 'text-base-content/50'
+                        }`}
+                      >
+                        {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 1 MB)'}
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf"
+                        onChange={(e) => handleKlaimFileChange(item.id, e)}
+                      />
+                    </label>
+                    {item.bukti ? (
+                      <button
+                        type="button"
+                        onClick={() => handleClearBukti(item.id)}
+                        disabled={submittingKlaim}
+                        className="btn btn-ghost btn-xs btn-circle shrink-0 text-base-content/50 hover:bg-error/10 hover:text-error"
+                        title="Hapus file"
+                        aria-label="Hapus file bukti"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                  {item.buktiError ? (
+                    <p className="mt-1.5 text-xs text-error font-medium">{item.buktiError}</p>
                   ) : null}
                 </div>
-                {item.buktiError ? (
-                  <p className="mt-1.5 text-xs text-error">{item.buktiError}</p>
-                ) : null}
               </div>
             ))}
           </div>
@@ -371,11 +523,11 @@ function KlaimPoinCapaian() {
           <div className="flex gap-3 pt-1">
             <button
               type="button"
-              disabled={submittingKlaim || !semuaBuktiLengkap}
+              disabled={submittingKlaim || !formKlaimSiap}
               onClick={handleSubmitKlaim}
               className="btn btn-primary flex-1 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {submittingKlaim ? 'Mengirim…' : 'Ajukan Klaim Poin'}
+              {submittingKlaim ? 'Mengirim...' : 'Ajukan Klaim Poin'}
             </button>
             <button
               type="button"
@@ -386,8 +538,12 @@ function KlaimPoinCapaian() {
               Batal
             </button>
           </div>
-          {klaimItems.length > 0 && !semuaBuktiLengkap && (
-            <p className="text-xs text-base-content/50">Lengkapi bukti dokumen untuk semua kegiatan sebelum dapat diajukan.</p>
+          {klaimItems.length > 0 && !formKlaimSiap && (
+            <p className="text-xs text-amber-600 text-center font-medium">
+              {!semuaPeranDipilih
+                ? 'Pilih peran capaian untuk semua kegiatan sebelum dapat diajukan.'
+                : 'Lengkapi bukti dokumen PDF untuk semua kegiatan sebelum dapat diajukan.'}
+            </p>
           )}
         </div>
       </Modal>
@@ -485,19 +641,16 @@ function KlaimPoinCapaian() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              {(search || filterStatus || filterSkala) && (
-                <button
-                  type="button"
-                  onClick={() => { setSearch(''); setFilterStatus(''); setFilterSkala('') }}
-                  className="btn btn-ghost btn-sm"
-                >
-                  Reset Filter
-                </button>
-              )}
             </div>
           </div>
+
           <TableFrame>
-            <DataTable columns={riwayatColumns} data={filteredRiwayat} loading={loading} />
+            <DataTable
+              columns={riwayatColumns}
+              data={filteredRiwayat}
+              loading={loading}
+              emptyText="Belum ada riwayat klaim poin."
+            />
           </TableFrame>
         </TableCard>
       </div>
