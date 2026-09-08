@@ -130,6 +130,7 @@ function ManajemenEvent() {
   const user = getCurrentUser()
   const role = user?.role || 'admin_ditmawa'
   const basePath = role === 'pimpinan_ditmawa' ? '/pimpinan_ditmawa' : '/admin_ditmawa'
+  const isPimpinan = role === 'pimpinan_ditmawa' || role === 'pimpinan_utama'
   const userRole = user?.userRole || (role === 'pimpinan_ditmawa' ? 'Pimpinan Ditmawa' : 'Admin Ditmawa')
   const userName = user?.nama || userRole
   const [searchParams, setSearchParams] = useSearchParams()
@@ -208,11 +209,15 @@ function ManajemenEvent() {
     if (!kirimTarget) return
     try {
       await ajukanKegiatan(kirimTarget.id)
-      toast.success('Event dikirim ke Pimpinan')
+      if (isPimpinan) {
+        toast.success('Event berhasil dipublikasikan dan langsung aktif!')
+      } else {
+        toast.success('Event dikirim ke Pimpinan')
+      }
       setKirimTarget(null)
       load()
     } catch (err) {
-      toast.error('Gagal kirim', { description: err.message })
+      toast.error('Gagal memproses event', { description: err.message })
     }
   }
 
@@ -248,7 +253,9 @@ function ManajemenEvent() {
         items={[
           bisaKirim(row)
             ? {
-                label: row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim',
+                label: isPimpinan
+                  ? (row.rawStatus === 'perlu_revisi' ? 'Publikasikan Ulang' : 'Publikasikan')
+                  : (row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim'),
                 icon: row.rawStatus === 'perlu_revisi' ? <RefreshCw className="h-4 w-4" /> : <Send className="h-4 w-4" />,
                 color: row.rawStatus === 'perlu_revisi' ? 'text-amber-600' : 'text-brand-dark',
                 onClick: () => setKirimTarget(row),
@@ -307,8 +314,16 @@ function ManajemenEvent() {
         )}
       <ConfirmModal
         isOpen={!!kirimTarget}
-        message="Setelah dikirim, kegiatan tidak dapat diedit. Lanjutkan?"
-        confirmText={kirimTarget?.rawStatus === 'perlu_revisi' ? 'Ya, Ajukan Ulang' : 'Ya, Kirim'}
+        message={
+          isPimpinan
+            ? 'Publikasikan kegiatan ini agar langsung aktif dan dapat diakses mahasiswa?'
+            : 'Setelah dikirim, kegiatan tidak dapat diedit. Lanjutkan?'
+        }
+        confirmText={
+          isPimpinan
+            ? (kirimTarget?.rawStatus === 'perlu_revisi' ? 'Ya, Publikasikan Ulang' : 'Ya, Publikasikan')
+            : (kirimTarget?.rawStatus === 'perlu_revisi' ? 'Ya, Ajukan Ulang' : 'Ya, Kirim')
+        }
         cancelText="Batal"
         onConfirm={handleKirim}
         onCancel={() => setKirimTarget(null)}

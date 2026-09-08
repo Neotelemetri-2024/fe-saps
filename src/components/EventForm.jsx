@@ -7,6 +7,7 @@ import { createKegiatan, updateKegiatan, getKegiatanById, ajukanKegiatan } from 
 import { getKurikulumAktif } from '../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../services/matriksService'
 import PemetaanCapaianKurikulumSection from './PemetaanCapaianKurikulumSection'
+import { getCurrentUser } from '../services/authService'
 
 const EMPTY_FORM = {
   nama: '',
@@ -24,6 +25,9 @@ const EMPTY_FORM = {
 
 function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
   const isEdit = !!editItem
+  const currentUser = getCurrentUser()
+  const role = currentUser?.role || ""
+  const isPimpinan = role === "pimpinan_ditmawa" || role === "pimpinan_utama"
   const [loading, setLoading] = useState(false)
   const [loadingEdit, setLoadingEdit] = useState(false)
   const [showAjukanConfirm, setShowAjukanConfirm] = useState(false)
@@ -191,12 +195,18 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
         await updateKegiatan(editItem.id, payload)
       }
       await ajukanKegiatan(id)
-      toast.success('Event berhasil diajukan!', {
-        description: 'Event telah dikirim dan menunggu persetujuan. Setelah dikirim tidak dapat diedit.',
-      })
+      if (isPimpinan) {
+        toast.success('Event berhasil dipublikasikan dan langsung aktif!', {
+          description: 'Kegiatan telah aktif dan peserta dapat didaftarkan.',
+        })
+      } else {
+        toast.success('Event berhasil diajukan!', {
+          description: 'Event telah dikirim dan menunggu persetujuan. Setelah dikirim tidak dapat diedit.',
+        })
+      }
       onSaved?.()
     } catch (err) {
-      toast.error('Gagal mengajukan event', { description: err.message })
+      toast.error(isPimpinan ? 'Gagal mempublikasikan event' : 'Gagal mengajukan event', { description: err.message })
     } finally {
       setLoading(false)
     }
@@ -206,8 +216,12 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
     <div className="space-y-5">
       <ConfirmModal
         isOpen={showAjukanConfirm}
-        message="Setelah diajukan, event tidak dapat diedit. Lanjutkan?"
-        confirmText="Ya, Ajukan"
+        message={
+          isPimpinan
+            ? 'Publikasikan kegiatan ini agar langsung aktif dan dapat diakses mahasiswa?'
+            : 'Setelah diajukan, event tidak dapat diedit. Lanjutkan?'
+        }
+        confirmText={isPimpinan ? 'Ya, Publikasikan' : 'Ya, Ajukan'}
         cancelText="Batal"
         onConfirm={handleAjukanSekarang}
         onCancel={() => setShowAjukanConfirm(false)}
@@ -409,7 +423,7 @@ function EventForm({ editItem, onCancel, onSaved, asal = 'universitas' }) {
             onClick={() => { if (validateForm()) setShowAjukanConfirm(true) }}
             className="btn btn-primary"
           >
-            {loading ? 'Mengirim...' : 'Ajukan Sekarang'}
+            {loading ? (isPimpinan ? 'Mempublikasikan...' : 'Mengirim...') : (isPimpinan ? 'Publikasikan Sekarang' : 'Ajukan Sekarang')}
           </button>
           <button type="button" onClick={onCancel} className="btn btn-ghost">
             Batal
