@@ -88,8 +88,8 @@ function TambahMatriks() {
       toast.error('Nama kurikulum tidak boleh kosong.')
       return
     }
-    if (!/^\d{4}\/\d{4}$/.test(tahun.trim())) {
-      toast.error('Tahun akademik harus berformat YYYY/YYYY.')
+    if (!/^(\d{4}|\d{4}\/\d{4})$/.test(tahun.trim())) {
+      toast.error('Tahun akademik harus berformat YYYY atau YYYY/YYYY (contoh: 2026 atau 2026/2027).')
       return
     }
     const angkatan = Number(angkatanMulai)
@@ -173,7 +173,7 @@ function TambahMatriks() {
                 type="text"
                 value={tahun}
                 onChange={(e) => setTahun(e.target.value)}
-                placeholder="Contoh: 2025/2026"
+                placeholder="Contoh: 2026 atau 2026/2027"
                 className="input w-full"
               />
             </div>

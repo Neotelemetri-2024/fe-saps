@@ -81,7 +81,7 @@ function ManajemenKurikulum() {
   const [nonaktifTarget, setNonaktifTarget] = useState(null)
 
   const [showTambahKurikulum, setShowTambahKurikulum] = useState(false)
-  const [kurForm, setKurForm] = useState({ tahun: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`, angkatanMulai: new Date().getFullYear(), nama: '' })
+  const [kurForm, setKurForm] = useState({ tahun: `${new Date().getFullYear()}`, angkatanMulai: new Date().getFullYear(), nama: '' })
 
   const [showTambahCapaian, setShowTambahCapaian] = useState(false)
   const [capaianForm, setCapaianForm] = useState({ nama: '', jumlahPoin: '' })
@@ -256,26 +256,25 @@ function ManajemenKurikulum() {
 
   const handleTambahKurikulum = async () => {
     const namaTrimmed = String(kurForm.nama || '').trim()
-    const tahunInt = parseInt(String(kurForm.tahun).split('/')[0], 10)
+    const tahunVal = String(kurForm.tahun || '').trim()
+    const tahunInt = parseInt(tahunVal.split('/')[0], 10)
     const angkatanMulai = Number(kurForm.angkatanMulai)
 
     if (!namaTrimmed) {
       toast.error('Nama kurikulum tidak boleh kosong.')
       return
     }
-    if (!kurForm.tahun || isNaN(tahunInt) || tahunInt < 2000 || tahunInt > 2100) {
-      toast.error('Tahun akademik harus valid (contoh: 2025/2026).')
+    if (!tahunVal || isNaN(tahunInt) || tahunInt < 2000 || tahunInt > 2100) {
+      toast.error('Tahun akademik harus valid (contoh: 2026 atau 2026/2027).')
       return
     }
     if (!angkatanMulai || angkatanMulai < 2000 || angkatanMulai > 2100) {
-      toast.error('Angkatan mulai harus diisi (contoh: 2024).')
+      toast.error('Angkatan mulai harus diisi (contoh: 2026).')
       return
     }
 
     try {
-      const tahunAkademik = String(kurForm.tahun).includes('/')
-        ? String(kurForm.tahun)
-        : `${tahunInt}/${tahunInt + 1}`
+      const tahunAkademik = tahunVal
       const created = await createKurikulum({
         nama: namaTrimmed,
         tahunAkademik,
@@ -283,7 +282,7 @@ function ManajemenKurikulum() {
       })
       toast.success('Kurikulum berhasil ditambahkan.')
       setKurForm({
-        tahun: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+        tahun: `${new Date().getFullYear()}`,
         angkatanMulai: new Date().getFullYear(),
         nama: '',
       })
@@ -505,7 +504,7 @@ const handleEditSubCapaian = async () => {
               type="text"
               value={kurForm.tahun}
               onChange={(e) => setKurForm((p) => ({ ...p, tahun: e.target.value }))}
-              placeholder="Contoh: 2024/2025"
+              placeholder="Contoh: 2026 atau 2026/2027"
               className="input w-full"
             />
           </div>

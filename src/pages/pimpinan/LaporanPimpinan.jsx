@@ -432,7 +432,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
               <VerticalBarChart
                 labels={kurikulumStats.map((c) => c.nama || `Tahun ${c.tahun}`)}
                 values={kurikulumStats.map((c) => Number(c.persentaseCapaian) || 0)}
-                height={220}
+                height={kurikulumStats.length > 4 ? 320 : 220}
               />
             )}
           </TableCard>
