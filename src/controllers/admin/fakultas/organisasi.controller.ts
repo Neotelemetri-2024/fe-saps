@@ -6,15 +6,15 @@ import bcrypt from 'bcryptjs';
 
 // ==================== VALIDASI ====================
 const createAkunLengkapSchema = z.object({
-  namaUkm: z.string().min(3),
-  email: z.string().email(),
-  password: z.string().min(6),
+  namaUkm: z.string().min(3, 'Nama UKMF minimal 3 karakter'),
+  email: z.string().email('Format email tidak valid'),
+  password: z.string().min(8, 'Password minimal 8 karakter'),
   status: z.boolean(), // true = Aktif, false = Non Aktif
   fakultasId: z.coerce.number().optional().nullable(),
 });
 
 const resetPasswordSchema = z.object({
-  passwordBaru: z.string().min(6),
+  passwordBaru: z.string().min(8, 'Password baru minimal 8 karakter'),
 });
 
 // ==================== OPERATOR UKMF CRUD (ADMIN FAKULTAS & PIMPINAN DITMAWA) ====================
@@ -167,7 +167,8 @@ export const createAkunUKMF = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ');
+      res.status(400).json({ success: false, message: errorMsg || 'Validasi gagal', errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
@@ -258,7 +259,8 @@ export const resetPasswordUKMF = async (req: Request, res: Response): Promise<vo
     res.json({ success: true, message: 'Password berhasil direset' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: 'Validasi gagal', errors: error.issues });
+      const errorMsg = error.issues.map((i) => i.message).join(', ');
+      res.status(400).json({ success: false, message: errorMsg || 'Validasi gagal', errors: error.issues });
     } else {
       console.error(error);
       res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
