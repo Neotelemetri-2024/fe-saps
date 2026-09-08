@@ -32,7 +32,9 @@ function TambahAkunModal({ onClose, onSave, fakultasList = [] }) {
   const handleSubmit = async () => {
     const email = form.email.trim()
     if (!form.nama || !email || !form.password) { toast.error('Lengkapi semua field wajib.'); return }
+    if (form.nama.trim().length < 3) { toast.error('Nama UKMF minimal 3 karakter.'); return }
     if (!EMAIL_REGEX.test(email)) { toast.error('Format email tidak valid.'); return }
+    if (form.password.length < 8) { toast.error('Password minimal 8 karakter.'); return }
     if (form.password !== form.konfirmasiPassword) { toast.error('Password tidak cocok.'); return }
     setSaving(true)
     try { await onSave(form) } finally { setSaving(false) }
@@ -122,6 +124,7 @@ function ResetPasswordModal({ item, onClose, onReset }) {
 
   const handleSubmit = async () => {
     if (!newPwd.trim()) { toast.error('Password baru tidak boleh kosong.'); return }
+    if (newPwd.trim().length < 8) { toast.error('Password baru minimal 8 karakter.'); return }
     setSaving(true)
     try { await onReset(item, newPwd); onClose() } finally { setSaving(false) }
   }

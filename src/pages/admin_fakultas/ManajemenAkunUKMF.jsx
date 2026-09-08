@@ -51,8 +51,18 @@ function TambahAkunModal({ onClose, onSave }) {
       return
     }
 
+    if (form.namaUkm.trim().length < 3) {
+      toast.error('Nama UKMF minimal 3 karakter.')
+      return
+    }
+
     if (!EMAIL_REGEX.test(email)) {
       toast.error('Format email tidak valid.')
+      return
+    }
+
+    if (form.password.length < 8) {
+      toast.error('Password minimal 8 karakter.')
       return
     }
 
@@ -275,6 +285,11 @@ function ResetPasswordModal({
   const handleSubmit = async () => {
     if (!newPwd.trim()) {
       toast.error('Password baru tidak boleh kosong.')
+      return
+    }
+
+    if (newPwd.trim().length < 8) {
+      toast.error('Password baru minimal 8 karakter.')
       return
     }
 

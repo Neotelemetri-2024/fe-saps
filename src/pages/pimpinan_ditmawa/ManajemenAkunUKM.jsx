@@ -34,8 +34,16 @@ function TambahAkunModal({ onClose, onSave }) {
       toast.error('Lengkapi semua field wajib.')
       return
     }
+    if (form.namaUkm.trim().length < 3) {
+      toast.error('Nama UKM minimal 3 karakter.')
+      return
+    }
     if (!EMAIL_REGEX.test(email)) {
       toast.error('Format email tidak valid.')
+      return
+    }
+    if (form.password.length < 8) {
+      toast.error('Password minimal 8 karakter.')
       return
     }
     if (form.password !== form.konfirmasiPassword) {
@@ -130,6 +138,7 @@ function ResetPasswordModal({ item, onClose, onReset }) {
 
   const handleSubmit = async () => {
     if (!newPwd.trim()) { toast.error('Password baru tidak boleh kosong.'); return }
+    if (newPwd.trim().length < 8) { toast.error('Password baru minimal 8 karakter.'); return }
     setSaving(true)
     try { await onReset(item, newPwd); onClose() }
     finally { setSaving(false) }

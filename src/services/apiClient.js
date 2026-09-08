@@ -25,6 +25,10 @@ function buildHeaders(extra = {}) {
 }
 
 function extractErrorMessage(text, body, status) {
+  if (Array.isArray(body?.errors) && body.errors.length > 0) {
+    const details = body.errors.map((e) => e.message || `${e.path?.join('.')}: invalid`).join(', ')
+    return details
+  }
   if (body?.message && typeof body.message === 'string' && !body.message.trim().startsWith('<')) {
     return body.message
   }
