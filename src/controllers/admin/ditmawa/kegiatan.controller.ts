@@ -26,7 +26,13 @@ const createKegiatanSchema = z.object({
     subCapaianId: z.number({ message: 'Sub capaian wajib dipilih' }).int().positive('Sub capaian tidak valid'),
     alokasiPersen: z.number({ message: 'Persentase alokasi wajib diisi' }).min(0.01, 'Alokasi minimal 0.01%').max(100, 'Alokasi maksimal 100%'),
   })).min(1, 'Minimal harus ada 1 alokasi sub capaian'),
-});
+}).refine(
+  (data) => new Date(data.tanggalSelesai).getTime() >= new Date(data.tanggalMulai).getTime(),
+  {
+    message: 'Tanggal berakhir tidak boleh lebih awal dari tanggal mulai',
+    path: ['tanggalSelesai'],
+  }
+);
 
 const approvalSchema = z.object({
   keputusan: z.enum(['setuju', 'revisi', 'tolak'] as const, {
