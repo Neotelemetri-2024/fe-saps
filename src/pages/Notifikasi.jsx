@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCheck } from 'lucide-react'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import { NotifListSkeleton, Skeleton } from '../components/dashboard/Skeleton'
 import { getCurrentUser } from '../services/authService'
 import { getNotifikasi, bacaNotifikasi, bacaSemua } from '../services/notifikasiService'
+import { subscribeDataUpdate } from '../services/pengajuanService'
 
 const ROLE_LABEL = {
   mahasiswa: 'Mahasiswa',
@@ -54,19 +55,64 @@ function resolveAction(notif, role) {
 
   const judul = (notif.title || '').toLowerCase()
   const refId = notif.raw?.refId
+  const refStatus = notif.raw?.refStatus ? String(notif.raw.refStatus).toLowerCase() : null
+
+  // Cek apakah entitas terkait sudah selesai diputuskan (disetujui, ditolak, dll)
+  const sudahSelesai =
+    refStatus === 'disetujui' ||
+    refStatus === 'terpublikasi' ||
+    refStatus === 'ditolak' ||
+    refStatus === 'selesai' ||
+    refStatus === 'dibatalkan'
 
   let label = 'Verifikasi Detail Kegiatan'
-  if (judul.includes('ditolak')) {
+  if (sudahSelesai) {
+    if (refStatus === 'ditolak') {
+      label = 'Lihat Alasan Penolakan'
+    } else if (notif.type === 'klaim_poin') {
+      label = 'Lihat Klaim Poin'
+    } else {
+      label = 'Lihat Detail Kegiatan'
+    }
+  } else if (judul.includes('ditolak')) {
     label = 'Lihat Alasan'
   } else if (judul.includes('saran')) {
-    label = 'Saran'
-  } else if (judul.includes('direview') || judul.includes('menunggu') || judul.includes('review') || judul.includes('diproses')) {
+    label = 'Lihat Saran'
+  } else if (
+    judul.includes('direview') ||
+    judul.includes('menunggu') ||
+    judul.includes('review') ||
+    judul.includes('diproses') ||
+    refStatus === 'terverifikasi' ||
+    refStatus === 'diajukan'
+  ) {
     label = 'Verifikasi'
   } else if (notif.type === 'klaim_poin' || notif.type === 'perolehan_poin') {
     label = 'Lihat Detail'
   }
 
-  return { label, path: route(refId) }
+  return { label, path: route(refId), sudahSelesai, refStatus }
+}
+
+function renderRefStatusBadge(status) {
+  if (!status) return null
+  const s = String(status).toLowerCase()
+  if (s === 'disetujui' || s === 'terpublikasi' || s === 'sah') {
+    return <span className="badge badge-success badge-xs font-semibold px-2 py-0.5">Disetujui</span>
+  }
+  if (s === 'ditolak' || s === 'dibatalkan') {
+    return <span className="badge badge-error badge-xs font-semibold px-2 py-0.5">Ditolak</span>
+  }
+  if (s === 'perlu_revisi' || s === 'revisi') {
+    return <span className="badge badge-warning badge-xs font-semibold px-2 py-0.5">Perlu Revisi</span>
+  }
+  if (s === 'terverifikasi') {
+    return <span className="badge badge-info badge-xs font-semibold px-2 py-0.5">Menunggu Persetujuan</span>
+  }
+  if (s === 'diajukan') {
+    return <span className="badge badge-ghost badge-xs font-semibold px-2 py-0.5">Menunggu Verifikasi</span>
+  }
+  return null
 }
 
 function formatRelativeTime(value) {
@@ -130,25 +176,32 @@ function Notifikasi() {
   const [activeTab, setActiveTab] = useState('semua')
   const [page, setPage] = useState(1)
 
-  useEffect(() => {
-    let active = true
+  const loadData = () => {
     getNotifikasi()
       .then((res) => {
-        if (!active) return
         const list = Array.isArray(res) ? res : res?.data || []
         setNotifs(list.map(normalizeNotif))
       })
       .catch((err) => {
-        if (!active) return
         setNotifs([])
         toast.error('Gagal memuat notifikasi', { description: err.message })
       })
       .finally(() => {
-        if (active) setLoading(false)
+        setLoading(false)
       })
-    return () => {
-      active = false
-    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  // Auto-refresh data saat ada event perubahan notifikasi / persetujuan
+  useEffect(() => {
+    return subscribeDataUpdate((detail) => {
+      if (!detail?.type || detail.type === 'notifikasi' || detail.type === 'persetujuan' || detail.type === 'klaim') {
+        loadData()
+      }
+    })
   }, [])
 
   const belumDibacaCount = notifs.filter((n) => n.belumDibaca).length
@@ -197,6 +250,23 @@ function Notifikasi() {
     }
   }
 
+  // Klik tombol aksi: otomatis tandai sudah dibaca lalu navigasi ke halaman target
+  const handleActionClick = async (notif, action) => {
+    if (notif.belumDibaca) {
+      try {
+        await bacaNotifikasi(notif.id)
+        setNotifs((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, belumDibaca: false } : n))
+        )
+      } catch {
+        // Tetap lanjutkan navigasi jika API mark-as-read gagal
+      }
+    }
+    if (action?.path) {
+      navigate(action.path)
+    }
+  }
+
   const emptyText =
     activeTab === 'belum_dibaca'
       ? 'Tidak ada notifikasi belum dibaca.'
@@ -221,7 +291,12 @@ function Notifikasi() {
             )}
           </div>
           {belumDibacaCount > 0 ? (
-            <button type="button" onClick={tandaiSemuaDibaca} className="btn btn-ghost btn-sm self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={tandaiSemuaDibaca}
+              className="btn btn-ghost btn-sm gap-1.5 self-start sm:self-auto text-primary font-semibold hover:bg-primary/10"
+            >
+              <CheckCheck className="h-4 w-4" />
               Tandai semua dibaca
             </button>
           ) : null}
@@ -242,7 +317,7 @@ function Notifikasi() {
           ))}
         </div>
 
-        <div className="card bg-base-100">
+        <div className="card bg-base-100 shadow-sm border border-base-300">
           {loading ? (
             <div className="p-4 sm:p-5">
               <NotifListSkeleton />
@@ -253,30 +328,44 @@ function Notifikasi() {
             <ul className="divide-y divide-base-300">
               {pageItems.map((notif) => {
                 const action = resolveAction(notif, role)
+                const refStatusBadge = renderRefStatusBadge(notif.raw?.refStatus)
+
                 return (
-                  <li key={notif.id} className="px-4 py-4 sm:px-5">
+                  <li
+                    key={notif.id}
+                    className={`px-4 py-4 sm:px-5 transition-colors ${
+                      notif.belumDibaca ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-base-200/50'
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-medium leading-snug text-base-content">
-                        {notif.belumDibaca ? (
-                          <span
-                            className="mr-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary align-middle"
-                            title="Belum dibaca"
-                          />
-                        ) : null}
-                        {notif.title}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2 min-w-0">
+                        <p className="text-sm font-semibold leading-snug text-base-content">
+                          {notif.belumDibaca ? (
+                            <span
+                              className="mr-2 inline-block h-2 w-2 shrink-0 rounded-full bg-primary align-middle"
+                              title="Belum dibaca"
+                            />
+                          ) : null}
+                          {notif.title}
+                        </p>
+                        {refStatusBadge}
+                      </div>
                       <span className="shrink-0 text-xs text-base-content/50">{notif.time}</span>
                     </div>
+
                     {notif.message ? (
-                      <p className="mt-1 text-sm text-base-content/60">{notif.message}</p>
+                      <p className="mt-1 text-sm text-base-content/70 leading-relaxed">{notif.message}</p>
                     ) : null}
+
                     {(action || notif.belumDibaca) ? (
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
                         {action ? (
                           <button
                             type="button"
-                            onClick={() => navigate(action.path)}
-                            className="text-sm font-medium text-primary hover:underline"
+                            onClick={() => handleActionClick(notif, action)}
+                            className={`text-sm font-semibold hover:underline transition-colors ${
+                              action.sudahSelesai ? 'text-base-content/80 hover:text-primary' : 'text-primary'
+                            }`}
                           >
                             {action.label}
                           </button>
@@ -285,7 +374,7 @@ function Notifikasi() {
                           <button
                             type="button"
                             onClick={() => tandaiSudahDibaca(notif.id)}
-                            className="text-sm text-base-content/60 hover:text-base-content hover:underline"
+                            className="text-xs text-base-content/50 hover:text-base-content hover:underline"
                           >
                             Tandai dibaca
                           </button>
@@ -316,7 +405,7 @@ function Notifikasi() {
                 {pageNumbers.map((p, idx) =>
                   p === '...' ? (
                     <button key={`ellipsis-${idx}`} type="button" className="btn btn-sm join-item btn-disabled">
-                      …
+                      ...
                     </button>
                   ) : (
                     <button

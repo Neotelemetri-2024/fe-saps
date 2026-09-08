@@ -3,6 +3,7 @@ import { Menu, Settings, LogOut, Bell, UserCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser, logout } from '../../services/authService'
 import { getUnreadCount } from '../../services/notifikasiService'
+import { subscribeDataUpdate } from '../../services/pengajuanService'
 import Sidebar, { MobileSidebar } from './Sidebar'
 import AccessibilityMenu from './AccessibilityMenu'
 import { NavSearchModal, NavSearchTrigger } from './NavSearch'
@@ -94,11 +95,23 @@ function DashboardChrome({ role, userName, userRole, children }) {
   }, [])
 
   useEffect(() => {
-    getUnreadCount().then(setUnreadCount).catch(() => {})
-    const interval = setInterval(() => {
+    const updateCount = () => {
       getUnreadCount().then(setUnreadCount).catch(() => {})
-    }, 30000)
-    return () => clearInterval(interval)
+    }
+    updateCount()
+
+    // Real-time listener saat notifikasi dibaca atau permohonan disetujui
+    const unsub = subscribeDataUpdate((detail) => {
+      if (!detail?.type || detail.type === 'notifikasi' || detail.type === 'persetujuan' || detail.type === 'klaim') {
+        updateCount()
+      }
+    })
+
+    const interval = setInterval(updateCount, 30000)
+    return () => {
+      unsub()
+      clearInterval(interval)
+    }
   }, [])
 
   useEffect(() => {
@@ -228,16 +241,16 @@ function DashboardChrome({ role, userName, userRole, children }) {
 
         <footer className="shrink-0 border-t border-base-300 bg-base-100 px-2 py-3">
           <p className="px-3 py-2.5 text-center text-sm text-base-content/60">
-            © {new Date().getFullYear()} Developed by Neo Telemetri - Universitas Andalas
+            &copy; {new Date().getFullYear()} Universitas Andalas. Sistem Aktivitas dan Poin Mahasiswa.
           </p>
         </footer>
       </div>
 
       <NavSearchModal
-        open={searchOpen}
+        isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
         menuItems={menuItems}
-        extras={searchExtras}
+        extraItems={searchExtras}
       />
     </div>
   )
