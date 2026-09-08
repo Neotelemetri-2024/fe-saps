@@ -247,7 +247,8 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
               include: {
                 peranUsulan: true
               }
-            }
+            },
+            peranVerif: true
           }
         }
       },
@@ -297,8 +298,8 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
             linkPenyelenggara: kg.linkPenyelenggara,
             emailPenyelenggara: kg.emailPenyelenggara,
           },
-          peran: klaim ? klaim.peranUsulan?.nama : '-',
-          peranId: klaim ? klaim.peranUsulanId?.toString() : null,
+          peran: klaim?.peranUsulan?.nama || item.partisipasi?.peranVerif?.nama || '-',
+          peranId: klaim?.peranUsulanId?.toString() || item.partisipasi?.peranVerifId?.toString() || null,
         };
       });
 

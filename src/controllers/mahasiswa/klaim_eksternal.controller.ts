@@ -36,9 +36,16 @@ export const getKegiatanTersedia = async (req: Request, res: Response, next: Nex
       include: {
         kegiatan: {
           include: {
-            kategori: { select: { id: true, nama: true } }
+            kategori: { select: { id: true, nama: true } },
+            skala: { select: { id: true, nama: true } },
           }
-        }
+        },
+        klaimPoin: {
+          include: {
+            peranUsulan: { select: { id: true, nama: true } }
+          }
+        },
+        peranVerif: { select: { id: true, nama: true } }
       }
     });
 
@@ -48,7 +55,12 @@ export const getKegiatanTersedia = async (req: Request, res: Response, next: Nex
       namaKegiatan: p.kegiatan.nama,
       jenisKegiatan: p.kegiatan.kategori?.nama,
       kategoriId: p.kegiatan.kategoriId,
-      tanggalPelaksanaan: p.kegiatan.tanggalMulai
+      skala: p.kegiatan.skala?.nama || null,
+      skalaId: p.kegiatan.skalaId,
+      penyelenggara: p.kegiatan.penyelenggaraExt || null,
+      tanggalPelaksanaan: p.kegiatan.tanggalMulai,
+      peran: p.klaimPoin?.peranUsulan?.nama || p.peranVerif?.nama || '-',
+      peranId: p.klaimPoin?.peranUsulanId?.toString() || p.peranVerifId?.toString() || null,
     }));
 
     res.status(200).json({ success: true, data: result });
@@ -66,12 +78,25 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
     const { partisipasiId, peranUsulanId } = req.body;
     const file = req.file;
 
-    if (!partisipasiId || !peranUsulanId || !file) {
-      return res.status(400).json({ success: false, message: 'Harap isi semua kolom wajib dan unggah file bukti' });
+    if (!partisipasiId || !peranUsulanId || peranUsulanId === 'null' || peranUsulanId === 'undefined' || !file) {
+      return res.status(400).json({ success: false, message: 'Harap lengkapi semua kolom wajib (termasuk peran) dan unggah file bukti' });
     }
 
     const partisipasiIdBigInt = BigInt(partisipasiId);
     const peranUsulanIdInt = parseInt(peranUsulanId);
+
+    if (isNaN(peranUsulanIdInt) || peranUsulanIdInt <= 0) {
+      return res.status(400).json({ success: false, message: 'Peran yang dipilih tidak valid' });
+    }
+
+    // Pastikan peran terdaftar di master peran
+    const masterPeran = await prisma.mpPeran.findUnique({
+      where: { id: peranUsulanIdInt }
+    });
+    if (!masterPeran) {
+      return res.status(400).json({ success: false, message: 'Peran yang dipilih tidak ditemukan di sistem' });
+    }
+
     const buktiUrl = `/uploads/${file.filename}`;
 
     // Cek partisipasi valid
@@ -97,7 +122,7 @@ export const ajukanKlaimEksternal = async (req: Request, res: Response, next: Ne
     }
 
     if (partisipasi.klaimPoin && partisipasi.klaimPoin.status !== 'draft') {
-      return res.status(400).json({ success: false, message: 'Kegiatan ini sudah pernah diklaim.' });
+      return res.status(400).json({ success: false, message: 'Kegiatan ini sudah pernah diajukan klaim.' });
     }
 
     // Update draft yang ada, atau buat baru
