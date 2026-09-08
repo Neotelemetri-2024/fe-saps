@@ -21,6 +21,7 @@ const createKegiatanSchema = z.object({
   kuota: z.number().int('Kuota harus berupa bilangan bulat').positive('Kuota harus berupa angka positif').optional(),
   organisasiId: z.number().int().positive('Organisasi ID tidak valid').optional(),
   penyelenggaraExt: z.string().optional(),
+  publikasikan: z.boolean().optional(),
   // Alokasi capaian
   alokasi: z.array(z.object({
     subCapaianId: z.number({ message: 'Sub capaian wajib dipilih' }).int().positive('Sub capaian tidak valid'),
@@ -293,7 +294,10 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
       body.penyelenggaraExt,
     );
 
-    // Selalu simpan sebagai draft — kirim lewat PUT /:id/ajukan
+    const isSuperAdmin = effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama';
+    const isDirectPublish = isSuperAdmin && (body.publikasikan === true || (req.body as any)?.status === 'disetujui');
+    const initialStatus = isDirectPublish ? 'disetujui' : 'draft';
+
     const kegiatan = await prisma.kegiatan.create({
       data: {
         nama: body.nama,
@@ -309,7 +313,7 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
         penyelenggaraExt: resolvedPenyelenggaraExt,
         kurikulumId: defaultKurikulumId,
         dibuatOleh,
-        status: 'draft',
+        status: initialStatus,
         kegiatanCapaian: {
           create: body.alokasi.map(a => ({
             subCapaianId: a.subCapaianId,
@@ -320,17 +324,31 @@ export const createKegiatan = async (req: Request, res: Response): Promise<void>
       include: { kegiatanCapaian: true },
     });
 
+    if (isDirectPublish) {
+      await prisma.kegiatanApproval.create({
+        data: {
+          kegiatanId: kegiatan.id,
+          tahap: 'approval',
+          aktorId: dibuatOleh,
+          keputusan: 'setuju',
+          alasan: 'Disetujui otomatis (dibuat langsung oleh Pimpinan/Super Admin)',
+        },
+      });
+    }
+
     await logAudit({
       entitas: 'kegiatan',
       entitasId: kegiatan.id,
-      aksi: 'create_draft',
-      statusBaru: 'draft',
+      aksi: isDirectPublish ? 'create_aktif' : 'create_draft',
+      statusBaru: initialStatus,
       aktorId: dibuatOleh,
     });
 
     res.status(201).json({
       success: true,
-      message: 'Kegiatan tersimpan sebagai draft. Kirim dari daftar kegiatan setelah siap.',
+      message: isDirectPublish
+        ? 'Kegiatan berhasil dibuat dan langsung aktif.'
+        : 'Kegiatan tersimpan sebagai draft. Kirim dari daftar kegiatan setelah siap.',
       data: kegiatan,
     });
   } catch (error) {
@@ -501,7 +519,11 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       }
     }
 
-    let statusBaru = 'terverifikasi';
+    const userPeran = req.user!.peran;
+    const effectiveRole = userPeran === 'staff' && userJabatan ? userJabatan : userPeran;
+    const isSuperAdmin = effectiveRole === 'pimpinan_ditmawa' || effectiveRole === 'pimpinan_utama';
+
+    let statusBaru = isSuperAdmin && body.keputusan === 'setuju' ? 'disetujui' : 'terverifikasi';
     if (body.keputusan === 'revisi') statusBaru = 'perlu_revisi';
     if (body.keputusan === 'tolak') statusBaru = 'ditolak';
 
@@ -539,10 +561,10 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       await prisma.kegiatanApproval.create({
         data: {
           kegiatanId: kegiatan.id,
-          tahap: 'verifikasi',
+          tahap: isSuperAdmin ? 'approval' : 'verifikasi',
           aktorId,
           keputusan: body.keputusan as any,
-          alasan: body.alasan,
+          alasan: body.alasan || (isSuperAdmin && body.keputusan === 'setuju' ? 'Disetujui langsung oleh Pimpinan/Super Admin' : undefined),
         },
       });
 
@@ -556,16 +578,17 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       });
 
       // Notifikasi ke pembuat kegiatan
+      const aktorNama = isSuperAdmin ? 'Pimpinan Ditmawa' : 'Admin';
       await NotifikasiService.kirim({
         userId: kegiatan.dibuatOleh,
-        judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
-        isi: `Kegiatan "${kegiatan.nama}" telah diverifikasi oleh Admin. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
+        judul: `Kegiatan ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'Disetujui' : 'Terverifikasi') : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+        isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'disetujui' : 'diverifikasi') : body.keputusan} oleh ${aktorNama}. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
         refType: 'kegiatan',
         refId: BigInt(kegiatan.id),
       });
 
-      // Jika setuju dan bukan eksternal, beri notif ke pimpinan
-      if (body.keputusan === 'setuju' && kegiatan.asal !== 'eksternal') {
+      // Jika setuju, bukan eksternal, dan BUKAN super admin, beri notif ke pimpinan
+      if (body.keputusan === 'setuju' && kegiatan.asal !== 'eksternal' && !isSuperAdmin) {
         let pimpinanTargets: { userId: bigint }[] = [];
         if (kegiatan.organisasi?.tipe === 'UKMF') {
           const pimpinanFakultas = await prisma.staff.findMany({
@@ -595,7 +618,12 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       successCount++;
     }
 
-    res.json({ success: true, message: `${successCount} kegiatan berhasil diproses secara bulk.` });
+    res.json({
+      success: true,
+      message: isSuperAdmin && body.keputusan === 'setuju'
+        ? `${successCount} kegiatan berhasil disetujui dan langsung aktif.`
+        : `${successCount} kegiatan berhasil diproses secara bulk.`,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
@@ -648,14 +676,27 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const statusBaru = isAdmin ? 'terverifikasi' : 'diajukan';
-
+    let statusBaru = 'diajukan';
     let notifTargets: { userId: bigint }[] = [];
     let notifJudul = statusLama === 'draft' ? 'Pengajuan Kegiatan Baru' : 'Pengajuan Ulang Kegiatan';
     let notifIsi = '';
     let notifLabel = 'Admin';
 
-    if (isAdmin) {
+    if (isSuperAdmin) {
+      statusBaru = 'disetujui';
+      await prisma.kegiatanApproval.create({
+        data: {
+          kegiatanId: kegiatan.id,
+          tahap: 'approval',
+          aktorId,
+          keputusan: 'setuju',
+          alasan: 'Disetujui otomatis (diajukan/dipublikasikan oleh Pimpinan/Super Admin)',
+        },
+      });
+      notifTargets = [];
+      notifLabel = 'Publik';
+    } else if (isAdmin) {
+      statusBaru = 'terverifikasi';
       if (effectiveRole === 'admin_ditmawa') {
         const pimpinanDitmawa = await prisma.staff.findMany({
           where: { jabatan: 'pimpinan_ditmawa', user: { aktif: true } },
@@ -729,7 +770,9 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
 
     res.json({
       success: true,
-      message: `Kegiatan berhasil dikirim ke ${notifLabel}. Setelah dikirim, kegiatan tidak dapat diedit.`,
+      message: isSuperAdmin
+        ? 'Kegiatan berhasil dipublikasikan dan langsung aktif.'
+        : `Kegiatan berhasil dikirim ke ${notifLabel}. Setelah dikirim, kegiatan tidak dapat diedit.`,
       data: updated,
     });
   } catch (error) {
@@ -899,17 +942,17 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     }
 
     const statusBaru =
-      body.keputusan === 'setuju' ? 'terverifikasi' :
+      body.keputusan === 'setuju' ? (isSuperAdmin ? 'disetujui' : 'terverifikasi') :
       body.keputusan === 'revisi' ? 'perlu_revisi' : 'ditolak';
 
     // Simpan catatan approval
     await prisma.kegiatanApproval.create({
       data: {
         kegiatanId: Number(id),
-        tahap: 'verifikasi',
+        tahap: isSuperAdmin ? 'approval' : 'verifikasi',
         aktorId,
         keputusan: body.keputusan,
-        alasan: body.alasan,
+        alasan: body.alasan || (isSuperAdmin && body.keputusan === 'setuju' ? 'Disetujui langsung oleh Pimpinan Ditmawa (Super Admin)' : undefined),
       },
     });
 
@@ -931,27 +974,28 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     }
 
     // Notifikasi ke pembuat kegiatan
+    const aktorNama = isSuperAdmin ? 'Pimpinan Ditmawa' : 'Admin';
     await NotifikasiService.kirim({
       userId: kegiatan.dibuatOleh,
-      judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Terverifikasi' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
-      isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Admin.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
+      judul: `Kegiatan ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'Disetujui' : 'Terverifikasi') : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
+      isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'disetujui' : 'diverifikasi') : body.keputusan} oleh ${aktorNama}.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
       refType: 'kegiatan',
       refId: BigInt(id as string),
     });
 
-    // Jika disetujui (terverifikasi), notifikasi ke Pimpinan yang tepat
-    if (body.keputusan === 'setuju') {
+    // Jika disetujui (terverifikasi) dan BUKAN super admin, notifikasi ke Pimpinan yang tepat
+    if (body.keputusan === 'setuju' && !isSuperAdmin) {
       let pimpinanTargets: { userId: bigint }[] = [];
 
       if (kegiatan.organisasi?.tipe === 'UKMF' && kegiatan.organisasi.fakultasId) {
-        // UKMF â†’ notifikasi ke Pimpinan Fakultas
+        // UKMF → notifikasi ke Pimpinan Fakultas
         const pimpinanFakultas = await prisma.staff.findMany({
           where: { jabatan: 'pimpinan_fakultas', fakultasId: kegiatan.organisasi.fakultasId, user: { aktif: true } },
           select: { userId: true },
         });
         pimpinanTargets = pimpinanFakultas.map(p => ({ userId: p.userId }));
       } else {
-        // UKM / universitas â†’ notifikasi ke Pimpinan Ditmawa
+        // UKM / universitas → notifikasi ke Pimpinan Ditmawa
         const pimpinanDitmawa = await prisma.staff.findMany({
           where: { jabatan: 'pimpinan_ditmawa', user: { aktif: true } },
           select: { userId: true },
@@ -990,7 +1034,13 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       aktorId,
     });
 
-    res.json({ success: true, data: updated });
+    res.json({
+      success: true,
+      message: isSuperAdmin && body.keputusan === 'setuju'
+        ? 'Kegiatan berhasil disetujui dan langsung aktif.'
+        : `Kegiatan berhasil ${body.keputusan === 'setuju' ? 'diverifikasi' : body.keputusan}.`,
+      data: updated,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
