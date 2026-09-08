@@ -54,6 +54,7 @@ function normalizeKegiatanDetail(k) {
     deskripsi: k.deskripsi || '',
     status: k.status,
     alasan: latestApproval?.alasan || '',
+    kurikulumNama: mhs.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || null,
     capaian: (() => {
       const seen = new Set()
       return (k.kegiatanCapaian || []).reduce((acc, kc) => {
@@ -253,6 +254,10 @@ function DetailVerifikasiPengajuanEksternal() {
         </SectionCard>
 
         {/* Capaian yang sudah diinput (setelah disetujui) */}
+        <SectionCard title="Kurikulum Mahasiswa">
+          <InfoRow label="Kurikulum" value={item.kurikulumNama || '-'} />
+        </SectionCard>
+
         {item.capaian?.length > 0 && (
           <SectionCard title="Capaian Kurikulum">
           {item.kurikulum && item.kurikulum !== '-' ? (

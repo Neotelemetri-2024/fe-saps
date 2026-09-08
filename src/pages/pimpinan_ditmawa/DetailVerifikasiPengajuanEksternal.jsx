@@ -60,6 +60,7 @@ function normalizeKegiatanDetail(k) {
     deskripsi: k.deskripsi || '',
     status: k.status,
     alasan: latestApproval?.alasan || '',
+    kurikulumNama: mhs.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || null,
     capaian: capaianList,
     subCapaian: subCapaianList,
     kurikulum: kurikulumNama,
@@ -174,6 +175,10 @@ function DetailVerifikasiPengajuanEksternal() {
           {item.email && item.email !== '-' ? <InfoRow label="Email" value={item.email} href={`mailto:${item.email}`} /> : null}
           {item.linkWebsite && item.linkWebsite !== '-' ? <InfoRow label="Website" value={item.linkWebsite} href={item.linkWebsite} /> : null}
           {item.deskripsi ? <InfoRow label="Deskripsi" value={item.deskripsi} multiline /> : null}
+        </SectionCard>
+
+        <SectionCard title="Kurikulum Mahasiswa">
+          <InfoRow label="Kurikulum" value={item.kurikulumNama || '-'} />
         </SectionCard>
 
         {item.capaian?.length > 0 ? (

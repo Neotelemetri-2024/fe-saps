@@ -7,7 +7,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 import { getCurrentUser } from '../../services/authService'
 import { getKlaimById, verifikasiKlaim } from '../../services/poinService'
-import { getApiBase } from '../../services/apiClient'
+import { resolveUploadUrl } from '../../services/apiClient'
 import {
   InfoRow,
   SectionCard,
@@ -37,9 +37,18 @@ function normalizeDetail(raw) {
   const mahasiswa = part.mahasiswa || {}
   const capaianList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.nama).filter(Boolean)
   const kurikulumList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
-  const kurikulumNama = raw.kurikulumNama || raw.kurikulum?.nama || kegiatan.kurikulum?.nama || mahasiswa.kurikulum?.nama || kurikulumList[0] || (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
-  const buktiUrl = raw.bukti?.[0]?.url || raw.buktiUrl || null
-  const apiBase = getApiBase()
+  const kurikulumNama =
+    mahasiswa.kurikulum?.nama ||
+    raw.kurikulumNama ||
+    raw.kurikulum?.nama ||
+    kegiatan.kurikulum?.nama ||
+    kurikulumList[0] ||
+    (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
+  const buktiRaw =
+    (typeof raw.bukti === 'string' ? raw.bukti : null) ||
+    raw.bukti?.[0]?.url ||
+    raw.buktiUrl ||
+    null
   return {
     id: String(raw.id),
     mahasiswa: mahasiswa.user?.nama || raw.mahasiswa || '-',
@@ -53,7 +62,7 @@ function normalizeDetail(raw) {
     email: kegiatan.emailExt || mahasiswa.user?.email || '-',
     linkWebsite: kegiatan.linkWebsiteExt || '-',
     deskripsi: kegiatan.deskripsi || '-',
-    bukti: buktiUrl ? (buktiUrl.startsWith('http') ? buktiUrl : `${apiBase}${buktiUrl}`) : null,
+    bukti: resolveUploadUrl(buktiRaw),
     kurikulum: kurikulumNama,
     capaian: [...new Set(capaianList)],
     subCapaian: (kegiatan.kegiatanCapaian || []).map((kc) => ({

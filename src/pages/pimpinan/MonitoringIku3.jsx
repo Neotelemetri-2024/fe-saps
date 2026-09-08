@@ -369,7 +369,7 @@ function MonitoringIku3({ defaultRole, embedded = false }) {
     })
       .then((res) => {
         if (cancelled) return
-        setActivities(res.data)
+        setActivities(res.data || [])
         setActivityTotal(res.total)
         setActivityPages(Math.max(1, res.totalPages || 1))
       })
@@ -402,7 +402,7 @@ function MonitoringIku3({ defaultRole, embedded = false }) {
       page,
       limit: PAGE_SIZE,
     }).then((res) => {
-      setActivities(res.data)
+      setActivities(res.data || [])
       setActivityTotal(res.total)
       setActivityPages(Math.max(1, res.totalPages || 1))
     }).catch(() => {})
@@ -594,17 +594,6 @@ function MonitoringIku3({ defaultRole, embedded = false }) {
                 label: 'Bobot',
                 center: true,
                 render: (row) => formatBobot(row.bobot),
-              },
-              {
-                key: 'bukti',
-                label: 'Bukti',
-                render: (row) => (
-                  row.buktiUrl ? (
-                    <a href={row.buktiUrl} target="_blank" rel="noopener noreferrer" className="link link-primary text-sm">
-                      Lihat
-                    </a>
-                  ) : '—'
-                ),
               },
             ]}
             data={activities.map((row, i) => ({

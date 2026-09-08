@@ -363,6 +363,7 @@ export function DoughnutChart({
   const skin = useChartSkin()
   const palette = colors?.length ? colors : undefined
   const totalLabel = centerLabel || centerTitle || ''
+  const hasCenter = centerValue != null && centerValue !== '' || Boolean(totalLabel)
 
   const options = {
     chart: baseChart(skin, { type: 'donut' }),
@@ -376,36 +377,30 @@ export function DoughnutChart({
       pie: {
         donut: {
           size: '68%',
-          labels: {
-            show: true,
-            name: {
-              show: Boolean(totalLabel),
-              fontSize: '11px',
-              color: skin.muted,
-              offsetY: 12,
-            },
-            value: {
-              show: true,
-              fontSize: '20px',
-              fontWeight: 800,
-              color: skin.foreColor,
-              offsetY: -8,
-              formatter: () => String(centerValue ?? ''),
-            },
-            total: {
-              show: true,
-              label: totalLabel,
-              fontSize: '11px',
-              color: skin.muted,
-              formatter: () => String(centerValue ?? ''),
-            },
-          },
+          // Label tengah pakai overlay HTML supaya jarak angka & teks tidak mepet
+          labels: { show: false },
         },
       },
     },
   }
 
   return (
-    <ApexChart options={options} series={values} type="donut" height={height} width="100%" />
+    <div className="relative w-full min-w-0" style={{ height }}>
+      <ApexChart options={options} series={values} type="donut" height={height} width="100%" />
+      {hasCenter && (
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+          {centerValue != null && centerValue !== '' && (
+            <span className="text-xl font-extrabold leading-none text-base-content sm:text-2xl">
+              {String(centerValue)}
+            </span>
+          )}
+          {totalLabel ? (
+            <span className="mt-1.5 max-w-[7.5rem] text-[11px] leading-snug text-base-content/60">
+              {totalLabel}
+            </span>
+          ) : null}
+        </div>
+      )}
+    </div>
   )
 }

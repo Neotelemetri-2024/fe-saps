@@ -10,7 +10,7 @@ import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { RadarChartCJ } from '../../components/charts'
 import { getCurrentUser } from '../../services/authService'
-import { get } from '../../services/apiClient'
+import { get, resolveUploadUrl } from '../../services/apiClient'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 function formatTanggal(val) {
@@ -120,7 +120,7 @@ function RiwayatPoin() {
             penyelenggara: item.penyelenggara || '-',
             tanggal: formatTanggal(item.tanggal),
             bukti: item.bukti ? (String(item.bukti).split('/').pop() || 'Bukti') : '-',
-            buktiUrl: item.bukti || null,
+            buktiUrl: resolveUploadUrl(item.bukti || item.buktiUrl || null),
             poin: item.poin ?? '-',
             status: mapStatus(item.status),
           })),

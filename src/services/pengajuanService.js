@@ -1,4 +1,4 @@
-import { get, post, put, del } from './apiClient'
+import { get, post, put, del, resolveUploadUrl } from './apiClient'
 
 const EVENT_NAME = 'saps-data-updated'
 
@@ -142,7 +142,7 @@ function normalizeKlaimEksternal(item, i = 0) {
     email: kegiatan.emailExt || mahasiswa.user?.email || '-',
     linkWebsite: kegiatan.linkWebsiteExt || '-',
     deskripsi: kegiatan.deskripsi || '-',
-    bukti: item.bukti?.[0]?.url || item.buktiUrl || null,
+    bukti: resolveUploadUrl(item.bukti?.[0]?.url || item.buktiUrl || null),
     capaian: uniqueCapaian.length ? uniqueCapaian : [],
     subCapaian,
     skala: kegiatan.skala?.nama || item.skala || '-',

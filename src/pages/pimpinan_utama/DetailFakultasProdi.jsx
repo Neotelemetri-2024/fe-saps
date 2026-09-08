@@ -1,42 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
-import { ChevronDown } from 'lucide-react'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import { DetailBackButton } from '../../components/ui/DetailComponents'
 import { getCurrentUser } from '../../services/authService'
 import { getDashboardFakultasDetail } from '../../services/dashboardService'
+import { ChartSkeleton } from '../../components/dashboard/Skeleton'
 import { DoughnutChart, StackedBarChart } from '../../components/charts'
-
-const KATEGORI = [
-  { key: 'organisasi', color: '#3b82f6', label: 'Organisasi' },
-  { key: 'seminar', color: '#15803d', label: 'Seminar' },
-  { key: 'prestasi', color: '#eab308', label: 'Prestasi' },
-]
-
-const SKALA_COLORS = [
-  '#9B5DE5', // ungu
-  '#1D3557', // navy
-  '#FF9F1C', // oranye
-  '#1A3A2B', // hijau tua
-  '#42B883', // hijau
-  '#E63946', // merah
-  '#457B9D', // biru abu
-  '#F4A261', // peach
-  '#2A9D8F', // teal
-  '#8338EC', // violet
-]
-const MHS_COLORS = [
-  '#B34F00',
-  '#DE350B',
-  '#42B883',
-  '#0052CC',
-  '#FFAB00',
-  '#6554C0',
-  '#00B8D9',
-  '#FF5630',
-]
 
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {
@@ -47,17 +19,16 @@ function pickKategoriValue(kategoriPoin = {}, keys) {
 }
 
 function KategoriPoinBar({ item }) {
-  const total = item.poin || KATEGORI.reduce((s, k) => s + (item[k.key] || 0), 0) || 1
+  const organisasi = item.organisasi || 0
+  const seminar = item.seminar || 0
+  const prestasi = item.prestasi || 0
+  const total = item.poin || organisasi + seminar + prestasi || 1
 
   return (
-    <div className="flex h-2.5 w-32 overflow-hidden rounded-full bg-base-300">
-      {KATEGORI.map((k) => (
-        <div
-          key={k.key}
-          style={{ width: `${((item[k.key] || 0) / total) * 100}%`, backgroundColor: k.color }}
-          title={`${k.label}: ${item[k.key] || 0}`}
-        />
-      ))}
+    <div className="flex h-2.5 w-32 overflow-hidden rounded-md bg-base-300">
+      <div className="bg-primary" style={{ width: `${(organisasi / total) * 100}%` }} title={`Organisasi: ${organisasi}`} />
+      <div className="bg-info" style={{ width: `${(seminar / total) * 100}%` }} title={`Seminar: ${seminar}`} />
+      <div className="bg-warning" style={{ width: `${(prestasi / total) * 100}%` }} title={`Prestasi: ${prestasi}`} />
     </div>
   )
 }
@@ -65,6 +36,7 @@ function KategoriPoinBar({ item }) {
 function DetailFakultasProdi() {
   const { fakultas } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const user = getCurrentUser()
   const fakultasId = fakultas
   const [selectedProdi, setSelectedProdi] = useState('Semua Prodi')
@@ -122,23 +94,20 @@ function DetailFakultasProdi() {
     selectedProdi === 'Semua Prodi' ? prodiList : prodiList.filter((p) => p.prodi === selectedProdi)
 
   const totalMahasiswa = useMemo(
-    () => distribusiPoin.reduce((s, p) => s + (p.jumlahMahasiswa || 0), 0) ||
-      prodiList.reduce((s, p) => s + (p.mahasiswa || 0), 0),
+    () => distribusiPoin.reduce((s, p) => s + (p.jumlahMahasiswa || 0), 0)
+      || prodiList.reduce((s, p) => s + (p.mahasiswa || 0), 0),
     [distribusiPoin, prodiList],
   )
   const totalPoin = prodiList.reduce((s, p) => s + p.poin, 0)
 
-  const mhsSections = prodiList.map((p, idx) => ({
-    percentage: (p.mahasiswa / (totalMahasiswa || 1)) * 100,
-    color: MHS_COLORS[idx % MHS_COLORS.length],
+  const mhsSections = prodiList.map((p) => ({
     label: p.prodi,
     value: p.mahasiswa,
   }))
 
-  const skalaKegiatan = poinBerdasarkanSkala.map((s, i) => ({
+  const skalaKegiatan = poinBerdasarkanSkala.map((s) => ({
     label: s.skala || '-',
     percentage: s.persentaseDariTotal ?? 0,
-    color: SKALA_COLORS[i % SKALA_COLORS.length],
     value: s.totalPoin ?? s.poin ?? null,
   }))
 
@@ -156,11 +125,14 @@ function DetailFakultasProdi() {
         userName={user?.nama || 'Pimpinan Utama'}
         userRole="Pimpinan Utama (Rektor)"
       >
-        <div className="rounded-xl border border-base-300 bg-base-100 p-10 text-center shadow-sm">
-          <h2 className="text-xl font-bold text-base-content">Fakultas tidak ditemukan</h2>
-          <p className="mt-2 text-sm text-base-content/60">
-            ID fakultas tidak valid. Pilih fakultas lain dari halaman ringkasan.
-          </p>
+        <div className="space-y-5">
+          <DetailBackButton onClick={() => navigate('/pimpinan_utama/detail-fakultas')} />
+          <div className="card bg-base-100 p-8 text-center">
+            <h2 className="text-xl font-extrabold text-base-content">Fakultas tidak ditemukan</h2>
+            <p className="mt-2 text-sm text-base-content/60">
+              ID fakultas tidak valid. Pilih fakultas lain dari halaman ringkasan.
+            </p>
+          </div>
         </div>
       </DashboardLayout>
     )
@@ -172,141 +144,151 @@ function DetailFakultasProdi() {
       userName={user?.nama || 'Pimpinan Utama'}
       userRole="Pimpinan Utama (Rektor)"
     >
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-5">
+        <DetailBackButton onClick={() => navigate('/pimpinan_utama/detail-fakultas')} />
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
+            <h2 className="text-2xl font-extrabold text-base-content">
               {namaFakultas || fakultasId}
             </h2>
-            <p className="mt-1 text-sm text-base-content/60">Detail program studi dan poin capaian mahasiswa.</p>
-          </div>
-          <div className="flex items-center gap-3 self-start sm:self-center">
-            <label htmlFor="filter-prodi" className="whitespace-nowrap text-sm font-semibold text-base-content">
-              Filter Prodi
-            </label>
-            <div className="relative">
-              <select
-                id="filter-prodi"
-                value={selectedProdi}
-                onChange={(e) => setSelectedProdi(e.target.value)}
-                className="cursor-pointer appearance-none rounded-lg border border-base-300 bg-base-100 py-2 pl-4 pr-10 text-sm text-base-content shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-              >
-                {['Semua Prodi', ...prodiList.map((p) => p.prodi)].map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/60" />
-            </div>
-            {selectedProdi !== 'Semua Prodi' && (
-              <button
-                type="button"
-                onClick={() => setSelectedProdi('Semua Prodi')}
-                className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2 text-sm font-medium text-brand-dark transition hover:bg-base-200"
-              >
-                Reset Filter
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between card bg-base-100 p-6">
-          <div>
-            <h3 className="text-sm font-bold text-base-content">Kurikulum Aktif</h3>
-            <p className="mt-1 text-sm font-semibold text-base-content">{kurikulumLabel}</p>
-            <p className="mt-0.5 text-xs text-base-content/60">
-              {Number(statistik?.totalMahasiswa ?? totalMahasiswa).toLocaleString('id-ID')} Mahasiswa Terdaftar
+            <p className="mt-1 text-sm text-base-content/60">
+              Detail program studi dan poin capaian mahasiswa.
             </p>
           </div>
-          <span className="rounded-full bg-gradient-to-r from-brand-dark to-brand-light px-4 py-1 text-xs font-bold text-white shadow-sm">
-            Aktif
-          </span>
+          <label className="flex min-w-52 flex-col gap-1">
+            <span className="text-xs text-base-content/60">Filter Prodi</span>
+            <select
+              value={selectedProdi}
+              onChange={(e) => setSelectedProdi(e.target.value)}
+              className="select select-sm"
+            >
+              {['Semua Prodi', ...prodiList.map((p) => p.prodi)].map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="card bg-base-100 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content">Kurikulum Aktif</h3>
+              <p className="mt-1 text-sm text-base-content">{kurikulumLabel}</p>
+              <p className="mt-0.5 text-xs text-base-content/60">
+                {Number(statistik?.totalMahasiswa ?? totalMahasiswa).toLocaleString('id-ID')} mahasiswa terdaftar
+              </p>
+            </div>
+            <span className="badge badge-success badge-sm">Aktif</span>
+          </div>
         </div>
 
         <TableCard title="Peringkat Prodi">
           <TableFrame>
-          <DataTable
-            loading={loading}
-            data={filteredProdi}
-            emptyText="Belum ada data prodi."
-            columns={[
-              { key: 'rank', label: 'Ranking', render: (item) => <span className="block text-center font-semibold text-base-content/60">{item.rank}.</span> },
-              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="font-semibold text-brand-dark">{item.prodi}</span> },
-              { key: 'poin', label: 'Total Poin', render: (item) => <span className="font-bold text-base-content">{item.poin}</span> },
-              { key: 'kategori', label: 'Kategori Poin', render: (item) => <KategoriPoinBar item={item} /> },
-            ]}
-          />
+            <DataTable
+              loading={loading}
+              data={filteredProdi}
+              emptyText="Belum ada data prodi."
+              columns={[
+                {
+                  key: 'rank',
+                  label: 'Ranking',
+                  render: (item) => (
+                    <span className="block text-center font-semibold text-base-content/60">{item.rank}.</span>
+                  ),
+                },
+                {
+                  key: 'prodi',
+                  label: 'Program Studi',
+                  render: (item) => <span className="font-medium text-base-content">{item.prodi}</span>,
+                },
+                {
+                  key: 'poin',
+                  label: 'Total Poin',
+                  render: (item) => <span className="font-semibold text-base-content">{item.poin}</span>,
+                },
+                {
+                  key: 'kategori',
+                  label: 'Kategori Poin',
+                  render: (item) => <KategoriPoinBar item={item} />,
+                },
+              ]}
+            />
           </TableFrame>
         </TableCard>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
-          <div className="card bg-base-100 p-6 md:col-span-3">
-            <h3 className="mb-6 text-center text-lg font-bold text-base-content">Rata-rata capaian per prodi</h3>
-            {loading || filteredProdi.length === 0 ? (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-5">
+          <div className="card bg-base-100 p-5 md:col-span-3">
+            <h3 className="mb-4 text-sm font-semibold text-base-content">Rata-rata capaian per prodi</h3>
+            {loading ? (
+              <ChartSkeleton height={240} />
+            ) : filteredProdi.length === 0 ? (
               <p className="py-10 text-center text-sm text-base-content/50">Belum ada data grafik.</p>
             ) : (
               <StackedBarChart
                 horizontal
                 labels={filteredProdi.map((d) => d.prodi)}
                 datasets={[
-                  { label: 'Organisasi', data: filteredProdi.map((d) => d.organisasi), color: '#3b82f6' },
-                  { label: 'Seminar', data: filteredProdi.map((d) => d.seminar), color: '#15803d' },
-                  { label: 'Prestasi', data: filteredProdi.map((d) => d.prestasi), color: '#eab308' },
+                  { label: 'Organisasi', data: filteredProdi.map((d) => d.organisasi) },
+                  { label: 'Seminar', data: filteredProdi.map((d) => d.seminar) },
+                  { label: 'Prestasi', data: filteredProdi.map((d) => d.prestasi) },
                 ]}
                 height={Math.max(240, filteredProdi.length * 42)}
               />
             )}
           </div>
 
-          <div className="flex flex-col items-center card bg-base-100 p-6 md:col-span-2">
-            <h3 className="mb-4 text-center text-lg font-bold text-base-content">Total mahasiswa</h3>
-            <DoughnutChart
-              labels={mhsSections.length ? mhsSections.map((s) => s.label) : ['—']}
-              values={mhsSections.length ? mhsSections.map((s) => s.value || s.percentage) : [1]}
-              colors={mhsSections.length ? mhsSections.map((s) => s.color) : ['#eef0f7']}
-              centerTitle="Total"
-              centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
-              centerLabel="Mahasiswa"
-              height={220}
-            />
-            <div className="mt-6 w-full space-y-2 text-xs font-semibold">
-              {prodiList.map((p, idx) => (
-                <div key={p.prodi} className="flex items-center justify-between text-base-content/60">
-                  <div className="flex max-w-[75%] items-center gap-2.5 truncate">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                      style={{ backgroundColor: MHS_COLORS[idx % MHS_COLORS.length] }}
-                    />
-                    <span className="truncate">{p.prodi}</span>
-                  </div>
-                  <span className="font-bold text-base-content/50">
-                    {Math.round((p.mahasiswa / (totalMahasiswa || 1)) * 100)}%
-                  </span>
+          <div className="card flex flex-col items-center bg-base-100 p-5 md:col-span-2">
+            <h3 className="mb-4 text-sm font-semibold text-base-content">Total mahasiswa</h3>
+            {loading ? (
+              <ChartSkeleton height={220} />
+            ) : (
+              <>
+                <DoughnutChart
+                  labels={mhsSections.length ? mhsSections.map((s) => s.label) : ['—']}
+                  values={mhsSections.length ? mhsSections.map((s) => s.value) : [1]}
+                  centerTitle="Total"
+                  centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
+                  centerLabel="Mahasiswa"
+                  height={220}
+                />
+                <div className="mt-5 w-full space-y-2 text-xs">
+                  {prodiList.map((p) => (
+                    <div key={p.prodi} className="flex items-center justify-between text-base-content/70">
+                      <span className="max-w-[75%] truncate">{p.prodi}</span>
+                      <span className="font-medium text-base-content/50">
+                        {Math.round((p.mahasiswa / (totalMahasiswa || 1)) * 100)}%
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="card bg-base-100 p-6">
-          <h3 className="mb-6 text-center text-lg font-bold text-base-content">Poin berdasarkan skala kegiatan</h3>
-          <div className="flex flex-col items-center justify-around gap-8 sm:flex-row">
-            <DoughnutChart
-              labels={skalaKegiatan.length ? skalaKegiatan.map((s) => s.label) : ['—']}
-              values={skalaKegiatan.length ? skalaKegiatan.map((s) => s.percentage) : [1]}
-              colors={skalaKegiatan.length ? skalaKegiatan.map((s) => s.color) : ['#eef0f7']}
-              centerValue={Number(totalPoin).toLocaleString('id-ID')}
-              centerLabel="Poin"
-              height={220}
-            />
-            <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-xs font-semibold">
-              {skalaKegiatan.map((s) => (
-                <div key={s.label} className="flex items-center gap-3 text-base-content/60">
-                  <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: s.color }}></span>
-                  <span>{s.label} ({s.percentage}%)</span>
-                </div>
-              ))}
+        <div className="card bg-base-100 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-base-content">Poin berdasarkan skala kegiatan</h3>
+          {loading ? (
+            <ChartSkeleton height={220} />
+          ) : (
+            <div className="flex flex-col items-center justify-around gap-8 sm:flex-row">
+              <DoughnutChart
+                labels={skalaKegiatan.length ? skalaKegiatan.map((s) => s.label) : ['—']}
+                values={skalaKegiatan.length ? skalaKegiatan.map((s) => s.percentage) : [1]}
+                centerValue={Number(totalPoin).toLocaleString('id-ID')}
+                centerLabel="Poin"
+                height={220}
+              />
+              <div className="grid grid-cols-2 gap-x-10 gap-y-3 text-xs">
+                {skalaKegiatan.map((s) => (
+                  <div key={s.label} className="text-base-content/70">
+                    {s.label} ({s.percentage}%)
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

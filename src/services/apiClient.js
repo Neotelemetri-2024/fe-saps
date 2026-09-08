@@ -128,6 +128,16 @@ export function getApiBase() {
   return API_BASE
 }
 
+/** Ubah path relatif `/uploads/...` jadi URL absolut ke backend. */
+export function resolveUploadUrl(url) {
+  if (!url || typeof url !== 'string') return null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  if (/^(https?:|blob:|data:)/i.test(trimmed)) return trimmed
+  const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  return `${API_BASE}${path}`
+}
+
 export function getAuthToken() {
   return getToken()
 }

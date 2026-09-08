@@ -8,7 +8,8 @@ import { StackedBarChart } from '../../components/charts'
 import { ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { getCurrentUser } from '../../services/authService'
-import { get } from '../../services/apiClient'
+import { getDashboardPimpinanUtama } from '../../services/dashboardService'
+import { getKurikulumAktif } from '../../services/kurikulumService'
 
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {
@@ -23,14 +24,21 @@ function PimpinanUtamaDashboard() {
   const [loading, setLoading] = useState(true)
   const [statistik, setStatistik] = useState(null)
   const [peringkatFakultas, setPeringkatFakultas] = useState([])
+  const [kurikulumId, setKurikulumId] = useState('')
+  const [kurikulumOptions, setKurikulumOptions] = useState([])
+
+  useEffect(() => {
+    getKurikulumAktif()
+      .then((list) => setKurikulumOptions(Array.isArray(list) ? list : []))
+      .catch(() => setKurikulumOptions([]))
+  }, [])
 
   useEffect(() => {
     setLoading(true)
-    get('/api/umum/dashboard/pimpinan-utama')
-      .then((res) => {
-        const data = res?.data || res || {}
-        setStatistik(data.statistik || null)
-        const ranking = data.peringkatFakultas || data.rankingFakultas || []
+    getDashboardPimpinanUtama(kurikulumId || undefined)
+      .then((data) => {
+        setStatistik(data?.statistik || null)
+        const ranking = data?.peringkatFakultas || data?.rankingFakultas || []
         setPeringkatFakultas(Array.isArray(ranking) ? ranking : [])
       })
       .catch((err) => {
@@ -39,15 +47,15 @@ function PimpinanUtamaDashboard() {
         toast.error('Gagal memuat dashboard', { description: err.message })
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [kurikulumId])
 
   const stats = useMemo(() => {
     if (!statistik) {
       return [
-        { label: 'TOTAL MAHASISWA AKTIF', value: loading ? '…' : '—' },
-        { label: 'RATA RATA CAPAIAN', value: loading ? '…' : '—' },
-        { label: 'TOTAL FAKULTAS', value: loading ? '…' : '—' },
-        { label: 'KURIKULUM AKTIF', value: loading ? '…' : '—' },
+        { label: 'TOTAL MAHASISWA AKTIF', loading: true },
+        { label: 'RATA RATA CAPAIAN', loading: true },
+        { label: 'TOTAL FAKULTAS', loading: true },
+        { label: 'KURIKULUM AKTIF', loading: true, small: true },
       ]
     }
     return [
@@ -66,9 +74,10 @@ function PimpinanUtamaDashboard() {
       {
         label: 'KURIKULUM AKTIF',
         value: statistik.kurikulumAktif || '—',
+        small: true,
       },
     ]
-  }, [statistik, loading])
+  }, [statistik])
 
   const chartData = useMemo(() => {
     if (!peringkatFakultas.length) return []
@@ -76,7 +85,7 @@ function PimpinanUtamaDashboard() {
       const kp = f.kategoriPoin || {}
       return {
         fakultas: f.fakultas || f.name || '-',
-        organisasi: pickKategoriValue(kp, ['organisasi', 'ukm', 'organisasi']),
+        organisasi: pickKategoriValue(kp, ['organisasi', 'ukm']),
         seminar: pickKategoriValue(kp, ['seminar', 'pelatihan', 'workshop']),
         prestasi: pickKategoriValue(kp, ['prestasi', 'lomba', 'kompetisi']),
       }
@@ -84,9 +93,9 @@ function PimpinanUtamaDashboard() {
   }, [peringkatFakultas])
 
   const chartDatasets = useMemo(() => [
-    { label: 'Organisasi', data: chartData.map((d) => d.organisasi), color: '#3b82f6' },
-    { label: 'Seminar', data: chartData.map((d) => d.seminar), color: '#15803d' },
-    { label: 'Prestasi', data: chartData.map((d) => d.prestasi), color: '#eab308' },
+    { label: 'Organisasi', data: chartData.map((d) => d.organisasi) },
+    { label: 'Seminar', data: chartData.map((d) => d.seminar) },
+    { label: 'Prestasi', data: chartData.map((d) => d.prestasi) },
   ], [chartData])
 
   const rankingList = useMemo(() => {
@@ -106,24 +115,45 @@ function PimpinanUtamaDashboard() {
 
   return (
     <DashboardLayout role="pimpinan_utama" userName={user?.nama || 'Pimpinan Utama'} userRole="Pimpinan Utama (Rektor)">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
-            Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm text-base-content/60">
-            Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.
-          </p>
+      <div className="space-y-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-extrabold text-base-content">
+              Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-base-content/60">
+              Pantau capaian poin mahasiswa lintas fakultas dan evaluasi kurikulum SAPS di tingkat universitas.
+            </p>
+          </div>
+          {kurikulumOptions.length > 0 ? (
+            <label className="flex min-w-52 flex-col gap-1">
+              <span className="text-xs text-base-content/60">Kurikulum</span>
+              <select
+                className="select select-sm"
+                value={kurikulumId}
+                onChange={(e) => setKurikulumId(e.target.value)}
+              >
+                <option value="">Semua / campuran</option>
+                {kurikulumOptions.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <StatCard key={s.label} {...s} />
+            <StatCard key={s.label} {...s} loading={loading || s.loading} />
           ))}
         </div>
 
-        <div className="card bg-base-100 p-6">
-          <h3 className="mb-4 text-center text-lg font-bold text-base-content">Grafik poin per Fakultas berdasarkan Jenis Kegiatan</h3>
+        <div className="card bg-base-100 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-base-content">
+            Grafik poin per fakultas berdasarkan jenis kegiatan
+          </h3>
           {loading ? (
             <ChartSkeleton height={320} />
           ) : chartData.length === 0 ? (
@@ -137,19 +167,16 @@ function PimpinanUtamaDashboard() {
           )}
         </div>
 
-        <div className="card bg-base-100 p-5 sm:p-6">
+        <div className="card bg-base-100 p-5">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold text-base-content">Ranking Fakultas</h3>
+              <h3 className="text-sm font-semibold text-base-content">Ranking Fakultas</h3>
               <p className="mt-1 text-sm text-base-content/60">
                 Peringkat berdasarkan total poin seluruh matriks
               </p>
             </div>
-            <Link
-              to="/pimpinan_utama/detail-fakultas"
-              className="inline-flex items-center btn btn-outline btn-primary btn-sm"
-            >
-              Lihat selengkapnya →
+            <Link to="/pimpinan_utama/detail-fakultas" className="btn btn-outline btn-primary btn-sm">
+              Lihat selengkapnya
             </Link>
           </div>
 
@@ -170,7 +197,7 @@ function PimpinanUtamaDashboard() {
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                         top
-                          ? 'bg-brand-dark text-white'
+                          ? 'bg-primary text-primary-content'
                           : 'bg-base-200 text-base-content/60'
                       }`}
                     >
@@ -179,7 +206,7 @@ function PimpinanUtamaDashboard() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                         <p className="truncate text-sm text-base-content">{item.name}</p>
-                        <p className="shrink-0 text-sm font-semibold text-brand-dark">
+                        <p className="shrink-0 text-sm font-semibold text-primary">
                           {item.totalPoin.toLocaleString('id-ID')}
                           <span className="ml-1 text-xs font-normal text-base-content/50">poin</span>
                         </p>
@@ -188,7 +215,7 @@ function PimpinanUtamaDashboard() {
                         value={item.barValue}
                         max={item.barMax}
                         height={6}
-                        color={top ? 'bg-brand-dark' : 'bg-brand-light'}
+                        color={top ? 'primary' : 'success'}
                       />
                     </div>
                   </div>
