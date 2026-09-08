@@ -5,8 +5,8 @@ import { logAudit } from '../../../lib/auditLog';
 
 // ==================== VALIDASI ====================
 const createKurikulumSchema = z.object({
-  nama: z.string().min(3),
-  tahunAkademik: z.string().regex(/^\d{4}\/\d{4}$/, 'Format: 2024/2025'),
+  nama: z.string(),
+  tahunAkademik: z.string().regex(/^(\d{4}|\d{4}\/\d{4})$/, 'Format: 2026 atau 2026/2027'),
   angkatanMulai: z.number().int().min(1900).max(2200),
   versi: z.number().int().positive().optional(),
 });
