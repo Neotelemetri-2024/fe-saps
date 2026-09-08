@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // Maks 10MB
+  limits: { fileSize: 1 * 1024 * 1024 } // Maks 1MB
 });
 
 // Middleware: Hanya role mahasiswa yang bisa mengakses rute ini

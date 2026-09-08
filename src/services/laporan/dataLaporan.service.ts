@@ -1,5 +1,11 @@
 import prisma from '../../lib/prisma';
-import { getKurikulumByFilter, resolveKurikulumMahasiswa, resolveKurikulumMahasiswaMap, targetPoinKurikulum } from '../kurikulumResolver.service';
+import { hitungProgresKurikulumMahasiswa } from '../../controllers/mahasiswa/dashboard.controller';
+import {
+  getKurikulumByFilter,
+  perolehanUntukKurikulum,
+  resolveKurikulumMahasiswaMap,
+  targetPoinKurikulum,
+} from '../kurikulumResolver.service';
 
 export interface FilterLaporan {
   role: string;
@@ -247,7 +253,11 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       perolehanPoin: {
         where: { status: 'sah' },
         include: {
-          detail: true,
+          detail: {
+            include: {
+              subCapaian: { include: { capaian: true } },
+            },
+          },
           kegiatan: {
             include: {
               kategori: true,
@@ -301,19 +311,17 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       });
     }
 
-    let mhsTotalPoin = 0;
-    const poinPerTahun = [0, 0, 0, 0, 0];
+    // Sama dengan dashboard mahasiswa: filter perolehan + capping per capaian
     const perolehanFiltered = kurikulumMhs
-      ? m.perolehanPoin.filter((pp: any) =>
-          pp.kurikulumId != null
-            ? Number(pp.kurikulumId) === Number(kurikulumMhs.id)
-            : true,
-        )
+      ? perolehanUntukKurikulum(m.perolehanPoin, kurikulumMhs.id)
       : m.perolehanPoin;
 
-    perolehanFiltered.forEach((pp: any) => {
-      mhsTotalPoin += pp.totalPoin;
+    const progres = kurikulumMhs?.capaian?.length
+      ? hitungProgresKurikulumMahasiswa(kurikulumMhs, perolehanFiltered)
+      : null;
 
+    const poinPerTahun = [0, 0, 0, 0, 0];
+    perolehanFiltered.forEach((pp: any) => {
       if (pp.detail && pp.detail.length > 0) {
         pp.detail.forEach((d: any) => {
           const th = localSubMap.get(d.subCapaianId) || subCapaianTahunMap.get(d.subCapaianId) || 1;
@@ -342,14 +350,18 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       }
     }
 
+    const mhsTotalPoin = progres?.totalPoin ?? perolehanFiltered.reduce((s: number, p: any) => s + (p.totalPoin || 0), 0);
+    const isTercapai = Boolean(progres?.isLulus);
+    const persentase = progres?.persentaseTotal ?? (
+      targetPoinTotal > 0
+        ? Math.min(Math.round((mhsTotalPoin / targetPoinTotal) * 100), 100)
+        : 0
+    );
+
     totalPoinSahGlobal += mhsTotalPoin;
-    if (mhsTotalPoin >= targetPoinTotal) {
+    if (isTercapai) {
       totalMahasiswaLulusTarget++;
     }
-
-    const persentase = targetPoinTotal > 0
-      ? Math.min(Math.round((mhsTotalPoin / targetPoinTotal) * 100), 100)
-      : 0;
 
     return {
       nim: m.nim,
@@ -364,9 +376,10 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       poinTahun3: poinPerTahun[3],
       poinTahun4: poinPerTahun[4],
       totalPoin: mhsTotalPoin,
-      targetPoin: targetPoinTotal,
+      totalPoinProgres: progres?.totalPoinProgres ?? mhsTotalPoin,
+      targetPoin: progres?.totalTarget ?? targetPoinTotal,
       persentase,
-      statusTarget: (mhsTotalPoin >= targetPoinTotal ? 'Tercapai' : 'Belum Tercapai') as 'Tercapai' | 'Belum Tercapai',
+      statusTarget: (isTercapai ? 'Tercapai' : 'Belum Tercapai') as 'Tercapai' | 'Belum Tercapai',
     };
   });
 

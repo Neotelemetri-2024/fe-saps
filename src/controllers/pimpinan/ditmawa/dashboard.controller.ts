@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import prisma from '../../../lib/prisma';
 import { calculateIku3Dashboard } from '../../../services/iku3/iku3Calculation.service';
+import {
+  perolehanUntukKurikulum,
+  resolveKurikulumMahasiswaMap,
+  targetPoinKurikulum,
+} from '../../../services/kurikulumResolver.service';
 
 // GET /api/umum/dashboard/pimpinan-ditmawa — Dashboard Monitoring & Command Center Super Admin
 export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Promise<void> => {
@@ -17,18 +22,37 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       return;
     }
 
-    // 1. Kurikulum Aktif & Capaian Kurikulum
-    const kurikulumAktif = await prisma.kurikulum.findFirst({
-      where: { status: 'aktif' },
-      include: {
-        capaian: {
-          orderBy: { urutan: 'asc' },
-          include: { subCapaian: true },
-        },
-      },
-    });
+    // 1. Kurikulum (filter opsional ?kurikulumId=) & Capaian Kurikulum
+    const kurikulumIdFilter = req.query.kurikulumId ? Number(req.query.kurikulumId) : undefined;
+    if (kurikulumIdFilter != null && Number.isNaN(kurikulumIdFilter)) {
+      res.status(400).json({ success: false, message: 'kurikulumId tidak valid' });
+      return;
+    }
 
-    const targetKurikulum = kurikulumAktif?.capaian.reduce((sum, c) => sum + c.jumlahPoin, 0) || 200;
+    const kurikulumInclude = {
+      capaian: {
+        orderBy: { urutan: 'asc' as const },
+        include: { subCapaian: true },
+      },
+    };
+
+    const kurikulumAktif = kurikulumIdFilter
+      ? await prisma.kurikulum.findUnique({
+          where: { id: kurikulumIdFilter },
+          include: kurikulumInclude,
+        })
+      : await prisma.kurikulum.findFirst({
+          where: { status: 'aktif' },
+          orderBy: [{ angkatanMulai: 'desc' }, { id: 'desc' }],
+          include: kurikulumInclude,
+        });
+
+    if (kurikulumIdFilter && !kurikulumAktif) {
+      res.status(400).json({ success: false, message: 'Kurikulum tidak ditemukan' });
+      return;
+    }
+
+    const targetKurikulum = targetPoinKurikulum(kurikulumAktif) || 200;
 
     // 2. Query Paralel Kartu Metrik Utama
     const [
@@ -59,15 +83,26 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
         where: { status: 'sah' },
         _sum: { totalPoin: true },
       }),
-      // Mahasiswa dengan Perolehan Poin untuk menghitung persentase kelulusan target
+      // Semua mahasiswa + poin sah (kurikulum di-resolve di memori — banyak mhs belum punya kurikulumId eksplisit)
       prisma.mahasiswa.findMany({
         select: {
           userId: true,
+          angkatan: true,
+          kurikulumId: true,
           perolehanPoin: {
             where: { status: 'sah' },
             select: {
               totalPoin: true,
-              detail: { select: { subCapaianId: true, poin: true } },
+              kurikulumId: true,
+              detail: {
+                select: {
+                  subCapaianId: true,
+                  poin: true,
+                  subCapaian: {
+                    select: { capaian: { select: { kurikulumId: true } } },
+                  },
+                },
+              },
             },
           },
         },
@@ -130,6 +165,22 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
     ]);
 
     // 3. Kalkulasi Persentase Kelulusan Target & Evaluasi 4 Pilar Kurikulum
+    const kurikulumMap = await resolveKurikulumMahasiswaMap(
+      mahasiswaDenganPoin.map((m) => ({
+        userId: m.userId,
+        angkatan: m.angkatan,
+        kurikulumId: m.kurikulumId,
+      })),
+    );
+
+    const mahasiswaFiltered = kurikulumAktif
+      ? mahasiswaDenganPoin.filter((m) => {
+          if (m.kurikulumId != null) return Number(m.kurikulumId) === kurikulumAktif.id;
+          const resolved = kurikulumMap.get(String(m.userId));
+          return resolved ? Number(resolved.id) === kurikulumAktif.id : false;
+        })
+      : mahasiswaDenganPoin;
+
     let lulusTargetCount = 0;
     const subCapaianTahunMap = new Map<number, number>();
     kurikulumAktif?.capaian.forEach((c, idx) => {
@@ -137,17 +188,26 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       c.subCapaian.forEach((sc) => subCapaianTahunMap.set(sc.id, th));
     });
 
-    const capaianTahunPoinMap: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    const totalMahasiswaTerhitung = mahasiswaDenganPoin.length || 1;
+    const capaianTahunPoinMap: Record<number, number> = {};
+    kurikulumAktif?.capaian.forEach((c, idx) => {
+      const th = c.urutan || (idx + 1);
+      capaianTahunPoinMap[th] = 0;
+    });
 
-    mahasiswaDenganPoin.forEach((m) => {
+    const totalMahasiswaTerhitung = mahasiswaFiltered.length;
+
+    mahasiswaFiltered.forEach((m) => {
+      const poinList = kurikulumAktif
+        ? perolehanUntukKurikulum(m.perolehanPoin, kurikulumAktif.id)
+        : m.perolehanPoin;
+
       let mhsTotalPoin = 0;
-      m.perolehanPoin.forEach((pp) => {
-        mhsTotalPoin += pp.totalPoin;
-        pp.detail.forEach((d) => {
+      poinList.forEach((pp) => {
+        mhsTotalPoin += Number(pp.totalPoin) || 0;
+        (pp.detail || []).forEach((d: { subCapaianId: number; poin: number }) => {
           const th = subCapaianTahunMap.get(d.subCapaianId);
-          if (th && capaianTahunPoinMap[th] !== undefined) {
-            capaianTahunPoinMap[th] += d.poin;
+          if (th != null && capaianTahunPoinMap[th] !== undefined) {
+            capaianTahunPoinMap[th] += Number(d.poin) || 0;
           }
         });
       });
@@ -156,16 +216,18 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       }
     });
 
-    const persentaseLulusTarget = Math.min(
-      Math.round((lulusTargetCount / totalMahasiswaTerhitung) * 100),
-      100
-    );
+    const denom = totalMahasiswaTerhitung || 1;
+    const persentaseLulusTarget = totalMahasiswaTerhitung > 0
+      ? Math.min(Math.round((lulusTargetCount / denom) * 100), 100)
+      : 0;
 
-    // Sebaran Capaian 4 Pilar Kurikulum SAPS
+    // Sebaran Capaian Kurikulum SAPS (per pilar/capaian)
     const capaianKurikulum = (kurikulumAktif?.capaian || []).map((c, i) => {
       const tahunNum = c.urutan || (i + 1);
       const totalPoinPilar = capaianTahunPoinMap[tahunNum] || 0;
-      const rataRataPoin = Math.round(totalPoinPilar / totalMahasiswaTerhitung);
+      const rataRataPoin = totalMahasiswaTerhitung > 0
+        ? Math.round(totalPoinPilar / totalMahasiswaTerhitung)
+        : 0;
       const targetPilar = c.jumlahPoin || 50;
       const persen = Math.min(Math.round((rataRataPoin / targetPilar) * 100), 100);
 

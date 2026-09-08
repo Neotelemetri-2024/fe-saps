@@ -59,8 +59,11 @@ app.use('/api/', limiter);
 // Mencegah hacker mengirim payload raksasa yang membuat server down (DoS)
 app.use(express.json({ limit: '10kb' }));
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve uploaded files statically (boleh diakses lintas origin dari SPA)
+app.use('/uploads', (_req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(process.cwd(), 'uploads')));
 
 // ==================== ROUTES ====================
 // Health Check
