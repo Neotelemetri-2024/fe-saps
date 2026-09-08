@@ -220,7 +220,7 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { status } = req.query;
+    const { status, asal } = req.query;
 
     const whereClause: any = {
       partisipasi: {
@@ -230,6 +230,18 @@ export const getRiwayatIzin = async (req: Request, res: Response, next: NextFunc
 
     if (status) {
       whereClause.status = status;
+    }
+
+    if (asal) {
+      if (asal === 'internal') {
+        whereClause.partisipasi.kegiatan = {
+          asal: { in: ['kurikuler_ukm', 'kurikuler_ukmf', 'universitas'] }
+        };
+      } else {
+        whereClause.partisipasi.kegiatan = {
+          asal: asal as string
+        };
+      }
     }
 
     const riwayat = await prisma.izinPA.findMany({
