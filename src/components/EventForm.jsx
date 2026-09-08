@@ -7,11 +7,8 @@ import { createKegiatan, updateKegiatan, getKegiatanById, ajukanKegiatan } from 
 import { getKurikulumAktif } from '../services/kurikulumService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../services/matriksService'
 import PemetaanCapaianKurikulumSection from './PemetaanCapaianKurikulumSection'
-<<<<<<< HEAD
 import { getCurrentUser } from '../services/authService'
-=======
 import { batalBtnClass } from './ui/buttonStyles'
->>>>>>> 954ad8f (revisi)
 
 const EMPTY_FORM = {
   nama: '',

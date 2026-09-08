@@ -11,11 +11,8 @@ import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 import { getKlaim, klaimPoin } from '../../services/poinService'
 import { getIzinPAMahasiswa, subscribeDataUpdate } from '../../services/pengajuanService'
-<<<<<<< HEAD
 import { getPeranKegiatan } from '../../services/matriksService'
-=======
 import { batalBtnClass } from '../../components/ui/buttonStyles'
->>>>>>> 954ad8f (revisi)
 
 const riwayatColumns = [
   { key: 'no', label: 'NO' },
@@ -149,14 +146,9 @@ function KlaimPoinCapaian() {
           .filter((item) => {
             const statusRaw = (item.statusIzin || item.status || '').toLowerCase()
             const asal = String(item.kegiatan?.asal || item.asal || '').toLowerCase()
-<<<<<<< HEAD
+            // Klaim manual hanya untuk kegiatan eksternal; internal cair otomatis setelah PA
             const isEksternal = asal === 'eksternal'
             return isEksternal && statusRaw === 'disetujui' && !item.sudahDiklaim
-=======
-            // Klaim manual hanya untuk kegiatan eksternal; internal cair otomatis setelah PA
-            if (asal !== 'eksternal') return false
-            return statusRaw === 'disetujui' && !item.sudahDiklaim
->>>>>>> 954ad8f (revisi)
           })
           .map(mapSiapKlaim)
           .map((row, i) => ({ ...row, no: i + 1 }))
