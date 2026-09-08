@@ -145,6 +145,17 @@ export const putuskanIzinPABulk = async (req: Request, res: Response, next: Next
       aktorId: dosenPaId,
     });
 
+    // Otomatis tandai notifikasi izin terkait milik Dosen PA sebagai sudah dibaca
+    await prisma.notifikasi.updateMany({
+      where: {
+        userId: dosenPaId,
+        refType: 'izin_pa',
+        refId: { in: ids },
+        dibaca: false,
+      },
+      data: { dibaca: true },
+    });
+
     // Auto-claim poin internal jika hadir + peran + izin PA sudah lengkap
     for (const izin of izinList) {
       try {
@@ -230,6 +241,17 @@ export const putuskanIzinPA = async (req: Request, res: Response, next: NextFunc
       statusLama: 'diajukan',
       statusBaru: body.status,
       aktorId: dosenPaId,
+    });
+
+    // Otomatis tandai notifikasi izin terkait milik Dosen PA sebagai sudah dibaca
+    await prisma.notifikasi.updateMany({
+      where: {
+        userId: dosenPaId,
+        refType: 'izin_pa',
+        refId: BigInt(id as string),
+        dibaca: false,
+      },
+      data: { dibaca: true },
     });
 
     // Auto-claim poin internal jika status disetujui dan syarat lengkap

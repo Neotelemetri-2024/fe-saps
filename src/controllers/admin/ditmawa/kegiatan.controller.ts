@@ -970,6 +970,17 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       }
     }
 
+    // Otomatis tandai notifikasi terkait kegiatan ini milik admin/verifikator sebagai sudah dibaca
+    await prisma.notifikasi.updateMany({
+      where: {
+        userId: aktorId,
+        refType: 'kegiatan',
+        refId: BigInt(id as string),
+        dibaca: false,
+      },
+      data: { dibaca: true },
+    });
+
     await logAudit({
       entitas: 'kegiatan',
       entitasId: Number(id),
@@ -1206,6 +1217,17 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
       refId: BigInt(id as string),
     });
 
+    // Otomatis tandai notifikasi terkait kegiatan ini milik pimpinan sebagai sudah dibaca
+    await prisma.notifikasi.updateMany({
+      where: {
+        userId: aktorId,
+        refType: 'kegiatan',
+        refId: BigInt(id as string),
+        dibaca: false,
+      },
+      data: { dibaca: true },
+    });
+
     await logAudit({
       entitas: 'kegiatan',
       entitasId: Number(id),
@@ -1299,6 +1321,17 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
           isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
           refType: 'kegiatan',
           refId: BigInt(kegiatanId),
+        });
+
+        // Otomatis tandai notifikasi terkait kegiatan ini milik pimpinan sebagai sudah dibaca
+        await prisma.notifikasi.updateMany({
+          where: {
+            userId: aktorId,
+            refType: 'kegiatan',
+            refId: BigInt(kegiatanId),
+            dibaca: false,
+          },
+          data: { dibaca: true },
         });
 
         await logAudit({

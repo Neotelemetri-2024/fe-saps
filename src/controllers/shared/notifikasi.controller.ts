@@ -32,20 +32,71 @@ export const getNotifikasi = async (
     const data = await prisma.notifikasi.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 100,
     });
 
     const unreadCount = await prisma.notifikasi.count({
       where: { userId, dibaca: false },
     });
 
-    // BigInt → string agar JSON aman
-    const normalized = data.map((n) => ({
-      ...n,
-      id: String(n.id),
-      userId: String(n.userId),
-      refId: n.refId != null ? String(n.refId) : null,
-    }));
+    // Kumpulkan refId untuk query status entitas terkait
+    const kegiatanIds = data
+      .filter((n) => n.refType === "kegiatan" && n.refId != null)
+      .map((n) => Number(n.refId));
+
+    const klaimIds = data
+      .filter((n) => n.refType === "klaim_poin" && n.refId != null)
+      .map((n) => BigInt(n.refId!));
+
+    const izinIds = data
+      .filter((n) => n.refType === "izin_pa" && n.refId != null)
+      .map((n) => BigInt(n.refId!));
+
+    // Lookup status entitas terkini
+    const [kegiatans, klaims, izins] = await Promise.all([
+      kegiatanIds.length > 0
+        ? prisma.kegiatan.findMany({
+            where: { id: { in: kegiatanIds } },
+            select: { id: true, status: true },
+          })
+        : Promise.resolve([]),
+      klaimIds.length > 0
+        ? prisma.klaimPoin.findMany({
+            where: { id: { in: klaimIds } },
+            select: { id: true, status: true },
+          })
+        : Promise.resolve([]),
+      izinIds.length > 0
+        ? prisma.izinPA.findMany({
+            where: { id: { in: izinIds } },
+            select: { id: true, status: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const kegiatanStatusMap = new Map(kegiatans.map((k) => [k.id, k.status]));
+    const klaimStatusMap = new Map(klaims.map((k) => [k.id.toString(), k.status]));
+    const izinStatusMap = new Map(izins.map((i) => [i.id.toString(), i.status]));
+
+    // BigInt → string agar JSON aman, sertakan refStatus
+    const normalized = data.map((n) => {
+      let refStatus: string | null = null;
+      if (n.refType === "kegiatan" && n.refId != null) {
+        refStatus = kegiatanStatusMap.get(Number(n.refId)) || null;
+      } else if (n.refType === "klaim_poin" && n.refId != null) {
+        refStatus = klaimStatusMap.get(n.refId.toString()) || null;
+      } else if (n.refType === "izin_pa" && n.refId != null) {
+        refStatus = izinStatusMap.get(n.refId.toString()) || null;
+      }
+
+      return {
+        ...n,
+        id: String(n.id),
+        userId: String(n.userId),
+        refId: n.refId != null ? String(n.refId) : null,
+        refStatus,
+      };
+    });
 
     res.json({ success: true, data: normalized, unreadCount });
   } catch (error) {
