@@ -134,7 +134,7 @@ function KlaimPoinCapaian() {
 
   const load = () => {
     setLoading(true)
-    Promise.all([getKlaim(), getIzinPAMahasiswa()])
+    Promise.all([getKlaim(), getIzinPAMahasiswa({ asal: 'eksternal' })])
       .then(([klaimRes, izinRes]) => {
         const klaimItemsArr = Array.isArray(klaimRes) ? klaimRes : []
         const izinItems = Array.isArray(izinRes) ? izinRes : []
@@ -144,7 +144,9 @@ function KlaimPoinCapaian() {
         const siap = izinItems
           .filter((item) => {
             const statusRaw = (item.statusIzin || item.status || '').toLowerCase()
-            return statusRaw === 'disetujui' && !item.sudahDiklaim
+            const asal = String(item.kegiatan?.asal || item.asal || '').toLowerCase()
+            const isEksternal = asal === 'eksternal'
+            return isEksternal && statusRaw === 'disetujui' && !item.sudahDiklaim
           })
           .map(mapSiapKlaim)
           .map((row, i) => ({ ...row, no: i + 1 }))
