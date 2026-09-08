@@ -141,7 +141,7 @@ function VerifikasiKegiatanInternal() {
   }
 
   return (
-    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan Fakultas">
       <ConfirmModal
         isOpen={showBulkConfirm}
         message={`Apakah Anda yakin ingin menyetujui ${selected.size} kegiatan internal ini?`}

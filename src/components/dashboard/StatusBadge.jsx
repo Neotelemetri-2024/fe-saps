@@ -14,6 +14,9 @@ const statusConfig = {
   perlu_revisi: { tone: 'warning', label: 'Perlu Revisi' },
   revisi: { tone: 'warning', label: 'Revisi' },
   disetujui: { tone: 'success', label: 'Disetujui' },
+  'disetujui universitas': { tone: 'success', label: 'Disetujui Universitas' },
+  'disetujui dosen pa': { tone: 'success', label: 'Disetujui Dosen PA' },
+  'disetujui pimpinan': { tone: 'success', label: 'Disetujui Pimpinan' },
   ditolak: { tone: 'error', label: 'Ditolak' },
   terpublikasi: { tone: 'success', label: 'Disetujui' },
   dipublikasikan: { tone: 'success', label: 'Dipublikasikan' },
@@ -39,12 +42,21 @@ const statusConfig = {
   belum_lulus: { tone: 'warning', label: 'Belum memenuhi syarat' },
 }
 
+function resolveStatusConfig(status) {
+  const key = String(status || '').toLowerCase().trim()
+  if (statusConfig[key]) return statusConfig[key]
+
+  const label = status
+    ? status.charAt(0).toUpperCase() + status.slice(1)
+    : 'Pending'
+
+  if (key.includes('ditolak')) return { tone: 'error', label }
+  if (key.includes('disetujui')) return { tone: 'success', label }
+  return { tone: 'warning', label }
+}
+
 function StatusBadge({ status }) {
-  const key = String(status || '').toLowerCase()
-  const cfg = statusConfig[key] || {
-    tone: 'warning',
-    label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending',
-  }
+  const cfg = resolveStatusConfig(status)
   return (
     <span className={`badge badge-sm h-auto shrink-0 overflow-visible whitespace-nowrap ${TONE[cfg.tone] || TONE.neutral}`}>
       {cfg.label}

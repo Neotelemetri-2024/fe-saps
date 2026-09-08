@@ -16,7 +16,6 @@ import {
   DetailHeader,
   DecisionNote,
   RejectForm,
-  VerifiedBanner,
   DecisionActions,
   EmptyDetail,
 } from '../../components/ui/DetailComponents'
@@ -177,7 +176,6 @@ function DetailVerifikasiKlaimPoin() {
         />
 
         {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
-        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} noun="Klaim" /> : null}
 
         <SectionCard title="Informasi Mahasiswa">
           <InfoRow label="Nama Mahasiswa" value={item.mahasiswa} />

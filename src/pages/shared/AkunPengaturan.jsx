@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Lock, User, UserCircle, Eye, EyeOff } from 'lucide-react'
+import { Lock, User, Eye, EyeOff } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { FormSkeleton } from '../../components/dashboard/Skeleton'
 import { getCurrentUser, updateProfil, gantiPassword } from '../../services/authService'
@@ -157,36 +157,29 @@ function AkunPengaturan({ role: roleProp } = {}) {
 
   return (
     <DashboardLayout role={role} userName={displayName || 'Pengguna'} userRole={roleLabel}>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-10">
-          <h2 className="text-xl font-bold text-base-content sm:text-2xl lg:text-3xl">Akun dan Pengaturan</h2>
-
-          <div className="mx-auto w-full max-w-md rounded-xl border border-base-300 bg-base-100 px-6 py-6 shadow-sm">
-            <div className="flex flex-col items-center text-center">
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-base-200">
-                <UserCircle className="h-12 w-12 text-brand-dark" />
-              </span>
-              <h3 className="mt-3 text-lg font-bold text-base-content">{form.namaLengkap || '—'}</h3>
-              {showIdentitas && (
-                <p className="mt-0.5 text-sm text-base-content/60">
-                  {form.identitasLabel}: {form.identitas}
-                </p>
-              )}
-              <p className="text-sm text-base-content/60">{form.jabatan}</p>
-            </div>
-          </div>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-base-content">Profil dan pengaturan</h2>
+          <p className="mt-1 text-sm text-base-content/60">{form.namaLengkap || roleLabel}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card bg-base-100 p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <User className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-base-content">Informasi Akun</h3>
+            <div className="mb-4 flex items-center gap-3">
+              <User className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-base-content">Informasi akun</h3>
             </div>
+
             {loading ? (
               <FormSkeleton fields={4} />
             ) : (
-              <div className="space-y-4">
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleSimpan()
+                }}
+              >
                 <div>
                   <label className="block text-sm font-medium text-base-content">Nama Lengkap</label>
                   <input
@@ -194,27 +187,27 @@ function AkunPengaturan({ role: roleProp } = {}) {
                     name="namaLengkap"
                     value={form.namaLengkap}
                     onChange={handleChange}
-                    className="mt-1 w-full rounded-lg border border-base-300 p-3 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input mt-1 w-full"
                   />
                 </div>
-                {showIdentitas && (
+                {showIdentitas ? (
                   <div>
                     <label className="block text-sm font-medium text-base-content">{form.identitasLabel}</label>
                     <input
                       type="text"
                       value={form.identitas}
                       readOnly
-                      className="mt-1 w-full rounded-lg border border-base-300 bg-base-200 p-3 text-sm text-base-content shadow-sm"
+                      className="input mt-1 w-full bg-base-200"
                     />
                   </div>
-                )}
+                ) : null}
                 <div>
                   <label className="block text-sm font-medium text-base-content">Jabatan</label>
                   <input
                     type="text"
                     value={form.jabatan}
                     readOnly
-                    className="mt-1 w-full rounded-lg border border-base-300 bg-base-200 p-3 text-sm text-base-content shadow-sm"
+                    className="input mt-1 w-full bg-base-200"
                   />
                 </div>
                 <div>
@@ -224,7 +217,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    className="mt-1 w-full rounded-lg border border-base-300 p-3 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input mt-1 w-full"
                   />
                 </div>
                 <div>
@@ -235,7 +228,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                     value={form.nomorTelepon}
                     onChange={handleChange}
                     placeholder="Masukkan nomor telepon"
-                    className="mt-1 w-full rounded-lg border border-base-300 p-3 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input mt-1 w-full"
                   />
                 </div>
                 <div>
@@ -246,73 +239,83 @@ function AkunPengaturan({ role: roleProp } = {}) {
                     value={form.alamat}
                     onChange={handleChange}
                     placeholder="Masukkan alamat"
-                    className="mt-1 w-full rounded-lg border border-base-300 p-3 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input mt-1 w-full"
                   />
                 </div>
                 <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleSimpan}
-                    disabled={saving}
-                    className="btn btn-primary px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
+                  <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
                     {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
                   </button>
                 </div>
-              </div>
+              </form>
             )}
           </div>
 
           <div className="card bg-base-100 p-6">
             <div className="mb-5 flex items-center gap-3">
-              <Lock className="h-5 w-5 text-brand-dark" />
-              <h3 className="text-lg font-bold text-base-content">Ganti Password</h3>
+              <Lock className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-base-content">Ganti password</h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-base-content">Password Lama <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">
+                  Password Lama <span className="text-error">*</span>
+                </label>
                 <div className="relative mt-1">
                   <input
                     type={showOld ? 'text' : 'password'}
                     name="passwordLama"
                     value={pwdForm.passwordLama}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
-                  <button type="button" onClick={() => setShowOld(!showOld)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
+                  <button
+                    type="button"
+                    onClick={() => setShowOld(!showOld)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  >
                     {showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-base-content">Password Baru <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">
+                  Password Baru <span className="text-error">*</span>
+                </label>
                 <div className="relative mt-1">
                   <input
                     type={showNew ? 'text' : 'password'}
                     name="passwordBaru"
                     value={pwdForm.passwordBaru}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
-                  <button type="button" onClick={() => setShowNew(!showNew)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  >
                     {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-base-content">Konfirmasi Password Baru <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-base-content">
+                  Konfirmasi Password Baru <span className="text-error">*</span>
+                </label>
                 <div className="relative mt-1">
                   <input
                     type={showConfirm ? 'text' : 'password'}
                     name="konfirmasiPassword"
                     value={pwdForm.konfirmasiPassword}
                     onChange={handlePwdChange}
-                    className="w-full rounded-lg border border-base-300 p-3 pr-10 text-sm text-base-content shadow-sm outline-none focus:border-brand-dark"
+                    className="input w-full pr-10"
                   />
-                  <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -322,7 +325,7 @@ function AkunPengaturan({ role: roleProp } = {}) {
                   type="button"
                   onClick={handleGantiPassword}
                   disabled={changingPwd}
-                  className="btn btn-primary px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn btn-primary btn-sm"
                 >
                   {changingPwd ? 'Mengganti…' : 'Ganti Password'}
                 </button>
@@ -331,19 +334,9 @@ function AkunPengaturan({ role: roleProp } = {}) {
           </div>
         </div>
 
-        <div className="max-w-sm btn btn-primary p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-base-100/20">
-              <Lock className="h-4 w-4 text-white" />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-white">KEAMANAN</p>
-              <p className="mt-0.5 text-xs leading-snug text-white/80">
-                Data login dan kata sandi Anda terintegrasi dengan portal utama universitas.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-base-content/60">
+          Data login terintegrasi dengan portal utama universitas.
+        </p>
       </div>
     </DashboardLayout>
   )

@@ -16,7 +16,6 @@ import {
   DetailHeader,
   DecisionNote,
   RejectForm,
-  VerifiedBanner,
   DecisionActions,
   EmptyDetail,
 } from '../../components/ui/DetailComponents'
@@ -100,7 +99,7 @@ function DetailVerifikasiKegiatanInternal() {
 
   if (loading) {
     return (
-      <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
+      <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan Fakultas">
         <DetailSkeleton />
       </DashboardLayout>
     )
@@ -108,14 +107,14 @@ function DetailVerifikasiKegiatanInternal() {
 
   if (!item) {
     return (
-      <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
+      <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan Fakultas">
         <EmptyDetail onBack={backToList} />
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan">
+    <DashboardLayout role="pimpinan_fakultas" userName={user?.nama || 'Pimpinan Fakultas'} userRole="Pimpinan Fakultas">
       <ConfirmModal
         isOpen={showConfirmSetujui}
         message="Kegiatan internal ini akan disetujui?"
@@ -144,7 +143,6 @@ function DetailVerifikasiKegiatanInternal() {
         />
 
         {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
-        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} noun="Kegiatan" /> : null}
 
         <SectionCard title="Detail kegiatan">
           <InfoRow label="Nama kegiatan" value={item.kegiatan} />

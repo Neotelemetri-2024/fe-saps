@@ -90,16 +90,6 @@ export function DecisionNote({ status, alasan, title }) {
   )
 }
 
-export function VerifiedBanner({ status, noun = 'Pengajuan' }) {
-  return (
-    <div role="alert" className="alert text-sm">
-      <span>
-        {noun} sudah diverifikasi dengan status <StatusBadge status={status} />
-      </span>
-    </div>
-  )
-}
-
 export function DecisionActions({
   onReject,
   onRevise,

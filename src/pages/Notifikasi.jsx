@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Bell, FileText, Users, Info, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import { NotifListSkeleton, Skeleton } from '../components/dashboard/Skeleton'
 import { getCurrentUser } from '../services/authService'
@@ -20,27 +20,6 @@ const ROLE_LABEL = {
   operator_ukmf: 'Operator UKMF',
 }
 
-// Palet warna kartu mengikuti desain referensi:
-// - disetujui  -> lingkaran hijau mint, ikon hijau tua
-// - ditolak    -> lingkaran merah muda, ikon merah
-// - lainnya    -> lingkaran kuning, ikon oranye-coklat
-const TYPE_CONFIG = {
-  disetujui: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
-  ditolak: { icon: XCircle, iconColor: 'text-error', bg: 'bg-error/15' },
-  pengajuan_baru: { icon: FileText, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  kegiatan: { icon: Clock, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  klaim: { icon: FileText, iconColor: 'text-success', bg: 'bg-success/15' },
-  event: { icon: Bell, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  peserta: { icon: Users, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  saran: { icon: Info, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  saran_pa: { icon: Info, iconColor: 'text-warning', bg: 'bg-warning/15' },
-  izin_pa: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
-  klaim_poin: { icon: FileText, iconColor: 'text-success', bg: 'bg-success/15' },
-  perolehan_poin: { icon: CheckCircle, iconColor: 'text-success', bg: 'bg-success/15' },
-  default: { icon: Bell, iconColor: 'text-success', bg: 'bg-success/15' },
-}
-
-// Rute tujuan chip aksi per tipe notifikasi dan role pengguna
 const ACTION_ROUTES = {
   kegiatan: {
     mahasiswa: (id) => `/mahasiswa/kegiatan-eksternal/${id}`,
@@ -62,14 +41,13 @@ const ACTION_ROUTES = {
   klaim_poin: {
     mahasiswa: () => '/mahasiswa/klaim-poin',
     admin_ditmawa: (id) => `/admin_ditmawa/verifikasi-klaim/${id}`,
-      pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-klaim/${id}`,
+    pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-klaim/${id}`,
   },
   perolehan_poin: {
     mahasiswa: () => '/mahasiswa/riwayat-poin',
   },
 }
 
-// Label & warna chip aksi mengikuti isi notifikasi (meniru desain referensi)
 function resolveAction(notif, role) {
   const route = ACTION_ROUTES[notif.type]?.[role]
   if (!route) return null
@@ -78,22 +56,17 @@ function resolveAction(notif, role) {
   const refId = notif.raw?.refId
 
   let label = 'Verifikasi Detail Kegiatan'
-  let cls = 'btn btn-ghost btn-xs'
-
   if (judul.includes('ditolak')) {
     label = 'Lihat Alasan'
-    cls = 'btn btn-ghost btn-xs text-error'
   } else if (judul.includes('saran')) {
     label = 'Saran'
-    cls = 'btn btn-ghost btn-xs'
   } else if (judul.includes('direview') || judul.includes('menunggu') || judul.includes('review') || judul.includes('diproses')) {
     label = 'Verifikasi'
-    cls = 'btn btn-ghost btn-xs'
   } else if (notif.type === 'klaim_poin' || notif.type === 'perolehan_poin') {
     label = 'Lihat Detail'
   }
 
-  return { label, cls, path: route(refId) }
+  return { label, path: route(refId) }
 }
 
 function formatRelativeTime(value) {
@@ -128,6 +101,20 @@ function resolveRoleFromPath(pathname) {
   const segment = pathname.split('/').filter(Boolean)[0]
   if (segment && ROLE_LABEL[segment]) return segment
   return null
+}
+
+function buildPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages = new Set([1, total, current, current - 1, current + 1])
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b)
+  const result = []
+  let prev = 0
+  for (const p of sorted) {
+    if (prev && p - prev > 1) result.push('...')
+    result.push(p)
+    prev = p
+  }
+  return result
 }
 
 function Notifikasi() {
@@ -169,8 +156,8 @@ function Notifikasi() {
 
   const TABS = [
     { key: 'semua', label: 'Semua', count: notifs.length },
-    { key: 'belum_dibaca', label: 'Belum Dibaca', count: belumDibacaCount },
-    { key: 'sudah_dibaca', label: 'Sudah Dibaca', count: sudahDibacaCount },
+    { key: 'belum_dibaca', label: 'Belum dibaca', count: belumDibacaCount },
+    { key: 'sudah_dibaca', label: 'Sudah dibaca', count: sudahDibacaCount },
   ]
 
   const filteredNotifs = notifs.filter((n) => {
@@ -184,28 +171,12 @@ function Notifikasi() {
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filteredNotifs.slice(start, start + PAGE_SIZE)
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   const handleTabChange = (key) => {
     setActiveTab(key)
     setPage(1)
   }
-
-  // Bangun daftar nomor halaman dengan elipsis untuk halaman yang banyak, mis: 1 2 3 … 8
-  function buildPageNumbers(current, total) {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-    const pages = new Set([1, total, current, current - 1, current + 1])
-    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b)
-    const result = []
-    let prev = 0
-    for (const p of sorted) {
-      if (prev && p - prev > 1) result.push('...')
-      result.push(p)
-      prev = p
-    }
-    return result
-  }
-
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   const tandaiSudahDibaca = async (id) => {
     try {
@@ -226,161 +197,133 @@ function Notifikasi() {
     }
   }
 
+  const emptyText =
+    activeTab === 'belum_dibaca'
+      ? 'Tidak ada notifikasi belum dibaca.'
+      : activeTab === 'sudah_dibaca'
+        ? 'Tidak ada notifikasi yang sudah dibaca.'
+        : 'Belum ada notifikasi.'
+
   return (
     <DashboardLayout role={role} userName={userName} userRole={userRole}>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-base-content sm:text-2xl lg:text-3xl">Notifikasi</h2>
+            <h2 className="text-2xl font-extrabold text-base-content">Notifikasi</h2>
             {loading ? (
-              <Skeleton className="mt-1.5 h-4 w-48" />
+              <Skeleton className="mt-1 h-4 w-48" />
             ) : (
-              <p className="mt-1.5 text-sm font-medium text-base-content">
+              <p className="mt-1 text-sm text-base-content/60">
                 {belumDibacaCount > 0
                   ? `${belumDibacaCount} notifikasi belum dibaca`
                   : 'Semua notifikasi sudah dibaca'}
               </p>
             )}
           </div>
-          {belumDibacaCount > 0 && (
-            <button
-              type="button"
-              onClick={tandaiSemuaDibaca}
-              className="self-start text-sm font-medium text-brand-dark underline underline-offset-4 transition hover:opacity-80 sm:self-auto"
-            >
+          {belumDibacaCount > 0 ? (
+            <button type="button" onClick={tandaiSemuaDibaca} className="btn btn-ghost btn-sm self-start sm:self-auto">
               Tandai semua dibaca
             </button>
-          )}
+          ) : null}
         </div>
 
-        {/* Card putih pembungkus tab, daftar, dan pagination */}
-        <div className="rounded-xl border border-base-300 bg-base-100 p-4 sm:p-5">
-          {/* Tab filter */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-base-300">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => handleTabChange(tab.key)}
-                className={`relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition ${
-                  activeTab === tab.key
-                    ? 'text-brand-dark'
-                    : 'text-base-content/60 hover:text-base-content'
-                }`}
-              >
-                {tab.label}
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                    activeTab === tab.key ? 'bg-primary/15 text-primary' : 'bg-base-200 text-base-content/60'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-                {activeTab === tab.key && (
-                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand-dark" />
-                )}
-              </button>
-            ))}
-          </div>
+        <div role="tablist" className="tabs tabs-box">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`tab ${activeTab === tab.key ? 'tab-active' : ''}`}
+              onClick={() => handleTabChange(tab.key)}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
 
-          {/* Daftar kartu notifikasi */}
-          <div className="mt-4 space-y-3">
-            {loading ? (
+        <div className="card bg-base-100">
+          {loading ? (
+            <div className="p-4 sm:p-5">
               <NotifListSkeleton />
-            ) : filteredNotifs.length === 0 ? (
-              <div className="rounded-xl border border-base-300 bg-base-200 px-6 py-12 text-center text-sm text-base-content/60">
-                {activeTab === 'belum_dibaca'
-                  ? 'Tidak ada notifikasi belum dibaca.'
-                  : activeTab === 'sudah_dibaca'
-                    ? 'Tidak ada notifikasi yang sudah dibaca.'
-                    : 'Belum ada notifikasi.'}
-              </div>
-            ) : (
-              pageItems.map((notif) => {
-                const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.default
-                const Icon = cfg.icon
+            </div>
+          ) : filteredNotifs.length === 0 ? (
+            <p className="px-6 py-12 text-center text-sm text-base-content/50">{emptyText}</p>
+          ) : (
+            <ul className="divide-y divide-base-300">
+              {pageItems.map((notif) => {
                 const action = resolveAction(notif, role)
                 return (
-                  <div
-                    key={notif.id}
-                    className="rounded-xl border border-base-300 bg-base-200 p-4 sm:p-5"
-                  >
-                    <div className="flex items-start gap-3 sm:gap-4">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${cfg.bg}`}>
-                        <Icon className={`h-5 w-5 sm:h-[22px] sm:w-[22px] ${cfg.iconColor}`} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-semibold leading-snug text-base-content">
-                            {notif.title}
-                            {notif.belumDibaca && (
-                              <span className="ml-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary align-middle" title="Belum dibaca"></span>
-                            )}
-                          </p>
-                          <span className="shrink-0 text-xs text-base-content/50">{notif.time}</span>
-                        </div>
-                        {notif.message && (
-                          <p className="mt-1.5 text-sm leading-relaxed text-base-content/60">{notif.message}</p>
-                        )}
-                        {action && (
-                          <div className="mt-3 flex flex-wrap items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => navigate(action.path)}
-                              className={action.cls}
-                            >
-                              {action.label}
-                            </button>
-                            {notif.belumDibaca && (
-                              <button
-                                type="button"
-                                onClick={() => tandaiSudahDibaca(notif.id)}
-                                className="text-xs font-medium text-brand-dark underline underline-offset-4 transition hover:opacity-80"
-                              >
-                                Tandai dibaca
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                  <li key={notif.id} className="px-4 py-4 sm:px-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium leading-snug text-base-content">
+                        {notif.belumDibaca ? (
+                          <span
+                            className="mr-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary align-middle"
+                            title="Belum dibaca"
+                          />
+                        ) : null}
+                        {notif.title}
+                      </p>
+                      <span className="shrink-0 text-xs text-base-content/50">{notif.time}</span>
                     </div>
-                  </div>
+                    {notif.message ? (
+                      <p className="mt-1 text-sm text-base-content/60">{notif.message}</p>
+                    ) : null}
+                    {(action || notif.belumDibaca) ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                        {action ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(action.path)}
+                            className="text-sm font-medium text-primary hover:underline"
+                          >
+                            {action.label}
+                          </button>
+                        ) : null}
+                        {notif.belumDibaca ? (
+                          <button
+                            type="button"
+                            onClick={() => tandaiSudahDibaca(notif.id)}
+                            className="text-sm text-base-content/60 hover:text-base-content hover:underline"
+                          >
+                            Tandai dibaca
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </li>
                 )
-              })
-            )}
-          </div>
+              })}
+            </ul>
+          )}
 
-          {/* Pagination */}
-          {!loading && filteredNotifs.length > 0 && totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between border-t border-base-300 pt-4">
+          {!loading && filteredNotifs.length > 0 && totalPages > 1 ? (
+            <div className="flex flex-col gap-3 border-t border-base-300 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <span className="text-xs text-base-content/50">
                 Menampilkan {start + 1}–{Math.min(start + PAGE_SIZE, filteredNotifs.length)} dari {filteredNotifs.length} notifikasi
               </span>
-              <div className="flex items-center gap-1">
+              <div className="join">
                 <button
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setPage(currentPage - 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="btn btn-sm join-item"
+                  aria-label="Halaman sebelumnya"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 {pageNumbers.map((p, idx) =>
                   p === '...' ? (
-                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-base-content/50">
+                    <button key={`ellipsis-${idx}`} type="button" className="btn btn-sm join-item btn-disabled">
                       …
-                    </span>
+                    </button>
                   ) : (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setPage(p)}
-                      className={`flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-xs font-medium transition ${
-                        p === currentPage
-                          ? 'bg-brand-dark text-white'
-                          : 'border border-base-300 text-base-content/60 hover:bg-base-200'
-                      }`}
+                      className={`btn btn-sm join-item ${p === currentPage ? 'btn-active' : ''}`}
                     >
                       {p}
                     </button>
@@ -390,13 +333,14 @@ function Notifikasi() {
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setPage(currentPage + 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-base-300 text-base-content/60 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="btn btn-sm join-item"
+                  aria-label="Halaman berikutnya"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </DashboardLayout>

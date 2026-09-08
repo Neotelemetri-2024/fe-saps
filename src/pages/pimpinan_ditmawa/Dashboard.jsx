@@ -9,6 +9,7 @@ import PanduanCard from '../../components/dashboard/PanduanCard'
 import { CardGridSkeleton, ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
+import { getKurikulumAktif } from '../../services/kurikulumService'
 
 function formatTanggal(val) {
   if (!val) return '-'
@@ -21,19 +22,44 @@ function formatTanggal(val) {
   }
 }
 
+function pickDefaultKurikulumId(list) {
+  if (!Array.isArray(list) || list.length === 0) return ''
+  const sorted = [...list].sort((a, b) => {
+    const angA = Number(a.angkatanMulai) || 0
+    const angB = Number(b.angkatanMulai) || 0
+    if (angB !== angA) return angB - angA
+    return Number(b.id) - Number(a.id)
+  })
+  return String(sorted[0].id)
+}
+
 function Dashboard() {
   const user = getCurrentUser()
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [kurikulumId, setKurikulumId] = useState('')
+  const [kurikulumOptions, setKurikulumOptions] = useState([])
+
+  useEffect(() => {
+    getKurikulumAktif()
+      .then((list) => {
+        const options = Array.isArray(list) ? list : []
+        const defaultId = pickDefaultKurikulumId(options)
+        setKurikulumOptions(options)
+        setKurikulumId(defaultId)
+      })
+      .catch(() => setKurikulumOptions([]))
+  }, [])
 
   useEffect(() => {
     setLoading(true)
-    get('/api/umum/dashboard/pimpinan-ditmawa')
+    const params = kurikulumId ? { kurikulumId: Number(kurikulumId) } : undefined
+    get('/api/umum/dashboard/pimpinan-ditmawa', params)
       .then((res) => setStats(res?.data || res))
       .catch(() => setStats(null))
       .finally(() => setLoading(false))
-  }, [])
+  }, [kurikulumId])
 
   const statistik = stats?.statistik || {}
   const capaianKurikulum = Array.isArray(stats?.capaianKurikulum) ? stats.capaianKurikulum : []
@@ -54,15 +80,14 @@ function Dashboard() {
         <div>
           <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">
             Selamat Datang<br />
-            <span className="text-brand-dark">{user?.nama || 'Pimpinan Ditmawa'}</span>
+            {user?.nama || 'Pimpinan Ditmawa'}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-base-content/60">
             Pantau perkembangan mahasiswa, evaluasi kurikulum SAPS, dan kelola kegiatan kemahasiswaan Universitas Andalas.
           </p>
         </div>
 
-        {/* 4 Stat Cards Utama */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             label="TOTAL MAHASISWA AKTIF"
             value={loading ? '…' : Number(statistik.mahasiswaAktif ?? 0).toLocaleString('id-ID')}
@@ -74,11 +99,6 @@ function Dashboard() {
           <StatCard
             label="TOTAL ORMAWA AKTIF"
             value={loading ? '…' : String(statistik.totalOrmawaAktif ?? 0)}
-          />
-          <StatCard
-            label="KURIKULUM AKTIF"
-            value={loading ? '…' : (statistik.kurikulumAktif || 'Kurikulum SAPS 2024')}
-            small
           />
         </div>
 
@@ -124,16 +144,35 @@ function Dashboard() {
 
         {/* Progres Capaian Kurikulum */}
         <div className="card bg-base-100 p-5 sm:p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-lg font-bold text-base-content">Progres Capaian Kurikulum</h3>
               <p className="mt-0.5 text-xs text-base-content/60">
                 Rata-rata pemenuhan poin kompetensi mahasiswa pada setiap tahun kurikulum
               </p>
             </div>
-            <span className="text-xs text-base-content/60">
-              Target Minimum: <strong className="text-brand-dark">{statistik.targetPoinKurikulum ?? 200} poin</strong>
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+              {kurikulumOptions.length > 0 ? (
+                <label className="flex min-w-52 flex-col gap-1">
+                  <span className="text-xs text-base-content/60">Kurikulum</span>
+                  <select
+                    className="select select-sm"
+                    value={kurikulumId}
+                    onChange={(e) => setKurikulumId(e.target.value)}
+                    aria-label="Filter kurikulum"
+                  >
+                    {kurikulumOptions.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <span className="text-xs text-base-content/60 sm:pt-5">
+                Target Minimum: <strong className="text-base-content">{statistik.targetPoinKurikulum ?? 200} poin</strong>
+              </span>
+            </div>
           </div>
 
           {loading ? (
@@ -145,7 +184,7 @@ function Dashboard() {
               {capaianKurikulum.map((pilar) => (
                 <div key={pilar.id || pilar.pilar} className="rounded-lg border border-base-300 p-4 text-center">
                   <p className="text-xs font-semibold uppercase text-base-content/60">{pilar.pilar}</p>
-                  <p className="mt-1 text-2xl font-bold text-brand-dark">
+                  <p className="mt-1 text-2xl font-bold text-base-content">
                     {pilar.rataRataPoin ?? 0}
                     <span className="text-sm font-normal text-base-content/60">/{pilar.targetPoin} poin</span>
                   </p>

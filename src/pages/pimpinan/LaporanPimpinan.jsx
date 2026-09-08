@@ -46,6 +46,18 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('id-ID')
 }
 
+/** Kurikulum aktif dengan angkatanMulai / id tertinggi. */
+function pickDefaultKurikulumId(list) {
+  if (!Array.isArray(list) || list.length === 0) return ''
+  const sorted = [...list].sort((a, b) => {
+    const angA = Number(a.angkatanMulai) || 0
+    const angB = Number(b.angkatanMulai) || 0
+    if (angB !== angA) return angB - angA
+    return Number(b.id) - Number(a.id)
+  })
+  return String(sorted[0].id)
+}
+
 function ToolbarSelect({ label, value, onChange, children, className = '' }) {
   return (
     <label className={`flex flex-col gap-1 ${className}`}>
@@ -107,18 +119,6 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
     }
   }
 
-  useEffect(() => {
-    getFakultasList().then(setFakultasOptions).catch(() => setFakultasOptions([]))
-    getKurikulumAktif()
-      .then((list) => setKurikulumOptions(Array.isArray(list) ? list : []))
-      .catch(() => setKurikulumOptions([]))
-  }, [])
-
-  useEffect(() => {
-    getProdiList(fakultasId || undefined).then(setProdiOptions).catch(() => setProdiOptions([]))
-    setProdiId('')
-  }, [fakultasId])
-
   const fetchData = async (overrides) => {
     setLoading(true)
     try {
@@ -136,9 +136,26 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   }
 
   useEffect(() => {
-    fetchData()
+    getFakultasList().then(setFakultasOptions).catch(() => setFakultasOptions([]))
+    getKurikulumAktif()
+      .then((list) => {
+        const options = Array.isArray(list) ? list : []
+        const defaultId = pickDefaultKurikulumId(options)
+        setKurikulumOptions(options)
+        setKurikulumId(defaultId)
+        fetchData({ kurikulumId: defaultId })
+      })
+      .catch(() => {
+        setKurikulumOptions([])
+        fetchData({ kurikulumId: '' })
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    getProdiList(fakultasId || undefined).then(setProdiOptions).catch(() => setProdiOptions([]))
+    setProdiId('')
+  }, [fakultasId])
 
   const handleApplyFilter = (e) => {
     e?.preventDefault()
@@ -146,12 +163,13 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   }
 
   const handleResetFilter = () => {
+    const defaultId = pickDefaultKurikulumId(kurikulumOptions)
     setTahunAkademik('')
     setAngkatan('')
-    setKurikulumId('')
+    setKurikulumId(defaultId)
     setFakultasId('')
     setProdiId('')
-    fetchData({ tahunAkademik: '', angkatan: '', kurikulumId: '', fakultasId: '', prodiId: '' })
+    fetchData({ tahunAkademik: '', angkatan: '', kurikulumId: defaultId, fakultasId: '', prodiId: '' })
   }
 
   const handleDownloadExcel = async () => {
@@ -224,8 +242,19 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const kpi = laporanData?.kpi
   const scopeNama = laporanData?.scopeNama || 'Universitas Andalas'
   const targetPoin = laporanData?.kurikulum?.targetPoin ?? 200
-  const hasActiveFilter = Boolean(tahunAkademik || angkatan || kurikulumId || fakultasId || prodiId)
+  const defaultKurikulumId = pickDefaultKurikulumId(kurikulumOptions)
+  const hasActiveFilter = Boolean(
+    tahunAkademik
+    || angkatan
+    || fakultasId
+    || prodiId
+    || (kurikulumId && kurikulumId !== defaultKurikulumId),
+  )
   const kurikulumStats = laporanData?.capaianKurikulumStats || []
+  const selectedKurikulum = kurikulumOptions.find((k) => String(k.id) === String(kurikulumId))
+  const kurikulumChartLabel = selectedKurikulum
+    ? `${selectedKurikulum.nama}${selectedKurikulum.angkatanMulai ? ` (${selectedKurikulum.angkatanMulai}+)` : ''}`
+    : null
 
   const content = (
     <div className="space-y-5">
@@ -278,12 +307,15 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
           </ToolbarSelect>
 
           <ToolbarSelect label="Kurikulum" className="min-w-[260px] flex-1" value={kurikulumId} onChange={(e) => setKurikulumId(e.target.value)}>
-            <option value="">Semua / campuran</option>
-            {kurikulumOptions.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
-              </option>
-            ))}
+            {kurikulumOptions.length === 0 ? (
+              <option value="">Belum ada kurikulum aktif</option>
+            ) : (
+              kurikulumOptions.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
+                </option>
+              ))
+            )}
           </ToolbarSelect>
 
           {isGlobalScope ? (
@@ -366,7 +398,31 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
         <div className="space-y-5">
           <TableCard
             title="Capaian kurikulum"
-            description={`Target ${targetPoin} poin`}
+            description={
+              kurikulumChartLabel
+                ? `Target ${targetPoin} poin · ${kurikulumChartLabel}`
+                : `Target ${targetPoin} poin`
+            }
+            headerRight={
+              kurikulumOptions.length > 0 ? (
+                <select
+                  className="select select-sm min-w-52 max-w-xs"
+                  value={kurikulumId}
+                  aria-label="Filter kurikulum"
+                  onChange={(e) => {
+                    const next = e.target.value
+                    setKurikulumId(next)
+                    fetchData({ kurikulumId: next })
+                  }}
+                >
+                  {kurikulumOptions.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.nama}{k.angkatanMulai ? ` (${k.angkatanMulai}+)` : ''}
+                    </option>
+                  ))}
+                </select>
+              ) : null
+            }
           >
             {loading ? (
               <ChartSkeleton />
@@ -466,7 +522,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
               emptyText="Tidak ada data mahasiswa."
               pageSize={15}
               columns={[
-                { key: 'nim', label: 'NIM', render: (row) => <span className="font-mono text-sm">{row.nim}</span> },
+                { key: 'nim', label: 'NIM' },
                 { key: 'nama', label: 'Nama' },
                 { key: 'prodi', label: 'Prodi' },
                 {
@@ -525,11 +581,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
               columns={[
                 { key: 'namaMahasiswa', label: 'Mahasiswa' },
                 { key: 'namaKegiatan', label: 'Kegiatan' },
-                {
-                  key: 'skala',
-                  label: 'Skala',
-                  render: (row) => <span className="badge badge-ghost badge-sm">{row.skala || '—'}</span>,
-                },
+                { key: 'skala', label: 'Skala' },
                 { key: 'peran', label: 'Peringkat' },
                 {
                   key: 'poin',

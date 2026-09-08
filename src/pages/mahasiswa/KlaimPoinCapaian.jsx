@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, FileText, UploadCloud } from 'lucide-react'
+import { Search, FileText, UploadCloud, X } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -172,6 +172,12 @@ function KlaimPoinCapaian() {
     })
   }
 
+  const handleSelectAll = () => {
+    const ids = siapKlaim.map((r) => r.id).filter(Boolean)
+    const allOn = ids.length > 0 && ids.every((id) => selected.has(id))
+    setSelected(allOn ? new Set() : new Set(ids))
+  }
+
   const handleBatalPilih = () => {
     setPilihanMode(false)
     setSelected(new Set())
@@ -197,17 +203,42 @@ function KlaimPoinCapaian() {
   }
 
   const handleKlaimFileChange = (itemId, e) => {
-    const file = e.target.files[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
     if (file.type !== 'application/pdf') {
-      toast.error('Hanya file PDF yang diizinkan')
+      input.value = ''
+      toast.warning('Format tidak didukung', {
+        description: 'Bukti harus berupa file PDF.',
+      })
+      setKlaimItems((prev) =>
+        prev.map((it) => (it.id === itemId ? { ...it, bukti: null, buktiError: 'Hanya file PDF yang diizinkan.' } : it)),
+      )
       return
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Ukuran file maksimal 10 MB')
+    if (file.size > 1 * 1024 * 1024) {
+      input.value = ''
+      toast.warning('Ukuran file terlalu besar', {
+        description: 'Maksimal ukuran bukti PDF adalah 1 MB. Kompres file lalu unggah ulang.',
+      })
+      setKlaimItems((prev) =>
+        prev.map((it) => (
+          it.id === itemId
+            ? { ...it, bukti: null, buktiError: 'File melebihi 1 MB. Unggah ulang dengan ukuran maksimal 1 MB.' }
+            : it
+        )),
+      )
       return
     }
-    setKlaimItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, bukti: file } : it)))
+    setKlaimItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, bukti: file, buktiError: null } : it)),
+    )
+  }
+
+  const handleClearBukti = (itemId) => {
+    setKlaimItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, bukti: null, buktiError: null } : it)),
+    )
   }
 
   const semuaBuktiLengkap = klaimItems.length > 0 && klaimItems.every((it) => !!it.bukti)
@@ -296,26 +327,43 @@ function KlaimPoinCapaian() {
 
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {klaimItems.map((item) => (
-              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : 'border-base-300 bg-base-200'}`}>
+              <div key={item.id} className={`rounded-lg border p-3 ${item.bukti ? 'border-green-200 bg-green-50/40' : item.buktiError ? 'border-error/40 bg-error/5' : 'border-base-300 bg-base-200'}`}>
                 <p className="text-sm font-medium text-base-content">{item.kegiatan}</p>
                 <p className="text-xs text-base-content/60 mt-0.5">Peran: <span className="font-medium text-brand-dark">{item.peran}</span></p>
 
-                <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-base-300 bg-base-100 px-3 py-2 transition hover:border-brand-dark hover:bg-green-50">
+                <div className="mt-2 flex items-center gap-1.5">
+                  <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed bg-base-100 px-3 py-2 transition ${item.buktiError ? 'border-error/50 hover:border-error' : 'border-base-300 hover:border-primary hover:bg-base-200'}`}>
+                    {item.bukti ? (
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                    ) : (
+                      <UploadCloud className={`h-4 w-4 shrink-0 ${item.buktiError ? 'text-error' : 'text-base-content/50'}`} />
+                    )}
+                    <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-base-content' : item.buktiError ? 'text-error' : 'text-base-content/50'}`}>
+                      {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 1 MB)'}
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf"
+                      onChange={(e) => handleKlaimFileChange(item.id, e)}
+                    />
+                  </label>
                   {item.bukti ? (
-                    <FileText className="h-4 w-4 shrink-0 text-brand-dark" />
-                  ) : (
-                    <UploadCloud className="h-4 w-4 shrink-0 text-base-content/50" />
-                  )}
-                  <span className={`truncate text-xs ${item.bukti ? 'font-semibold text-brand-dark' : 'text-base-content/50'}`}>
-                    {item.bukti ? item.bukti.name : 'Klik untuk upload bukti PDF (maks 10 MB)'}
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf"
-                    onChange={(e) => handleKlaimFileChange(item.id, e)}
-                  />
-                </label>
+                    <button
+                      type="button"
+                      onClick={() => handleClearBukti(item.id)}
+                      disabled={submittingKlaim}
+                      className="btn btn-ghost btn-xs btn-circle shrink-0 text-base-content/50 hover:bg-error/10 hover:text-error"
+                      title="Hapus file"
+                      aria-label="Hapus file bukti"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                </div>
+                {item.buktiError ? (
+                  <p className="mt-1.5 text-xs text-error">{item.buktiError}</p>
+                ) : null}
               </div>
             ))}
           </div>
@@ -362,6 +410,7 @@ function KlaimPoinCapaian() {
               selectable={pilihanMode}
               selected={selected}
               onSelect={toggleSelect}
+              onSelectAll={handleSelectAll}
               isSelectable={() => true}
               onRowClick={pilihanMode ? (row) => toggleSelect(row.id) : undefined}
             />

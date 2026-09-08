@@ -8,6 +8,7 @@ import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { getKegiatan, updateKegiatan } from '../../services/kegiatanService'
+import { getCurrentUser } from '../../services/authService'
 
 function formatTanggal(value) {
   if (!value) return ''
@@ -85,8 +86,13 @@ function PimpinanFakultasPersetujuan() {
       ),
     },
   ]
+  const user = getCurrentUser()
   return (
-    <DashboardLayout role="pimpinan_fakultas" userName="Dr. Andi Wijaya" userRole="Pimpinan Fakultas">
+    <DashboardLayout
+      role="pimpinan_fakultas"
+      userName={user?.nama || 'Pimpinan Fakultas'}
+      userRole="Pimpinan Fakultas"
+    >
       <div className="space-y-6">
         <TableCard title="Persetujuan Kegiatan">
           <TableFrame>

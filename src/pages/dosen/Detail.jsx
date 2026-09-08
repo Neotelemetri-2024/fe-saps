@@ -444,28 +444,30 @@ function DosenPADetail() {
         {loading && m.nama === '-' ? (
           <DetailSkeleton />
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-extrabold text-base-content">{m.nama}</h2>
-              <p className="mt-1 text-sm text-base-content/60">
-                {m.nim} · {m.prodi} · Angkatan {m.angkatan} · IPK {m.ipk}
-              </p>
-            </div>
-            <div className="sm:min-w-44 sm:text-right">
-              <StatusBadge status={kelulusanStatus} />
-              <p className="mt-2 text-2xl font-extrabold text-base-content">
-                {m.totalPoinProgres ?? m.poin}
-              </p>
-              <p className="text-sm text-base-content/60">/ {m.targetPoin ?? 200} poin target</p>
-              {m.poin > (m.totalPoinProgres ?? m.poin) && (
-                <p className="mt-0.5 text-xs text-base-content/60">
-                  Total riil: {m.poin} poin
+          <div className="card bg-base-100 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-extrabold text-base-content">{m.nama}</h2>
+                <p className="mt-1 text-sm text-base-content/60">
+                  {m.nim} · {m.prodi} · Angkatan {m.angkatan} · IPK {m.ipk}
                 </p>
-              )}
-              <div className="mt-2 w-full sm:w-44 sm:ml-auto">
-                <ProgressBar value={m.totalPoinProgres ?? m.poin} max={m.targetPoin ?? 200} height={6} />
               </div>
-              <p className="mt-1 text-xs text-base-content/50">{pctTarget}% dari target</p>
+              <div className="sm:min-w-44 sm:text-right">
+                <StatusBadge status={kelulusanStatus} />
+                <p className="mt-2 text-2xl font-extrabold text-base-content">
+                  {m.totalPoinProgres ?? m.poin}
+                </p>
+                <p className="text-sm text-base-content/60">/ {m.targetPoin ?? 200} poin target</p>
+                {m.poin > (m.totalPoinProgres ?? m.poin) && (
+                  <p className="mt-0.5 text-xs text-base-content/60">
+                    Total riil: {m.poin} poin
+                  </p>
+                )}
+                <div className="mt-2 w-full sm:w-44 sm:ml-auto">
+                  <ProgressBar value={m.totalPoinProgres ?? m.poin} max={m.targetPoin ?? 200} height={6} />
+                </div>
+                <p className="mt-1 text-xs text-base-content/50">{pctTarget}% dari target</p>
+              </div>
             </div>
           </div>
         )}

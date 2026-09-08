@@ -1,136 +1,235 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import StatCard from "../../components/dashboard/StatCard";
-import StatusBadge from "../../components/dashboard/StatusBadge";
-import DataTable from "../../components/dashboard/DataTable";
-import { TableCard, TableFrame } from "../../components/dashboard/TableFrame";
-import PanduanCard from "../../components/dashboard/PanduanCard";
-import { getCurrentUser } from "../../services/authService";
-import { getDashboardAdminDitmawa } from "../../services/dashboardService";
-import KegiatanCell from "../../components/dashboard/KegiatanCell";
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { Eye } from 'lucide-react'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import StatCard from '../../components/dashboard/StatCard'
+import StatusBadge from '../../components/dashboard/StatusBadge'
+import DataTable from '../../components/dashboard/DataTable'
+import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import PanduanCard from '../../components/dashboard/PanduanCard'
+import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import ActionMenu from '../../components/ui/ActionMenu'
+import { getCurrentUser } from '../../services/authService'
+import { getDashboardAdminDitmawa } from '../../services/dashboardService'
 
 function formatTanggal(start, end) {
-  if (!start) return "-";
+  if (!start) return '-'
   try {
-    const ds = new Date(start);
-    if (Number.isNaN(ds.getTime())) return "-";
-    const a = ds.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-    if (!end) return a;
-    const de = new Date(end);
-    if (Number.isNaN(de.getTime())) return a;
-    const b = de.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-    return `${a} - ${b}`;
+    const ds = new Date(start)
+    if (Number.isNaN(ds.getTime())) return '-'
+    const a = ds.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    if (!end) return a
+    const de = new Date(end)
+    if (Number.isNaN(de.getTime())) return a
+    const b = de.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    return `${a} – ${b}`
   } catch {
-    return String(start);
+    return String(start)
   }
 }
 
-function AdminDitmawaDashboard() {
-  const navigate = useNavigate();
-  const user = getCurrentUser();
-  const [stats, setStats] = useState([
-    { label: "DISETUJUI", value: 0 },
-    { label: "PENDING", value: 0 },
-    { label: "DITOLAK", value: 0 },
-    { label: "EVENT GLOBAL AKTIF", value: 0 },
-  ]);
-  const [kegiatanTerbaru, setKegiatanTerbaru] = useState([]);
-  const [loading, setLoading] = useState(true);
+function formatDiajukan(val) {
+  if (!val) return '-'
+  try {
+    const d = new Date(val)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return String(val)
+  }
+}
 
-  const load = () => {
-    setLoading(true);
-    getDashboardAdminDitmawa()
-      .then((data) => {
-        const s = data?.statistik || {};
-        setStats([
-          { label: "DISETUJUI", value: s.disetujui ?? 0 },
-          { label: "PENDING", value: s.pending ?? 0 },
-          { label: "DITOLAK", value: s.ditolak ?? 0 },
-          { label: "EVENT GLOBAL AKTIF", value: s.eventGlobalAktif ?? 0 },
-        ]);
-        const list = data?.kegiatanTerbaru || [];
-        setKegiatanTerbaru(
-          list.map((k, i) => ({
-            no: i + 1,
-            id: k.id,
-            nama: k.namaKegiatan || k.nama || "-",
-            diajukanPada: formatTanggal(k.diajukanPada),
-            kategori: k.kategori || "-",
-            skala: k.skala || "-",
-            tanggal: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
-            status: String(k.status || "pending").toLowerCase(),
-          })),
-        );
-      })
-      .catch((err) =>
-        toast.error("Gagal memuat dashboard", { description: err.message }),
-      )
-      .finally(() => setLoading(false));
-  };
+function detailPath(row) {
+  if (row.asal === 'eksternal') {
+    return `/admin_ditmawa/verifikasi-pengajuan-eksternal/${row.id}`
+  }
+  if (row.asal === 'universitas') {
+    return `/admin_ditmawa/manajemen-peserta-event/${row.id}`
+  }
+  return `/admin_ditmawa/verifikasi-pengajuan-internal/${row.id}`
+}
 
-  useEffect(() => {
-    load();
-  }, []);
+function mapRows(list = []) {
+  return list.map((k, i) => ({
+    no: i + 1,
+    id: k.id,
+    nama: k.namaKegiatan || k.nama || '-',
+    diajukanPada: formatDiajukan(k.diajukanPada),
+    asal: k.asal || '',
+    asalLabel: k.asalLabel || k.asal || '-',
+    kategori: k.kategori || '-',
+    skala: k.skala || '-',
+    tanggal: formatTanggal(k.tanggalMulai, k.tanggalSelesai),
+    pengaju: k.pengaju || '-',
+    kurikulumNama: k.kurikulumNama || null,
+    peserta: k.peserta ?? 0,
+    status: String(k.statusRaw || k.status || 'diajukan').toLowerCase(),
+  }))
+}
 
-  const kegiatanColumns = useMemo(
+function KegiatanPreviewTable({
+  title,
+  rows,
+  loading,
+  emptyText,
+  onSeeAll,
+  seeAllLabel,
+  showAsal = false,
+  showPeserta = false,
+}) {
+  const navigate = useNavigate()
+
+  const openDetail = (row) => {
+    navigate(detailPath(row), { state: { item: row } })
+  }
+
+  const columns = useMemo(
     () => [
       {
-        key: "no",
-        label: "No",
+        key: 'no',
+        label: 'No',
         render: (row) => <span className="text-base-content">{row.no}</span>,
       },
       {
-        key: "nama",
-        label: "Nama Kegiatan",
-        render: (row) => (
-          <div>
-            <p className="text-base-content">{row.nama}</p>
-            {row.diajukanPada && row.diajukanPada !== "-" && (
-              <p className="text-xs text-base-content/60">
-                Diajukan: {row.diajukanPada}
-              </p>
-            )}
-          </div>
-        ),
+        key: 'nama',
+        label: 'Kegiatan',
+        render: (row) => <KegiatanCell nama={row.nama} tanggal={row.diajukanPada} />,
+      },
+      ...(showAsal
+        ? [{
+            key: 'asal',
+            label: 'Asal',
+            render: (row) => <span className="text-base-content">{row.asalLabel}</span>,
+          }]
+        : []),
+      {
+        key: 'pengaju',
+        label: 'Pengaju',
+        render: (row) => <span className="text-base-content">{row.pengaju}</span>,
       },
       {
-        key: "kategori",
-        label: "Kategori",
+        key: 'kategori',
+        label: 'Kategori',
         render: (row) => <span className="text-base-content">{row.kategori}</span>,
       },
       {
-        key: "skala",
-        label: "Skala",
+        key: 'skala',
+        label: 'Skala',
         render: (row) => <span className="text-base-content">{row.skala}</span>,
       },
+      ...(showPeserta
+        ? [{
+            key: 'peserta',
+            label: 'Peserta',
+            center: true,
+            render: (row) => <span className="text-base-content">{row.peserta}</span>,
+          }]
+        : []),
       {
-        key: "tanggal",
-        label: "Tanggal",
-        render: (row) => <span className="text-base-content">{row.tanggal}</span>,
-      },
-      {
-        key: "status",
-        label: "Status",
+        key: 'status',
+        label: 'Status',
         render: (row) => <StatusBadge status={row.status} />,
       },
+      {
+        key: 'aksi',
+        label: 'Aksi',
+        stopPropagation: true,
+        render: (row) => (
+          <ActionMenu
+            items={[
+              {
+                label: 'Detail',
+                icon: <Eye className="h-4 w-4" />,
+                color: 'text-primary',
+                onClick: () => openDetail(row),
+              },
+            ]}
+          />
+        ),
+      },
     ],
-    [],
-  );
+    [showAsal, showPeserta, navigate],
+  )
+
+  return (
+    <TableCard
+      title={title}
+      headerRight={
+        <button type="button" onClick={onSeeAll} className="btn btn-outline btn-primary btn-sm">
+          {seeAllLabel}
+        </button>
+      }
+    >
+      <TableFrame>
+        <DataTable
+          columns={columns}
+          data={rows}
+          loading={loading}
+          emptyText={emptyText}
+          pageSize={5}
+          onRowClick={openDetail}
+        />
+      </TableFrame>
+    </TableCard>
+  )
+}
+
+function AdminDitmawaDashboard() {
+  const navigate = useNavigate()
+  const user = getCurrentUser()
+  const [stats, setStats] = useState([
+    { label: 'DISETUJUI', value: 0 },
+    { label: 'PENDING', value: 0 },
+    { label: 'DITOLAK', value: 0 },
+    { label: 'EVENT GLOBAL AKTIF', value: 0 },
+  ])
+  const [eksternal, setEksternal] = useState([])
+  const [internal, setInternal] = useState([])
+  const [eventGlobal, setEventGlobal] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = () => {
+    setLoading(true)
+    getDashboardAdminDitmawa()
+      .then((data) => {
+        const s = data?.statistik || {}
+        setStats([
+          { label: 'DISETUJUI', value: s.disetujui ?? 0 },
+          { label: 'PENDING', value: s.pending ?? 0 },
+          { label: 'DITOLAK', value: s.ditolak ?? 0 },
+          { label: 'EVENT GLOBAL AKTIF', value: s.eventGlobalAktif ?? 0 },
+        ])
+        setEksternal(mapRows(data?.kegiatanEksternal || []))
+        setInternal(mapRows(data?.kegiatanInternal || []))
+        setEventGlobal(mapRows(data?.kegiatanEventGlobal || []))
+      })
+      .catch((err) =>
+        toast.error('Gagal memuat dashboard', { description: err.message }),
+      )
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
 
   return (
     <DashboardLayout
       role="admin_ditmawa"
-      userName={user?.nama || "Admin Ditmawa"}
+      userName={user?.nama || 'Admin Ditmawa'}
       userRole="Admin Ditmawa"
     >
       <div className="space-y-6">
@@ -148,32 +247,39 @@ function AdminDitmawaDashboard() {
             <StatCard
               key={stat.label}
               label={stat.label}
-              value={loading ? "…" : stat.value}
+              value={loading ? '…' : stat.value}
             />
           ))}
         </div>
 
-        <TableCard
-          title="Kegiatan terbaru"
-          headerRight={
-            <button
-              type="button"
-              onClick={() => navigate("/admin_ditmawa/verifikasi-pengajuan-internal")}
-              className="btn btn-outline btn-primary btn-sm"
-            >
-              Lihat selengkapnya →
-            </button>
-          }
-        >
-          <TableFrame>
-            <DataTable
-              columns={kegiatanColumns}
-              data={kegiatanTerbaru}
-              loading={loading}
-              emptyText="Belum ada kegiatan."
-            />
-          </TableFrame>
-        </TableCard>
+        <KegiatanPreviewTable
+          title="Pengajuan eksternal terbaru"
+          rows={eksternal}
+          loading={loading}
+          emptyText="Belum ada pengajuan eksternal."
+          seeAllLabel="Lihat selengkapnya →"
+          onSeeAll={() => navigate('/admin_ditmawa/verifikasi-pengajuan-eksternal')}
+        />
+
+        <KegiatanPreviewTable
+          title="Pengajuan internal terbaru"
+          rows={internal}
+          loading={loading}
+          emptyText="Belum ada pengajuan internal UKM/UKMF."
+          seeAllLabel="Lihat selengkapnya →"
+          showAsal
+          onSeeAll={() => navigate('/admin_ditmawa/verifikasi-pengajuan-internal')}
+        />
+
+        <KegiatanPreviewTable
+          title="Event global terbaru"
+          rows={eventGlobal}
+          loading={loading}
+          emptyText="Belum ada event global."
+          seeAllLabel="Lihat selengkapnya →"
+          showPeserta
+          onSeeAll={() => navigate('/admin_ditmawa/manajemen-event')}
+        />
 
         <PanduanCard
           className="max-w-lg"
@@ -182,7 +288,7 @@ function AdminDitmawaDashboard() {
         />
       </div>
     </DashboardLayout>
-  );
+  )
 }
 
-export default AdminDitmawaDashboard;
+export default AdminDitmawaDashboard

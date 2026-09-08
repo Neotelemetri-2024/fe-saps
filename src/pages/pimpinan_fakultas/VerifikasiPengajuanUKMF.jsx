@@ -10,6 +10,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { getKegiatanApproval, approvalBulk } from '../../services/kegiatanService'
+import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
 const PAGE_SIZE = 10
@@ -53,6 +54,7 @@ function normalizeItem(item) {
 
 function VerifikasiPengajuanUKMF() {
   const navigate = useNavigate()
+  const user = getCurrentUser()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -169,7 +171,11 @@ function VerifikasiPengajuanUKMF() {
   ], [navigate, pilihanMode, start])
 
   return (
-    <DashboardLayout role="pimpinan_fakultas" userName="Dr. Eng. Ir. Dendi Adi Saputra M, S.T, M.T" userRole="Pimpinan">
+    <DashboardLayout
+      role="pimpinan_fakultas"
+      userName={user?.nama || 'Pimpinan Fakultas'}
+      userRole="Pimpinan Fakultas"
+    >
       <ConfirmModal
         isOpen={showBulkConfirm}
         message={`Apakah Anda yakin ingin menyetujui ${selected.size} pengajuan UKMF ini?`}

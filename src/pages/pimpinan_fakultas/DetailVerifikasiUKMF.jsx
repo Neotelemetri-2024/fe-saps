@@ -16,7 +16,6 @@ import {
   DetailHeader,
   DecisionNote,
   RejectForm,
-  VerifiedBanner,
   DecisionActions,
   EmptyDetail,
 } from '../../components/ui/DetailComponents'
@@ -143,7 +142,6 @@ function DetailVerifikasiUKMF() {
         />
 
         {!canAct && item.alasan ? <DecisionNote status={item.status} alasan={item.alasan} /> : null}
-        {!canAct && !item.alasan ? <VerifiedBanner status={item.status} /> : null}
 
         <SectionCard title="Detail kegiatan">
           <InfoRow label="Nama kegiatan" value={item.kegiatan} />

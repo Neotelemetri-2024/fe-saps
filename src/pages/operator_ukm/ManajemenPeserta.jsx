@@ -170,6 +170,22 @@ function ManajemenPeserta() {
     loadData()
   }
 
+  async function handleConfirmDeletePeserta() {
+    if (!pesertaToDelete) return
+    setDeleting(true)
+    try {
+      const pid = pesertaToDelete.partisipasiId ?? pesertaToDelete.id
+      await hapusPesertaKegiatan(id, pid)
+      toast.success(`Peserta ${pesertaToDelete.nama} berhasil dihapus`)
+      setPesertaData((prev) => prev.filter((p) => (p.partisipasiId ?? p.id) !== pid && p.id !== pid))
+      setPesertaToDelete(null)
+    } catch (err) {
+      toast.error('Gagal menghapus peserta', { description: err.message })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const handleImport = async (file) => {
     setImporting(true)
     try {

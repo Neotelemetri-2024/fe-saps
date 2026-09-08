@@ -10,8 +10,6 @@ import PanduanCard from '../../components/dashboard/PanduanCard'
 import { DoughnutChart, StackedBarChart } from '../../components/charts'
 import { ChartSkeleton } from '../../components/dashboard/Skeleton'
 
-const DOUGHNUT_COLORS = ['#92400e', '#dc2626', '#15803d', '#3b82f6', '#eab308', '#7c3aed']
-
 function pickKategoriValue(kategoriPoin = {}, keys) {
   for (const key of keys) {
     const found = Object.entries(kategoriPoin).find(([k]) => k.toLowerCase().includes(key))
@@ -20,19 +18,17 @@ function pickKategoriValue(kategoriPoin = {}, keys) {
   return 0
 }
 
-// ── KategoriPoinBar ──
 function KategoriPoinBar({ organisasi, prestasi, seminar }) {
   const total = organisasi + seminar + prestasi || 1
   return (
-    <div className="flex h-3 w-36 overflow-hidden rounded-sm">
-      <div style={{ width: `${(organisasi / total) * 100}%` }} className="bg-[#15803d]" title={`Organisasi: ${organisasi}`} />
-      <div style={{ width: `${(seminar / total) * 100}%` }} className="bg-[#3b82f6]" title={`Seminar: ${seminar}`} />
-      <div style={{ width: `${(prestasi / total) * 100}%` }} className="bg-[#eab308]" title={`Prestasi: ${prestasi}`} />
+    <div className="flex h-3 w-full max-w-[160px] overflow-hidden rounded-md bg-base-300">
+      <div className="bg-primary" style={{ width: `${(organisasi / total) * 100}%` }} title={`Organisasi: ${organisasi}`} />
+      <div className="bg-info" style={{ width: `${(seminar / total) * 100}%` }} title={`Seminar: ${seminar}`} />
+      <div className="bg-warning" style={{ width: `${(prestasi / total) * 100}%` }} title={`Prestasi: ${prestasi}`} />
     </div>
   )
 }
 
-// ── MAIN ──
 function PimpinanFakultasDashboard() {
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
@@ -58,14 +54,15 @@ function PimpinanFakultasDashboard() {
   }, [])
 
   const mappedPeringkat = useMemo(() => {
-    return peringkatProdi.map((item) => {
+    return peringkatProdi.map((item, index) => {
       const kp = item.kategoriPoin || {}
       return {
+        rank: index + 1,
         prodi: item.programStudi || item.prodi || '-',
         organisasi: pickKategoriValue(kp, ['organisasi', 'ukm']),
         seminar: pickKategoriValue(kp, ['seminar', 'pelatihan', 'workshop']),
         prestasi: pickKategoriValue(kp, ['prestasi', 'lomba', 'kompetisi']),
-        total: `${item.rataRataCapaian ?? item.total ?? 0}%`,
+        total: item.rataRataCapaian ?? item.total ?? 0,
       }
     })
   }, [peringkatProdi])
@@ -73,9 +70,8 @@ function PimpinanFakultasDashboard() {
   const capaianPerProdi = useMemo(() => {
     return peringkatProdi.map((item) => {
       const kp = item.kategoriPoin || {}
-      const nama = item.programStudi || item.prodi || '-'
       return {
-        prodi: String(nama).replace(/\s+/g, '\n'),
+        prodi: item.programStudi || item.prodi || '-',
         organisasi: pickKategoriValue(kp, ['organisasi', 'ukm']),
         seminar: pickKategoriValue(kp, ['seminar', 'pelatihan', 'workshop']),
         prestasi: pickKategoriValue(kp, ['prestasi', 'lomba', 'kompetisi']),
@@ -84,107 +80,109 @@ function PimpinanFakultasDashboard() {
   }, [peringkatProdi])
 
   const distribusiData = useMemo(() => {
-    return distribusiPoin.map((d, i) => ({
+    return distribusiPoin.map((d) => ({
       label: d.programStudi || d.prodi || '-',
       value: d.persentaseDariTotal ?? 0,
-      color: DOUGHNUT_COLORS[i % DOUGHNUT_COLORS.length],
       jumlahMahasiswa: d.jumlahMahasiswa ?? 0,
     }))
   }, [distribusiPoin])
 
   const totalMahasiswa = statistik?.totalMahasiswa ?? 0
-  const kurikulumLabel =
-    typeof statistik?.kurikulumAktif === 'string'
-      ? statistik.kurikulumAktif
-      : statistik?.kurikulumAktif
-        ? `KURIKULUM AKTIF (${statistik.kurikulumAktif})`
-        : '—'
 
   return (
     <DashboardLayout
       role="pimpinan_fakultas"
       userName={user?.nama || 'Pimpinan Fakultas'}
-      userRole="Pimpinan"
+      userRole="Pimpinan Fakultas"
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div>
-          <h2 className="text-2xl font-extrabold sm:text-3xl">
-            <span className="text-brand-dark">Dasboard Pimpinan/</span>{' '}
-            <span className="text-base-content">Direktorat</span>
+          <h2 className="text-2xl font-extrabold text-base-content">
+            Selamat Datang<br />
+            {user?.nama || 'Pimpinan Fakultas'}
           </h2>
-          <p className="mt-1 text-sm text-base-content/60">Kelola persetujuan kegiatan, kurikulum berjenjang, dan pantau analitik universitas.</p>
+          <p className="mt-2 max-w-2xl text-sm text-base-content/60">
+            Pantau capaian mahasiswa per program studi, kelola persetujuan kegiatan, dan evaluasi kurikulum SAPS di tingkat fakultas.
+          </p>
         </div>
 
-        {/* Stat cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             label="TOTAL MAHASISWA AKTIF"
-            value={loading ? '…' : Number(totalMahasiswa).toLocaleString('id-ID')}
+            loading={loading}
+            value={Number(totalMahasiswa).toLocaleString('id-ID')}
           />
           <StatCard
             label="RATA RATA CAPAIAN"
-            value={loading ? '…' : `${statistik?.rataRataCapaian ?? 0}%`}
+            loading={loading}
+            value={`${statistik?.rataRataCapaian ?? 0}%`}
           />
           <StatCard
             label="KEGIATAN PERLU PERSETUJUAN"
-            value={loading ? '…' : String(statistik?.kegiatanPending ?? 0)}
-          />
-          <StatCard
-            label="KURIKULUM AKTIF"
-            value={loading ? '…' : kurikulumLabel}
-            small
+            loading={loading}
+            value={String(statistik?.kegiatanPending ?? 0)}
           />
         </div>
 
-        {/* Peringkat Prodi */}
-        <TableCard title="Peringkat Prodi" description="Kategori Poin"
+        <TableCard
+          title="Peringkat Prodi"
+          description="Berdasarkan rata-rata capaian mahasiswa"
           headerRight={
-            <div className="flex gap-4 text-xs font-medium text-base-content/70">
-              {[['#15803d', 'Organisasi'], ['#3b82f6', 'Seminar'], ['#eab308', 'Prestasi']].map(([c, l]) => (
-                <span key={l} className="flex items-center gap-1.5">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: c }}></span>
-                  {l}
-                </span>
-              ))}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-base-content/70">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> Organisasi
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-info" /> Seminar
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-warning" /> Prestasi
+              </span>
             </div>
-          }>
+          }
+        >
           <TableFrame>
-          <DataTable
-            loading={loading}
-            data={mappedPeringkat}
-            emptyText="Belum ada data peringkat prodi."
-            columns={[
-              {
-                key: 'ranking', label: 'Ranking',
-                render: (item, i) => (
-                  <div className="flex justify-center">
-                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
-                      i === 0 ? 'bg-yellow-400' : i === 1 ? 'bg-gray-400' : 'bg-amber-700'
-                    }`}>
-                      {i + 1}.
-                    </span>
-                  </div>
-                ),
-              },
-              { key: 'prodi', label: 'Program Studi', render: (item) => <span className="text-center block text-base-content">{item.prodi}</span> },
-              { key: 'total', label: 'Total Poin', render: (item) => <span className="text-center block font-semibold text-base-content">{item.total}</span> },
-              {
-                key: 'kategori', label: 'Kategori Poin',
-                render: (item) => (
-                  <div className="flex justify-center">
-                    <KategoriPoinBar organisasi={item.organisasi} prestasi={item.prestasi} seminar={item.seminar} />
-                  </div>
-                ),
-              },
-            ]}
-          />
+            <DataTable
+              loading={loading}
+              data={mappedPeringkat}
+              emptyText="Belum ada data peringkat prodi."
+              columns={[
+                {
+                  key: 'rank',
+                  label: 'Ranking',
+                  render: (item) => (
+                    <span className="block text-center font-semibold text-base-content">{item.rank}.</span>
+                  ),
+                },
+                { key: 'prodi', label: 'Program Studi' },
+                {
+                  key: 'total',
+                  label: 'Rata-rata Capaian',
+                  render: (item) => (
+                    <span className="block text-center font-medium text-base-content">{item.total}%</span>
+                  ),
+                },
+                {
+                  key: 'kategori',
+                  label: 'Kategori Poin',
+                  render: (item) => (
+                    <KategoriPoinBar
+                      organisasi={item.organisasi}
+                      prestasi={item.prestasi}
+                      seminar={item.seminar}
+                    />
+                  ),
+                },
+              ]}
+            />
           </TableFrame>
         </TableCard>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-5">
-          <div className="card bg-base-100 p-6 md:col-span-1 lg:col-span-3">
-            <h3 className="mb-5 text-center text-sm font-bold text-base-content">Rata rata Capaian per prodi</h3>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+          <div className="card bg-base-100 p-5 lg:col-span-3">
+            <h3 className="mb-4 text-sm font-semibold text-base-content">
+              Rata-rata capaian per prodi
+            </h3>
             {loading ? (
               <ChartSkeleton height={280} />
             ) : capaianPerProdi.length === 0 ? (
@@ -193,42 +191,42 @@ function PimpinanFakultasDashboard() {
               <StackedBarChart
                 labels={capaianPerProdi.map((d) => d.prodi)}
                 datasets={[
-                  { label: 'Organisasi', data: capaianPerProdi.map((d) => d.organisasi), color: '#3b82f6' },
-                  { label: 'Seminar', data: capaianPerProdi.map((d) => d.seminar), color: '#15803d' },
-                  { label: 'Prestasi', data: capaianPerProdi.map((d) => d.prestasi), color: '#eab308' },
+                  { label: 'Organisasi', data: capaianPerProdi.map((d) => d.organisasi) },
+                  { label: 'Seminar', data: capaianPerProdi.map((d) => d.seminar) },
+                  { label: 'Prestasi', data: capaianPerProdi.map((d) => d.prestasi) },
                 ]}
                 height={280}
               />
             )}
           </div>
 
-          <div className="card bg-base-100 p-6 md:col-span-1 lg:col-span-2">
-            <h3 className="mb-5 text-center text-sm font-bold text-base-content">Distribusi poin per prodi</h3>
-            <div className="flex flex-col items-center">
-              {loading ? (
-                <ChartSkeleton variant="donut" height={220} />
-              ) : (
-                <>
-                  <DoughnutChart
-                    labels={distribusiData.length ? distribusiData.map((d) => d.label) : ['—']}
-                    values={distribusiData.length ? distribusiData.map((d) => d.value) : [1]}
-                    colors={distribusiData.length ? distribusiData.map((d) => d.color) : ['#e9ebf8']}
-                    centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
-                    centerLabel="Mahasiswa"
-                    height={220}
-                  />
-                  <div className="mt-5 w-full space-y-2.5">
-                    {distribusiData.map((d) => (
-                      <div key={d.label} className="flex items-center gap-2 text-xs font-medium">
-                        <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }}></span>
-                        <span className="flex-1 text-base-content">{d.label}</span>
-                        <span className="text-base-content/60">{d.value} %</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+          <div className="card bg-base-100 p-5 lg:col-span-2">
+            <h3 className="mb-4 text-sm font-semibold text-base-content">
+              Distribusi poin per prodi
+            </h3>
+            {loading ? (
+              <ChartSkeleton variant="donut" height={220} />
+            ) : distribusiData.length === 0 ? (
+              <p className="py-16 text-center text-sm text-base-content/50">Belum ada data distribusi.</p>
+            ) : (
+              <div className="flex flex-col items-center">
+                <DoughnutChart
+                  labels={distribusiData.map((d) => d.label)}
+                  values={distribusiData.map((d) => d.value)}
+                  centerValue={Number(totalMahasiswa).toLocaleString('id-ID')}
+                  centerLabel="Mahasiswa"
+                  height={220}
+                />
+                <div className="mt-4 w-full space-y-2">
+                  {distribusiData.map((d) => (
+                    <div key={d.label} className="flex items-center gap-2 text-xs">
+                      <span className="flex-1 text-base-content">{d.label}</span>
+                      <span className="tabular-nums text-base-content/60">{d.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
