@@ -88,6 +88,7 @@ function normalizeKegiatanDetail(k) {
         kurikulumNama: kurikulumDisplay,
         capaian: Array.from(capaianMap.values()),
         subCapaian: subCapaianList,
+        kegiatanCapaian: targetKc,
       }
     })(),
   }
@@ -278,6 +279,7 @@ function DetailVerifikasiPengajuanEksternal() {
           kurikulum={item.kurikulumNama || item.kurikulum}
           capaian={item.capaian}
           subCapaian={item.subCapaian}
+          kegiatanCapaian={item.kegiatanCapaian}
         />
 
         {/* Tombol aksi awal */}

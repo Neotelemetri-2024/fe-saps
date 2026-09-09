@@ -84,6 +84,7 @@ function normalizeDetail(raw) {
     kurikulum: kurikulumDisplay,
     capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
+    kegiatanCapaian: targetKc,
     status: mapStatus(raw.status),
     alasan: raw.alasan || null,
   }
@@ -223,6 +224,7 @@ function DetailVerifikasiKlaimPoin() {
           kurikulum={item.kurikulum}
           capaian={item.capaian}
           subCapaian={item.subCapaian}
+          kegiatanCapaian={item.kegiatanCapaian}
         />
 
         {canAct ? (

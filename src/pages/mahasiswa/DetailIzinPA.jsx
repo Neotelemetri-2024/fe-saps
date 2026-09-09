@@ -93,8 +93,10 @@ function DetailIzinPAMahasiswa() {
             subCapaian={row.subCapaian || kg.subCapaian || (kg.kegiatanCapaian ? kg.kegiatanCapaian.map(kc => ({
               label: kc.subCapaian?.nama || '-',
               capaian: kc.subCapaian?.capaian?.nama || '',
+              kurikulum: kc.subCapaian?.capaian?.kurikulum?.nama || '',
               persen: kc.alokasiPersen ?? null,
             })) : [])}
+            kegiatanCapaian={kg.kegiatanCapaian || row.kegiatanCapaian}
           />
         ) : null}
       </div>

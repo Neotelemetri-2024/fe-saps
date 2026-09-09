@@ -55,15 +55,25 @@ function detailName(value) {
 }
 
 function detailPercentage(item) {
-  const value = item?.persen ?? item?.alokasiPersen ?? item?.persentase ?? item?.poin ?? item?.value
+  if (item == null) return null
+  let value
+  if (typeof item === 'number' || typeof item === 'string') {
+    value = item
+  } else if (typeof item === 'object') {
+    value = item.persen ?? item.alokasiPersen ?? item.persentase ?? item.alokasiPoin ?? item.poin ?? item.value
+  }
   if (value == null || value === '' || value === '-') return null
   const text = String(value).trim()
   return text.endsWith('%') ? text : `${text}%`
 }
 
-export function CurriculumAchievementCard({ kurikulum, capaian = [], subCapaian = [] }) {
+export function CurriculumAchievementCard({
+  kurikulum,
+  capaian = [],
+  subCapaian = [],
+  kegiatanCapaian = [],
+}) {
   const defaultKurName = detailName(kurikulum) || '-'
-
   const kurMap = new Map()
 
   const getKurBucket = (kName) => {
@@ -74,37 +84,73 @@ export function CurriculumAchievementCard({ kurikulum, capaian = [], subCapaian 
     return kurMap.get(key)
   }
 
-  ;(capaian || []).forEach((item) => {
-    const name = detailName(item)
-    if (!name) return
-    const kName = detailName(item?.kurikulum) || defaultKurName
-    const bucket = getKurBucket(kName)
-    if (!bucket.groupMap.has(name)) {
-      const group = { name, items: [] }
-      bucket.groupMap.set(name, group)
-      bucket.groups.push(group)
-    }
-  })
+  // 1. Jika kegiatanCapaian ada, gunakan data relasi langsung untuk grouping yang paling akurat
+  if (Array.isArray(kegiatanCapaian) && kegiatanCapaian.length > 0) {
+    kegiatanCapaian.forEach((kc) => {
+      const kName =
+        kc.subCapaian?.capaian?.kurikulum?.nama ||
+        kc.capaian?.kurikulum?.nama ||
+        kc.kurikulum?.nama ||
+        detailName(kurikulum) ||
+        '-'
+      const capName =
+        kc.subCapaian?.capaian?.nama ||
+        kc.capaian?.nama ||
+        kc.capaianNama ||
+        'Capaian'
+      const subCapName = kc.subCapaian?.nama || kc.nama || kc.label || 'Sub Capaian'
+      const persen = detailPercentage(kc.alokasiPersen ?? kc.persen ?? kc.persentase ?? kc.poin ?? kc)
 
-  ;(subCapaian || []).forEach((item) => {
-    const parentName =
-      detailName(item?.capaian) ||
-      item?.capaianNama ||
-      item?.sublabel ||
-      (typeof item?.capaian === 'string' ? item.capaian : '') ||
-      (capaian.length === 1 ? detailName(capaian[0]) : 'Capaian lainnya')
-    const kName = detailName(item?.kurikulum) || defaultKurName
-    const bucket = getKurBucket(kName)
-    if (!bucket.groupMap.has(parentName)) {
-      const group = { name: parentName, items: [] }
-      bucket.groupMap.set(parentName, group)
-      bucket.groups.push(group)
-    }
-    bucket.groupMap.get(parentName).items.push({
-      name: detailName(item),
-      percentage: detailPercentage(item),
+      const bucket = getKurBucket(kName)
+      if (!bucket.groupMap.has(capName)) {
+        const group = { name: capName, items: [] }
+        bucket.groupMap.set(capName, group)
+        bucket.groups.push(group)
+      }
+      bucket.groupMap.get(capName).items.push({
+        name: subCapName,
+        percentage: persen || '0%',
+      })
     })
-  })
+  } else {
+    // 2. Fallback jika kegiatanCapaian tidak ada (misal dari capaian & subCapaian)
+    const capaianKurikulumMap = new Map()
+    ;(capaian || []).forEach((item) => {
+      const name = detailName(item)
+      if (!name) return
+      const kName = detailName(item?.kurikulum) || defaultKurName
+      capaianKurikulumMap.set(name, kName)
+      const bucket = getKurBucket(kName)
+      if (!bucket.groupMap.has(name)) {
+        const group = { name, items: [] }
+        bucket.groupMap.set(name, group)
+        bucket.groups.push(group)
+      }
+    })
+
+    ;(subCapaian || []).forEach((item) => {
+      const parentName =
+        detailName(item?.capaian) ||
+        item?.capaianNama ||
+        item?.sublabel ||
+        (typeof item?.capaian === 'string' ? item.capaian : '') ||
+        (capaian.length === 1 ? detailName(capaian[0]) : 'Capaian lainnya')
+      const kName =
+        detailName(item?.kurikulum) ||
+        capaianKurikulumMap.get(parentName) ||
+        defaultKurName
+      const bucket = getKurBucket(kName)
+      if (!bucket.groupMap.has(parentName)) {
+        const group = { name: parentName, items: [] }
+        bucket.groupMap.set(parentName, group)
+        bucket.groups.push(group)
+      }
+      bucket.groupMap.get(parentName).items.push({
+        name: detailName(item),
+        percentage: detailPercentage(item) || '0%',
+      })
+    })
+  }
 
   if (kurMap.size === 0) {
     getKurBucket(defaultKurName)
@@ -113,48 +159,52 @@ export function CurriculumAchievementCard({ kurikulum, capaian = [], subCapaian 
   const buckets = Array.from(kurMap.values())
 
   return (
-    <>
+    <SectionCard title="Capaian Kurikulum">
       {buckets.map((bucket, bIdx) => (
-        <SectionCard key={bIdx} title="Capaian Kurikulum">
-          <InfoRow label="Kurikulum" value={bucket.name} />
+        <div key={bIdx} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="badge badge-primary badge-sm font-semibold">Kurikulum</span>
+            <span className="text-sm font-bold text-base-content">{bucket.name}</span>
+          </div>
+
           {bucket.groups.length > 0 ? (
-            bucket.groups.map((group) => (
-              <div key={group.name} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-base-content">{group.name}</p>
+            <div className="space-y-3 pl-3 border-l-2 border-base-300">
+              {bucket.groups.map((group) => (
+                <div key={group.name} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-base-content">{group.name}</p>
+                    {group.items.length > 0 ? (
+                      <span className="text-xs text-base-content/50">
+                        {group.items.length} sub capaian
+                      </span>
+                    ) : null}
+                  </div>
                   {group.items.length > 0 ? (
-                    <span className="text-xs text-base-content/50">
-                      {group.items.length} sub capaian
-                    </span>
-                  ) : null}
-                </div>
-                {group.items.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {group.items.map((item, index) => (
-                      <div
-                        key={`${item.name}-${index}`}
-                        className="flex items-center justify-between gap-4 py-1"
-                      >
-                        <p className="text-sm text-base-content/75">{item.name || 'Sub capaian'}</p>
-                        {item.percentage ? (
-                          <span className="shrink-0 text-sm text-base-content">
+                    <div className="space-y-1">
+                      {group.items.map((item, index) => (
+                        <div
+                          key={`${item.name}-${index}`}
+                          className="flex items-center justify-between gap-4 py-0.5 text-sm"
+                        >
+                          <p className="text-sm text-base-content/75">{item.name || 'Sub capaian'}</p>
+                          <span className="shrink-0 text-sm font-medium text-base-content">
                             {item.percentage}
                           </span>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-base-content/40 italic">Belum ada sub capaian.</p>
-                )}
-              </div>
-            ))
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-base-content/40 italic">Belum ada sub capaian.</p>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-base-content/50">Belum ada pemetaan capaian kurikulum.</p>
           )}
-        </SectionCard>
+        </div>
       ))}
-    </>
+    </SectionCard>
   )
 }
 

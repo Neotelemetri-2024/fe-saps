@@ -18,7 +18,7 @@ import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
 function normalizeDetail(raw) {
   if (!raw) return null
-  const capaianList = []
+  const capaianMap = new Map()
   const subCapaianList = []
   const kurikulumList = (raw.kegiatanCapaian || [])
     .map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama)
@@ -30,12 +30,19 @@ function normalizeDetail(raw) {
     (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
 
   ;(raw.kegiatanCapaian || []).forEach((kc) => {
+    const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumNama
     const capNama = kc.subCapaian?.capaian?.nama || kc.subCapaian?.capaian?.label
-    if (capNama && !capaianList.includes(capNama)) capaianList.push(capNama)
+    if (capNama) {
+      const capKey = `${kurNama}___${capNama}`
+      if (!capaianMap.has(capKey)) {
+        capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
+      }
+    }
     if (kc.subCapaian?.nama) {
       subCapaianList.push({
         label: kc.subCapaian.nama,
         capaian: capNama || '',
+        kurikulum: kurNama,
         persen: `${kc.alokasiPersen ?? 0}%`,
       })
     }
@@ -50,9 +57,10 @@ function normalizeDetail(raw) {
     tanggal: formatTanggal(raw.tanggalMulai, raw.tanggalSelesai),
     lokasi: raw.lokasi || '-',
     deskripsi: raw.deskripsi || '-',
-    capaian: capaianList,
+    capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
     kurikulum: kurikulumNama,
+    kegiatanCapaian: raw.kegiatanCapaian || [],
     status: mapUiStatus(raw.status),
     kuota: raw.kuota != null ? `${raw.kuota} peserta` : '-',
     penyelenggaraExt: raw.penyelenggaraExt || '-',
@@ -66,24 +74,18 @@ function DetailEvent({ role = 'admin_ditmawa', userRole = 'Admin Ditmawa' }) {
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const basePath = role === 'pimpinan_ditmawa'
-    ? '/pimpinan_ditmawa'
-    : role === 'admin_fakultas'
-    ? '/admin_fakultas'
-    : '/admin_ditmawa'
-
   useEffect(() => {
     setLoading(true)
     getKegiatanById(id)
       .then((data) => setItem(normalizeDetail(data)))
       .catch((err) => {
         setItem(null)
-        toast.error('Gagal memuat detail event', { description: err.message })
+        toast.error('Gagal memuat detail kegiatan', { description: err.message })
       })
       .finally(() => setLoading(false))
   }, [id])
 
-  const backToList = () => navigate(`${basePath}/manajemen-event`)
+  const backToList = () => navigate(`/${role}/manajemen-event`)
 
   if (loading) {
     return (
@@ -106,15 +108,15 @@ function DetailEvent({ role = 'admin_ditmawa', userRole = 'Admin Ditmawa' }) {
       <div className="space-y-5">
         <DetailBackButton onClick={backToList} />
         <DetailHeader
-          title="Detail Event Internal"
-          description="Informasi lengkap event internal resmi dan pemetaan capaian kurikulum."
+          title="Detail kegiatan"
+          description={`Informasi lengkap kegiatan ${userRole}.`}
           status={item.status}
         />
 
-        <SectionCard title="Informasi Event">
-          <InfoRow label="Nama Event" value={item.nama} />
+        <SectionCard title="Detail Kegiatan">
+          <InfoRow label="Nama Kegiatan" value={item.nama} />
           <InfoRow label="Penyelenggara" value={item.organisasi} />
-          <InfoRow label="Kategori / Jenis" value={item.kategori} />
+          <InfoRow label="Jenis Kegiatan" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
           <InfoRow label="Tanggal Pelaksanaan" value={item.tanggal} />
           <InfoRow label="Lokasi" value={item.lokasi} />
@@ -128,6 +130,7 @@ function DetailEvent({ role = 'admin_ditmawa', userRole = 'Admin Ditmawa' }) {
           kurikulum={item.kurikulum}
           capaian={item.capaian}
           subCapaian={item.subCapaian}
+          kegiatanCapaian={item.kegiatanCapaian}
         />
       </div>
     </DashboardLayout>

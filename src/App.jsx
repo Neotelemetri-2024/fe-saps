@@ -42,6 +42,7 @@ import PimpinanDitmawaManajemenAkunUKMF from './pages/pimpinan_ditmawa/Manajemen
 
 import PimpinanDitmawaManajemenAkunPimpinan from './pages/pimpinan_ditmawa/ManajemenAkunPimpinan'
 import PimpinanDitmawaManajemenAkunAdmin from './pages/pimpinan_ditmawa/ManajemenAkunAdmin'
+import PimpinanDitmawaManajemenAkun from './pages/pimpinan_ditmawa/ManajemenAkun'
 import PimpinanFakultasManajemenAkunAdmin from './pages/pimpinan_fakultas/ManajemenAkunAdminFakultas'
 // import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
 import PimpinanDitmawaLayout from './layouts/PimpinanDitmawaLayout'
@@ -150,6 +151,7 @@ function App() {
           <Route path="manajemen-akun-ukm" element={<PimpinanDitmawaManajemenAkunUKM />} />
           <Route path="manajemen-akun-ukmf" element={<PimpinanDitmawaManajemenAkunUKMF />} />
 
+          <Route path="manajemen-akun" element={<PimpinanDitmawaManajemenAkun />} />
           <Route path="manajemen-akun-pimpinan" element={<PimpinanDitmawaManajemenAkunPimpinan />} />
           <Route path="manajemen-akun-admin" element={<PimpinanDitmawaManajemenAkunAdmin />} />
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />

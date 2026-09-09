@@ -23,22 +23,22 @@ const ROLE_LABEL = {
 
 const ACTION_ROUTES = {
   kegiatan: {
-    mahasiswa: (id) => /mahasiswa/kegiatan-eksternal/,
-    dosen: (id) => /dosen/permintaan-persetujuan/,
-    dosen_pa: (id) => /dosen/permintaan-persetujuan/,
-    admin_ditmawa: (id) => /admin_ditmawa/verifikasi-pengajuan-eksternal/,
-    admin_fakultas: (id) => /admin_fakultas/verifikasi-pengajuan-ukmf/,
-    operator_ukm: (id) => /operator_ukm/daftar-kegiatan/,
-    operator_ukmf: (id) => /operator_ukmf/daftar-kegiatan/,
-    pimpinan_ditmawa: (id) => /pimpinan_ditmawa/verifikasi-pengajuan-internal/,
-    pimpinan_fakultas: (id) => /pimpinan_fakultas/verifikasi-kegiatan-internal/,
+    mahasiswa: (id) => `/mahasiswa/kegiatan-eksternal/${id}`,
+    dosen: (id) => `/dosen/permintaan-persetujuan/${id}`,
+    dosen_pa: (id) => `/dosen/permintaan-persetujuan/${id}`,
+    admin_ditmawa: (id) => `/admin_ditmawa/verifikasi-pengajuan-eksternal/${id}`,
+    admin_fakultas: (id) => `/admin_fakultas/verifikasi-pengajuan-ukmf/${id}`,
+    operator_ukm: (id) => `/operator_ukm/daftar-kegiatan/${id}`,
+    operator_ukmf: (id) => `/operator_ukmf/daftar-kegiatan/${id}`,
+    pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-pengajuan-internal/${id}`,
+    pimpinan_fakultas: (id) => `/pimpinan_fakultas/verifikasi-kegiatan-internal/${id}`,
   },
   kegiatan_internal: {
-    pimpinan_ditmawa: (id) => /pimpinan_ditmawa/verifikasi-pengajuan-internal/,
-    pimpinan_fakultas: (id) => /pimpinan_fakultas/verifikasi-kegiatan-internal/,
+    pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-pengajuan-internal/${id}`,
+    pimpinan_fakultas: (id) => `/pimpinan_fakultas/verifikasi-kegiatan-internal/${id}`,
   },
   kegiatan_eksternal: {
-    pimpinan_ditmawa: (id) => /pimpinan_ditmawa/verifikasi-pengajuan-eksternal/,
+    pimpinan_ditmawa: (id) => `/pimpinan_ditmawa/verifikasi-pengajuan-eksternal/${id}`,
   },
   izin_pa: {
     mahasiswa: (id) => `/mahasiswa/persetujuan-dosen/${id}`,

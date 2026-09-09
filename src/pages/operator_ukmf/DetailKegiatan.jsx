@@ -18,14 +18,27 @@ import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
 function normalizeDetail(raw) {
   if (!raw) return null
-  const capaianList = []
+  const capaianMap = new Map()
   const subCapaianList = []
   const kurikulumList = (raw.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
   const kurikulumNama = raw.kurikulumNama || raw.kurikulum?.nama || kurikulumList[0] || (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
   ;(raw.kegiatanCapaian || []).forEach((kc) => {
+    const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumNama
     const capNama = kc.subCapaian?.capaian?.nama
-    if (capNama && !capaianList.includes(capNama)) capaianList.push(capNama)
-    if (kc.subCapaian?.nama) subCapaianList.push({ label: kc.subCapaian.nama, capaian: capNama || '', persen: `${kc.alokasiPersen ?? 0}%` })
+    if (capNama) {
+      const capKey = `${kurNama}___${capNama}`
+      if (!capaianMap.has(capKey)) {
+        capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
+      }
+    }
+    if (kc.subCapaian?.nama) {
+      subCapaianList.push({
+        label: kc.subCapaian.nama,
+        capaian: capNama || '',
+        kurikulum: kurNama,
+        persen: `${kc.alokasiPersen ?? 0}%`,
+      })
+    }
   })
   return {
     id: raw.id,
@@ -36,9 +49,10 @@ function normalizeDetail(raw) {
     tanggal: formatTanggal(raw.tanggalMulai, raw.tanggalSelesai),
     lokasi: raw.lokasi || '-',
     deskripsi: raw.deskripsi || '-',
-    capaian: capaianList,
+    capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
     kurikulum: kurikulumNama,
+    kegiatanCapaian: raw.kegiatanCapaian || [],
     status: mapUiStatus(raw.status),
     kuota: raw.kuota ?? '-',
     penyelenggaraExt: raw.penyelenggaraExt || '-',
@@ -101,6 +115,7 @@ function DetailKegiatan({ role, userRole }) {
           kurikulum={item.kurikulum}
           capaian={item.capaian}
           subCapaian={item.subCapaian}
+          kegiatanCapaian={item.kegiatanCapaian}
         />
       </div>
     </DashboardLayout>

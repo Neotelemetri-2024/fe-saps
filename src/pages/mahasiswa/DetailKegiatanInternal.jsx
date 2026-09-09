@@ -16,44 +16,42 @@ import {
 } from '../../components/ui/DetailComponents'
 import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
-function normalizeCapaianData(kegiatan, userKurikulumId) {
+function normalizeCapaianData(kegiatan) {
   if (!kegiatan || !Array.isArray(kegiatan.kegiatanCapaian)) {
-    return { kurikulum: '-', capaian: [], subCapaian: [] }
+    return { kurikulum: '-', capaian: [], subCapaian: [], kegiatanCapaian: [] }
   }
 
-  // Filter ke kurikulum mahasiswa jika ada
-  let list = kegiatan.kegiatanCapaian
-  if (userKurikulumId) {
-    const matched = list.filter(
-      (kc) => String(kc.subCapaian?.capaian?.kurikulumId) === String(userKurikulumId)
-    )
-    if (matched.length > 0) list = matched
-  }
-
-  const capaianSet = new Set()
+  const list = kegiatan.kegiatanCapaian
+  const capaianMap = new Map()
   const subCapaianList = []
-  let kurikulumNama = kegiatan.kurikulum?.nama || kegiatan.kurikulumNama || ''
+  const kurikulumSet = new Set()
 
   list.forEach((kc) => {
     const cap = kc.subCapaian?.capaian
+    const kurNama = cap?.kurikulum?.nama || kegiatan.kurikulum?.nama || '-'
     const capNama = cap?.nama || cap?.label
-    if (capNama) capaianSet.add(capNama)
+    if (kurNama && kurNama !== '-') kurikulumSet.add(kurNama)
+    if (capNama) {
+      const capKey = `${kurNama}___${capNama}`
+      if (!capaianMap.has(capKey)) {
+        capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
+      }
+    }
     if (kc.subCapaian?.nama) {
       subCapaianList.push({
         label: kc.subCapaian.nama,
         capaian: capNama || '',
+        kurikulum: kurNama,
         persen: kc.alokasiPersen != null ? `${kc.alokasiPersen}%` : '',
       })
-    }
-    if (!kurikulumNama && cap?.kurikulum?.nama) {
-      kurikulumNama = cap.kurikulum.nama
     }
   })
 
   return {
-    kurikulum: kurikulumNama || '-',
-    capaian: Array.from(capaianSet),
+    kurikulum: Array.from(kurikulumSet).join(', ') || kegiatan.kurikulum?.nama || '-',
+    capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
+    kegiatanCapaian: list,
   }
 }
 
@@ -138,7 +136,7 @@ function DetailKegiatanInternal() {
   const statusIzinPA = partisipasi?.statusIzinPA || (partisipasi?.statusPaLabel ?? 'Belum Diajukan')
   const poin = partisipasi?.poin != null && partisipasi?.poin !== '' ? partisipasi.poin : '-'
 
-  const capaianData = normalizeCapaianData(kegiatan, user?.kurikulumId)
+  const capaianData = normalizeCapaianData(kegiatan)
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -178,11 +176,12 @@ function DetailKegiatanInternal() {
           <InfoRow label="Poin Diperoleh" value={poin} />
         </SectionCard>
 
-        {(capaianData.capaian.length > 0 || capaianData.subCapaian.length > 0) && (
+        {(capaianData.capaian.length > 0 || capaianData.subCapaian.length > 0 || (capaianData.kegiatanCapaian && capaianData.kegiatanCapaian.length > 0)) && (
           <CurriculumAchievementCard
             kurikulum={capaianData.kurikulum}
             capaian={capaianData.capaian}
             subCapaian={capaianData.subCapaian}
+            kegiatanCapaian={capaianData.kegiatanCapaian}
           />
         )}
       </div>

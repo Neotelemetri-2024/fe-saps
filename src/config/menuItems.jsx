@@ -70,15 +70,7 @@ export const pimpinanDitmawaMenu = [
       { path: '/pimpinan_ditmawa/verifikasi-klaim', label: 'Verifikasi Klaim Poin Eksternal' },
     ],
   },
-  {
-    path: '#',
-    label: 'Manajemen Akun Staff',
-    icon: <UserCog className="h-4 w-4" />,
-    children: [
-      { path: '/pimpinan_ditmawa/manajemen-akun-pimpinan', label: 'Akun Pimpinan' },
-      { path: '/pimpinan_ditmawa/manajemen-akun-admin', label: 'Akun Admin Ditmawa' },
-    ],
-  },
+  { path: '/pimpinan_ditmawa/manajemen-akun', label: 'Manajemen Akun', icon: <UserCog className="h-4 w-4" /> },
   {
     path: '#',
     label: 'Manajemen Ormawa',
