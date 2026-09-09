@@ -87,6 +87,14 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).send('OK');
+});
+
+app.get('/api/health', (req: Request, res: Response) => {
+  res.status(200).send('OK');
+});
+
 // Halaman "og-page" CV publik — target link share LinkedIn (lihat cv.controller.ts).
 // Didaftarkan di root (bukan /api) karena URL ini yang di-crawl LinkedIn/Facebook/dll
 // dan dibagikan langsung ke pengguna. Bot dilayani HTML + meta OG; manusia di-redirect ke SPA.
