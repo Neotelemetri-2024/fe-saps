@@ -616,15 +616,9 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
 
   const ormawaList = ormawaRaw.map((o) => {
     let totalPeserta = 0;
-    let totalPoinDistribusi = 0;
 
     o.kegiatan.forEach((k) => {
       totalPeserta += k.partisipasi.length;
-      k.partisipasi.forEach((part) => {
-        if (part.klaimPoin?.perolehanPoin?.status === 'sah') {
-          totalPoinDistribusi += part.klaimPoin.perolehanPoin.totalPoin;
-        }
-      });
     });
 
     return {
@@ -633,7 +627,7 @@ export async function getLaporanData(filter: FilterLaporan): Promise<LaporanData
       fakultas: o.fakultas?.nama || 'Tingkat Universitas',
       totalKegiatan: o.kegiatan.length,
       totalPeserta,
-      totalPoinDidistribusikan: totalPoinDistribusi,
+      totalPoinDidistribusikan: o.kegiatan.length, // Sesuai revisi: Poin = Jumlah Kegiatan
     };
   });
 

@@ -344,7 +344,7 @@ export const getKlaimEksternalForVerifikasi = async (req: Request, res: Response
     if (status && status !== 'semua') {
       where.status = status as string;
     } else {
-      where.status = { in: ['menunggu_pimpinan', 'disetujui', 'ditolak'] };
+      where.status = { in: ['menunggu_validasi', 'menunggu_pimpinan', 'disetujui', 'ditolak'] };
     }
 
     // Filter kategori

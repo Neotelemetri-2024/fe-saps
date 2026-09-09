@@ -74,8 +74,8 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       prisma.fakultas.count(),
       // Total Ormawa / UKM
       prisma.organisasi.count(),
-      // Antrean Proposal Kegiatan (status 'diajukan' atau 'terverifikasi')
-      prisma.kegiatan.count({ where: { status: { in: ['diajukan', 'terverifikasi'] } } }),
+      // Antrean Proposal Kegiatan (status 'terverifikasi')
+      prisma.kegiatan.count({ where: { status: { in: ['terverifikasi'] } } }),
       // Antrean Klaim Poin (status 'menunggu_validasi' atau 'menunggu_pimpinan')
       prisma.klaimPoin.count({ where: { status: { in: ['menunggu_validasi', 'menunggu_pimpinan'] } } }),
       // Total Akumulasi Poin Sah
@@ -109,7 +109,7 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
       }),
       // 5 Proposal Kegiatan Terbaru yang Menunggu Persetujuan (Quick Action)
       prisma.kegiatan.findMany({
-        where: { status: { in: ['diajukan', 'terverifikasi'] } },
+        where: { status: { in: ['terverifikasi'] } },
         include: {
           organisasi: { select: { nama: true, tipe: true } },
           kategori: { select: { nama: true } },
