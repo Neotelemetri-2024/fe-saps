@@ -83,7 +83,6 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const resolvedRole = defaultRole || user?.role || 'pimpinan_utama'
   const isGlobalScope = GLOBAL_ROLES.has(resolvedRole)
 
-  const [tahunAkademik, setTahunAkademik] = useState('')
   const [angkatan, setAngkatan] = useState('')
   const [kurikulumId, setKurikulumId] = useState('')
   const [kurikulumOptions, setKurikulumOptions] = useState([])
@@ -105,13 +104,11 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const [searchOrmawa, setSearchOrmawa] = useState('')
 
   const buildFilter = (overrides = {}) => {
-    const nextTahun = overrides.tahunAkademik ?? tahunAkademik
     const nextAngkatan = overrides.angkatan ?? angkatan
     const nextKurikulum = overrides.kurikulumId ?? kurikulumId
     const nextFakultas = overrides.fakultasId ?? fakultasId
     const nextProdi = overrides.prodiId ?? prodiId
     return {
-      tahunAkademik: nextTahun || undefined,
       angkatan: nextAngkatan ? Number(nextAngkatan) : undefined,
       kurikulumId: nextKurikulum ? Number(nextKurikulum) : undefined,
       fakultasId: nextFakultas ? Number(nextFakultas) : undefined,
@@ -164,12 +161,11 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
   const handleResetFilter = () => {
     const defaultId = pickDefaultKurikulumId(kurikulumOptions)
-    setTahunAkademik('')
     setAngkatan('')
     setKurikulumId(defaultId)
     setFakultasId('')
     setProdiId('')
-    fetchData({ tahunAkademik: '', angkatan: '', kurikulumId: defaultId, fakultasId: '', prodiId: '' })
+    fetchData({ angkatan: '', kurikulumId: defaultId, fakultasId: '', prodiId: '' })
   }
 
   const handleDownloadExcel = async () => {
@@ -244,8 +240,7 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
   const targetPoin = laporanData?.kurikulum?.targetPoin ?? 200
   const defaultKurikulumId = pickDefaultKurikulumId(kurikulumOptions)
   const hasActiveFilter = Boolean(
-    tahunAkademik
-    || angkatan
+    angkatan
     || fakultasId
     || prodiId
     || (kurikulumId && kurikulumId !== defaultKurikulumId),
@@ -287,18 +282,6 @@ function LaporanPimpinan({ defaultRole, embedded = false }) {
 
       <form onSubmit={handleApplyFilter} className="card bg-base-100 p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
-          <ToolbarSelect
-            label="Tahun akademik"
-            className="w-36 shrink-0"
-            value={tahunAkademik}
-            onChange={(e) => setTahunAkademik(e.target.value)}
-          >
-            <option value="">Semua</option>
-            {TAHUN_AKADEMIK.map((tahun) => (
-              <option key={tahun} value={tahun}>{tahun}</option>
-            ))}
-          </ToolbarSelect>
-
           <ToolbarSelect label="Angkatan" className="w-28 shrink-0" value={angkatan} onChange={(e) => setAngkatan(e.target.value)}>
             <option value="">Semua</option>
             {ANGKATAN.map((year) => (

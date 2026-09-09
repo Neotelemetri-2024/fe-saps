@@ -142,44 +142,46 @@ function Dashboard() {
           </div>
         ) : null}
 
-        {/* Kurikulum & Capaian */}
-        <div className="flex flex-col gap-4" style={{ gap: '16px' }}>
-          {/* Kartu Kurikulum Mahasiswa */}
-          <div className="rounded-xl bg-white p-5 shadow-sm sm:p-6" style={{ borderRadius: '10px' }}>
-            <h3 className="text-base font-bold" style={{ color: '#1F2937' }}>Kurikulum Mahasiswa</h3>
-            <div className="mt-3 flex items-center gap-6">
-              <span className="text-sm" style={{ color: '#9CA3AF' }}>Kurikulum</span>
-              <span className="text-sm font-medium" style={{ color: '#1F2937' }}>
-                {loading
-                  ? '...'
-                  : kurikulumOptions.find((k) => String(k.id) === String(kurikulumId))
-                    ? `${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).nama}${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).angkatanMulai ? ` (${kurikulumOptions.find((k) => String(k.id) === String(kurikulumId)).angkatanMulai}+)` : ''}`
-                    : '-'}
-              </span>
+        {/* Struktur Kurikulum & Capaian */}
+        <div className="card bg-base-100 p-5 sm:p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-base-content">Struktur Kurikulum & Capaian</h3>
+              <p className="mt-0.5 text-xs text-base-content/60">
+                Daftar lengkap kurikulum aktif beserta capaian dan subcapaian
+              </p>
             </div>
           </div>
 
-          {/* Kartu Capaian Kurikulum */}
-          <div className="rounded-xl bg-white p-5 shadow-sm sm:p-6" style={{ borderRadius: '10px' }}>
-            <h3 className="text-base font-bold" style={{ color: '#1F2937' }}>Capaian Kurikulum</h3>
-            <div className="mt-3 flex flex-col gap-2">
-              {loading ? (
-                <div className="space-y-2" aria-hidden>
-                  <div className="skeleton h-4 w-32" />
-                  <div className="skeleton h-4 w-28" />
-                  <div className="skeleton h-4 w-20" />
+          {loading ? (
+            <CardGridSkeleton />
+          ) : kurikulumOptions.length === 0 ? (
+            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data kurikulum aktif.</p>
+          ) : (
+            <div className="space-y-6">
+              {kurikulumOptions.map((kurikulum) => (
+                <div key={kurikulum.id} className="rounded-lg border border-base-300 p-4">
+                  <h4 className="mb-3 text-md font-bold text-base-content">Kurikulum: {kurikulum.nama}</h4>
+                  <div className="space-y-4">
+                    {kurikulum.capaian?.map((cap) => (
+                      <div key={cap.id} className="ml-4 border-l-2 border-base-300 pl-4">
+                        <p className="text-sm font-semibold text-base-content">
+                          Capaian: {cap.nama} <span className="font-normal text-base-content/60">({cap.jumlahPoin} poin)</span>
+                        </p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-base-content/70">
+                          {cap.subCapaian?.map((sub) => (
+                            <li key={sub.id}>
+                              {sub.nama} <span className="font-medium">({sub.poinMaksimal} poin)</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ) : capaianKurikulum.length === 0 ? (
-                <p className="py-4 text-center text-sm" style={{ color: '#9CA3AF' }}>Belum ada data kurikulum aktif.</p>
-              ) : (
-                capaianKurikulum.map((pilar) => (
-                  <p key={pilar.id || pilar.pilar} className="text-sm" style={{ color: '#1F2937' }}>
-                    {pilar.pilar}
-                  </p>
-                ))
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Middle Section: Top Fakultas & Grafik UKM */}

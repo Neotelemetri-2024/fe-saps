@@ -11,7 +11,7 @@ function LaporanEksekutif() {
   const [loading, setLoading] = useState(false)
   const [downloading, setDownloading] = useState(null)
   const [fakultasList, setFakultasList] = useState([])
-  const [filter, setFilter] = useState({ fakultasId: '', prodiId: '', angkatan: '', tahunAkademik: '' })
+  const [filter, setFilter] = useState({ fakultasId: '', prodiId: '', angkatan: '' })
 
   useEffect(() => {
     getFakultasList()
@@ -26,7 +26,6 @@ function LaporanEksekutif() {
       if (filter.fakultasId) params.fakultasId = filter.fakultasId
       if (filter.prodiId) params.prodiId = filter.prodiId
       if (filter.angkatan) params.angkatan = filter.angkatan
-      if (filter.tahunAkademik) params.tahunAkademik = filter.tahunAkademik
       const res = await getPreviewLaporan(params)
       setPreview(res?.data || res)
     } catch (err) {
@@ -61,7 +60,7 @@ function LaporanEksekutif() {
   const capaian = preview?.capaianKurikulumStats || []
 
   const resetFilter = () => {
-    setFilter({ fakultasId: '', prodiId: '', angkatan: '', tahunAkademik: '' })
+    setFilter({ fakultasId: '', prodiId: '', angkatan: '' })
     setTimeout(loadPreview, 100)
   }
 
@@ -87,15 +86,13 @@ function LaporanEksekutif() {
             <input type="text" value={filter.angkatan} onChange={(e) => setFilter((f) => ({ ...f, angkatan: e.target.value }))}
               placeholder="Angkatan (mis: 2022)"
               className="select" />
-            <input type="text" value={filter.tahunAkademik} onChange={(e) => setFilter((f) => ({ ...f, tahunAkademik: e.target.value }))}
-              placeholder="Tahun Akademik (mis: 2024/2025)"
-              className="select" />
+            {/* Removed tahunAkademik input */}
             <div className="flex gap-2">
               <button type="button" onClick={loadPreview}
                 className="btn btn-primary flex-1 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
                 <Eye className="mr-1 inline h-4 w-4" /> Preview
               </button>
-              {(filter.fakultasId || filter.angkatan || filter.tahunAkademik) && (
+              {(filter.fakultasId || filter.angkatan) && (
                 <button type="button" onClick={resetFilter}
                   className="rounded-lg border border-brand-dark bg-base-100 px-3 py-2.5 text-sm font-medium text-brand-dark hover:bg-base-200">
                   <X className="h-4 w-4" />
