@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, isValidElement } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreVertical } from 'lucide-react'
 
@@ -98,7 +98,7 @@ function ActionMenu({ items = [], align = 'right' }) {
                     onClick={(e) => runAction(e, it.onClick)}
                     className={it.color || 'text-base-content'}
                   >
-                    {it.icon}
+                    {it.icon ? (isValidElement(it.icon) ? it.icon : typeof it.icon === 'function' ? <it.icon className="h-4 w-4 shrink-0" /> : it.icon) : null}
                     <span className="truncate">{it.label}</span>
                   </button>
                 </li>

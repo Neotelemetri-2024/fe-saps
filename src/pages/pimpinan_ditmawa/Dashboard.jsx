@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Eye } from 'lucide-react'
 import StatCard from '../../components/dashboard/StatCard'
 import ProgressBar from '../../components/dashboard/ProgressBar'
 import { VerticalBarChart } from '../../components/charts'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import DataTable from '../../components/dashboard/DataTable'
+import ActionMenu from '../../components/ui/ActionMenu'
 import PanduanCard from '../../components/dashboard/PanduanCard'
 import { ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import { get } from '../../services/apiClient'
@@ -260,14 +262,18 @@ function Dashboard() {
                 {
                   key: 'aksi',
                   label: 'Aksi',
+                  stopPropagation: true,
                   render: (row) => (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-internal/${row.id}`)}
-                      className="btn btn-outline btn-primary btn-xs"
-                    >
-                      Tinjau
-                    </button>
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Tinjau',
+                          icon: <Eye className="h-4 w-4" />,
+                          color: 'text-primary',
+                          onClick: () => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-internal/${row.id}`),
+                        },
+                      ]}
+                    />
                   ),
                 },
               ]}

@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import DataTable from '../../components/dashboard/DataTable'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { DetailBackButton } from '../../components/ui/DetailComponents'
 import { KehadiranSelect, PeranSelect } from '../../components/dashboard/PesertaFields'
 import { getCurrentUser } from '../../services/authService'
@@ -370,15 +371,18 @@ function ManajemenPeserta() {
                   key: '_aksi',
                   label: 'Aksi',
                   center: true,
+                  stopPropagation: true,
                   render: (p) => (
-                    <button
-                      type="button"
-                      onClick={() => setPesertaToDelete(p)}
-                      className="btn btn-ghost btn-xs text-error hover:bg-error/10"
-                      title="Hapus peserta"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <ActionMenu
+                      items={[
+                        {
+                          label: 'Hapus',
+                          icon: <Trash2 className="h-4 w-4" />,
+                          color: 'text-red-500',
+                          onClick: () => setPesertaToDelete(p),
+                        },
+                      ]}
+                    />
                   ),
                 }] : []),
               ]}

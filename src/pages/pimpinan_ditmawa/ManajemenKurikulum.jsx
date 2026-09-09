@@ -857,7 +857,7 @@ const handleEditSubCapaian = async () => {
                     onClick={() => setActiveKurId(isActive ? null : kur.id)}
                     className="flex flex-1 flex-col gap-1.5 text-left"
                   >
-                    <p className={`text-sm font-bold ${isActive ? 'text-brand-dark' : 'text-base-content'}`}>{kur.nama}</p>
+                    <p className="text-sm font-bold text-base-content">{kur.nama}</p>
                     <p className="text-xs text-base-content/50">
                       Tahun: {kur.tahun} · {formatCakupanAngkatan(kur, kurikulum)}
                     </p>

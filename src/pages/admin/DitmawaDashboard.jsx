@@ -10,6 +10,8 @@ import { getCurrentUser } from '../../services/authService'
 import { getDashboardAdminDitmawa } from '../../services/dashboardService'
 import { deleteKegiatan } from '../../services/kegiatanService'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
+import ActionMenu from '../../components/ui/ActionMenu'
+import { Trash2 } from 'lucide-react'
 
 function formatTanggal(start, end) {
   if (!start) return '-'
@@ -70,15 +72,20 @@ function AdminDitmawaDashboard() {
     { key: 'tgl', label: 'TANGGAL' },
     { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
     {
-      key: 'aksi', label: 'AKSI',
+      key: 'aksi',
+      label: 'AKSI',
+      stopPropagation: true,
       render: (row) => (
-        <button
-          type="button"
-          onClick={() => { setSelectedRow(row); setShowConfirmDelete(true) }}
-          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-        >
-          Hapus
-        </button>
+        <ActionMenu
+          items={[
+            {
+              label: 'Hapus',
+              icon: <Trash2 className="h-4 w-4" />,
+              color: 'text-red-500',
+              onClick: () => { setSelectedRow(row); setShowConfirmDelete(true) },
+            },
+          ]}
+        />
       ),
     },
   ]

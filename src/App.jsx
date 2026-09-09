@@ -16,6 +16,7 @@ import PesanDosenPA from './pages/mahasiswa/PesanDosenPA'
 import AkunPengaturan from './pages/mahasiswa/AkunPengaturan'
 import DetailPengajuanMahasiswa from './pages/mahasiswa/DetailPengajuan'
 import DetailIzinPAMahasiswa from './pages/mahasiswa/DetailIzinPA'
+import DetailKegiatanInternalMahasiswa from './pages/mahasiswa/DetailKegiatanInternal'
 import Notifikasi from './pages/Notifikasi'
 import DosenPADashboard from './pages/dosen/Dashboard'
 import DosenPAMahasiswaBimbingan from './pages/dosen/MahasiswaBimbingan'
@@ -59,6 +60,7 @@ import AdminDitmawaPemetaanCapaianMassal from './pages/admin_ditmawa/PemetaanCap
 import AdminDitmawaManajemenAkunUKM from './pages/admin_ditmawa/ManajemenAkunUKM'
 import AdminDitmawaManajemenEvent from './pages/admin_ditmawa/ManajemenEvent'
 import AdminDitmawaManajemenPesertaEvent from './pages/admin_ditmawa/ManajemenPesertaEvent'
+import DetailEvent from './pages/admin_ditmawa/DetailEvent'
 import AdminDitmawaDetailVerifikasiKlaimPoin from './pages/admin_ditmawa/DetailVerifikasiKlaimPoin'
 import AdminDitmawaVerifikasiPengajuanInternal from './pages/admin_ditmawa/VerifikasiPengajuanInternal'
 import AdminDitmawaDetailVerifikasiPengajuanInternal from './pages/admin_ditmawa/DetailVerifikasiPengajuanInternal'
@@ -104,6 +106,7 @@ function App() {
           <Route path="klaim-poin" element={<KlaimPoinCapaian />} />
           <Route path="riwayat-poin" element={<RiwayatPoin />} />
           <Route path="riwayat-kegiatan-internal" element={<RiwayatKegiatanInternal />} />
+          <Route path="riwayat-kegiatan-internal/:id" element={<DetailKegiatanInternalMahasiswa />} />
           <Route path="pesan-dosen-pa" element={<PesanDosenPA />} />
           <Route path="pengaturan" element={<AkunPengaturan />} />
           <Route path="notifikasi" element={<Notifikasi />} />
@@ -143,6 +146,7 @@ function App() {
           <Route path="manajemen-akun-ukm" element={<PimpinanDitmawaManajemenAkunUKM />} />
           <Route path="manajemen-akun-ukmf" element={<PimpinanDitmawaManajemenAkunUKMF />} />
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
+          <Route path="manajemen-event/:id" element={<DetailEvent role="pimpinan_ditmawa" userRole="Pimpinan Ditmawa" />} />
           <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="manajemen-event/:id/peserta" element={<AdminDitmawaManajemenPesertaEvent />} />
@@ -192,6 +196,7 @@ function App() {
           <Route path="verifikasi-pengajuan-internal/:id" element={<AdminDitmawaDetailVerifikasiPengajuanInternal />} />
           <Route path="manajemen-akun-ukm" element={<AdminDitmawaManajemenAkunUKM />} />
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
+          <Route path="manajemen-event/:id" element={<DetailEvent role="admin_ditmawa" userRole="Admin Ditmawa" />} />
           <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="manajemen-peserta-event/:id" element={<AdminDitmawaManajemenPesertaEvent />} />
           <Route path="pengaturan" element={<SharedAkunPengaturan />} />
@@ -204,6 +209,7 @@ function App() {
           <Route path="dashboard" element={<AdminFakultasDashboardNew />} />
           <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="admin_fakultas" />} />
           <Route path="manajemen-event" element={<AdminFakultasManajemenEvent />} />
+          <Route path="manajemen-event/:id" element={<DetailEvent role="admin_fakultas" userRole="Admin Fakultas" />} />
           <Route path="manajemen-event/:id/peserta" element={<AdminFakultasManajemenPesertaEvent />} />
           <Route path="manajemen-akun-ukmf" element={<AdminFakultasManajemenAkunUKMF />} />
           <Route path="verifikasi-pengajuan-ukmf" element={<AdminFakultasVerifikasiPengajuanUKMF />} />

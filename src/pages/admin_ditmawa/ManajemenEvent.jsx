@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Search, Edit3, Plus, Trash2, Send, RefreshCw, Users } from 'lucide-react'
+import { Search, Edit3, Plus, Trash2, Send, RefreshCw, Users, Eye } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import DataTable from '../../components/dashboard/DataTable'
@@ -251,6 +251,12 @@ function ManajemenEvent() {
     { key: 'aksi', label: 'Aksi', stopPropagation: true, render: (row) => (
       <ActionMenu
         items={[
+          {
+            label: 'Detail',
+            icon: <Eye className="h-4 w-4" />,
+            color: 'text-primary',
+            onClick: () => navigate(`${basePath}/manajemen-event/${row.id}`),
+          },
           bisaKirim(row)
             ? {
                 label: isPimpinan

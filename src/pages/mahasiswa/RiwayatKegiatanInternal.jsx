@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import KegiatanCell from '../../components/dashboard/KegiatanCell'
 import { getCurrentUser } from '../../services/authService'
@@ -71,6 +73,7 @@ function canMintaIzin(row) {
 }
 
 function RiwayatKegiatanInternal() {
+  const navigate = useNavigate()
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
   const [riwayat, setRiwayat] = useState([])
@@ -254,6 +257,26 @@ function RiwayatKegiatanInternal() {
         <span className="tabular-nums text-base-content">
           {row.poin === null || row.poin === undefined || row.poin === '' ? '-' : row.poin}
         </span>
+      ),
+    },
+    {
+      key: 'aksi',
+      label: 'Aksi',
+      stopPropagation: true,
+      render: (row) => pilihanMode ? null : (
+        <ActionMenu
+          items={[
+            {
+              label: 'Detail',
+              icon: <Eye className="h-4 w-4" />,
+              color: 'text-primary',
+              onClick: () =>
+                navigate(`/mahasiswa/riwayat-kegiatan-internal/${row.kegiatanId || row.id}`, {
+                  state: { row },
+                }),
+            },
+          ]}
+        />
       ),
     },
   ]

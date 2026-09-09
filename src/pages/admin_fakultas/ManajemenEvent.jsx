@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Pencil, Plus, Trash2, Send, RefreshCw, Users } from 'lucide-react'
+import { Search, Pencil, Plus, Trash2, Send, RefreshCw, Users, Eye } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
@@ -419,6 +419,12 @@ function ManajemenEvent() {
         render: (row) => (
           <ActionMenu
             items={[
+              {
+                label: 'Detail',
+                icon: <Eye className="h-4 w-4" />,
+                color: 'text-primary',
+                onClick: () => navigate(`/admin_fakultas/manajemen-event/${row.id}`),
+              },
               bisaKirim(row)
                 ? {
                     label: row.rawStatus === 'perlu_revisi' ? 'Ajukan Ulang' : 'Kirim',

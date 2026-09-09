@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Settings2, Scale } from 'lucide-react'
+import { Search, Settings2, Scale, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
 import DataTable from '../../components/dashboard/DataTable'
+import ActionMenu from '../../components/ui/ActionMenu'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { ChartSkeleton } from '../../components/dashboard/Skeleton'
@@ -229,15 +230,19 @@ function RulesModal({ isOpen, onClose, onSaved }) {
             {
               key: 'aksi',
               label: 'Aksi',
+              stopPropagation: true,
               render: (r) => (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-xs"
-                  disabled={savingId === r.id}
-                  onClick={() => handleSave(r)}
-                >
-                  {savingId === r.id ? 'Menyimpan…' : 'Simpan'}
-                </button>
+                <ActionMenu
+                  items={[
+                    {
+                      label: savingId === r.id ? 'Menyimpan…' : 'Simpan',
+                      icon: <Save className="h-4 w-4" />,
+                      color: 'text-primary',
+                      disabled: savingId === r.id,
+                      onClick: () => handleSave(r),
+                    },
+                  ]}
+                />
               ),
             },
           ]}

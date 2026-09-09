@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getCurrentUser } from '../../services/authService'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
+import ActionMenu from '../../components/ui/ActionMenu'
 import { getKurikulumAktif, createKurikulum, tambahCapaian, tambahSubCapaian } from '../../services/kurikulumService'
 import { batalBtnClass } from '../../components/ui/buttonStyles'
 
@@ -262,15 +263,18 @@ function TambahMatriks() {
                             />
                           </td>
                         ))}
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => removeBaris(b.id)}
-                            className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50"
-                          >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </button>
-                    </td>
+                        <td className="px-4 py-3 text-center">
+                          <ActionMenu
+                            items={[
+                              {
+                                label: 'Hapus',
+                                icon: <Trash2 className="h-4 w-4" />,
+                                color: 'text-red-500',
+                                onClick: () => removeBaris(b.id),
+                              },
+                            ]}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
