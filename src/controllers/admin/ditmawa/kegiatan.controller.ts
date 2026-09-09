@@ -583,7 +583,7 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
         userId: kegiatan.dibuatOleh,
         judul: `Kegiatan ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'Disetujui' : 'Terverifikasi') : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
         isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'disetujui' : 'diverifikasi') : body.keputusan} oleh ${aktorNama}. Keputusan: ${body.keputusan}.${body.alasan ? ' Alasan: ' + body.alasan : ''}`,
-        refType: 'kegiatan',
+        refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
         refId: BigInt(kegiatan.id),
       });
 
@@ -609,7 +609,7 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
             userIds: pimpinanTargets.map(t => t.userId),
             judul: 'Kegiatan Menunggu Approval',
             isi: `Kegiatan "${kegiatan.nama}" telah lolos verifikasi Admin dan menunggu approval final Anda.`,
-            refType: 'kegiatan',
+            refType: (kegiatan.asal as any) === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
             refId: BigInt(kegiatan.id),
           });
         }
@@ -754,7 +754,7 @@ export const ajukanKegiatan = async (req: Request, res: Response): Promise<void>
         userIds: notifTargets.map(t => t.userId),
         judul: notifJudul,
         isi: notifIsi,
-        refType: 'kegiatan',
+        refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
         refId: BigInt(kegiatan.id),
       });
     }
@@ -979,7 +979,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       userId: kegiatan.dibuatOleh,
       judul: `Kegiatan ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'Disetujui' : 'Terverifikasi') : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
       isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan === 'setuju' ? (isSuperAdmin ? 'disetujui' : 'diverifikasi') : body.keputusan} oleh ${aktorNama}.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-      refType: 'kegiatan',
+      refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
       refId: BigInt(id as string),
     });
 
@@ -1008,7 +1008,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
           userIds: pimpinanTargets.map(t => t.userId),
           judul: 'Kegiatan Menunggu Approval',
           isi: `Kegiatan "${kegiatan.nama}" telah terverifikasi dan menunggu persetujuan Anda.`,
-          refType: 'kegiatan',
+          refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
           refId: BigInt(kegiatan.id),
         });
       }
@@ -1018,7 +1018,7 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
     await prisma.notifikasi.updateMany({
       where: {
         userId: aktorId,
-        refType: 'kegiatan',
+        refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
         refId: BigInt(id as string),
         dibaca: false,
       },
@@ -1263,7 +1263,7 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
       userId: kegiatan.dibuatOleh,
       judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
       isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-      refType: 'kegiatan',
+      refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
       refId: BigInt(id as string),
     });
 
@@ -1271,7 +1271,7 @@ export const approvalKegiatan = async (req: Request, res: Response): Promise<voi
     await prisma.notifikasi.updateMany({
       where: {
         userId: aktorId,
-        refType: 'kegiatan',
+        refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
         refId: BigInt(id as string),
         dibaca: false,
       },
@@ -1369,7 +1369,7 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
           userId: kegiatan.dibuatOleh,
           judul: `Kegiatan ${body.keputusan === 'setuju' ? 'Disetujui' : body.keputusan === 'revisi' ? 'Perlu Revisi' : 'Ditolak'}`,
           isi: `Kegiatan "${kegiatan.nama}" telah ${body.keputusan} oleh Pimpinan.${body.alasan ? ` Alasan: ${body.alasan}` : ''}`,
-          refType: 'kegiatan',
+          refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
           refId: BigInt(kegiatanId),
         });
 
@@ -1377,7 +1377,7 @@ export const approvalKegiatanBulk = async (req: Request, res: Response, next: Ne
         await prisma.notifikasi.updateMany({
           where: {
             userId: aktorId,
-            refType: 'kegiatan',
+            refType: kegiatan.asal === 'eksternal' ? 'kegiatan_eksternal' : 'kegiatan_internal',
             refId: BigInt(kegiatanId),
             dibaca: false,
           },
@@ -1539,3 +1539,4 @@ export const hapusKegiatan = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server saat menghapus kegiatan' });
   }
 };
+

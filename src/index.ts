@@ -131,9 +131,13 @@ app.use('/api/organisasi-fakultas', organisasiFakultasRoutes);
 import mahasiswaRoutes from './routes/mahasiswa.routes';
 import dosenRoutes from './routes/dosen.routes';
 import ukmRoutes from './routes/ukm.routes';
+import staffRoutes from './routes/staff.routes';
 
 // Klaim Poin & Perolehan (Mahasiswa, Validator, Admin)
 app.use('/api/klaim', klaimRoutes);
+
+// Manajemen Akun Staff (Pimpinan)
+app.use('/api/staff', staffRoutes);
 
 // Khusus Mahasiswa
 app.use('/api/mahasiswa', mahasiswaRoutes);

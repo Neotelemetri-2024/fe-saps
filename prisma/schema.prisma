@@ -244,6 +244,7 @@ model Mahasiswa {
 /// 1.6 Profil staf struktural — Admin/Pimpinan × Ditmawa/Fakultas
 model Staff {
   userId     BigInt        @id @map("user_id")
+  nip        String?       @unique @db.VarChar(50)
   jabatan    JabatanStaff
   fakultasId Int?          @map("fakultas_id") // NULL = tingkat universitas (Ditmawa)
 
