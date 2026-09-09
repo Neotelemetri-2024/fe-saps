@@ -8,6 +8,7 @@ import { getKegiatanById, approvalKegiatan } from '../../services/kegiatanServic
 import {
   InfoRow,
   SectionCard,
+  CurriculumAchievementCard,
   mapUiStatus,
   formatTanggal,
   DetailBackButton,
@@ -130,7 +131,6 @@ function DetailVerifikasiPengajuanInternal() {
 
         <SectionCard title="Detail kegiatan">
           <InfoRow label="Nama kegiatan" value={item.kegiatan} />
-          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label="Penyelenggara" value={item.namaOrganisasi} />
           <InfoRow label="Jenis kegiatan" value={item.jenis} />
           <InfoRow label="Skala" value={item.skala} />
@@ -138,25 +138,11 @@ function DetailVerifikasiPengajuanInternal() {
           {item.deskripsi && item.deskripsi !== '-' ? <InfoRow label="Deskripsi" value={item.deskripsi} multiline /> : null}
         </SectionCard>
 
-        <SectionCard title="Kurikulum Mahasiswa">
-          <InfoRow label="Kurikulum" value={item.kurikulum || '-'} />
-        </SectionCard>
-
-        <SectionCard title="Capaian Kurikulum">
-          {item.capaian?.length > 0
-            ? item.capaian.map((c, i) => (
-                <p key={i} className="text-sm text-base-content">{typeof c === 'string' ? c : c.label}</p>
-              ))
-            : <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>}
-        </SectionCard>
-
-        {item.subCapaian?.length > 0 ? (
-          <SectionCard title="Sub capaian">
-            {item.subCapaian.map((sc, i) => (
-              <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen || `${sc.poin || 0}%`} />
-            ))}
-          </SectionCard>
-        ) : null}
+        <CurriculumAchievementCard
+          kurikulum={item.kurikulum}
+          capaian={item.capaian}
+          subCapaian={item.subCapaian}
+        />
 
         {canAct ? (
           <DecisionActions

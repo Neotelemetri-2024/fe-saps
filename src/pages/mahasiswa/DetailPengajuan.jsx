@@ -8,6 +8,7 @@ import {
   DetailHeader,
   DecisionNote,
   EmptyDetail,
+  CurriculumAchievementCard,
 } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
@@ -73,6 +74,14 @@ function DetailPengajuanMahasiswa() {
           ) : null}
           {row.deskripsi ? <InfoRow label="Deskripsi" value={row.deskripsi} multiline /> : null}
         </SectionCard>
+
+        {(row.kurikulum || (row.capaian && row.capaian.length > 0) || (row.subCapaian && row.subCapaian.length > 0)) ? (
+          <CurriculumAchievementCard
+            kurikulum={row.kurikulum || row.kurikulumNama}
+            capaian={row.capaian}
+            subCapaian={row.subCapaian}
+          />
+        ) : null}
       </div>
     </DashboardLayout>
   )

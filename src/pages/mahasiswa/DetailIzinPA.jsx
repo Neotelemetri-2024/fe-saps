@@ -8,6 +8,7 @@ import {
   DetailHeader,
   DecisionNote,
   EmptyDetail,
+  CurriculumAchievementCard,
 } from '../../components/ui/DetailComponents'
 
 function formatTanggal(val) {
@@ -84,6 +85,18 @@ function DetailIzinPAMahasiswa() {
           ) : null}
           {(kg.deskripsi || row.deskripsi) ? <InfoRow label="Deskripsi" value={kg.deskripsi || row.deskripsi} multiline /> : null}
         </SectionCard>
+
+        {(row.kurikulum || kg.kurikulum || row.capaian?.length > 0 || kg.capaian?.length > 0 || row.subCapaian?.length > 0 || kg.subCapaian?.length > 0 || kg.kegiatanCapaian?.length > 0) ? (
+          <CurriculumAchievementCard
+            kurikulum={row.kurikulum || kg.kurikulum?.nama || (typeof kg.kurikulum === 'string' ? kg.kurikulum : null) || row.kurikulumNama}
+            capaian={row.capaian || kg.capaian || (kg.kegiatanCapaian ? [...new Set(kg.kegiatanCapaian.map(kc => kc.subCapaian?.capaian?.nama).filter(Boolean))] : [])}
+            subCapaian={row.subCapaian || kg.subCapaian || (kg.kegiatanCapaian ? kg.kegiatanCapaian.map(kc => ({
+              label: kc.subCapaian?.nama || '-',
+              capaian: kc.subCapaian?.capaian?.nama || '',
+              persen: kc.alokasiPersen ?? null,
+            })) : [])}
+          />
+        ) : null}
       </div>
     </DashboardLayout>
   )

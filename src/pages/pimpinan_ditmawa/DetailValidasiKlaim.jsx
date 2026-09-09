@@ -9,6 +9,7 @@ import { resolveUploadUrl } from '../../services/apiClient'
 import {
   InfoRow,
   SectionCard,
+  CurriculumAchievementCard,
   formatTanggal,
   DetailBackButton,
   DetailHeader,
@@ -32,15 +33,33 @@ function normalizeDetail(raw) {
   const part = raw.partisipasi || {}
   const kegiatan = part.kegiatan || {}
   const mahasiswa = part.mahasiswa || {}
-  const capaianList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.nama).filter(Boolean)
-  const kurikulumList = (kegiatan.kegiatanCapaian || []).map((kc) => kc.subCapaian?.capaian?.kurikulum?.nama).filter(Boolean)
-  const kurikulumNama =
-    mahasiswa.kurikulum?.nama ||
-    raw.kurikulumNama ||
-    raw.kurikulum?.nama ||
-    kegiatan.kurikulum?.nama ||
-    kurikulumList[0] ||
-    (typeof raw.kurikulum === 'string' ? raw.kurikulum : '-')
+  const mhsKurNama = mahasiswa.kurikulum?.nama || (typeof mahasiswa.kurikulum === 'string' ? mahasiswa.kurikulum : null) || raw.kurikulumNama || raw.kurikulum?.nama || null
+  const allKc = kegiatan.kegiatanCapaian || []
+  const matched = mhsKurNama
+    ? allKc.filter((kc) => kc.subCapaian?.capaian?.kurikulum?.nama === mhsKurNama)
+    : []
+  const targetKc = matched.length > 0 ? matched : allKc
+  const kurikulumDisplay = mhsKurNama || targetKc[0]?.subCapaian?.capaian?.kurikulum?.nama || '-'
+
+  const capaianMap = new Map()
+  const subCapaianList = []
+
+  targetKc.forEach((kc) => {
+    const capNama = kc.subCapaian?.capaian?.nama
+    const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumDisplay
+    if (capNama && !capaianMap.has(capNama)) {
+      capaianMap.set(capNama, { label: capNama, kurikulum: kurNama })
+    }
+    if (kc.subCapaian?.nama) {
+      subCapaianList.push({
+        label: kc.subCapaian.nama,
+        capaian: capNama || '',
+        kurikulum: kurNama,
+        persen: kc.alokasiPersen != null ? `${kc.alokasiPersen}%` : '-',
+      })
+    }
+  })
+
   const buktiRaw =
     (typeof raw.bukti === 'string' ? raw.bukti : null) ||
     raw.bukti?.[0]?.url ||
@@ -62,13 +81,9 @@ function normalizeDetail(raw) {
     linkWebsite: kegiatan.linkWebsiteExt || '-',
     deskripsi: kegiatan.deskripsi || '-',
     bukti: resolveUploadUrl(buktiRaw),
-    kurikulum: kurikulumNama,
-    capaian: [...new Set(capaianList)],
-    subCapaian: (kegiatan.kegiatanCapaian || []).map((kc) => ({
-      label: kc.subCapaian?.nama || '-',
-      capaian: kc.subCapaian?.capaian?.nama || '',
-      persen: kc.alokasiPersen != null ? `${kc.alokasiPersen}%` : '-',
-    })),
+    kurikulum: kurikulumDisplay,
+    capaian: Array.from(capaianMap.values()),
+    subCapaian: subCapaianList,
     status: mapStatus(raw.status),
     statusRaw: raw.status,
     alasan: raw.alasan || null,
@@ -171,7 +186,6 @@ function DetailValidasiKlaim() {
 
         <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.kegiatan} />
-          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label="Kategori" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
           <InfoRow label="Peran" value={item.peran} />
@@ -192,23 +206,11 @@ function DetailValidasiKlaim() {
           )}
         </SectionCard>
 
-        <SectionCard title="Kurikulum Mahasiswa">
-          <InfoRow label="Kurikulum" value={item.kurikulum || '-'} />
-        </SectionCard>
-
-        <SectionCard title="Capaian Kurikulum">
-          {item.capaian?.length > 0
-            ? item.capaian.map((c, i) => (
-                <p key={i} className="text-sm text-base-content">{c}</p>
-              ))
-            : <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>}
-        </SectionCard>
-
-        {item.subCapaian?.length > 0 && (
-          <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen} />)}
-          </SectionCard>
-        )}
+        <CurriculumAchievementCard
+          kurikulum={item.kurikulum}
+          capaian={item.capaian}
+          subCapaian={item.subCapaian}
+        />
 
         {canAct ? (
           <DecisionActions

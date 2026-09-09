@@ -6,7 +6,7 @@ import { VerticalBarChart } from '../../components/charts'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import DataTable from '../../components/dashboard/DataTable'
 import PanduanCard from '../../components/dashboard/PanduanCard'
-import { CardGridSkeleton, ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
+import { ChartSkeleton, RankListSkeleton } from '../../components/dashboard/Skeleton'
 import { get } from '../../services/apiClient'
 import { getCurrentUser } from '../../services/authService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
@@ -39,17 +39,15 @@ function Dashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [kurikulumId, setKurikulumId] = useState('')
-  const [kurikulumOptions, setKurikulumOptions] = useState([])
 
   useEffect(() => {
     getKurikulumAktif()
       .then((list) => {
         const options = Array.isArray(list) ? list : []
         const defaultId = pickDefaultKurikulumId(options)
-        setKurikulumOptions(options)
         setKurikulumId(defaultId)
       })
-      .catch(() => setKurikulumOptions([]))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -142,47 +140,6 @@ function Dashboard() {
           </div>
         ) : null}
 
-        {/* Struktur Kurikulum & Capaian */}
-        <div className="card bg-base-100 p-5 sm:p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-base-content">Struktur Kurikulum & Capaian</h3>
-              <p className="mt-0.5 text-xs text-base-content/60">
-                Daftar lengkap kurikulum aktif beserta capaian dan subcapaian
-              </p>
-            </div>
-          </div>
-
-          {loading ? (
-            <CardGridSkeleton />
-          ) : kurikulumOptions.length === 0 ? (
-            <p className="py-8 text-center text-sm text-base-content/50">Belum ada data kurikulum aktif.</p>
-          ) : (
-            <div className="space-y-6">
-              {kurikulumOptions.map((kurikulum) => (
-                <div key={kurikulum.id} className="rounded-lg border border-base-300 p-4">
-                  <h4 className="mb-3 text-md font-bold text-base-content">Kurikulum: {kurikulum.nama}</h4>
-                  <div className="space-y-4">
-                    {kurikulum.capaian?.map((cap) => (
-                      <div key={cap.id} className="ml-4 border-l-2 border-base-300 pl-4">
-                        <p className="text-sm font-semibold text-base-content">
-                          Capaian: {cap.nama} <span className="font-normal text-base-content/60">({cap.jumlahPoin} poin)</span>
-                        </p>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-base-content/70">
-                          {cap.subCapaian?.map((sub) => (
-                            <li key={sub.id}>
-                              {sub.nama} <span className="font-medium">({sub.poinMaksimal} poin)</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Middle Section: Top Fakultas & Grafik UKM */}
         <div className="grid gap-6 lg:grid-cols-2">

@@ -7,6 +7,7 @@ import { getKegiatanById } from '../../services/kegiatanService'
 import {
   InfoRow,
   SectionCard,
+  CurriculumAchievementCard,
   formatTanggal,
   mapUiStatus,
   DetailBackButton,
@@ -88,7 +89,6 @@ function DetailKegiatan({ role, userRole }) {
 
         <SectionCard title="Detail Kegiatan">
           <InfoRow label="Nama Kegiatan" value={item.nama} />
-          {item.kurikulum && item.kurikulum !== '-' ? <InfoRow label="Kurikulum Terkait" value={item.kurikulum} /> : null}
           <InfoRow label={role === 'operator_ukm' ? 'Nama UKM' : 'Nama UKMF'} value={item.organisasi} />
           <InfoRow label="Jenis Kegiatan" value={item.kategori} />
           <InfoRow label="Skala" value={item.skala} />
@@ -97,38 +97,11 @@ function DetailKegiatan({ role, userRole }) {
           {item.deskripsi && item.deskripsi !== '-' && <InfoRow label="Deskripsi" value={item.deskripsi} multiline />}
         </SectionCard>
 
-        {((item.kurikulum && item.kurikulum !== '-') || item.capaian?.length > 0) && (
-          <SectionCard title="Capaian Kurikulum">
-          {item.kurikulum && item.kurikulum !== '-' ? (
-            <div className="mb-3 pb-3 border-b border-base-200">
-              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                Kurikulum Terkait
-              </span>
-              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
-                {item.kurikulum}
-              </span>
-            </div>
-          ) : null}
-          {item.capaian?.length > 0 ? (
-            <div>
-              {item.kurikulum && item.kurikulum !== '-' && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                  Daftar Capaian
-                </span>
-              )}
-              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c}</p>)}
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/50">Tidak ada capaian kurikulum</p>
-          )}
-        </SectionCard>
-        )}
-
-        {item.subCapaian?.length > 0 && (
-          <SectionCard title="Sub Capaian & Bobot">
-            {item.subCapaian.map((sc, i) => <InfoRow key={i} label={sc.label} sublabel={sc.capaian} value={sc.persen} />)}
-          </SectionCard>
-        )}
+        <CurriculumAchievementCard
+          kurikulum={item.kurikulum}
+          capaian={item.capaian}
+          subCapaian={item.subCapaian}
+        />
       </div>
     </DashboardLayout>
   )

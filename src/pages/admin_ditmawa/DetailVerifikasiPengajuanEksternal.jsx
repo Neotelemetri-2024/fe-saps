@@ -11,6 +11,7 @@ import { getCurrentUser } from '../../services/authService'
 import {
   InfoRow,
   SectionCard,
+  CurriculumAchievementCard,
   DetailBackButton,
   DetailHeader,
   DecisionNote,
@@ -54,20 +55,41 @@ function normalizeKegiatanDetail(k) {
     deskripsi: k.deskripsi || '',
     status: k.status,
     alasan: latestApproval?.alasan || '',
-    kurikulumNama: mhs.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || null,
-    capaian: (() => {
-      const seen = new Set()
-      return (k.kegiatanCapaian || []).reduce((acc, kc) => {
-        const nama = kc.subCapaian?.capaian?.nama
-        if (nama && !seen.has(nama)) { seen.add(nama); acc.push({ label: nama }) }
-        return acc
-      }, [])
+    ...(() => {
+      const mhsKurikulumNama = mhs.kurikulum?.nama || (typeof mhs.kurikulum === 'string' ? mhs.kurikulum : null) || k.kurikulumNama || k.kurikulum?.nama || null
+      const allKc = k.kegiatanCapaian || []
+      const matched = mhsKurikulumNama
+        ? allKc.filter((kc) => kc.subCapaian?.capaian?.kurikulum?.nama === mhsKurikulumNama)
+        : []
+      const targetKc = matched.length > 0 ? matched : allKc
+      const kurikulumDisplay = mhsKurikulumNama || targetKc[0]?.subCapaian?.capaian?.kurikulum?.nama || '-'
+
+      const capaianMap = new Map()
+      const subCapaianList = []
+
+      targetKc.forEach((kc) => {
+        const capNama = kc.subCapaian?.capaian?.nama
+        const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumDisplay
+        if (capNama && !capaianMap.has(capNama)) {
+          capaianMap.set(capNama, { label: capNama, kurikulum: kurNama })
+        }
+        if (kc.subCapaian?.nama) {
+          subCapaianList.push({
+            label: kc.subCapaian.nama,
+            capaian: capNama || '',
+            kurikulum: kurNama,
+            persen: kc.alokasiPersen ?? null,
+          })
+        }
+      })
+
+      return {
+        kurikulum: kurikulumDisplay,
+        kurikulumNama: kurikulumDisplay,
+        capaian: Array.from(capaianMap.values()),
+        subCapaian: subCapaianList,
+      }
     })(),
-    subCapaian: (k.kegiatanCapaian || []).map((kc) => ({
-      label: kc.subCapaian?.nama || '-',
-      capaian: kc.subCapaian?.capaian?.nama || '',
-      persen: kc.alokasiPersen ?? null,
-    })),
   }
 }
 
@@ -252,50 +274,11 @@ function DetailVerifikasiPengajuanEksternal() {
           )}
         </SectionCard>
 
-        {/* Capaian yang sudah diinput (setelah disetujui) */}
-        <SectionCard title="Kurikulum Mahasiswa">
-          <InfoRow label="Kurikulum" value={item.kurikulumNama || '-'} />
-        </SectionCard>
-
-        {item.capaian?.length > 0 && (
-          <SectionCard title="Capaian Kurikulum">
-          {item.kurikulum && item.kurikulum !== '-' ? (
-            <div className="mb-3 pb-3 border-b border-base-200">
-              <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                Kurikulum Terkait
-              </span>
-              <span className="badge badge-primary badge-outline font-semibold text-xs py-2 px-3">
-                {item.kurikulum}
-              </span>
-            </div>
-          ) : null}
-          {item.capaian?.length > 0 ? (
-            <div>
-              {item.kurikulum && item.kurikulum !== '-' && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-base-content/60 block mb-1">
-                  Daftar Capaian
-                </span>
-              )}
-              {item.capaian.map((c, i) => <p key={i} className="text-sm font-medium text-base-content">{c.label || c}</p>)}
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/50">Belum ada pemetaan capaian</p>
-          )}
-        </SectionCard>
-        )}
-
-        {item.subCapaian?.length > 0 && (
-          <SectionCard title="Sub capaian">
-            {item.subCapaian.map((sc, i) => (
-              <InfoRow
-                key={i}
-                label={sc.label}
-                sublabel={sc.capaian}
-                value={sc.persen != null ? `${sc.persen}%` : '—'}
-              />
-            ))}
-          </SectionCard>
-        )}
+        <CurriculumAchievementCard
+          kurikulum={item.kurikulumNama || item.kurikulum}
+          capaian={item.capaian}
+          subCapaian={item.subCapaian}
+        />
 
         {/* Tombol aksi awal */}
         {canAct && !showCapaianForm ? (

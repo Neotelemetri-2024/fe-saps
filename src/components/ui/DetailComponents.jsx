@@ -47,6 +47,117 @@ export function SectionCard({ title, icon: Icon, children }) {
   )
 }
 
+function detailName(value) {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map(detailName).filter(Boolean).join(', ')
+  return value?.label || value?.nama || value?.capaianNama || value?.name || value?.judul || ''
+}
+
+function detailPercentage(item) {
+  const value = item?.persen ?? item?.alokasiPersen ?? item?.persentase ?? item?.poin ?? item?.value
+  if (value == null || value === '' || value === '-') return null
+  const text = String(value).trim()
+  return text.endsWith('%') ? text : `${text}%`
+}
+
+export function CurriculumAchievementCard({ kurikulum, capaian = [], subCapaian = [] }) {
+  const defaultKurName = detailName(kurikulum) || '-'
+
+  const kurMap = new Map()
+
+  const getKurBucket = (kName) => {
+    const key = kName || defaultKurName
+    if (!kurMap.has(key)) {
+      kurMap.set(key, { name: key, groups: [], groupMap: new Map() })
+    }
+    return kurMap.get(key)
+  }
+
+  ;(capaian || []).forEach((item) => {
+    const name = detailName(item)
+    if (!name) return
+    const kName = detailName(item?.kurikulum) || defaultKurName
+    const bucket = getKurBucket(kName)
+    if (!bucket.groupMap.has(name)) {
+      const group = { name, items: [] }
+      bucket.groupMap.set(name, group)
+      bucket.groups.push(group)
+    }
+  })
+
+  ;(subCapaian || []).forEach((item) => {
+    const parentName =
+      detailName(item?.capaian) ||
+      item?.capaianNama ||
+      item?.sublabel ||
+      (typeof item?.capaian === 'string' ? item.capaian : '') ||
+      (capaian.length === 1 ? detailName(capaian[0]) : 'Capaian lainnya')
+    const kName = detailName(item?.kurikulum) || defaultKurName
+    const bucket = getKurBucket(kName)
+    if (!bucket.groupMap.has(parentName)) {
+      const group = { name: parentName, items: [] }
+      bucket.groupMap.set(parentName, group)
+      bucket.groups.push(group)
+    }
+    bucket.groupMap.get(parentName).items.push({
+      name: detailName(item),
+      percentage: detailPercentage(item),
+    })
+  })
+
+  if (kurMap.size === 0) {
+    getKurBucket(defaultKurName)
+  }
+
+  const buckets = Array.from(kurMap.values())
+
+  return (
+    <>
+      {buckets.map((bucket, bIdx) => (
+        <SectionCard key={bIdx} title="Capaian Kurikulum">
+          <InfoRow label="Kurikulum" value={bucket.name} />
+          {bucket.groups.length > 0 ? (
+            bucket.groups.map((group) => (
+              <div key={group.name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-base-content">{group.name}</p>
+                  {group.items.length > 0 ? (
+                    <span className="text-xs text-base-content/50">
+                      {group.items.length} sub capaian
+                    </span>
+                  ) : null}
+                </div>
+                {group.items.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {group.items.map((item, index) => (
+                      <div
+                        key={`${item.name}-${index}`}
+                        className="flex items-center justify-between gap-4 py-1"
+                      >
+                        <p className="text-sm text-base-content/75">{item.name || 'Sub capaian'}</p>
+                        {item.percentage ? (
+                          <span className="shrink-0 text-sm text-base-content">
+                            {item.percentage}
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-base-content/40 italic">Belum ada sub capaian.</p>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-base-content/50">Belum ada pemetaan capaian kurikulum.</p>
+          )}
+        </SectionCard>
+      ))}
+    </>
+  )
+}
+
 export function DetailBackButton({ onClick, children = 'Kembali' }) {
   return (
     <button
