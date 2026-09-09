@@ -17,7 +17,8 @@ const PAGE_SIZE = 10
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
-  if (['terverifikasi', 'diajukan'].includes(s)) return 'pending'
+  if (['terverifikasi'].includes(s)) return 'terverifikasi'
+  if (['diajukan'].includes(s)) return 'diajukan'
   if (['perlu_revisi'].includes(s)) return 'revisi'
   if (['terpublikasi'].includes(s)) return 'disetujui'
   return s || 'pending'
@@ -278,3 +279,4 @@ function VerifikasiPengajuanInternal() {
 }
 
 export default VerifikasiPengajuanInternal
+

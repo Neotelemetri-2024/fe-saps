@@ -270,7 +270,7 @@ function Dashboard() {
                           label: 'Tinjau',
                           icon: <Eye className="h-4 w-4" />,
                           color: 'text-primary',
-                          onClick: () => navigate(`/pimpinan_ditmawa/verifikasi-pengajuan-internal/${row.id}`),
+                          onClick: () => navigate(row.asal === "eksternal" ? `/pimpinan_ditmawa/verifikasi-pengajuan-eksternal/${row.id}` : `/pimpinan_ditmawa/verifikasi-pengajuan-internal/${row.id}`),
                         },
                       ]}
                     />
@@ -295,3 +295,4 @@ function Dashboard() {
 }
 
 export default Dashboard
+
