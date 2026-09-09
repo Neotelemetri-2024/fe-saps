@@ -190,6 +190,8 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
         staff: {
           select: {
             jabatan: true,
+            namaJabatan: true,
+            nip: true,
             fakultas: { select: { id: true, nama: true } },
           },
         },

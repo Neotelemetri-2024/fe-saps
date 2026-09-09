@@ -9,6 +9,7 @@ const jabatanSchema = z.enum(['admin_ditmawa', 'pimpinan_ditmawa', 'admin_fakult
 const baseSchema = z.object({
   nama: z.string().trim().min(3, 'Nama minimal 3 karakter'),
   nip: z.string().trim().max(50, 'NIP maksimal 50 karakter').optional().nullable().transform((value) => value || null),
+  namaJabatan: z.string().trim().max(150, 'Nama jabatan maksimal 150 karakter').optional().nullable().transform((value) => value || null),
   email: z.string().trim().toLowerCase().email('Format email tidak valid'),
   jabatan: jabatanSchema,
   fakultasId: z.coerce.number().int().positive().optional().nullable(),
@@ -65,11 +66,11 @@ export const createStaff = async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(body.password, 10);
     const created = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data: { nama: body.nama, email: body.email, passwordHash, peran: 'staff', aktif: body.aktif } });
-      const staff = await tx.staff.create({ data: { userId: user.id, jabatan: body.jabatan, nip: body.nip, fakultasId }, include: { fakultas: { select: { nama: true } } } });
+      const staff = await tx.staff.create({ data: { userId: user.id, jabatan: body.jabatan, namaJabatan: body.namaJabatan, nip: body.nip, fakultasId }, include: { fakultas: { select: { nama: true } } } });
       return { user, staff };
     });
     await logAudit({ entitas: 'user', entitasId: created.user.id, aksi: 'CREATE', statusBaru: body.aktif ? 'aktif' : 'nonaktif', aktorId: actor.userId });
-    return res.status(201).json({ success: true, message: 'Akun berhasil dibuat', data: { id: created.user.id.toString(), nama: created.user.nama, email: created.user.email, nip: created.staff.nip, jabatan: created.staff.jabatan, fakultasId: created.staff.fakultasId, fakultasNama: created.staff.fakultas?.nama, aktif: created.user.aktif, createdAt: created.user.createdAt } });
+    return res.status(201).json({ success: true, message: 'Akun berhasil dibuat', data: { id: created.user.id.toString(), nama: created.user.nama, email: created.user.email, nip: created.staff.nip, namaJabatan: created.staff.namaJabatan, jabatan: created.staff.jabatan, fakultasId: created.staff.fakultasId, fakultasNama: created.staff.fakultas?.nama, aktif: created.user.aktif, createdAt: created.user.createdAt } });
   } catch (error) { return handleError(error, res); }
 };
 
@@ -84,7 +85,7 @@ export const getStaff = async (req: Request, res: Response) => {
         : null;
     if (!where) return res.status(403).json({ success: false, message: 'Akses ditolak' });
     const staffs = await prisma.staff.findMany({ where, include: { user: { select: { nama: true, email: true, aktif: true, createdAt: true } }, fakultas: { select: { nama: true } } }, orderBy: { createdAt: 'desc' } });
-    return res.json({ success: true, data: staffs.map((staff) => ({ id: staff.userId.toString(), nama: staff.user.nama, email: staff.user.email, jabatan: staff.jabatan, nip: staff.nip, fakultasId: staff.fakultasId, fakultasNama: staff.fakultas?.nama, aktif: staff.user.aktif, createdAt: staff.user.createdAt })) });
+    return res.json({ success: true, data: staffs.map((staff) => ({ id: staff.userId.toString(), nama: staff.user.nama, email: staff.user.email, jabatan: staff.jabatan, namaJabatan: staff.namaJabatan, nip: staff.nip, fakultasId: staff.fakultasId, fakultasNama: staff.fakultas?.nama, aktif: staff.user.aktif, createdAt: staff.user.createdAt })) });
   } catch (error) { return handleError(error, res); }
 };
 
@@ -105,7 +106,7 @@ export const updateStaff = async (req: Request, res: Response) => {
     const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : undefined;
     await prisma.$transaction([
       prisma.user.update({ where: { id: targetUserId }, data: { nama: body.nama, email: body.email, aktif: body.aktif, ...(passwordHash ? { passwordHash } : {}) } }),
-      prisma.staff.update({ where: { userId: targetUserId }, data: { jabatan: body.jabatan, nip: body.nip, fakultasId } }),
+      prisma.staff.update({ where: { userId: targetUserId }, data: { jabatan: body.jabatan, namaJabatan: body.namaJabatan, nip: body.nip, fakultasId } }),
     ]);
     await logAudit({ entitas: 'user', entitasId: targetUserId, aksi: 'UPDATE', aktorId: actor.userId });
     return res.json({ success: true, message: 'Akun berhasil diperbarui' });
