@@ -166,6 +166,7 @@ function App() {
         {/* Pimpinan Fakultas */}
         <Route path="pimpinan_fakultas" element={<AuthGuard><RoleGuard allowedRoles={['pimpinan_fakultas']}><Outlet /></RoleGuard></AuthGuard>}>
           <Route path="dashboard" element={<PimpinanFakultasDashboard />} />
+          <Route path="manajemen-akun-admin" element={<PimpinanFakultasManajemenAkunAdmin />} />
           <Route path="laporan" element={<LaporanPimpinan defaultRole="pimpinan_fakultas" />} />
           <Route path="monitoring-iku3" element={<MonitoringIku3 defaultRole="pimpinan_fakultas" />} />
           <Route path="persetujuan" element={<PimpinanFakultasPersetujuan />} />

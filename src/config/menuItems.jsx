@@ -72,8 +72,17 @@ export const pimpinanDitmawaMenu = [
   },
   {
     path: '#',
-    label: 'Manajemen Ormawa',
+    label: 'Manajemen Akun Staff',
     icon: <UserCog className="h-4 w-4" />,
+    children: [
+      { path: '/pimpinan_ditmawa/manajemen-akun-pimpinan', label: 'Akun Pimpinan' },
+      { path: '/pimpinan_ditmawa/manajemen-akun-admin', label: 'Akun Admin Ditmawa' },
+    ],
+  },
+  {
+    path: '#',
+    label: 'Manajemen Ormawa',
+    icon: <Users className="h-4 w-4" />,
     children: [
       { path: '/pimpinan_ditmawa/manajemen-akun-ukm', label: 'Akun UKM Universitas' },
       { path: '/pimpinan_ditmawa/manajemen-akun-ukmf', label: 'Akun UKMF Fakultas' },

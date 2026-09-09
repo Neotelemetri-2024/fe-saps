@@ -21,11 +21,11 @@ import {
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
-  if (['menunggu_validasi', 'pending', 'menunggu_pimpinan'].includes(s)) return 'pending'
+  if (['menunggu_validasi', 'pending', 'menunggu_pimpinan', 'diajukan'].includes(s)) return 'terverifikasi'
   if (['perlu_revisi', 'revisi'].includes(s)) return 'revisi'
   if (['disetujui'].includes(s)) return 'disetujui'
   if (['ditolak'].includes(s)) return 'ditolak'
-  return s || 'pending'
+  return s || 'terverifikasi'
 }
 
 function normalizeDetail(raw) {
@@ -137,7 +137,7 @@ function DetailValidasiKlaim() {
     finally { setSubmitting(false) }
   }
 
-  const canAct = item?.status === 'pending'
+  const canAct = item?.status === 'pending' || item?.status === 'terverifikasi'
 
   if (loading && !item) return <DetailSkeleton />
   if (!item) return <EmptyDetail onBack={backToList} message="Data klaim tidak ditemukan." />

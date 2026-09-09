@@ -19,11 +19,11 @@ const PAGE_SIZE = 10
 
 function mapStatus(status) {
   const s = String(status || '').toLowerCase()
-  if (['menunggu_validasi', 'pending', 'menunggu_pimpinan'].includes(s)) return 'pending'
+  if (['menunggu_validasi', 'pending', 'menunggu_pimpinan', 'diajukan'].includes(s)) return 'terverifikasi'
   if (['perlu_revisi', 'revisi'].includes(s)) return 'revisi'
   if (['disetujui'].includes(s)) return 'disetujui'
   if (['ditolak'].includes(s)) return 'ditolak'
-  return s || 'pending'
+  return s || 'terverifikasi'
 }
 
 function formatTanggal(value) {
@@ -110,7 +110,7 @@ function ValidasiKlaimPoin() {
   const start = (currentPage - 1) * PAGE_SIZE
   const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
-  const isSelectableRow = (row) => row.status === 'pending'
+  const isSelectableRow = (row) => row.status === 'pending' || row.status === 'terverifikasi'
 
   const toggleSelect = (id) => {
     const row = pageItems.find((i) => i.id === id)
