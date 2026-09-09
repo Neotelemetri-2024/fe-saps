@@ -1,4 +1,4 @@
-import { get, post, put } from './apiClient'
+﻿import { get, post, put } from './apiClient'
 
 function normalizeStaff(item, index = 0) {
   return {
@@ -6,6 +6,7 @@ function normalizeStaff(item, index = 0) {
     id: String(item.id ?? item.userId ?? index),
     nama: item.nama || '-',
     nip: item.nip || '-',
+    namaJabatan: item.namaJabatan || item.nama_jabatan || '',
     email: item.email || '-',
     jabatan: item.jabatan || '-',
     fakultasId: item.fakultasId ?? null,
