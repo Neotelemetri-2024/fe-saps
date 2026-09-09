@@ -32,7 +32,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  get: (p) => request(p, { method: 'GET' }),
+  get: (p, params) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return request(p + qs, { method: 'GET' }) },
   post: (p, body) => request(p, { method: 'POST', body: JSON.stringify(body) }),
   put: (p, body) => request(p, { method: 'PUT', body: JSON.stringify(body) }),
   del: (p) => request(p, { method: 'DELETE' }),
@@ -58,3 +58,4 @@ export const api = {
     }
   },
 };
+
