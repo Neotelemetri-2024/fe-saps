@@ -39,6 +39,10 @@ import PimpinanDitmawaValidasiKlaimPoin from './pages/pimpinan_ditmawa/ValidasiK
 import PimpinanDitmawaDetailValidasiKlaim from './pages/pimpinan_ditmawa/DetailValidasiKlaim'
 import PimpinanDitmawaManajemenAkunUKM from './pages/pimpinan_ditmawa/ManajemenAkunUKM'
 import PimpinanDitmawaManajemenAkunUKMF from './pages/pimpinan_ditmawa/ManajemenAkunUKMF'
+
+import PimpinanDitmawaManajemenAkunPimpinan from './pages/pimpinan_ditmawa/ManajemenAkunPimpinan'
+import PimpinanDitmawaManajemenAkunAdmin from './pages/pimpinan_ditmawa/ManajemenAkunAdmin'
+import PimpinanFakultasManajemenAkunAdmin from './pages/pimpinan_fakultas/ManajemenAkunAdminFakultas'
 // import PimpinanDitmawaAuditLog from './pages/pimpinan_ditmawa/AuditLog'
 import PimpinanDitmawaLayout from './layouts/PimpinanDitmawaLayout'
 import PimpinanFakultasDashboard from './pages/pimpinan_fakultas/FakultasDashboard'
@@ -145,6 +149,9 @@ function App() {
           <Route path="verifikasi-pengajuan-internal/:id" element={<PimpinanDitmawaDetailVerifikasiInternal />} />
           <Route path="manajemen-akun-ukm" element={<PimpinanDitmawaManajemenAkunUKM />} />
           <Route path="manajemen-akun-ukmf" element={<PimpinanDitmawaManajemenAkunUKMF />} />
+
+          <Route path="manajemen-akun-pimpinan" element={<PimpinanDitmawaManajemenAkunPimpinan />} />
+          <Route path="manajemen-akun-admin" element={<PimpinanDitmawaManajemenAkunAdmin />} />
           <Route path="manajemen-event" element={<AdminDitmawaManajemenEvent />} />
           <Route path="manajemen-event/:id" element={<DetailEvent role="pimpinan_ditmawa" userRole="Pimpinan Ditmawa" />} />
           <Route path="manajemen-peserta-event" element={<AdminDitmawaManajemenPesertaEvent />} />

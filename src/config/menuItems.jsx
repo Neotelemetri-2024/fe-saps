@@ -84,6 +84,8 @@ export const pimpinanDitmawaMenu = [
 ]
 export const pimpinanFakultasMenu = [
   { path: '/pimpinan_fakultas/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, end: true },
+  { path: '/pimpinan_fakultas/manajemen-akun-admin', label: 'Manajemen Akun Admin', icon: <UserCog className="h-4 w-4" /> },
+
   { path: '/pimpinan_fakultas/laporan', label: 'Laporan & Evaluasi', icon: <FileSpreadsheet className="h-4 w-4" /> },
   { path: '/pimpinan_fakultas/monitoring-iku3', label: 'Monitoring IKU 3 Fakultas', icon: <Building2 className="h-4 w-4" /> },
   {
