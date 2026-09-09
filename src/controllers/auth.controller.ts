@@ -82,6 +82,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (user.peran === "staff") {
       const staff = await prisma.staff.findUnique({
         where: { userId: user.id },
+        select: { jabatan: true },
       });
       if (staff) {
         tokenPayload.jabatan = staff.jabatan;
