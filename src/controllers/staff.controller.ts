@@ -1,233 +1,113 @@
+import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import prisma from '../lib/prisma';
 import { logAudit } from '../lib/auditLog';
 
-// Schema validasi
-const staffSchema = z.object({
-  nama: z.string().min(3, 'Nama minimal 3 karakter'),
-  nip: z.string().optional().nullable(),
-  email: z.string().email('Format email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter').optional(), // Opsional saat edit
-  jabatan: z.enum(['admin_ditmawa', 'pimpinan_ditmawa', 'admin_fakultas', 'pimpinan_fakultas', 'pimpinan_utama']),
-  fakultasId: z.number().int().positive().optional().nullable(),
+const jabatanSchema = z.enum(['admin_ditmawa', 'pimpinan_ditmawa', 'admin_fakultas', 'pimpinan_fakultas', 'pimpinan_utama']);
+const baseSchema = z.object({
+  nama: z.string().trim().min(3, 'Nama minimal 3 karakter'),
+  nip: z.string().trim().max(50, 'NIP maksimal 50 karakter').optional().nullable().transform((value) => value || null),
+  email: z.string().trim().toLowerCase().email('Format email tidak valid'),
+  jabatan: jabatanSchema,
+  fakultasId: z.coerce.number().int().positive().optional().nullable(),
   aktif: z.boolean().default(true),
 });
+const createSchema = baseSchema.extend({ password: z.string().min(8, 'Password minimal 8 karakter') });
+const updateSchema = baseSchema.extend({ password: z.string().min(8, 'Password minimal 8 karakter').optional().or(z.literal('')) });
+const ditmawaTargets = ['pimpinan_utama', 'pimpinan_fakultas', 'admin_ditmawa'];
+
+async function actorStaff(req: Request) {
+  if (req.user?.peran !== 'staff' || !req.user.id) return null;
+  return prisma.staff.findFirst({ where: { userId: BigInt(req.user.id), deletedAt: null } });
+}
+
+async function resolveScope(actor: NonNullable<Awaited<ReturnType<typeof actorStaff>>>, jabatan: string, submitted?: number | null) {
+  if (actor.jabatan === 'pimpinan_ditmawa') {
+    if (!ditmawaTargets.includes(jabatan)) throw Object.assign(new Error('Pimpinan Ditmawa hanya dapat mengelola akun Pimpinan Utama, Pimpinan Fakultas, atau Admin Ditmawa'), { status: 403 });
+    if (jabatan !== 'pimpinan_fakultas') return null;
+    if (!submitted) throw Object.assign(new Error('Fakultas wajib dipilih untuk Pimpinan Fakultas'), { status: 400 });
+    return submitted;
+  }
+  if (actor.jabatan === 'pimpinan_fakultas') {
+    if (jabatan !== 'admin_fakultas') throw Object.assign(new Error('Pimpinan Fakultas hanya dapat mengelola akun Admin Fakultas'), { status: 403 });
+    if (!actor.fakultasId) throw Object.assign(new Error('Akun Anda belum terhubung ke fakultas'), { status: 400 });
+    return actor.fakultasId;
+  }
+  throw Object.assign(new Error('Akses ditolak. Hanya Pimpinan yang dapat mengelola akun'), { status: 403 });
+}
+
+async function validateFaculty(fakultasId: number | null) {
+  if (!fakultasId) return;
+  const fakultas = await prisma.fakultas.findFirst({ where: { id: fakultasId, deletedAt: null } });
+  if (!fakultas) throw Object.assign(new Error('Fakultas tidak ditemukan atau tidak aktif'), { status: 400 });
+}
+
+function handleError(error: any, res: Response) {
+  if (error instanceof z.ZodError) return res.status(400).json({ success: false, message: error.issues.map((issue) => issue.message).join(', '), errors: error.issues });
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    const target = String(error.meta?.target || '');
+    return res.status(409).json({ success: false, message: target.includes('nip') ? 'NIP sudah digunakan' : 'Email sudah digunakan' });
+  }
+  return res.status(error?.status || 500).json({ success: false, message: error?.status ? error.message : 'Terjadi kesalahan server' });
+}
 
 export const createStaff = async (req: Request, res: Response) => {
   try {
-    const userRole = req.user?.peran; // 'staff'
-    const userId = req.user?.id ? BigInt(req.user.id) : null;
-
-    if (!userId || userRole !== 'staff') {
-      return res.status(403).json({ success: false, message: 'Akses ditolak' });
-    }
-
-    const currStaff = await prisma.staff.findUnique({ where: { userId } });
-    if (!currStaff) return res.status(403).json({ success: false, message: 'Data staff tidak ditemukan' });
-
-    const body = staffSchema.parse(req.body);
-
-    // Otorisasi pembuatan akun
-    if (currStaff.jabatan === 'pimpinan_utama' || currStaff.jabatan === 'pimpinan_ditmawa') {
-      // Pimpinan Ditmawa/Utama boleh buat: pimpinan_utama, pimpinan_fakultas, admin_ditmawa
-      if (!['pimpinan_utama', 'pimpinan_fakultas', 'admin_ditmawa'].includes(body.jabatan)) {
-        return res.status(403).json({ success: false, message: 'Pimpinan Ditmawa hanya dapat membuat akun Pimpinan atau Admin Ditmawa' });
-      }
-    } else if (currStaff.jabatan === 'pimpinan_fakultas') {
-      // Pimpinan Fakultas boleh buat: admin_fakultas (hanya untuk fakultasnya sendiri)
-      if (body.jabatan !== 'admin_fakultas') {
-        return res.status(403).json({ success: false, message: 'Pimpinan Fakultas hanya dapat membuat akun Admin Fakultas' });
-      }
-      if (body.fakultasId !== currStaff.fakultasId) {
-        return res.status(403).json({ success: false, message: 'Hanya dapat membuat admin untuk fakultas Anda sendiri' });
-      }
-    } else {
-      return res.status(403).json({ success: false, message: 'Akses ditolak. Hanya Pimpinan yang dapat membuat akun' });
-    }
-
-    // Jika fakultas, pastikan fakultasId ada
-    if (body.jabatan.includes('fakultas') && !body.fakultasId) {
-      return res.status(400).json({ success: false, message: 'Fakultas wajib diisi untuk peran tingkat Fakultas' });
-    }
-
-    // Cek email duplikat
+    const actor = await actorStaff(req);
+    if (!actor) return res.status(403).json({ success: false, message: 'Akses ditolak' });
+    const body = createSchema.parse(req.body);
+    const fakultasId = await resolveScope(actor, body.jabatan, body.fakultasId);
+    await validateFaculty(fakultasId);
     const existing = await prisma.user.findUnique({ where: { email: body.email } });
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'Email sudah digunakan' });
-    }
-
-    const passwordHash = await bcrypt.hash(body.password || 'password123', 10);
-
-    const newUser = await prisma.$transaction(async (tx) => {
-      const u = await tx.user.create({
-        data: {
-          nama: body.nama,
-          email: body.email,
-          passwordHash,
-          peran: 'staff',
-          aktif: body.aktif,
-        }
-      });
-
-      await tx.staff.create({
-        data: {
-          userId: u.id,
-          jabatan: body.jabatan as any,
-          nip: body.nip,
-          fakultasId: body.fakultasId || null,
-        }
-      });
-
-      return u;
+    if (existing) return res.status(409).json({ success: false, message: 'Email sudah digunakan' });
+    const passwordHash = await bcrypt.hash(body.password, 10);
+    const created = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({ data: { nama: body.nama, email: body.email, passwordHash, peran: 'staff', aktif: body.aktif } });
+      const staff = await tx.staff.create({ data: { userId: user.id, jabatan: body.jabatan, nip: body.nip, fakultasId }, include: { fakultas: { select: { nama: true } } } });
+      return { user, staff };
     });
-
-    await logAudit({
-      entitas: 'user',
-      entitasId: newUser.id,
-      aksi: 'CREATE',
-      statusBaru: 'aktif',
-      aktorId: userId,
-    });
-
-    res.status(201).json({ success: true, message: 'Akun berhasil dibuat', data: { id: newUser.id.toString(), nama: newUser.nama, email: newUser.email } });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
-      return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
-    }
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server', error: error.message });
-  }
+    await logAudit({ entitas: 'user', entitasId: created.user.id, aksi: 'CREATE', statusBaru: body.aktif ? 'aktif' : 'nonaktif', aktorId: actor.userId });
+    return res.status(201).json({ success: true, message: 'Akun berhasil dibuat', data: { id: created.user.id.toString(), nama: created.user.nama, email: created.user.email, nip: created.staff.nip, jabatan: created.staff.jabatan, fakultasId: created.staff.fakultasId, fakultasNama: created.staff.fakultas?.nama, aktif: created.user.aktif, createdAt: created.user.createdAt } });
+  } catch (error) { return handleError(error, res); }
 };
 
 export const getStaff = async (req: Request, res: Response) => {
   try {
-    const userRole = req.user?.peran;
-    const userId = req.user?.id ? BigInt(req.user.id) : null;
-
-    if (!userId || userRole !== 'staff') {
-      return res.status(403).json({ success: false, message: 'Akses ditolak' });
-    }
-
-    const currStaff = await prisma.staff.findUnique({ where: { userId } });
-    if (!currStaff) return res.status(403).json({ success: false, message: 'Data staff tidak ditemukan' });
-
-    let whereClause: any = {};
-    if (currStaff.jabatan === 'pimpinan_utama' || currStaff.jabatan === 'pimpinan_ditmawa') {
-      whereClause.jabatan = { in: ['pimpinan_utama', 'pimpinan_fakultas', 'admin_ditmawa'] };
-    } else if (currStaff.jabatan === 'pimpinan_fakultas') {
-      whereClause.jabatan = 'admin_fakultas';
-      whereClause.fakultasId = currStaff.fakultasId;
-    } else {
-      return res.status(403).json({ success: false, message: 'Akses ditolak' });
-    }
-
-    const staffs = await prisma.staff.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: { id: true, nama: true, email: true, aktif: true, createdAt: true }
-        },
-        fakultas: { select: { nama: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    const mapped = staffs.map(s => ({
-      id: s.userId.toString(),
-      nama: s.user.nama,
-      email: s.user.email,
-      jabatan: s.jabatan,
-      nip: s.nip,
-      fakultasId: s.fakultasId,
-      fakultasNama: s.fakultas?.nama,
-      aktif: s.user.aktif,
-      createdAt: s.user.createdAt,
-    }));
-
-    res.json({ success: true, data: mapped });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server', error: error.message });
-  }
+    const actor = await actorStaff(req);
+    if (!actor) return res.status(403).json({ success: false, message: 'Akses ditolak' });
+    const where = actor.jabatan === 'pimpinan_ditmawa'
+      ? { jabatan: { in: ditmawaTargets as any[] }, deletedAt: null, user: { deletedAt: null } }
+      : actor.jabatan === 'pimpinan_fakultas'
+        ? { jabatan: 'admin_fakultas' as const, fakultasId: actor.fakultasId, deletedAt: null, user: { deletedAt: null } }
+        : null;
+    if (!where) return res.status(403).json({ success: false, message: 'Akses ditolak' });
+    const staffs = await prisma.staff.findMany({ where, include: { user: { select: { nama: true, email: true, aktif: true, createdAt: true } }, fakultas: { select: { nama: true } } }, orderBy: { createdAt: 'desc' } });
+    return res.json({ success: true, data: staffs.map((staff) => ({ id: staff.userId.toString(), nama: staff.user.nama, email: staff.user.email, jabatan: staff.jabatan, nip: staff.nip, fakultasId: staff.fakultasId, fakultasNama: staff.fakultas?.nama, aktif: staff.user.aktif, createdAt: staff.user.createdAt })) });
+  } catch (error) { return handleError(error, res); }
 };
 
 export const updateStaff = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const targetUserId = BigInt(id as string);
-    const userId = req.user?.id ? BigInt(req.user.id) : null;
-    const userRole = req.user?.peran;
-
-    if (!userId || userRole !== 'staff') return res.status(403).json({ success: false, message: 'Akses ditolak' });
-
-    const body = staffSchema.parse(req.body);
-
-    const currStaff = await prisma.staff.findUnique({ where: { userId } });
-    if (!currStaff) return res.status(403).json({ success: false, message: 'Data staff tidak ditemukan' });
-
-    const targetStaff = await prisma.staff.findUnique({ where: { userId: targetUserId } });
-    if (!targetStaff) return res.status(404).json({ success: false, message: 'Akun tidak ditemukan' });
-
-    // Otorisasi update (sama seperti create)
-    if (currStaff.jabatan === 'pimpinan_utama' || currStaff.jabatan === 'pimpinan_ditmawa') {
-      if (!['pimpinan_utama', 'pimpinan_fakultas', 'admin_ditmawa'].includes(targetStaff.jabatan)) {
-        return res.status(403).json({ success: false, message: 'Pimpinan Ditmawa hanya dapat mengubah akun Pimpinan atau Admin Ditmawa' });
-      }
-    } else if (currStaff.jabatan === 'pimpinan_fakultas') {
-      if (targetStaff.jabatan !== 'admin_fakultas' || targetStaff.fakultasId !== currStaff.fakultasId) {
-        return res.status(403).json({ success: false, message: 'Pimpinan Fakultas hanya dapat mengubah akun Admin Fakultas di fakultas yang sama' });
-      }
-    } else {
-      return res.status(403).json({ success: false, message: 'Akses ditolak' });
-    }
-
-    const existingEmail = await prisma.user.findFirst({
-      where: { email: body.email, id: { not: targetUserId } }
-    });
-    if (existingEmail) {
-      return res.status(400).json({ success: false, message: 'Email sudah digunakan oleh akun lain' });
-    }
-
-    let passwordHash = undefined;
-    if (body.password) {
-      passwordHash = await bcrypt.hash(body.password, 10);
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: targetUserId },
-        data: {
-          nama: body.nama,
-          email: body.email,
-          aktif: body.aktif,
-          ...(passwordHash && { passwordHash }),
-        }
-      });
-
-      await tx.staff.update({
-        where: { userId: targetUserId },
-        data: {
-          jabatan: body.jabatan as any,
-          nip: body.nip,
-          fakultasId: body.fakultasId || null,
-        }
-      });
-    });
-
-    await logAudit({
-      entitas: 'user',
-      entitasId: targetUserId,
-      aksi: 'UPDATE',
-      aktorId: userId,
-    });
-
-    res.json({ success: true, message: 'Akun berhasil diperbarui' });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
-      return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
-    }
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server', error: error.message });
-  }
+    const actor = await actorStaff(req);
+    if (!actor) return res.status(403).json({ success: false, message: 'Akses ditolak' });
+    const targetUserId = BigInt(req.params.id as string);
+    const target = await prisma.staff.findFirst({ where: { userId: targetUserId, deletedAt: null, user: { deletedAt: null } } });
+    if (!target) return res.status(404).json({ success: false, message: 'Akun tidak ditemukan' });
+    if (actor.jabatan === 'pimpinan_fakultas' && (target.jabatan !== 'admin_fakultas' || target.fakultasId !== actor.fakultasId)) return res.status(403).json({ success: false, message: 'Akun berada di luar fakultas Anda' });
+    if (actor.jabatan === 'pimpinan_ditmawa' && !ditmawaTargets.includes(target.jabatan)) return res.status(403).json({ success: false, message: 'Akun berada di luar kewenangan Anda' });
+    const body = updateSchema.parse(req.body);
+    const fakultasId = await resolveScope(actor, body.jabatan, body.fakultasId);
+    await validateFaculty(fakultasId);
+    const existing = await prisma.user.findFirst({ where: { email: body.email, id: { not: targetUserId } } });
+    if (existing) return res.status(409).json({ success: false, message: 'Email sudah digunakan oleh akun lain' });
+    const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : undefined;
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: targetUserId }, data: { nama: body.nama, email: body.email, aktif: body.aktif, ...(passwordHash ? { passwordHash } : {}) } }),
+      prisma.staff.update({ where: { userId: targetUserId }, data: { jabatan: body.jabatan, nip: body.nip, fakultasId } }),
+    ]);
+    await logAudit({ entitas: 'user', entitasId: targetUserId, aksi: 'UPDATE', aktorId: actor.userId });
+    return res.json({ success: true, message: 'Akun berhasil diperbarui' });
+  } catch (error) { return handleError(error, res); }
 };
