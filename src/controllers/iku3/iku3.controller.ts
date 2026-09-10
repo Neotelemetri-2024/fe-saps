@@ -8,6 +8,7 @@ import {
   getIku3ActivitiesDetail,
   Iku3Filter,
 } from '../../services/iku3/iku3Calculation.service';
+import { generateIku3ExcelReport } from '../../services/iku3/iku3Excel.service';
 
 /**
  * Helper: Ambil role efektif dan enforce isolasi fakultas
@@ -322,3 +323,32 @@ export const updateRuleIku3 = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+// GET /api/iku3/export — Download Laporan IKU 3 Format Excel (.xlsx)
+export const exportIku3Excel = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { tahun, triwulan, fakultasId, prodiId } = req.query;
+    const { enforcedFakultasId } = await resolveRoleAndScope(req);
+
+    const filter: Iku3Filter = {
+      tahun: tahun ? Number(tahun) : undefined,
+      triwulan: triwulan ? Number(triwulan) : undefined,
+      fakultasId: enforcedFakultasId ?? (fakultasId ? Number(fakultasId) : undefined),
+      prodiId: prodiId ? Number(prodiId) : undefined,
+    };
+
+    const buffer = await generateIku3ExcelReport(filter);
+
+    const safeTahun = filter.tahun || new Date().getFullYear();
+    const twLabel = filter.triwulan ? `_TW${filter.triwulan}` : '';
+    const filename = `Laporan_IKU3_${safeTahun}${twLabel}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('[exportIku3Excel]', error);
+    next(error);
+  }
+};
+

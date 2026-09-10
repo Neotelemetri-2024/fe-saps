@@ -10,6 +10,7 @@ import {
   upsertTargetIku3,
   getRulesIku3,
   updateRuleIku3,
+  exportIku3Excel,
 } from '../controllers/iku3/iku3.controller';
 
 const router = Router();
@@ -31,6 +32,7 @@ router.get('/trend', authorizeRole(...VIEW_ROLES), getTrendIku3);
 router.get('/trend/quarterly', authorizeRole(...VIEW_ROLES), getQuarterlyTrendIku3);
 router.get('/faculties', authorizeRole(...VIEW_ROLES), getFacultiesIku3);
 router.get('/activities', authorizeRole(...VIEW_ROLES), getActivitiesIku3);
+router.get('/export', authorizeRole(...VIEW_ROLES), exportIku3Excel);
 
 // 2. Pembacaan Target & Aturan Bobot
 router.get('/targets', authorizeRole(...VIEW_ROLES), getTargetsIku3);
