@@ -198,6 +198,66 @@ export const getDaftarKegiatanUKM = async (req: Request, res: Response, next: Ne
   }
 };
 
+/**
+ * Mengambil daftar peran yang valid untuk suatu kegiatan:
+ * - Hanya peran yang memiliki bobot di MatriksPoin untuk (kategoriId, skalaId) pada kurikulum-kurikulum yang aktif.
+ * - Mengabaikan peran yang berawalan '(tidak digunakan)' (soft-deleted).
+ * - Mengurutkan berdasarkan urutan peran.
+ */
+async function getValidPeranForKegiatan(kegiatan: {
+  kategoriId: number;
+  skalaId?: number | null;
+  kurikulumId?: number | null;
+}) {
+  // Ambil semua kurikulum yang sedang aktif
+  const activeKurikulums = await prisma.kurikulum.findMany({
+    where: { status: 'aktif' },
+    select: { id: true }
+  });
+  const kurikulumIds = activeKurikulums.map((k) => k.id);
+  if (kegiatan.kurikulumId && !kurikulumIds.includes(kegiatan.kurikulumId)) {
+    kurikulumIds.push(kegiatan.kurikulumId);
+  }
+
+  // Jika kegiatan memiliki skalaId, cari peranId yang terdaftar di MatriksPoin untuk kategori & skala ini
+  if (kegiatan.skalaId) {
+    const validMatriks = await prisma.matriksPoin.findMany({
+      where: {
+        kategoriId: kegiatan.kategoriId,
+        skalaId: kegiatan.skalaId,
+        ...(kurikulumIds.length > 0 ? { kurikulumId: { in: kurikulumIds } } : {}),
+        deletedAt: null,
+        peran: {
+          NOT: { nama: { startsWith: '(tidak digunakan)' } }
+        }
+      },
+      select: { peranId: true },
+      distinct: ['peranId']
+    });
+
+    const validPeranIds = validMatriks.map((m) => m.peranId);
+
+    if (validPeranIds.length > 0) {
+      return prisma.mpPeran.findMany({
+        where: {
+          id: { in: validPeranIds },
+          NOT: { nama: { startsWith: '(tidak digunakan)' } }
+        },
+        orderBy: { urutan: 'asc' }
+      });
+    }
+  }
+
+  // Fallback: jika matriks belum ada, ambil peran aktif di kategori tersebut yang tidak berstatus '(tidak digunakan)'
+  return prisma.mpPeran.findMany({
+    where: {
+      kategoriId: kegiatan.kategoriId,
+      NOT: { nama: { startsWith: '(tidak digunakan)' } }
+    },
+    orderBy: { urutan: 'asc' }
+  });
+}
+
 // ==================== MANAJEMEN PESERTA KEGIATAN ====================
 
 // GET /api/ukm/kegiatan/:kegiatanId/peserta
@@ -304,11 +364,8 @@ export const getManajemenPeserta = async (req: Request, res: Response, next: Nex
       take: limitNum
     });
 
-    // Daftar peran yang tersedia untuk kategori kegiatan ini
-    const peranTersedia = await prisma.mpPeran.findMany({
-      where: { kategoriId: kegiatan.kategoriId },
-      orderBy: { urutan: 'asc' }
-    });
+    // Daftar peran yang tersedia untuk kategori & skala kegiatan ini sesuai matriks kurikulum aktif
+    const peranTersedia = await getValidPeranForKegiatan(kegiatan);
 
     const tabelPeserta = peserta.map((p, i) => ({
       no: skip + i + 1,
@@ -414,11 +471,8 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // Ambil daftar peran untuk kategori kegiatan ini
-    const peranList = await prisma.mpPeran.findMany({
-      where: kegiatan.kategoriId ? { kategoriId: kegiatan.kategoriId } : {},
-      orderBy: { urutan: 'asc' }
-    });
+    // Ambil daftar peran yang valid untuk kategori & skala kegiatan ini sesuai matriks kurikulum aktif
+    const peranList = await getValidPeranForKegiatan(kegiatan);
 
     const findPeranId = (peranInput: any): number | null => {
       if (peranInput === undefined || peranInput === null) return null;
@@ -633,41 +687,35 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
 
     const kegiatanId = parseInt((req.params.kegiatanId || req.params.id) as string);
 
-    // Untuk route admin/pimpinan (peserta.routes.ts), tidak perlu cek operator
     let namaKegiatan = 'Kegiatan';
-    let kategoriId: number | null = null;
+    let kegiatanTarget: any = null;
     const isAdmin = checkIsAdminOrSuper(req);
 
     if (isAdmin) {
-      const kegiatan = await prisma.kegiatan.findUnique({
+      kegiatanTarget = await prisma.kegiatan.findUnique({
         where: { id: kegiatanId },
-        select: { nama: true, kategoriId: true }
+        select: { nama: true, kategoriId: true, skalaId: true, kurikulumId: true }
       });
-      if (!kegiatan) {
+      if (!kegiatanTarget) {
         return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
       }
-      namaKegiatan = kegiatan.nama;
-      kategoriId = kegiatan.kategoriId;
+      namaKegiatan = kegiatanTarget.nama;
     } else {
       const operator = await getOrganisasiOperator(BigInt(userId));
       if (!operator) {
         return res.status(403).json({ success: false, message: 'Anda bukan operator organisasi/UKM manapun.' });
       }
-      const kegiatan = await prisma.kegiatan.findFirst({
+      kegiatanTarget = await prisma.kegiatan.findFirst({
         where: { id: kegiatanId, organisasiId: operator.organisasiId },
-        select: { nama: true, kategoriId: true }
+        select: { nama: true, kategoriId: true, skalaId: true, kurikulumId: true }
       });
-      if (!kegiatan) {
+      if (!kegiatanTarget) {
         return res.status(404).json({ success: false, message: 'Kegiatan tidak ditemukan.' });
       }
-      namaKegiatan = kegiatan.nama;
-      kategoriId = kegiatan.kategoriId;
+      namaKegiatan = kegiatanTarget.nama;
     }
 
-    const peranList = await prisma.mpPeran.findMany({
-      where: kategoriId ? { kategoriId } : {},
-      orderBy: { urutan: 'asc' }
-    });
+    const peranList = await getValidPeranForKegiatan(kegiatanTarget);
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'SAPS UNAND';
