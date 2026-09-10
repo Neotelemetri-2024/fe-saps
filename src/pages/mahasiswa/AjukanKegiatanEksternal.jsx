@@ -66,10 +66,24 @@ function AjukanKegiatanEksternal() {
   const [kegiatanTerdaftarList, setKegiatanTerdaftarList] = useState([])
   const [loadingTerdaftar, setLoadingTerdaftar] = useState(false)
   const [selectedKegiatanId, setSelectedKegiatanId] = useState('')
+  const [modalSearch, setModalSearch] = useState('')
+
+  const modalFilteredKegiatan = useMemo(() => {
+    const q = modalSearch.trim().toLowerCase()
+    if (!q) return kegiatanTerdaftarList
+    return kegiatanTerdaftarList.filter((k) => {
+      const nama = (k.nama || '').toLowerCase()
+      const pen = (k.penyelenggara || '').toLowerCase()
+      const skala = (k.skalaNama || '').toLowerCase()
+      const thn = String(k.tahun || '')
+      return nama.includes(q) || pen.includes(q) || skala.includes(q) || thn.includes(q)
+    })
+  }, [kegiatanTerdaftarList, modalSearch])
 
   const handleOpenPilihModal = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setSelectedKegiatanId('')
+    setModalSearch('')
     setShowPilihModal(true)
     setLoadingTerdaftar(true)
     getKegiatanEksternalTerdaftar()
@@ -200,53 +214,138 @@ function AjukanKegiatanEksternal() {
         isOpen={showPilihModal}
         onClose={() => setShowPilihModal(false)}
         title="Pilih Kegiatan Eksternal"
-        size="md"
+        size="xl"
       >
         <div className="space-y-4">
-          <p className="text-sm text-base-content/70">
-            Pilih kegiatan eksternal yang sudah terdaftar di sistem, atau pilih opsi <strong>Kegiatan Belum Terdaftar</strong> jika kegiatan yang Anda ikuti belum terdaftar.
+          <p className="text-xs sm:text-sm text-base-content/70">
+            Pilih kegiatan yang telah terdaftar di sistem atau daftarkan kegiatan baru jika kegiatan yang Anda ikuti belum terdaftar.
           </p>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-base-content/80 mb-1.5">
-              Pilih Kegiatan <span className="text-error">*</span>
-            </label>
+          {/* Kotak Pencarian */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+            <input
+              type="text"
+              value={modalSearch}
+              onChange={(e) => setModalSearch(e.target.value)}
+              placeholder="Cari nama kegiatan, skala, atau penyelenggara..."
+              className="input input-sm sm:input-md w-full pl-10 text-xs sm:text-sm"
+            />
+          </div>
+
+          {/* Daftar Pilihan Kegiatan */}
+          <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
+            {/* Opsi Khusus: Belum Terdaftar */}
+            <div
+              onClick={() => setSelectedKegiatanId('BELUM_TERDAFTAR')}
+              className={`cursor-pointer rounded-xl border p-3 transition-all ${
+                selectedKegiatanId === 'BELUM_TERDAFTAR'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                  : 'border-base-300 bg-base-100 hover:border-base-400 hover:bg-base-200/50'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                    selectedKegiatanId === 'BELUM_TERDAFTAR' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/70'
+                  }`}>
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-base-content">
+                      Kegiatan Saya Belum Terdaftar
+                    </h4>
+                    <p className="text-xs text-base-content/60">
+                      Daftarkan kegiatan baru untuk diverifikasi oleh Admin Ditmawa
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="pilihKegiatanRadio"
+                  checked={selectedKegiatanId === 'BELUM_TERDAFTAR'}
+                  onChange={() => setSelectedKegiatanId('BELUM_TERDAFTAR')}
+                  className="radio radio-primary radio-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 py-1">
+              <div className="h-px flex-1 bg-base-200" />
+              <span className="text-[11px] font-semibold tracking-wider text-base-content/40 uppercase">
+                Kegiatan Terdaftar ({kegiatanTerdaftarList.length})
+              </span>
+              <div className="h-px flex-1 bg-base-200" />
+            </div>
+
             {loadingTerdaftar ? (
-              <div className="flex items-center gap-2 py-3 text-sm text-base-content/60">
-                <span className="loading loading-spinner loading-sm text-primary"></span>
+              <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-base-content/60">
+                <span className="loading loading-spinner loading-md text-primary mb-2"></span>
                 Memuat daftar kegiatan terdaftar...
               </div>
+            ) : modalFilteredKegiatan.length > 0 ? (
+              modalFilteredKegiatan.map((keg) => {
+                const isSelected = String(selectedKegiatanId) === String(keg.id)
+                return (
+                  <div
+                    key={keg.id}
+                    onClick={() => setSelectedKegiatanId(keg.id)}
+                    className={`cursor-pointer rounded-xl border p-3 transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                        : 'border-base-200 bg-base-100 hover:border-base-300 hover:bg-base-200/40'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="badge badge-sm badge-neutral font-medium">
+                            {keg.tahun}
+                          </span>
+                          <span className="badge badge-sm badge-outline font-medium">
+                            {keg.skalaNama}
+                          </span>
+                          {keg.kategoriNama && (
+                            <span className="badge badge-sm badge-ghost text-base-content/70">
+                              {keg.kategoriNama}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-bold text-base-content leading-snug">
+                          {keg.nama}
+                        </h4>
+                        <p className="text-xs text-base-content/60 flex items-center gap-1">
+                          <span className="font-medium text-base-content/80">Penyelenggara:</span>{' '}
+                          {keg.penyelenggara || '-'}
+                        </p>
+                      </div>
+                      <input
+                        type="radio"
+                        name="pilihKegiatanRadio"
+                        checked={isSelected}
+                        onChange={() => setSelectedKegiatanId(keg.id)}
+                        className="radio radio-primary radio-sm mt-1"
+                      />
+                    </div>
+                  </div>
+                )
+              })
             ) : (
-              <select
-                value={selectedKegiatanId}
-                onChange={(e) => setSelectedKegiatanId(e.target.value)}
-                className="select select-bordered w-full text-sm font-medium"
-              >
-                <option value="">-- Pilih Kegiatan --</option>
-                {kegiatanTerdaftarList.length > 0 && (
-                  <optgroup label="Kegiatan yang Sudah Terdaftar">
-                    {kegiatanTerdaftarList.map((keg) => (
-                      <option key={keg.id} value={keg.id}>
-                        {keg.label || keg.nama}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                <optgroup label="Pilihan Lainnya">
-                  <option value="BELUM_TERDAFTAR" className="font-semibold text-primary">
-                    ➕ Kegiatan Belum Terdaftar (Daftarkan Baru)
-                  </option>
-                </optgroup>
-              </select>
+              <div className="rounded-xl border border-dashed border-base-300 py-6 text-center text-xs sm:text-sm text-base-content/50">
+                {modalSearch
+                  ? `Tidak ada kegiatan yang cocok dengan "${modalSearch}". Silakan pilih "Kegiatan Saya Belum Terdaftar" di atas.`
+                  : 'Belum ada kegiatan eksternal yang terdaftar.'}
+              </div>
             )}
           </div>
 
+          {/* Kotak Informasi Dinamis */}
           {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
             <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-950 shadow-xs">
               <Info className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
               <div className="leading-relaxed">
-                <span className="font-bold text-emerald-900">Informasi: </span>
-                Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
+                <span className="font-bold text-emerald-900">Informasi Kegiatan Terdaftar: </span>
+                Kegiatan ini sudah diverifikasi di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
               </div>
             </div>
           )}
@@ -254,12 +353,13 @@ function AjukanKegiatanEksternal() {
             <div className="flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs text-sky-950 shadow-xs">
               <Info className="h-4 w-4 shrink-0 text-sky-600 mt-0.5" />
               <div className="leading-relaxed">
-                <span className="font-bold text-sky-900">Informasi: </span>
+                <span className="font-bold text-sky-900">Informasi Kegiatan Baru: </span>
                 Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
               </div>
             </div>
           )}
 
+          {/* Action Buttons */}
           <div className="mt-5 flex items-center justify-end gap-2 border-t border-base-200 pt-4">
             <button
               type="button"
@@ -270,9 +370,9 @@ function AjukanKegiatanEksternal() {
             </button>
             <button
               type="button"
-              disabled={!selectedKegiatanId || loadingTerdaftar}
+              disabled={!selectedKegiatanId}
               onClick={handleLanjutPilihKegiatan}
-              className="btn btn-primary btn-sm px-5"
+              className="btn btn-primary btn-sm px-6"
             >
               Selanjutnya
             </button>
