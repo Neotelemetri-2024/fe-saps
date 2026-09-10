@@ -14,6 +14,7 @@ import ActionMenu from '../../components/ui/ActionMenu'
 import { getPengajuan, hapusDraftKegiatanEksternal, subscribeDataUpdate, getKegiatanEksternalTerdaftar } from '../../services/pengajuanService'
 import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
+import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatTanggal(value) {
   if (!value) return '-'
