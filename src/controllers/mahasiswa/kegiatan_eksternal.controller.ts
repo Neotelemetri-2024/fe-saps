@@ -331,3 +331,60 @@ export const getRiwayatPengajuan = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
+
+
+// 7. Mengambil Daftar Kegiatan Eksternal yang Sudah Terdaftar & Disetujui
+export const getKegiatanEksternalTerdaftar = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { search } = req.query;
+    const where: any = {
+      asal: 'eksternal',
+      status: { in: ['disetujui', 'terpublikasi'] },
+      deletedAt: null,
+    };
+
+    if (search) {
+      where.OR = [
+        { nama: { contains: String(search) } },
+        { penyelenggaraExt: { contains: String(search) } },
+      ];
+    }
+
+    const data = await prisma.kegiatan.findMany({
+      where,
+      include: {
+        kategori: { select: { id: true, nama: true } },
+        skala: { select: { id: true, nama: true } },
+      },
+      orderBy: { tanggalMulai: 'desc' },
+    });
+
+    const result = data.map((k) => {
+      const year = k.tanggalMulai
+        ? new Date(k.tanggalMulai).getFullYear()
+        : (k.createdAt ? new Date(k.createdAt).getFullYear() : '-');
+      const skalaNama = k.skala?.nama || '-';
+      const penyelenggara = k.penyelenggaraExt || '-';
+      return {
+        id: k.id,
+        nama: k.nama,
+        label: `[${year}] ${k.nama} · ${skalaNama} (${penyelenggara})`,
+        tahun: year,
+        kategoriId: k.kategoriId,
+        kategoriNama: k.kategori?.nama || null,
+        skalaId: k.skalaId,
+        skalaNama: k.skala?.nama || null,
+        penyelenggara: k.penyelenggaraExt || null,
+        tanggalMulai: k.tanggalMulai,
+        tanggalSelesai: k.tanggalSelesai,
+        deskripsi: k.deskripsi || null,
+        linkWebsite: k.linkPenyelenggara || null,
+        emailPenyelenggara: k.emailPenyelenggara || null,
+      };
+    });
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error: any) {
+    next(error);
+  }
+};

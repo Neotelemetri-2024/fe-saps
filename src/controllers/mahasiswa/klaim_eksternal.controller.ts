@@ -22,7 +22,7 @@ export const getKegiatanTersedia = async (req: Request, res: Response, next: Nex
         mahasiswaId: BigInt(userId),
         kegiatan: {
           asal: 'eksternal',
-          dibuatOleh: BigInt(userId),
+          // dibuatOleh: BigInt(userId), // Diperbolehkan bagi mhsw yg ikut kegiatan eksternal terdaftar
           status: { in: ['terpublikasi', 'disetujui'] }, // Sudah disetujui Admin
         },
         izinPA: {

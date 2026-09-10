@@ -10,6 +10,7 @@ import {
   editDraftKegiatanEksternal,
   hapusDraftKegiatanEksternal,
   ajukanDraftKegiatanEksternal,
+  getKegiatanEksternalTerdaftar,
 } from '../controllers/mahasiswa/kegiatan_eksternal.controller';
 import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } from '../controllers/mahasiswa/klaim_eksternal.controller';
 import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal, getKurikulumMahasiswa } from '../controllers/mahasiswa/dashboard.controller';
@@ -62,6 +63,7 @@ router.get('/saran-pa', getCatatanPA);
 
 
 // Pengajuan Kegiatan Eksternal
+router.get('/kegiatan-eksternal/terdaftar', getKegiatanEksternalTerdaftar);
 router.get('/kegiatan-eksternal', getRiwayatPengajuan);
 router.post('/kegiatan-eksternal', ajukanKegiatanEksternal);
 router.post('/kegiatan-eksternal/draft', simpanDraftKegiatanEksternal);

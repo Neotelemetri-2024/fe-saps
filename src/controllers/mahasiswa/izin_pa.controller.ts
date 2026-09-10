@@ -16,7 +16,8 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { partisipasiId, kegiatanId, peranId } = req.body;
+    const { partisipasiId, kegiatanId, peranId: rawPeranId } = req.body;
+    let peranId = rawPeranId;
 
     if (!partisipasiId && !kegiatanId) {
       return res.status(400).json({ success: false, message: 'Harap sertakan ID partisipasi atau ID kegiatan' });
@@ -66,7 +67,20 @@ export const ajukanIzinPA = async (req: Request, res: Response, next: NextFuncti
         });
       }
       if (!peranId && !targetPartisipasi?.peranVerifId) {
-        return res.status(400).json({ success: false, message: 'Harap pilih peran' });
+        // Fallback otomatis peran default 'Peserta' jika tidak dikirimkan
+        const defaultPeran = await prisma.mpPeran.findFirst({
+          where: {
+            nama: { contains: 'Peserta' },
+            deletedAt: null,
+            NOT: { nama: { startsWith: '(tidak digunakan)' } },
+          },
+          orderBy: { id: 'asc' },
+        });
+        if (defaultPeran) {
+          peranId = defaultPeran.id;
+        } else {
+          return res.status(400).json({ success: false, message: 'Harap pilih peran' });
+        }
       }
     } else {
       if (!targetPartisipasi) {
