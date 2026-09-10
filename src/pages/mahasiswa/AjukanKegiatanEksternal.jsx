@@ -66,20 +66,22 @@ function AjukanKegiatanEksternal() {
   const [loadingTerdaftar, setLoadingTerdaftar] = useState(false)
   const [selectedKegiatanId, setSelectedKegiatanId] = useState('')
 
-  const handleOpenPilihModal = async () => {
+  const handleOpenPilihModal = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     setSelectedKegiatanId('')
     setShowPilihModal(true)
     setLoadingTerdaftar(true)
-    try {
-      const list = await getKegiatanEksternalTerdaftar()
-      setKegiatanTerdaftarList(Array.isArray(list) ? list : [])
-    } catch (err) {
-      console.error(err)
-      toast.error('Gagal memuat daftar kegiatan terdaftar')
-      setKegiatanTerdaftarList([])
-    } finally {
-      setLoadingTerdaftar(false)
-    }
+    getKegiatanEksternalTerdaftar()
+      .then((list) => {
+        setKegiatanTerdaftarList(Array.isArray(list) ? list : [])
+      })
+      .catch((err) => {
+        console.error('Error fetching kegiatan terdaftar:', err)
+        setKegiatanTerdaftarList([])
+      })
+      .finally(() => {
+        setLoadingTerdaftar(false)
+      })
   }
 
   const handleLanjutPilihKegiatan = () => {
@@ -193,61 +195,63 @@ function AjukanKegiatanEksternal() {
       />
 
       {/* Modal Dialog: Pilih Kegiatan Eksternal (Gambar 1) */}
-      <Modal isOpen={showPilihModal} onClose={() => setShowPilihModal(false)} size="md">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-base-content">Pilih Kegiatan Eksternal</h3>
-          <p className="mt-1 text-sm text-base-content/60">
+      <Modal
+        isOpen={showPilihModal}
+        onClose={() => setShowPilihModal(false)}
+        title="Pilih Kegiatan Eksternal"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-base-content/70">
             Pilih kegiatan eksternal yang sudah terdaftar di sistem, atau pilih opsi <strong>Kegiatan Belum Terdaftar</strong> jika kegiatan yang Anda ikuti belum terdaftar.
           </p>
 
-          <div className="mt-5 space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-base-content mb-1.5">
-                PILIH KEGIATAN <span className="text-error">*</span>
-              </label>
-              {loadingTerdaftar ? (
-                <div className="flex items-center gap-2 py-3 text-sm text-base-content/60">
-                  <span className="loading loading-spinner loading-sm text-primary"></span>
-                  Memuat daftar kegiatan terdaftar...
-                </div>
-              ) : (
-                <select
-                  value={selectedKegiatanId}
-                  onChange={(e) => setSelectedKegiatanId(e.target.value)}
-                  className="select select-bordered w-full text-sm font-medium"
-                >
-                  <option value="">-- Pilih Kegiatan --</option>
-                  {kegiatanTerdaftarList.length > 0 && (
-                    <optgroup label="Kegiatan yang Sudah Terdaftar">
-                      {kegiatanTerdaftarList.map((keg) => (
-                        <option key={keg.id} value={keg.id}>
-                          {keg.label || keg.nama}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  <optgroup label="Pilihan Lainnya">
-                    <option value="BELUM_TERDAFTAR" className="font-semibold text-primary">
-                      ➕ KEGIATAN SAYA BELUM TERDAFTAR (Daftarkan Baru)
-                    </option>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-base-content/80 mb-1.5">
+              Pilih Kegiatan <span className="text-error">*</span>
+            </label>
+            {loadingTerdaftar ? (
+              <div className="flex items-center gap-2 py-3 text-sm text-base-content/60">
+                <span className="loading loading-spinner loading-sm text-primary"></span>
+                Memuat daftar kegiatan terdaftar...
+              </div>
+            ) : (
+              <select
+                value={selectedKegiatanId}
+                onChange={(e) => setSelectedKegiatanId(e.target.value)}
+                className="select select-bordered w-full text-sm font-medium"
+              >
+                <option value="">-- Pilih Kegiatan --</option>
+                {kegiatanTerdaftarList.length > 0 && (
+                  <optgroup label="Kegiatan yang Sudah Terdaftar">
+                    {kegiatanTerdaftarList.map((keg) => (
+                      <option key={keg.id} value={keg.id}>
+                        {keg.label || keg.nama}
+                      </option>
+                    ))}
                   </optgroup>
-                </select>
-              )}
-            </div>
-
-            {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
-              <div className="rounded-lg bg-base-200/70 p-3 text-xs text-base-content/80 border border-base-300">
-                <span className="font-semibold text-base-content">Informasi:</span> Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
-              </div>
-            )}
-            {selectedKegiatanId === 'BELUM_TERDAFTAR' && (
-              <div className="rounded-lg bg-info/10 p-3 text-xs text-info-content border border-info/20">
-                <span className="font-semibold">Informasi:</span> Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
-              </div>
+                )}
+                <optgroup label="Pilihan Lainnya">
+                  <option value="BELUM_TERDAFTAR" className="font-semibold text-primary">
+                    ➕ KEGIATAN SAYA BELUM TERDAFTAR (Daftarkan Baru)
+                  </option>
+                </optgroup>
+              </select>
             )}
           </div>
 
-          <div className="mt-6 flex items-center justify-end gap-2 border-t border-base-200 pt-4">
+          {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
+            <div className="rounded-lg bg-base-200/70 p-3 text-xs text-base-content/80 border border-base-300">
+              <span className="font-semibold text-base-content">Informasi:</span> Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
+            </div>
+          )}
+          {selectedKegiatanId === 'BELUM_TERDAFTAR' && (
+            <div className="rounded-lg bg-info/10 p-3 text-xs text-info-content border border-info/20">
+              <span className="font-semibold">Informasi:</span> Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
+            </div>
+          )}
+
+          <div className="mt-5 flex items-center justify-end gap-2 border-t border-base-200 pt-4">
             <button
               type="button"
               onClick={() => setShowPilihModal(false)}
@@ -274,6 +278,7 @@ function AjukanKegiatanEksternal() {
             <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit. Kegiatan yang sudah <strong>disetujui</strong> admin dipindah ke halaman Persetujuan Dosen.</>} />
           </div>
           <button
+            type="button"
             onClick={handleOpenPilihModal}
             className="btn btn-primary btn-sm"
           >

@@ -28,7 +28,7 @@ function Modal({ isOpen, onClose, title, description, children, size = 'lg' }) {
   return (
     <dialog
       ref={dialogRef}
-      className="modal modal-bottom sm:modal-middle bg-black/40 backdrop-blur-xs transition-all duration-200"
+      className={`modal modal-bottom sm:modal-middle bg-black/40 backdrop-blur-xs transition-all duration-200 ${isOpen ? 'modal-open' : ''}`}
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault()
