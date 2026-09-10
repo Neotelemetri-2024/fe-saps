@@ -87,6 +87,8 @@ export async function login(email, password) {
     organisasiId: userData.organisasiId ?? meData.organisasiOperator?.organisasi?.id ?? null,
     namaOrganisasi: userData.namaOrganisasi ?? meData.organisasiOperator?.organisasi?.nama ?? null,
     tipeOrganisasi: meData.organisasiOperator?.organisasi?.tipe ?? meData.tipeOrganisasi ?? meData.tipe ?? meData.organisasi?.tipe ?? null,
+    kurikulumId: meData.mahasiswa?.kurikulum?.id ?? null,
+    kurikulumNama: meData.mahasiswa?.kurikulum?.nama ?? null,
     role,
     userRole: userData.jabatan || userData.peran || role,
     token,
@@ -131,6 +133,30 @@ export function getCurrentUser() {
 export function isAuthenticated() {
   const u = getCurrentUser()
   return u !== null && !!u.role
+}
+
+/** GET /api/mahasiswa/kurikulum — ambil kurikulum mahasiswa yang sedang login */
+export async function getKurikulumMahasiswa() {
+  try {
+    const res = await get('/api/mahasiswa/kurikulum')
+    const data = res?.data ?? res
+    if (data) {
+      const kurikulumId = data.id ?? null
+      const kurikulumNama = data.nama ?? null
+      // Sinkronkan ke localStorage
+      try {
+        const raw = localStorage.getItem(USER_STORAGE_KEY)
+        if (raw) {
+          const current = JSON.parse(raw)
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...current, kurikulumId, kurikulumNama }))
+        }
+      } catch { /* ignore */ }
+      return { id: kurikulumId, nama: kurikulumNama }
+    }
+    return null
+  } catch {
+    return null
+  }
 }
 
 /** PUT /api/auth/profil — perbarui profil (nama, email, nomorTelepon, alamat, prodiId?) */

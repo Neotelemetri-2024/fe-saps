@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, ClipboardList } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
 import { getKegiatanById, verifikasiBulk } from '../../services/kegiatanService'
 import { getKurikulumAktif } from '../../services/kurikulumService'
 import PemetaanCapaianKurikulumSection from '../../components/PemetaanCapaianKurikulumSection'
+import {
+  DetailBackButton,
+  DetailHeader,
+  SectionCard,
+  InfoRow,
+} from '../../components/ui/DetailComponents'
 import { batalBtnClass } from '../../components/ui/buttonStyles'
 
 function formatTanggal(tanggal) {
@@ -14,7 +19,7 @@ function formatTanggal(tanggal) {
   try {
     const d = new Date(tanggal)
     if (Number.isNaN(d.getTime())) return '-'
-    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
   } catch {
     return '-'
   }
@@ -23,6 +28,9 @@ function formatTanggal(tanggal) {
 function normalizeKegiatan(k) {
   const pembuat = k.pembuat || {}
   const mhs = pembuat.mahasiswa || {}
+  const mhsKur = k.mahasiswaKurikulum || null
+  const kurikulumNama = mhsKur?.nama || mhs.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || '-'
+  const kurikulumId = mhsKur?.id || mhs.kurikulum?.id || k.kurikulum?.id || null
   const existingCapaianIds = [
     ...new Set(
       (k.kegiatanCapaian || [])
@@ -43,10 +51,15 @@ function normalizeKegiatan(k) {
     mahasiswa: pembuat.nama || '-',
     nim: mhs.nim || '-',
     prodi: mhs.prodi?.nama || '-',
+    fakultas: mhs.prodi?.fakultas?.nama || '-',
     kategori: k.kategori?.nama || '-',
     skala: k.skala?.nama || '-',
+    penyelenggara: k.penyelenggaraExt || '-',
     deskripsi: k.deskripsi || '',
     tanggal: formatTanggal(k.tanggalMulai),
+    kurikulumNama,
+    kurikulumId,
+    mahasiswaKurikulum: mhsKur,
     existing: (k.kegiatanCapaian || []).map((kc) => ({
       subCapaianId: kc.subCapaianId,
       alokasiPersen: Number(kc.alokasiPersen ?? 0),
@@ -56,11 +69,28 @@ function normalizeKegiatan(k) {
   }
 }
 
+function getKurikulumForKegiatan(kegiatan, kurList = []) {
+  if (!kegiatan) return []
+  if (kegiatan.mahasiswaKurikulum && Array.isArray(kegiatan.mahasiswaKurikulum.capaian) && kegiatan.mahasiswaKurikulum.capaian.length > 0) {
+    return [kegiatan.mahasiswaKurikulum]
+  }
+  if (kegiatan.kurikulumId) {
+    const match = kurList.find((k) => k.id === kegiatan.kurikulumId)
+    if (match) return [match]
+  }
+  if (kegiatan.kurikulumNama && kegiatan.kurikulumNama !== '-') {
+    const match = kurList.find((k) => k.nama?.toLowerCase() === kegiatan.kurikulumNama.toLowerCase())
+    if (match) return [match]
+  }
+  return kurList.length > 0 ? [kurList[0]] : []
+}
+
 function buildForm(kegiatan, kurList = []) {
+  const targetKurList = getKurikulumForKegiatan(kegiatan, kurList)
   const kurIds =
     kegiatan.existingKurIds && kegiatan.existingKurIds.length > 0
       ? kegiatan.existingKurIds
-      : kurList.map((k) => k.id)
+      : targetKurList.map((k) => k.id)
   return {
     kurikulumIds: kurIds,
     capaianIds: kegiatan.existingCapaianIds || [],
@@ -132,38 +162,29 @@ function PemetaanCapaianMassal() {
   const active = kegiatans[activeIndex] || null
 
   const isLengkap = (kegiatan) => {
-    if (!kegiatan || kurikulumList.length === 0) return false
-    for (const kur of kurikulumList) {
-      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-      const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
-      if (kurAlokasi.length === 0) return false
-      const sum = kurAlokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-      if (Math.abs(sum - 100) > 0.01) return false
-    }
-    return true
+    if (!kegiatan) return false
+    const targetKurList = getKurikulumForKegiatan(kegiatan, kurikulumList)
+    if (targetKurList.length === 0) return false
+    const kur = targetKurList[0]
+    const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+    const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
+    if (kurAlokasi.length === 0) return false
+    const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+    return Math.abs(sum - 100) < 0.01
   }
 
   const getBobotStatus = (kegiatan) => {
-    if (!kegiatan || kurikulumList.length === 0) return 'kosong'
-    let hasKurang = false
-    let hasLebih = false
-    let hasKosong = false
-    for (const kur of kurikulumList) {
-      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-      const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
-      if (kurAlokasi.length === 0) {
-        hasKosong = true
-        continue
-      }
-      const sum = kurAlokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-      if (Math.abs(sum - 100) < 0.01) continue
-      if (sum < 100) hasKurang = true
-      else hasLebih = true
-    }
-    if (!hasKurang && !hasLebih && !hasKosong) return 'pas'
-    if (hasKurang) return 'kurang'
-    if (hasLebih) return 'lebih'
-    return 'kosong'
+    if (!kegiatan) return 'kosong'
+    const targetKurList = getKurikulumForKegiatan(kegiatan, kurikulumList)
+    if (targetKurList.length === 0) return 'kosong'
+    const kur = targetKurList[0]
+    const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+    const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
+    if (kurAlokasi.length === 0) return 'kosong'
+    const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+    if (Math.abs(sum - 100) < 0.01) return 'pas'
+    if (sum < 100) return 'kurang'
+    return 'lebih'
   }
 
   const allLengkap = kegiatans.length > 0 && kegiatans.every(isLengkap)
@@ -175,28 +196,25 @@ function PemetaanCapaianMassal() {
     )
   }
 
+  const handleBagiRata = () => {
+    if (!active || !active.alokasi || active.alokasi.length === 0) return
+    const count = active.alokasi.length
+    const base = Math.floor(100 / count)
+    const remainder = 100 - base * count
+
+    updateActive((k) => ({
+      ...k,
+      alokasi: (k.alokasi || []).map((a, idx) => ({
+        ...a,
+        alokasiPersen: idx === 0 ? base + remainder : base,
+      })),
+    }))
+  }
+
   const handleSubmit = async () => {
-    if (kurikulumList.length === 0) {
-      toast.error('Tidak ada kurikulum aktif.')
-      return
-    }
     const belumLengkap = kegiatans.filter((k) => !isLengkap(k))
     if (belumLengkap.length > 0) {
-      const detail = belumLengkap.map((k) => {
-        for (const kur of kurikulumList) {
-          const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-          const kurAlokasi = (k.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
-          const sum = kurAlokasi.reduce((s, a) => s + (a.alokasiPersen || 0), 0)
-          if (kurAlokasi.length === 0) return `"${k.nama}" belum ada alokasi sub-capaian untuk ${kur.nama}`
-          if (Math.abs(sum - 100) > 0.01) {
-            return sum < 100
-              ? `"${k.nama}" bobot ${kur.nama} kurang ${(100 - sum).toFixed(0)}%`
-              : `"${k.nama}" bobot ${kur.nama} lebih ${(sum - 100).toFixed(0)}%`
-          }
-        }
-        return `"${k.nama}" belum lengkap`
-      })
-      toast.error(`Total bobot harus tepat 100% untuk semua kurikulum aktif. ${detail.join('; ')}`)
+      toast.error(`Ada ${belumLengkap.length} kegiatan yang belum lengkap. Total bobot tiap kegiatan harus tepat 100%.`)
       return
     }
     setSubmitting(true)
@@ -230,147 +248,164 @@ function PemetaanCapaianMassal() {
     return (
       <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
         <div className="space-y-5">
-          <button
-            type="button"
-            onClick={backToList}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-base-content hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" /> Kembali
-          </button>
-          <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center shadow-sm">
+          <DetailBackButton onClick={backToList} />
+          <div className="card border border-base-300 bg-base-100 p-8 text-center">
             <p className="text-base font-semibold text-base-content">Tidak Ada Kegiatan yang Dipilih</p>
             <p className="mt-1 text-sm text-base-content/60">
               Pilih satu atau beberapa kegiatan di halaman Verifikasi Pengajuan Eksternal terlebih dahulu untuk melakukan pemetaan capaian secara massal.
             </p>
-            <button
-              type="button"
-              onClick={backToList}
-              className="mt-4 inline-btn btn-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              Menuju ke Verifikasi Pengajuan Eksternal
-            </button>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={backToList}
+                className="btn btn-primary btn-sm"
+              >
+                Menuju ke Verifikasi Pengajuan Eksternal
+              </button>
+            </div>
           </div>
         </div>
       </DashboardLayout>
     )
   }
 
+  const activeSum = (active?.alokasi || []).reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+
   return (
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
       <div className="space-y-5">
-        <button type="button" onClick={backToList}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-base-content hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Kembali
-        </button>
+        <DetailBackButton onClick={backToList} children="Kembali ke Verifikasi Pengajuan" />
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-base-content sm:text-2xl">Pemetaan Capaian Massal</h2>
-            <p className="mt-1 text-sm text-base-content/60">
-              Isi pemetaan capaian kurikulum untuk {kegiatans.length} kegiatan sebelum diteruskan ke Pimpinan.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 shadow-sm">
-            <ClipboardList className="h-4 w-4 text-brand-dark" />
-            <span className="text-sm text-base-content/60">
-              <span className="font-bold text-brand-dark">{jumlahLengkap}</span> / {kegiatans.length} lengkap
-            </span>
-          </div>
-        </div>
+        <DetailHeader
+          title="Pemetaan Capaian Massal"
+          description={`Isi pemetaan capaian kurikulum untuk ${kegiatans.length} kegiatan eksternal mahasiswa sebelum diteruskan ke Pimpinan.`}
+        />
 
         {loadingKur ? (
-          <div className="rounded-xl border border-base-300 bg-base-100 p-6 text-sm text-base-content/50 shadow-sm">Memuat kurikulum…</div>
+          <div className="card border border-base-300 bg-base-100 p-6 text-sm text-base-content/50">
+            Memuat kurikulum…
+          </div>
         ) : kurikulumList.length === 0 ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">
+          <div className="alert alert-error text-sm">
             Kurikulum aktif tidak ditemukan. Hubungi Super Admin untuk mengaktifkan kurikulum terlebih dahulu.
           </div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
-            {/* Daftar kegiatan */}
-            <div className="card bg-base-100 overflow-hidden self-start">
-              <div className="flex items-center justify-between border-b border-base-300 bg-base-200 px-4 py-3">
-                <h3 className="text-sm font-bold text-base-content">Daftar Kegiatan</h3>
+          <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+            {/* Sidebar Daftar Kegiatan */}
+            <div className="card border border-base-300 bg-base-100 overflow-hidden self-start">
+              <div className="flex items-center justify-between border-b border-base-300 bg-base-200/50 px-4 py-3">
+                <h3 className="text-sm font-semibold text-base-content">
+                  Daftar Kegiatan ({kegiatans.length})
+                </h3>
                 <span className="text-xs font-medium text-base-content/60">
                   {jumlahLengkap}/{kegiatans.length} Lengkap
                 </span>
               </div>
+
               <div className="divide-y divide-base-300">
                 {kegiatans.map((k, idx) => {
                   const lengkap = isLengkap(k)
                   const isActive = idx === activeIndex
+                  const kSum = (k.alokasi || []).reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+
                   return (
                     <button
                       key={k.id}
                       type="button"
                       onClick={() => setActiveIndex(idx)}
-                      className={`group flex w-full flex-col gap-1.5 p-4 text-left transition border-l-4 ${
+                      className={`flex w-full flex-col gap-1 px-4 py-3 text-left transition cursor-pointer ${
                         isActive
-                          ? 'border-brand-dark bg-base-200'
-                          : 'border-transparent hover:bg-base-200'
+                          ? 'border-l-2 border-primary bg-primary/5'
+                          : 'border-l-2 border-transparent hover:bg-base-200/50'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className={`text-sm font-semibold line-clamp-1 ${
-                          isActive ? 'text-brand-dark font-bold' : 'text-base-content'
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`truncate text-sm font-medium ${
+                          isActive ? 'text-primary' : 'text-base-content'
                         }`}>
                           {idx + 1}. {k.nama}
                         </span>
-                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-normal ${
-                          lengkap
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-amber-200 bg-amber-50 text-amber-700'
-                        }`}>
-                          {lengkap ? 'Lengkap' : 'Belum Lengkap'}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-base-content/60">
-                        <span className="truncate max-w-[140px]">{k.mahasiswa}</span>
-                        <span>•</span>
-                        <span className="truncate max-w-[120px]">{k.prodi}</span>
-                        {k.skala && k.skala !== '-' && (
-                          <>
-                            <span>•</span>
-                            <span className="text-base-content/50">{k.skala}</span>
-                          </>
+                        {lengkap ? (
+                          <span className="shrink-0 text-xs font-medium text-success">✓ Lengkap</span>
+                        ) : (
+                          <span className="shrink-0 text-xs text-base-content/40">
+                            {kSum > 0 ? `${kSum}%` : 'Belum'}
+                          </span>
                         )}
                       </div>
+
+                      <p className="truncate text-xs text-base-content/60">
+                        {k.mahasiswa} · {k.nim}
+                      </p>
+
+                      <p className="truncate text-xs text-base-content/40">
+                        {k.prodi}{k.skala && k.skala !== '-' ? ` · ${k.skala}` : ''}
+                      </p>
+
+                      {k.kurikulumNama && k.kurikulumNama !== '-' && (
+                        <p className="truncate text-xs text-base-content/35 italic">{k.kurikulumNama}</p>
+                      )}
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            {/* Form pemetaan */}
-            <div className="card bg-base-100 overflow-hidden">
-              <div className="border-b border-base-300 bg-base-200 px-5 py-4 sm:px-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div>
-                    <h3 className="text-base font-bold text-base-content">
-                      {active?.nama}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-base-content/60">
-                      Diajukan oleh: <span className="font-medium text-base-content">{active?.mahasiswa}</span> {active?.nim && active?.nim !== '-' ? `(${active?.nim})` : ''} · {active?.prodi}
-                      {active?.kategori && active?.kategori !== '-' ? ` · ${active?.kategori}` : ''}
-                      {active?.skala && active?.skala !== '-' ? ` · Skala ${active?.skala}` : ''}
-                    </p>
-                  </div>
-                  <div className="shrink-0">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-normal ${
-                      isLengkap(active)
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-amber-200 bg-amber-50 text-amber-700'
-                    }`}>
-                      {isLengkap(active) ? 'Bobot 100% (Lengkap)' : 'Belum Lengkap'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* Panel Kanan: Detail Kegiatan & Form Pemetaan */}
+            {active && (
+              <div className="space-y-5 min-w-0">
+                {/* 1. Informasi Mahasiswa & Kegiatan */}
+                <SectionCard title={`Informasi Kegiatan #${activeIndex + 1} — ${active.nama}`}>
+                  <InfoRow label="Mahasiswa" value={`${active.mahasiswa} (${active.nim})`} />
+                  <InfoRow label="Program Studi" value={`${active.prodi} — ${active.fakultas}`} />
+                  <InfoRow label="Kurikulum Mahasiswa" value={active.kurikulumNama} />
+                  <InfoRow label="Nama Kegiatan" value={active.nama} />
+                  <InfoRow label="Kategori & Skala" value={`${active.kategori} · Skala ${active.skala}`} />
+                  <InfoRow label="Pelaksanaan" value={`${active.tanggal} · Penyelenggara: ${active.penyelenggara}`} />
+                  {active.deskripsi ? <InfoRow label="Deskripsi" value={active.deskripsi} multiline /> : null}
+                </SectionCard>
 
-              <div className="p-5 sm:p-6 space-y-5">
-                {active && (
+                {/* 2. Pemetaan Capaian Kurikulum */}
+                <div className="card border border-base-300 bg-base-100 p-5 space-y-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-base-300 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-base-content">
+                          Pemetaan Capaian Kurikulum
+                        </h3>
+                        <span className="badge badge-outline badge-primary text-xs">
+                          {active.kurikulumNama}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-base-content/60">
+                        Pilih capaian dan tentukan alokasi bobot sub-capaian untuk mahasiswa pengaju ({active.mahasiswa}).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {(active.alokasi || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleBagiRata}
+                          className="btn btn-ghost btn-xs text-primary hover:bg-base-200"
+                        >
+                          Bagi Rata (100%)
+                        </button>
+                      )}
+                      {isLengkap(active) ? (
+                        <span className="badge badge-success badge-sm">
+                          Bobot 100% (Lengkap)
+                        </span>
+                      ) : (
+                        <span className="badge badge-warning badge-sm badge-outline">
+                          {activeSum > 0 ? `Bobot ${activeSum}% (Belum 100%)` : 'Belum Ada Bobot'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   <PemetaanCapaianKurikulumSection
-                    kurikulumList={kurikulumList}
+                    kurikulumList={getKurikulumForKegiatan(active, kurikulumList)}
                     selectedKurikulumIds={active.kurikulumIds || []}
                     setSelectedKurikulumIds={(ids) =>
                       updateActive((k) => ({
@@ -392,40 +427,59 @@ function PemetaanCapaianMassal() {
                         alokasi: typeof aloks === 'function' ? aloks(k.alokasi || []) : aloks,
                       }))
                     }
+                    compact={true}
                   />
-                )}
+
+                  {/* Navigasi Antar Kegiatan */}
+                  <div className="flex items-center justify-between border-t border-base-300 pt-3 text-xs">
+                    <button
+                      type="button"
+                      disabled={activeIndex === 0}
+                      onClick={() => setActiveIndex((prev) => Math.max(0, prev - 1))}
+                      className="btn btn-ghost btn-xs text-base-content disabled:opacity-40"
+                    >
+                      ← Kegiatan Sebelumnya
+                    </button>
+                    <span className="text-base-content/50">
+                      Kegiatan {activeIndex + 1} dari {kegiatans.length}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={activeIndex === kegiatans.length - 1}
+                      onClick={() => setActiveIndex((prev) => Math.min(kegiatans.length - 1, prev + 1))}
+                      className="btn btn-ghost btn-xs text-base-content disabled:opacity-40"
+                    >
+                      Kegiatan Selanjutnya →
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
-        {/* Footer aksi */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between card bg-base-100 p-5">
-          <p className="text-sm text-base-content/60">
+        {/* Footer Aksi */}
+        <div className="card border border-base-300 bg-base-100 p-4 sm:p-5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-base-content/70">
             {allLengkap
-              ? 'Semua kegiatan sudah lengkap. Siap diteruskan ke Pimpinan.'
-              : (() => {
-                  const kurang = kegiatans.filter((k) => getBobotStatus(k) === 'kurang').length
-                  const lebih = kegiatans.filter((k) => getBobotStatus(k) === 'lebih').length
-                  if (kurang > 0 && lebih > 0) return `${kurang} kegiatan bobot kurang & ${lebih} kegiatan bobot lebih. Total bobot tiap kurikulum harus tepat 100%.`
-                  if (kurang > 0) return `${kurang} kegiatan bobot kurang dari 100%.`
-                  if (lebih > 0) return `${lebih} kegiatan bobot lebih dari 100%.`
-                  return `${kegiatans.length - jumlahLengkap} kegiatan belum lengkap (total bobot tiap kurikulum harus 100%).`
-                })()}
+              ? 'Semua kegiatan telah lengkap dipetakan (100%). Siap diteruskan ke Pimpinan Ditmawa.'
+              : `${kegiatans.length - jumlahLengkap} dari ${kegiatans.length} kegiatan belum lengkap (total bobot tiap kegiatan harus tepat 100%).`}
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 justify-end">
             <button
               type="button"
               onClick={backToList}
-             className={batalBtnClass}>
+              className={batalBtnClass}
+            >
               Batal
             </button>
             <button
               type="button"
               disabled={submitting || !allLengkap}
               onClick={handleSubmit}
-              className="inline-btn btn-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >{submitting ? 'Memproses…' : `Teruskan ke Pimpinan (${kegiatans.length})`}
+              className="btn btn-primary btn-sm"
+            >
+              {submitting ? 'Memproses…' : `Teruskan ke Pimpinan (${kegiatans.length})`}
             </button>
           </div>
         </div>

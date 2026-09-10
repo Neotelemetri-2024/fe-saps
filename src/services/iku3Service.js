@@ -10,6 +10,11 @@ export async function getIku3Trend(params = {}) {
   return Array.isArray(res?.data) ? res.data : []
 }
 
+export async function getIku3QuarterlyTrend(params = {}) {
+  const res = await get('/api/iku3/trend/quarterly', params)
+  return Array.isArray(res?.data) ? res.data : []
+}
+
 export async function getIku3Faculties(params = {}) {
   const res = await get('/api/iku3/faculties', params)
   return Array.isArray(res?.data) ? res.data : []

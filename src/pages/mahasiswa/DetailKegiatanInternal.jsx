@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { getCurrentUser } from '../../services/authService'
+import { getCurrentUser, getKurikulumMahasiswa } from '../../services/authService'
 import { getKegiatanById, getRiwayatKegiatanInternal } from '../../services/kegiatanService'
 import {
   InfoRow,
@@ -16,19 +16,34 @@ import {
 } from '../../components/ui/DetailComponents'
 import { DetailSkeleton } from '../../components/dashboard/Skeleton'
 
-function normalizeCapaianData(kegiatan) {
+function normalizeCapaianData(kegiatan, userKurikulumId, userKurikulumNama) {
   if (!kegiatan || !Array.isArray(kegiatan.kegiatanCapaian)) {
-    return { kurikulum: '-', capaian: [], subCapaian: [], kegiatanCapaian: [] }
+    return { kurikulum: userKurikulumNama || '-', capaian: [], subCapaian: [], kegiatanCapaian: [] }
   }
 
-  const list = kegiatan.kegiatanCapaian
+  const allList = kegiatan.kegiatanCapaian
+
+  // Filter ke kurikulum mahasiswa jika tersedia
+  let list = allList
+  if (userKurikulumId || userKurikulumNama) {
+    const filtered = allList.filter((kc) => {
+      const kurId = kc.subCapaian?.capaian?.kurikulum?.id ?? kc.capaian?.kurikulum?.id ?? kc.kurikulum?.id
+      const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama ?? kc.capaian?.kurikulum?.nama ?? kc.kurikulum?.nama
+      if (userKurikulumId && kurId != null) return Number(kurId) === Number(userKurikulumId)
+      if (userKurikulumNama && kurNama) return kurNama.trim().toLowerCase() === userKurikulumNama.trim().toLowerCase()
+      return false
+    })
+    // Tampilkan HANYA kurikulum mahasiswa yang dipakai (jangan fallback ke kurikulum lain)
+    list = filtered
+  }
+
   const capaianMap = new Map()
   const subCapaianList = []
   const kurikulumSet = new Set()
 
   list.forEach((kc) => {
-    const cap = kc.subCapaian?.capaian
-    const kurNama = cap?.kurikulum?.nama || kegiatan.kurikulum?.nama || '-'
+    const cap = kc.subCapaian?.capaian || kc.capaian
+    const kurNama = cap?.kurikulum?.nama || kc.kurikulum?.nama || userKurikulumNama || '-'
     const capNama = cap?.nama || cap?.label
     if (kurNama && kurNama !== '-') kurikulumSet.add(kurNama)
     if (capNama) {
@@ -37,9 +52,9 @@ function normalizeCapaianData(kegiatan) {
         capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
       }
     }
-    if (kc.subCapaian?.nama) {
+    if (kc.subCapaian?.nama || kc.nama) {
       subCapaianList.push({
-        label: kc.subCapaian.nama,
+        label: kc.subCapaian?.nama || kc.nama,
         capaian: capNama || '',
         kurikulum: kurNama,
         persen: kc.alokasiPersen != null ? `${kc.alokasiPersen}%` : '',
@@ -47,8 +62,14 @@ function normalizeCapaianData(kegiatan) {
     }
   })
 
+  const kurNameResolved =
+    userKurikulumNama ||
+    Array.from(kurikulumSet).join(', ') ||
+    kegiatan.kurikulum?.nama ||
+    '-'
+
   return {
-    kurikulum: Array.from(kurikulumSet).join(', ') || kegiatan.kurikulum?.nama || '-',
+    kurikulum: kurNameResolved,
     capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
     kegiatanCapaian: list,
@@ -64,6 +85,10 @@ function DetailKegiatanInternal() {
   const [partisipasi, setPartisipasi] = useState(location.state?.row || null)
   const [kegiatan, setKegiatan] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [userKurikulum, setUserKurikulum] = useState({
+    id: location.state?.row?.kurikulumId ?? user?.kurikulumId ?? null,
+    nama: location.state?.row?.kurikulumNama ?? user?.kurikulumNama ?? null,
+  })
 
   useEffect(() => {
     let isMounted = true
@@ -71,19 +96,51 @@ function DetailKegiatanInternal() {
 
     const loadData = async () => {
       try {
-        let currentPartisipasi = partisipasi
-        // Jika tidak ada data dari state router (misal direct link / refresh)
-        if (!currentPartisipasi) {
-          const res = await getRiwayatKegiatanInternal()
-          const list = Array.isArray(res.riwayat) ? res.riwayat : []
-          currentPartisipasi = list.find((r) => String(r.id) === String(id) || String(r.kegiatanId) === String(id))
-          if (isMounted && currentPartisipasi) setPartisipasi(currentPartisipasi)
+        let resolvedKurId = location.state?.row?.kurikulumId ?? user?.kurikulumId ?? null
+        let resolvedKurNama = location.state?.row?.kurikulumNama ?? user?.kurikulumNama ?? null
+
+        // 1. Coba ambil kurikulum mahasiswa jika belum ada
+        if (!resolvedKurId && !resolvedKurNama) {
+          try {
+            const kurData = await getKurikulumMahasiswa()
+            if (kurData?.id || kurData?.nama) {
+              resolvedKurId = kurData.id ?? null
+              resolvedKurNama = kurData.nama ?? null
+            }
+          } catch {
+            // ignore
+          }
         }
 
+        // 2. Selalu fetch riwayat fresh untuk mendapatkan kurikulumId mahasiswa & status partisipasi
+        const res = await getRiwayatKegiatanInternal()
+        const list = Array.isArray(res.riwayat) ? res.riwayat : []
+        const freshRow = list.find((r) => String(r.id) === String(id) || String(r.kegiatanId) === String(id))
+
+        let currentPartisipasi = freshRow || partisipasi
+        if (isMounted && freshRow) setPartisipasi(freshRow)
+
+        if (freshRow?.kurikulumId || freshRow?.kurikulumNama) {
+          resolvedKurId = freshRow.kurikulumId ?? resolvedKurId
+          resolvedKurNama = freshRow.kurikulumNama ?? resolvedKurNama
+        }
+
+        // 3. Ambil data kegiatan
         const targetKegiatanId = currentPartisipasi?.kegiatanId || id
         if (targetKegiatanId) {
           const kgData = await getKegiatanById(targetKegiatanId)
           if (isMounted) setKegiatan(kgData)
+          if (kgData?.userKurikulum?.id || kgData?.userKurikulum?.nama) {
+            resolvedKurId = kgData.userKurikulum.id ?? resolvedKurId
+            resolvedKurNama = kgData.userKurikulum.nama ?? resolvedKurNama
+          }
+        }
+
+        if (isMounted && (resolvedKurId || resolvedKurNama)) {
+          setUserKurikulum({
+            id: resolvedKurId,
+            nama: resolvedKurNama,
+          })
         }
       } catch (err) {
         if (isMounted) {
@@ -136,7 +193,7 @@ function DetailKegiatanInternal() {
   const statusIzinPA = partisipasi?.statusIzinPA || (partisipasi?.statusPaLabel ?? 'Belum Diajukan')
   const poin = partisipasi?.poin != null && partisipasi?.poin !== '' ? partisipasi.poin : '-'
 
-  const capaianData = normalizeCapaianData(kegiatan)
+  const capaianData = normalizeCapaianData(kegiatan, userKurikulum.id, userKurikulum.nama)
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
