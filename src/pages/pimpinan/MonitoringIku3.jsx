@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, Fragment } from 'react'
-import { Search, Settings2, Scale, Info } from 'lucide-react'
+import { Search, Settings2, Scale, Info, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import StatCard from '../../components/dashboard/StatCard'
@@ -22,6 +22,7 @@ import {
   saveIku3Target,
   getIku3Rules,
   updateIku3Rule,
+  downloadExcelIku3,
 } from '../../services/iku3Service'
 import { batalBtnClass } from '../../components/ui/buttonStyles'
 
@@ -722,6 +723,21 @@ function MonitoringIku3({ defaultRole, embedded = false }) {
 
   const [showTargetModal, setShowTargetModal] = useState(false)
   const [showRulesModal, setShowRulesModal] = useState(false)
+  const [exportingExcel, setExportingExcel] = useState(false)
+
+  const handleDownloadExcel = async () => {
+    try {
+      setExportingExcel(true)
+      toast.info('Menyiapkan laporan Excel IKU 3...')
+      await downloadExcelIku3(filterParams)
+      toast.success('Laporan Excel IKU 3 berhasil diunduh')
+    } catch (err) {
+      console.error('Failed to export IKU3 Excel:', err)
+      toast.error(err?.response?.data?.message || 'Gagal mengunduh laporan Excel IKU 3')
+    } finally {
+      setExportingExcel(false)
+    }
+  }
 
   const filterParams = useMemo(() => ({
     tahun: Number(tahun) || currentYear(),
@@ -882,6 +898,15 @@ function MonitoringIku3({ defaultRole, embedded = false }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="btn btn-outline btn-sm shadow-xs flex items-center gap-1.5"
+            onClick={handleDownloadExcel}
+            disabled={exportingExcel}
+          >
+            <Download className="w-4 h-4" />
+            {exportingExcel ? 'Mengunduh...' : 'Unduh Laporan Excel'}
+          </button>
           {canSetTarget ? (
             <button
               type="button"

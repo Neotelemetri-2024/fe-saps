@@ -1,4 +1,4 @@
-import { get, post, put } from './apiClient'
+import { get, post, put, getAuthToken, getApiBase } from './apiClient'
 
 export async function getIku3Dashboard(params = {}) {
   const res = await get('/api/iku3/dashboard', params)
@@ -47,4 +47,55 @@ export async function getIku3Rules(params = {}) {
 export async function updateIku3Rule(id, body) {
   const res = await put(`/api/iku3/rules/${id}`, body)
   return res?.data || res || {}
+}
+
+export async function downloadExcelIku3(filter = {}) {
+  const token = getAuthToken()
+  const apiBase = getApiBase()
+  const qs = new URLSearchParams()
+  if (filter.tahun) qs.set('tahun', filter.tahun)
+  if (filter.triwulan) qs.set('triwulan', filter.triwulan)
+  if (filter.fakultasId) qs.set('fakultasId', filter.fakultasId)
+  if (filter.prodiId) qs.set('prodiId', filter.prodiId)
+  const queryString = qs.toString() ? '?' + qs.toString() : ''
+
+  const url = `${apiBase}/api/iku3/export${queryString}`
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+    },
+  })
+
+  if (!res.ok) {
+    let errorMsg = 'Gagal mengunduh file Excel IKU 3'
+    try {
+      const errJson = await res.json()
+      if (errJson?.message) errorMsg = errJson.message
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMsg)
+  }
+
+  const blob = await res.blob()
+  const contentDisposition = res.headers.get('Content-Disposition')
+  let filename = 'Laporan_IKU3_' + (filter.tahun || 2026) + '.xlsx'
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="?([^";]+)"?/)
+    if (match && match[1]) {
+      filename = match[1]
+    }
+  }
+
+  const blobUrl = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(blobUrl)
 }
