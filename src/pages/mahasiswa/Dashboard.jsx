@@ -180,9 +180,9 @@ function MahasiswaDashboard() {
             </div>
           </div>
 
-          <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-dark to-brand-light p-4 text-center shadow-sm sm:p-6">
+          <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-dark to-brand-light px-3 py-5 text-center shadow-sm sm:px-4 sm:py-6">
             <h3 className="text-sm font-bold text-white">Radar Karakter Andalasian</h3>
-            <div className="mx-auto mt-2 max-w-[260px]">
+            <div className="mx-auto mt-2 w-full max-w-[290px]">
               {loadingDash ? (
                 <ChartSkeleton variant="radar" height={200} />
               ) : (

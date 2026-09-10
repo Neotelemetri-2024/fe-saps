@@ -295,6 +295,7 @@ export function RadarChartCJ({
   color = BRAND_LIGHT,
   darkBg = false,
   height = 260,
+  size,
 }) {
   const skin = useChartSkin()
   const rawMax = values.length ? Math.max(...values) : 0
@@ -305,7 +306,12 @@ export function RadarChartCJ({
   const fill = darkBg ? 'rgba(255,255,255,0.22)' : color
   const labelColor = darkBg ? 'rgba(255,255,255,0.85)' : skin.foreColor
   const categories = labels.map((label) => wrapRadarLabel(label))
-  const radarSize = Math.max(64, Math.round(height * 0.34))
+  const radarSize =
+    size ??
+    (height <= 220
+      ? Math.max(46, Math.round(height * 0.25))
+      : Math.max(64, Math.round(height * 0.32)))
+  const labelFontSize = height <= 220 ? '10px' : '11px'
 
   const options = {
     chart: baseChart(skin, {
@@ -325,7 +331,14 @@ export function RadarChartCJ({
     },
     xaxis: {
       categories,
-      labels: { style: { colors: categories.map(() => labelColor), fontSize: '11px' } },
+      labels: {
+        style: {
+          colors: categories.map(() => labelColor),
+          fontSize: labelFontSize,
+          fontFamily: skin.fontFamily,
+          fontWeight: 600,
+        },
+      },
     },
     yaxis: {
       min: 0,
@@ -352,7 +365,10 @@ export function RadarChartCJ({
   }
 
   return (
-    <div className="overflow-visible" style={{ height: height + 28, position: 'relative', width: '100%', minWidth: 0 }}>
+    <div
+      className="overflow-visible [&_.apexcharts-canvas]:!overflow-visible [&_.apexcharts-svg]:!overflow-visible"
+      style={{ height: height + 24, position: 'relative', width: '100%', minWidth: 0 }}
+    >
       <ApexChart
         options={options}
         series={[{ name: 'Poin', data: displayValues }]}
