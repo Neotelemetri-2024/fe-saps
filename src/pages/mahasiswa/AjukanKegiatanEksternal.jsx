@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Pencil, Plus, Trash2, RefreshCw, Eye } from 'lucide-react'
+import { Search, Pencil, Plus, Trash2, RefreshCw, Eye, Info } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import { toast } from 'sonner'
@@ -234,7 +234,7 @@ function AjukanKegiatanEksternal() {
                 )}
                 <optgroup label="Pilihan Lainnya">
                   <option value="BELUM_TERDAFTAR" className="font-semibold text-primary">
-                    ➕ KEGIATAN SAYA BELUM TERDAFTAR (Daftarkan Baru)
+                    ➕ Kegiatan Belum Terdaftar (Daftarkan Baru)
                   </option>
                 </optgroup>
               </select>
@@ -242,13 +242,21 @@ function AjukanKegiatanEksternal() {
           </div>
 
           {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
-            <div className="rounded-lg bg-base-200/70 p-3 text-xs text-base-content/80 border border-base-300">
-              <span className="font-semibold text-base-content">Informasi:</span> Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
+            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-950 shadow-xs">
+              <Info className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div className="leading-relaxed">
+                <span className="font-bold text-emerald-900">Informasi: </span>
+                Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
+              </div>
             </div>
           )}
           {selectedKegiatanId === 'BELUM_TERDAFTAR' && (
-            <div className="rounded-lg bg-info/10 p-3 text-xs text-info-content border border-info/20">
-              <span className="font-semibold">Informasi:</span> Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
+            <div className="flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs text-sky-950 shadow-xs">
+              <Info className="h-4 w-4 shrink-0 text-sky-600 mt-0.5" />
+              <div className="leading-relaxed">
+                <span className="font-bold text-sky-900">Informasi: </span>
+                Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
+              </div>
             </div>
           )}
 

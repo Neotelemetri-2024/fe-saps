@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Info } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { DetailBackButton } from '../../components/ui/DetailComponents'
@@ -267,6 +268,15 @@ function AjukanKegiatanForm() {
         </div>
 
         <div className="card bg-base-100 p-5">
+          {isModeTerdaftar && (
+            <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs sm:text-sm text-sky-950 shadow-xs">
+              <Info className="h-4 w-4 shrink-0 text-sky-600 mt-0.5" />
+              <div className="leading-relaxed">
+                <span className="font-bold text-sky-900">Kegiatan Terdaftar: </span>
+                Data kegiatan ini telah diverifikasi di sistem. Seluruh field di bawah dikunci secara otomatis. Klik tombol <strong>Minta persetujuan dosen</strong> di bagian bawah untuk mengajukan izin ke Dosen PA Anda.
+              </div>
+            </div>
+          )}
           <h3 className="mb-4 text-sm font-semibold text-base-content">Detail kegiatan</h3>
 
           <div className="space-y-6">
