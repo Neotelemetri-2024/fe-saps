@@ -116,7 +116,9 @@ function DashboardChrome({ role, userName, userRole, children }) {
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === '/' && !searchOpen) {
+      const isCmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'
+      const isSlash = e.key === '/'
+      if ((isCmdK || isSlash) && !searchOpen) {
         const tag = document.activeElement?.tagName
         if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !document.activeElement?.isContentEditable) {
           e.preventDefault()
@@ -248,9 +250,11 @@ function DashboardChrome({ role, userName, userRole, children }) {
 
       <NavSearchModal
         isOpen={searchOpen}
+        open={searchOpen}
         onClose={() => setSearchOpen(false)}
         menuItems={menuItems}
         extraItems={searchExtras}
+        extras={searchExtras}
       />
     </div>
   )
