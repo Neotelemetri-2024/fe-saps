@@ -243,16 +243,34 @@ export async function calculateIku3Dashboard(filter: Iku3Filter): Promise<Iku3Da
     let jenisRumpun: 'prestasi' | 'pembelajaran' = 'prestasi';
     let bobot = 0;
 
+    const kegiatanNama = normalize(item.kegiatan?.nama);
+
     const isLomba = kategoriNama.includes('kompetisi') || kategoriNama.includes('lomba') || 
                     normalize(peranNama).includes('juara') || normalize(peranNama).includes('finalis');
+
+    // Deteksi eksplisit Pembelajaran Luar Kampus (MBKM / Magang / Exchange / Riset luar kampus)
+    const PEMBELAJARAN_KEYWORDS = [
+      'magang', 'internship', 'msib', 'mbkm', 'kampus mengajar',
+      'pertukaran pelajar', 'pertukaran mahasiswa', 'exchange', 'iisma',
+      'studi independen', 'riset luar', 'proyek kemanusiaan',
+      'kkn tematik', 'kkn internasional',
+      'pembelajaran luar kampus', 'belajar luar kampus',
+    ];
+    const isPembelajaranLuarKampus = PEMBELAJARAN_KEYWORDS.some(kw =>
+      kategoriNama.includes(kw) || kegiatanNama.includes(kw)
+    );
 
     if (isLomba) {
       jenisRumpun = 'prestasi';
       bobot = resolveBobotPrestasi(skalaNama, peranNama, dynamicRules);
-    } else {
+    } else if (isPembelajaranLuarKampus) {
       jenisRumpun = 'pembelajaran';
-      // Asumsi MBKM / Magang Luar Kampus terverifikasi (estimasi SKS ekuivalensi)
+      // Estimasi SKS ekuivalensi MBKM (default 20 SKS = bobot 1.00)
       bobot = resolveBobotPembelajaran(20, dynamicRules);
+    } else {
+      // Kegiatan non-lomba & non-MBKM (organisasi, seminar, workshop, dll.)
+      // BUKAN bagian dari IKU 3 → skip
+      continue;
     }
 
     // Jika bobot > 0 (memenuhi syarat IKU 3)
@@ -522,15 +540,31 @@ export async function getIku3ActivitiesDetail(
     const isLomba = kategoriNama.includes('kompetisi') || kategoriNama.includes('lomba') || 
                     normalize(peranNama).includes('juara') || normalize(peranNama).includes('finalis');
 
+    const kegiatanNamaAct = normalize(p.kegiatan?.nama);
+    const PEMBELAJARAN_KEYWORDS = [
+      'magang', 'internship', 'msib', 'mbkm', 'kampus mengajar',
+      'pertukaran pelajar', 'pertukaran mahasiswa', 'exchange', 'iisma',
+      'studi independen', 'riset luar', 'proyek kemanusiaan',
+      'kkn tematik', 'kkn internasional',
+      'pembelajaran luar kampus', 'belajar luar kampus',
+    ];
+    const isPembelajaranLuarKampus = PEMBELAJARAN_KEYWORDS.some(kw =>
+      kategoriNama.includes(kw) || kegiatanNamaAct.includes(kw)
+    );
+
     let jenisRumpun: 'prestasi' | 'pembelajaran' = 'prestasi';
     let bobot = 0;
 
     if (isLomba) {
       jenisRumpun = 'prestasi';
       bobot = resolveBobotPrestasi(skalaNama, peranNama, dynamicRules);
-    } else {
+    } else if (isPembelajaranLuarKampus) {
       jenisRumpun = 'pembelajaran';
       bobot = resolveBobotPembelajaran(20, dynamicRules);
+    } else {
+      // Kegiatan non-lomba & non-MBKM → bukan IKU 3, tampilkan bobot 0
+      jenisRumpun = 'pembelajaran';
+      bobot = 0;
     }
 
     return {
