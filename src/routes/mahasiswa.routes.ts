@@ -12,7 +12,7 @@ import {
   ajukanDraftKegiatanEksternal,
 } from '../controllers/mahasiswa/kegiatan_eksternal.controller';
 import { getKegiatanTersedia, ajukanKlaimEksternal, getRiwayatKlaimEksternal } from '../controllers/mahasiswa/klaim_eksternal.controller';
-import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal } from '../controllers/mahasiswa/dashboard.controller';
+import { getDashboard, getRiwayatPoin, getRiwayatKegiatanInternal, getKurikulumMahasiswa } from '../controllers/mahasiswa/dashboard.controller';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import { getPrivateCv, generatePublicCvToken } from '../controllers/mahasiswa/cv.controller';
 import { connectLinkedIn, shareCvToLinkedIn, getLinkedInStatus, disconnectLinkedIn } from '../controllers/mahasiswa/linkedin.controller';
@@ -51,6 +51,9 @@ router.get('/riwayat-poin', getRiwayatPoin);
 
 // Riwayat Kegiatan Internal
 router.get('/riwayat-kegiatan-internal', getRiwayatKegiatanInternal);
+
+// Kurikulum mahasiswa yang sedang login
+router.get('/kurikulum', getKurikulumMahasiswa);
 
 // Izin Dosen PA
 router.post('/izin-pa', ajukanIzinPA);

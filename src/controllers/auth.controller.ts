@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma";
 import { JWT_SECRET } from "../middlewares/auth.middleware";
+import { resolveKurikulumMahasiswa } from "../services/kurikulumResolver.service";
 import { z } from "zod";
 
 // ==================== VALIDASI ====================
@@ -208,7 +209,30 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.json({ success: true, data: user });
+    let userResponse: any = user;
+    if (user.peran === "mahasiswa" && user.id) {
+      try {
+        const kur = await resolveKurikulumMahasiswa(user.id, prisma, {
+          includeStructure: false,
+          requireActive: false,
+        });
+        if (kur && user.mahasiswa) {
+          userResponse = {
+            ...user,
+            mahasiswa: {
+              ...user.mahasiswa,
+              kurikulumId: kur.id,
+              kurikulumNama: kur.nama,
+              kurikulum: { id: kur.id, nama: kur.nama },
+            },
+          };
+        }
+      } catch (err) {
+        // Abaikan jika tidak dapat di-resolve agar tidak menimbulkan error 500
+      }
+    }
+
+    res.json({ success: true, data: userResponse });
   } catch (error) {
     console.error(error);
     res

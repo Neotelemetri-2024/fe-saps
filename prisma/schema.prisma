@@ -736,6 +736,10 @@ model Iku3Target {
   id            Int       @id @default(autoincrement())
   tahun         Int       @unique
   targetPersen  Decimal   @map("target_persen") @db.Decimal(5, 2)
+  targetTw1     Decimal?  @map("target_tw1") @db.Decimal(5, 2)
+  targetTw2     Decimal?  @map("target_tw2") @db.Decimal(5, 2)
+  targetTw3     Decimal?  @map("target_tw3") @db.Decimal(5, 2)
+  targetTw4     Decimal?  @map("target_tw4") @db.Decimal(5, 2)
   keterangan    String?   @db.VarChar(255)
   diubahOleh    BigInt?   @map("diubah_oleh")
   createdAt     DateTime  @default(now()) @map("created_at")

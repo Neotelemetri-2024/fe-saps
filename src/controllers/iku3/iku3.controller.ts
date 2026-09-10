@@ -4,6 +4,7 @@ import {
   calculateIku3Dashboard,
   calculateIku3Faculties,
   calculateIku3Trend,
+  calculateIku3QuarterlyTrend,
   getIku3ActivitiesDetail,
   Iku3Filter,
 } from '../../services/iku3/iku3Calculation.service';
@@ -69,6 +70,28 @@ export const getTrendIku3 = async (req: Request, res: Response, next: NextFuncti
     });
   } catch (error) {
     console.error('[getTrendIku3]', error);
+    next(error);
+  }
+};
+
+// GET /api/iku3/trend/quarterly
+export const getQuarterlyTrendIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { enforcedFakultasId } = await resolveRoleAndScope(req);
+    const { tahun, fakultasId, prodiId } = req.query;
+
+    const targetTahun = tahun ? Number(tahun) : new Date().getFullYear();
+    const targetFakultasId = enforcedFakultasId ?? (fakultasId ? Number(fakultasId) : undefined);
+    const targetProdiId = prodiId ? Number(prodiId) : undefined;
+
+    const data = await calculateIku3QuarterlyTrend(targetTahun, targetFakultasId, targetProdiId);
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error('[getQuarterlyTrendIku3]', error);
     next(error);
   }
 };
@@ -140,6 +163,10 @@ export const getTargetsIku3 = async (req: Request, res: Response, next: NextFunc
         id: t.id,
         tahun: t.tahun,
         targetPersen: Number(t.targetPersen),
+        targetTw1: t.targetTw1 != null ? Number(t.targetTw1) : null,
+        targetTw2: t.targetTw2 != null ? Number(t.targetTw2) : null,
+        targetTw3: t.targetTw3 != null ? Number(t.targetTw3) : null,
+        targetTw4: t.targetTw4 != null ? Number(t.targetTw4) : null,
         keterangan: t.keterangan,
         diubahOleh: t.pengubah?.nama || 'Sistem',
         updatedAt: t.updatedAt,
@@ -154,7 +181,7 @@ export const getTargetsIku3 = async (req: Request, res: Response, next: NextFunc
 // POST /api/iku3/targets — Tetapkan / Ubah Target Tahunan (Khusus Ditmawa)
 export const upsertTargetIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { tahun, targetPersen, keterangan } = req.body;
+    const { tahun, targetPersen, targetTw1, targetTw2, targetTw3, targetTw4, keterangan } = req.body;
     const userId = req.user?.id ? BigInt(req.user.id) : null;
 
     if (!tahun || targetPersen === undefined) {
@@ -165,28 +192,36 @@ export const upsertTargetIku3 = async (req: Request, res: Response, next: NextFu
       return;
     }
 
+    const payload = {
+      targetPersen: Number(targetPersen),
+      targetTw1: targetTw1 !== undefined && targetTw1 !== null && targetTw1 !== '' ? Number(targetTw1) : null,
+      targetTw2: targetTw2 !== undefined && targetTw2 !== null && targetTw2 !== '' ? Number(targetTw2) : null,
+      targetTw3: targetTw3 !== undefined && targetTw3 !== null && targetTw3 !== '' ? Number(targetTw3) : null,
+      targetTw4: targetTw4 !== undefined && targetTw4 !== null && targetTw4 !== '' ? Number(targetTw4) : null,
+      keterangan: keterangan || null,
+      diubahOleh: userId,
+      deletedAt: null,
+    };
+
     const upserted = await prisma.iku3Target.upsert({
       where: { tahun: Number(tahun) },
-      update: {
-        targetPersen: Number(targetPersen),
-        keterangan: keterangan || null,
-        diubahOleh: userId,
-        deletedAt: null,
-      },
+      update: payload,
       create: {
         tahun: Number(tahun),
-        targetPersen: Number(targetPersen),
-        keterangan: keterangan || null,
-        diubahOleh: userId,
+        ...payload,
       },
     });
 
     res.status(200).json({
       success: true,
-      message: `Target IKU 3 tahun ${tahun} berhasil disimpan sebesar ${targetPersen}%.`,
+      message: `Target IKU 3 tahun ${tahun} berhasil disimpan.`,
       data: {
         tahun: upserted.tahun,
         targetPersen: Number(upserted.targetPersen),
+        targetTw1: upserted.targetTw1 != null ? Number(upserted.targetTw1) : null,
+        targetTw2: upserted.targetTw2 != null ? Number(upserted.targetTw2) : null,
+        targetTw3: upserted.targetTw3 != null ? Number(upserted.targetTw3) : null,
+        targetTw4: upserted.targetTw4 != null ? Number(upserted.targetTw4) : null,
         keterangan: upserted.keterangan,
       },
     });
@@ -232,7 +267,7 @@ export const getRulesIku3 = async (req: Request, res: Response, next: NextFuncti
 export const updateRuleIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const { bobot, keterangan, aktif } = req.body;
+    const { bobot, sksMin, sksMax, keterangan, aktif } = req.body;
     const userId = req.user?.id ? BigInt(req.user.id) : null;
 
     if (bobot === undefined) {
@@ -240,14 +275,34 @@ export const updateRuleIku3 = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    const minVal = sksMin !== undefined ? (sksMin === null || sksMin === '' ? null : Number(sksMin)) : undefined;
+    const maxVal = sksMax !== undefined ? (sksMax === null || sksMax === '' ? null : Number(sksMax)) : undefined;
+
+    if (minVal !== undefined && minVal !== null && minVal < 0) {
+      res.status(400).json({ success: false, message: 'SKS minimal tidak boleh bernilai negatif.' });
+      return;
+    }
+    if (maxVal !== undefined && maxVal !== null && maxVal < 0) {
+      res.status(400).json({ success: false, message: 'SKS maksimal tidak boleh bernilai negatif.' });
+      return;
+    }
+    if (minVal !== undefined && minVal !== null && maxVal !== undefined && maxVal !== null && minVal > maxVal) {
+      res.status(400).json({ success: false, message: 'SKS minimal tidak boleh lebih besar dari SKS maksimal.' });
+      return;
+    }
+
+    const updateData: any = {
+      bobot: Number(bobot),
+      keterangan: keterangan !== undefined ? keterangan : undefined,
+      aktif: aktif !== undefined ? Boolean(aktif) : undefined,
+      diubahOleh: userId,
+    };
+    if (minVal !== undefined) updateData.sksMin = minVal;
+    if (maxVal !== undefined) updateData.sksMax = maxVal;
+
     const updated = await prisma.iku3BobotRule.update({
       where: { id: Number(id) },
-      data: {
-        bobot: Number(bobot),
-        keterangan: keterangan !== undefined ? keterangan : undefined,
-        aktif: aktif !== undefined ? Boolean(aktif) : undefined,
-        diubahOleh: userId,
-      },
+      data: updateData,
     });
 
     res.status(200).json({
@@ -256,6 +311,8 @@ export const updateRuleIku3 = async (req: Request, res: Response, next: NextFunc
       data: {
         id: updated.id,
         bobot: Number(updated.bobot),
+        sksMin: updated.sksMin,
+        sksMax: updated.sksMax,
         keterangan: updated.keterangan,
         aktif: updated.aktif,
       },

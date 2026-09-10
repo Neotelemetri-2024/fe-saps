@@ -3,7 +3,7 @@ import prisma from '../../../lib/prisma';
 import { z } from 'zod';
 import { logAudit } from '../../../lib/auditLog';
 import { NotifikasiService } from '../../../services/notifikasi.service';
-import { assertAlokasiCoversActiveKurikulum, CurriculumResolutionError } from '../../../services/kurikulumResolver.service';
+import { assertAlokasiCoversActiveKurikulum, resolveKurikulumMahasiswa, CurriculumResolutionError } from '../../../services/kurikulumResolver.service';
 
 // ==================== VALIDASI ====================
 const createKegiatanSchema = z.object({
@@ -208,17 +208,59 @@ export const getKegiatanById = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    let mahasiswaKurikulum: any = null;
+    if (data.asal === 'eksternal' && data.dibuatOleh) {
+      try {
+        const resolved = await resolveKurikulumMahasiswa(data.dibuatOleh, prisma, {
+          includeStructure: true,
+          requireActive: false,
+        });
+        if (resolved) {
+          const capaianFiltered = (resolved.capaian || [])
+            .filter((c: any) => !c.deletedAt)
+            .map((c: any) => ({
+              ...c,
+              subCapaian: (c.subCapaian || []).filter((sc: any) => !sc.deletedAt),
+            }));
+          mahasiswaKurikulum = {
+            ...resolved,
+            capaian: capaianFiltered,
+          };
+        }
+      } catch (err) {
+        console.warn('Gagal me-resolve kurikulum mahasiswa:', err);
+      }
+    }
+
     const kurikulumNama =
+      mahasiswaKurikulum?.nama ||
       data.kurikulum?.nama ||
       data.kegiatanCapaian?.[0]?.subCapaian?.capaian?.kurikulum?.nama ||
       data.pembuat?.mahasiswa?.kurikulum?.nama ||
       (await prisma.kurikulum.findFirst({ where: { status: 'aktif', deletedAt: null }, select: { nama: true } }))?.nama ||
       null;
 
+    let userKurikulum: { id: number; nama: string } | null = null;
+    if (req.user?.peran === 'mahasiswa' && req.user?.id) {
+      try {
+        const resolved = await resolveKurikulumMahasiswa(BigInt(req.user.id), prisma, {
+          includeStructure: false,
+          requireActive: false,
+        });
+        if (resolved) {
+          userKurikulum = { id: resolved.id, nama: resolved.nama };
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
     const resData = {
       ...data,
       kurikulumNama,
-      kurikulum: data.kurikulum || (kurikulumNama ? { nama: kurikulumNama } : null),
+      kurikulum: data.kurikulum || (mahasiswaKurikulum ? { id: mahasiswaKurikulum.id, nama: mahasiswaKurikulum.nama, status: mahasiswaKurikulum.status } : (kurikulumNama ? { nama: kurikulumNama } : null)),
+      mahasiswaKurikulum,
+      userKurikulum,
     };
 
     res.json({ success: true, data: resData });
@@ -543,6 +585,20 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       // Simpan pemetaan capaian bila dikirim (kegiatan eksternal mahasiswa)
       const alokasi = alokasiByKegiatan.get(kegiatan.id);
       if (body.keputusan === 'setuju' && alokasi && alokasi.length > 0) {
+        if (kegiatan.asal === 'eksternal') {
+          try {
+            const kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
+            if (kurMhs && kegiatan.kurikulumId !== kurMhs.id) {
+              await prisma.kegiatan.update({
+                where: { id: kegiatan.id },
+                data: { kurikulumId: kurMhs.id },
+              });
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+
         await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: kegiatan.id } });
         await prisma.kegiatanCapaian.createMany({
           data: alokasi.map((a) => ({
@@ -963,6 +1019,40 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
 
     // Hanya timpa capaian jika Admin mengirim alokasi baru (kegiatan eksternal mahasiswa)
     if (body.keputusan === 'setuju' && body.alokasi && body.alokasi.length > 0) {
+      if (kegiatan.asal === 'eksternal') {
+        let kurMhs: any = null;
+        try {
+          kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
+        } catch (e) {
+          // ignore
+        }
+        if (kurMhs) {
+          const subIds = body.alokasi.map(a => a.subCapaianId);
+          const validSubs = await prisma.subCapaian.findMany({
+            where: {
+              id: { in: subIds },
+              capaian: { kurikulumId: kurMhs.id },
+            },
+            select: { id: true },
+          });
+          if (validSubs.length !== subIds.length) {
+            res.status(400).json({
+              success: false,
+              message: `Sub capaian yang dipilih harus sesuai dengan kurikulum mahasiswa (${kurMhs.nama})`,
+            });
+            return;
+          }
+          const totalPersen = body.alokasi.reduce((sum, a) => sum + (a.alokasiPersen || 0), 0);
+          if (Math.abs(totalPersen - 100) > 0.01) {
+            res.status(400).json({
+              success: false,
+              message: `Total bobot untuk ${kurMhs.nama} harus tepat 100% (saat ini ${totalPersen}%)`,
+            });
+            return;
+          }
+        }
+      }
+
       await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } });
       await prisma.kegiatanCapaian.createMany({
         data: body.alokasi.map((a) => ({
@@ -971,6 +1061,20 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
           alokasiPersen: a.alokasiPersen,
         })),
       });
+
+      if (kegiatan.asal === 'eksternal') {
+        try {
+          const kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
+          if (kurMhs && kegiatan.kurikulumId !== kurMhs.id) {
+            await prisma.kegiatan.update({
+              where: { id: Number(id) },
+              data: { kurikulumId: kurMhs.id },
+            });
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
     }
 
     // Notifikasi ke pembuat kegiatan

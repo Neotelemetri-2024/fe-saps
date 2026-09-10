@@ -54,6 +54,15 @@ export interface Iku3TrendItem {
   totalKontributor: number;
 }
 
+export interface Iku3QuarterlyTrendItem {
+  triwulan: number;
+  label: string;
+  capaian: number;
+  target: number;
+  totalMahasiswa: number;
+  totalKontributor: number;
+}
+
 export interface Iku3ActivityDetailItem {
   id: string;
   mahasiswaId: string;
@@ -114,11 +123,18 @@ export async function calculateIku3Dashboard(filter: Iku3Filter): Promise<Iku3Da
   const tahun = filter.tahun || new Date().getFullYear();
   const { startDate, endDate, labelTriwulan } = getDateRange(tahun, filter.triwulan);
 
-  // 1. Ambil Target Tahunan dari Database (atau fallback default)
+  // 1. Ambil Target Tahunan & Triwulan dari Database (atau fallback default)
   const targetDb = await prisma.iku3Target.findFirst({
     where: { tahun, deletedAt: null },
   });
-  const targetVal = targetDb ? Number(targetDb.targetPersen) : DEFAULT_TARGET_IKU3_2026;
+  let targetVal = targetDb ? Number(targetDb.targetPersen) : DEFAULT_TARGET_IKU3_2026;
+  if (filter.triwulan) {
+    const tw = Number(filter.triwulan);
+    if (tw === 1 && targetDb?.targetTw1 != null) targetVal = Number(targetDb.targetTw1);
+    else if (tw === 2 && targetDb?.targetTw2 != null) targetVal = Number(targetDb.targetTw2);
+    else if (tw === 3 && targetDb?.targetTw3 != null) targetVal = Number(targetDb.targetTw3);
+    else if (tw === 4 && targetDb?.targetTw4 != null) targetVal = Number(targetDb.targetTw4);
+  }
 
   // 2. Ambil Dynamic Rules dari Database
   const dynamicRules = await prisma.iku3BobotRule.findMany({
@@ -408,6 +424,37 @@ export async function calculateIku3Trend(fakultasId?: number): Promise<Iku3Trend
   }
 
   return trendData;
+}
+
+/**
+ * Service: Tren Capaian per Triwulan (TW 1 - TW 4) untuk Tahun Terpilih
+ */
+export async function calculateIku3QuarterlyTrend(
+  tahun: number,
+  fakultasId?: number,
+  prodiId?: number
+): Promise<Iku3QuarterlyTrendItem[]> {
+  const results: Iku3QuarterlyTrendItem[] = [];
+
+  for (let tw = 1; tw <= 4; tw++) {
+    const data = await calculateIku3Dashboard({
+      tahun,
+      triwulan: tw,
+      fakultasId,
+      prodiId,
+    });
+
+    results.push({
+      triwulan: tw,
+      label: `TW ${tw}`,
+      capaian: data.kpi.capaian,
+      target: data.kpi.target,
+      totalMahasiswa: data.kpi.totalMahasiswa,
+      totalKontributor: data.kpi.totalKontributor,
+    });
+  }
+
+  return results;
 }
 
 /**

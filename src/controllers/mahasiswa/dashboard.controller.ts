@@ -442,6 +442,19 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
+    let userKurikulum: { id: number; nama: string } | null = null;
+    try {
+      const kur = await resolveKurikulumMahasiswa(BigInt(userId), prisma, {
+        includeStructure: false,
+        requireActive: false,
+      });
+      if (kur) {
+        userKurikulum = { id: kur.id, nama: kur.nama };
+      }
+    } catch (err) {
+      console.warn('Gagal me-resolve kurikulum mahasiswa:', err);
+    }
+
     const { search, kategoriId, kehadiran, tahun } = req.query;
 
     const whereKegiatan: any = {
@@ -477,6 +490,11 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
             kategori: { select: { nama: true } },
             skala: { select: { nama: true } },
             organisasi: { select: { nama: true, tipe: true } }
+          }
+        },
+        mahasiswa: {
+          select: {
+            kurikulum: { select: { id: true, nama: true } }
           }
         },
         peranVerif: { select: { id: true, nama: true } },
@@ -615,7 +633,9 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
         } : null,
         statusIzinPA: statusIzin,
         canMintaIzinPA,
-        statusPoin
+        statusPoin,
+        kurikulumId: userKurikulum?.id ?? p.mahasiswa?.kurikulum?.id ?? null,
+        kurikulumNama: userKurikulum?.nama ?? p.mahasiswa?.kurikulum?.nama ?? null,
       };
     });
 
@@ -625,3 +645,34 @@ export const getRiwayatKegiatanInternal = async (req: Request, res: Response, ne
     next(error);
   }
 };
+
+// ==================== KURIKULUM MAHASISWA ====================
+
+/**
+ * GET /api/mahasiswa/kurikulum
+ * Mengembalikan kurikulum yang dimiliki mahasiswa yang sedang login.
+ */
+export const getKurikulumMahasiswa = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    let kurikulum: { id: number; nama: string } | null = null;
+    try {
+      const resolved = await resolveKurikulumMahasiswa(BigInt(userId), prisma, {
+        includeStructure: false,
+        requireActive: false,
+      });
+      if (resolved) {
+        kurikulum = { id: resolved.id, nama: resolved.nama };
+      }
+    } catch (err) {
+      console.warn('Gagal me-resolve kurikulum mahasiswa:', err);
+    }
+
+    res.json({ success: true, data: kurikulum });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
