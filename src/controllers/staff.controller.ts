@@ -25,8 +25,8 @@ async function actorStaff(req: Request) {
 }
 
 async function resolveScope(actor: NonNullable<Awaited<ReturnType<typeof actorStaff>>>, jabatan: string, submitted?: number | null) {
-  if (actor.jabatan === 'pimpinan_ditmawa') {
-    if (!ditmawaTargets.includes(jabatan)) throw Object.assign(new Error('Pimpinan Ditmawa hanya dapat mengelola akun Pimpinan Utama, Pimpinan Fakultas, atau Admin Ditmawa'), { status: 403 });
+  if (actor.jabatan === 'pimpinan_ditmawa' || actor.jabatan === 'pimpinan_utama') {
+    if (!ditmawaTargets.includes(jabatan)) throw Object.assign(new Error('Pimpinan Ditmawa / Utama hanya dapat mengelola akun Pimpinan Utama, Pimpinan Fakultas, atau Admin Ditmawa'), { status: 403 });
     if (jabatan !== 'pimpinan_fakultas') return null;
     if (!submitted) throw Object.assign(new Error('Fakultas wajib dipilih untuk Pimpinan Fakultas'), { status: 400 });
     return submitted;
@@ -46,6 +46,7 @@ async function validateFaculty(fakultasId: number | null) {
 }
 
 function handleError(error: any, res: Response) {
+  console.error('[Staff Controller Error]:', error);
   if (error instanceof z.ZodError) return res.status(400).json({ success: false, message: error.issues.map((issue) => issue.message).join(', '), errors: error.issues });
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
     const target = String(error.meta?.target || '');
@@ -78,7 +79,8 @@ export const getStaff = async (req: Request, res: Response) => {
   try {
     const actor = await actorStaff(req);
     if (!actor) return res.status(403).json({ success: false, message: 'Akses ditolak' });
-    const where = actor.jabatan === 'pimpinan_ditmawa'
+    const isDitmawaOrUtama = actor.jabatan === 'pimpinan_ditmawa' || actor.jabatan === 'pimpinan_utama';
+    const where = isDitmawaOrUtama
       ? { jabatan: { in: ditmawaTargets as any[] }, deletedAt: null, user: { deletedAt: null } }
       : actor.jabatan === 'pimpinan_fakultas'
         ? { jabatan: 'admin_fakultas' as const, fakultasId: actor.fakultasId, deletedAt: null, user: { deletedAt: null } }
@@ -97,7 +99,8 @@ export const updateStaff = async (req: Request, res: Response) => {
     const target = await prisma.staff.findFirst({ where: { userId: targetUserId, deletedAt: null, user: { deletedAt: null } } });
     if (!target) return res.status(404).json({ success: false, message: 'Akun tidak ditemukan' });
     if (actor.jabatan === 'pimpinan_fakultas' && (target.jabatan !== 'admin_fakultas' || target.fakultasId !== actor.fakultasId)) return res.status(403).json({ success: false, message: 'Akun berada di luar fakultas Anda' });
-    if (actor.jabatan === 'pimpinan_ditmawa' && !ditmawaTargets.includes(target.jabatan)) return res.status(403).json({ success: false, message: 'Akun berada di luar kewenangan Anda' });
+    const isDitmawaOrUtama = actor.jabatan === 'pimpinan_ditmawa' || actor.jabatan === 'pimpinan_utama';
+    if (isDitmawaOrUtama && !ditmawaTargets.includes(target.jabatan)) return res.status(403).json({ success: false, message: 'Akun berada di luar kewenangan Anda' });
     const body = updateSchema.parse(req.body);
     const fakultasId = await resolveScope(actor, body.jabatan, body.fakultasId);
     await validateFaculty(fakultasId);
