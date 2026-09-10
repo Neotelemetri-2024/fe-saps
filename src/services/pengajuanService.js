@@ -317,10 +317,11 @@ export async function validasiBulk(ids, status, alasan) {
  */
 export async function mintaPersetujuanDosenEksternal(kegiatanId, peranId) {
   if (!kegiatanId) throw new Error('kegiatanId diperlukan.')
-  if (!peranId) throw new Error('Pilih peran terlebih dahulu.')
   const body = {
     kegiatanId: Number(kegiatanId),
-    peranId: Number(peranId),
+  }
+  if (peranId) {
+    body.peranId = Number(peranId)
   }
   const res = await post('/api/mahasiswa/izin-pa', body)
   emitUpdate('persetujuan')
@@ -407,4 +408,9 @@ export async function setujuiTolakBulk(ids) {
 export async function getPendingPersetujuanCount() {
   const list = await getPersetujuanDosen({ status: 'pending' })
   return list.length
+}
+
+export async function getKegiatanEksternalTerdaftar(params = {}) {
+  const res = await get('/api/mahasiswa/kegiatan-eksternal/terdaftar', params)
+  return res?.data || []
 }

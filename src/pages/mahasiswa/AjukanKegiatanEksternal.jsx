@@ -11,7 +11,7 @@ import Modal from '../../components/ui/Modal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import InfoTooltip from '../../components/ui/InfoTooltip'
 import ActionMenu from '../../components/ui/ActionMenu'
-import { getPengajuan, hapusDraftKegiatanEksternal, subscribeDataUpdate } from '../../services/pengajuanService'
+import { getPengajuan, hapusDraftKegiatanEksternal, subscribeDataUpdate, getKegiatanEksternalTerdaftar } from '../../services/pengajuanService'
 import { getCurrentUser } from '../../services/authService'
 import { statusOptionsFromRows } from '../../utils/statusFilter'
 
@@ -61,6 +61,42 @@ function AjukanKegiatanEksternal() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [showPilihModal, setShowPilihModal] = useState(false)
+  const [kegiatanTerdaftarList, setKegiatanTerdaftarList] = useState([])
+  const [loadingTerdaftar, setLoadingTerdaftar] = useState(false)
+  const [selectedKegiatanId, setSelectedKegiatanId] = useState('')
+
+  const handleOpenPilihModal = async () => {
+    setSelectedKegiatanId('')
+    setShowPilihModal(true)
+    setLoadingTerdaftar(true)
+    try {
+      const list = await getKegiatanEksternalTerdaftar()
+      setKegiatanTerdaftarList(Array.isArray(list) ? list : [])
+    } catch (err) {
+      console.error(err)
+      toast.error('Gagal memuat daftar kegiatan terdaftar')
+      setKegiatanTerdaftarList([])
+    } finally {
+      setLoadingTerdaftar(false)
+    }
+  }
+
+  const handleLanjutPilihKegiatan = () => {
+    if (!selectedKegiatanId) {
+      toast.error('Pilih kegiatan terlebih dahulu')
+      return
+    }
+    setShowPilihModal(false)
+    if (selectedKegiatanId === 'BELUM_TERDAFTAR') {
+      navigate('/mahasiswa/kegiatan-eksternal/ajukan', { state: { mode: 'baru' } })
+    } else {
+      const chosen = kegiatanTerdaftarList.find((k) => String(k.id) === String(selectedKegiatanId))
+      navigate('/mahasiswa/kegiatan-eksternal/ajukan', {
+        state: { mode: 'terdaftar', selectedKegiatan: chosen },
+      })
+    }
+  }
   const [filterStatus, setFilterStatus] = useState('')
   const [filterKategori, setFilterKategori] = useState('')
   const [filterSkala, setFilterSkala] = useState('')
@@ -156,6 +192,81 @@ function AjukanKegiatanEksternal() {
         onCancel={() => setHapusDraftTarget(null)}
       />
 
+      {/* Modal Dialog: Pilih Kegiatan Eksternal (Gambar 1) */}
+      <Modal isOpen={showPilihModal} onClose={() => setShowPilihModal(false)} size="md">
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-base-content">Pilih Kegiatan Eksternal</h3>
+          <p className="mt-1 text-sm text-base-content/60">
+            Pilih kegiatan eksternal yang sudah terdaftar di sistem, atau pilih opsi <strong>Kegiatan Belum Terdaftar</strong> jika kegiatan yang Anda ikuti belum terdaftar.
+          </p>
+
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-base-content mb-1.5">
+                PILIH KEGIATAN <span className="text-error">*</span>
+              </label>
+              {loadingTerdaftar ? (
+                <div className="flex items-center gap-2 py-3 text-sm text-base-content/60">
+                  <span className="loading loading-spinner loading-sm text-primary"></span>
+                  Memuat daftar kegiatan terdaftar...
+                </div>
+              ) : (
+                <select
+                  value={selectedKegiatanId}
+                  onChange={(e) => setSelectedKegiatanId(e.target.value)}
+                  className="select select-bordered w-full text-sm font-medium"
+                >
+                  <option value="">-- Pilih Kegiatan --</option>
+                  {kegiatanTerdaftarList.length > 0 && (
+                    <optgroup label="Kegiatan yang Sudah Terdaftar">
+                      {kegiatanTerdaftarList.map((keg) => (
+                        <option key={keg.id} value={keg.id}>
+                          {keg.label || keg.nama}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="Pilihan Lainnya">
+                    <option value="BELUM_TERDAFTAR" className="font-semibold text-primary">
+                      ➕ KEGIATAN SAYA BELUM TERDAFTAR (Daftarkan Baru)
+                    </option>
+                  </optgroup>
+                </select>
+              )}
+            </div>
+
+            {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
+              <div className="rounded-lg bg-base-200/70 p-3 text-xs text-base-content/80 border border-base-300">
+                <span className="font-semibold text-base-content">Informasi:</span> Kegiatan ini sudah terdaftar di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
+              </div>
+            )}
+            {selectedKegiatanId === 'BELUM_TERDAFTAR' && (
+              <div className="rounded-lg bg-info/10 p-3 text-xs text-info-content border border-info/20">
+                <span className="font-semibold">Informasi:</span> Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-2 border-t border-base-200 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowPilihModal(false)}
+              className={batalBtnClass}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={!selectedKegiatanId || loadingTerdaftar}
+              onClick={handleLanjutPilihKegiatan}
+              className="btn btn-primary btn-sm px-5"
+            >
+              Selanjutnya
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
@@ -163,7 +274,7 @@ function AjukanKegiatanEksternal() {
             <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit. Kegiatan yang sudah <strong>disetujui</strong> admin dipindah ke halaman Persetujuan Dosen.</>} />
           </div>
           <button
-            onClick={() => navigate('/mahasiswa/kegiatan-eksternal/ajukan')}
+            onClick={handleOpenPilihModal}
             className="btn btn-primary btn-sm"
           >
             <Plus className="h-4 w-4" />

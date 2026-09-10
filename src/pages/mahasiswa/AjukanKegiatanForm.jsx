@@ -12,6 +12,7 @@ import {
   simpanDraftKegiatanEksternal,
   editDraftKegiatanEksternal,
   ajukanDraftKegiatanEksternal,
+  mintaPersetujuanDosenEksternal,
 } from '../../services/pengajuanService'
 import { getKategoriKegiatan, getSkalaKegiatan } from '../../services/matriksService'
 import { getCurrentUser } from '../../services/authService'
@@ -44,6 +45,9 @@ function AjukanKegiatanForm() {
   const draftItem = location.state?.draft || null
   const isRevisi = !!(location.state?.isRevisi && draftItem)
   const isEditDraft = !!draftItem && !isRevisi
+  const selectedKegiatan = location.state?.selectedKegiatan || null
+  const isModeTerdaftar = location.state?.mode === 'terdaftar' && !!selectedKegiatan
+  const [submittingIzin, setSubmittingIzin] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState(EMPTY_FORM)
@@ -58,12 +62,28 @@ function AjukanKegiatanForm() {
       .then((list) => setKategoriList(Array.isArray(list) ? list : []))
       .catch(() => setKategoriList([]))
 
-    if (draftItem) {
+    if (isModeTerdaftar && selectedKegiatan) {
+      setFormData({
+        kategoriId: String(selectedKegiatan.kategoriId || ''),
+        namaKegiatan: selectedKegiatan.nama || '',
+        penyelenggara: selectedKegiatan.penyelenggara || '',
+        skalaId: String(selectedKegiatan.skalaId || ''),
+        tanggalPelaksanaan: selectedKegiatan.tanggalMulai ? new Date(selectedKegiatan.tanggalMulai) : null,
+        deskripsiKegiatan: selectedKegiatan.deskripsi || '',
+        linkWebsite: selectedKegiatan.linkWebsite || '',
+        emailPenyelenggara: selectedKegiatan.emailPenyelenggara || '',
+      })
+      if (selectedKegiatan.kategoriId) {
+        getSkalaKegiatan(selectedKegiatan.kategoriId)
+          .then((list) => setSkalaList(Array.isArray(list) ? list : []))
+          .catch(() => setSkalaList([]))
+      }
+    } else if (draftItem) {
       setFormData({
         kategoriId: String(draftItem.kategoriId || ''),
         namaKegiatan: draftItem.namaKegiatan || '',
         penyelenggara: draftItem.penyelenggara || '',
-      skalaId: String(draftItem.skalaId || ''),
+        skalaId: String(draftItem.skalaId || ''),
         tanggalPelaksanaan: draftItem.tanggalPelaksanaan ? new Date(draftItem.tanggalPelaksanaan) : null,
         deskripsiKegiatan: draftItem.deskripsi || '',
         linkWebsite: draftItem.linkWebsite || '',
@@ -165,6 +185,26 @@ function AjukanKegiatanForm() {
     }
   }
 
+  const handleMintaPersetujuanDosen = async () => {
+    if (!selectedKegiatan?.id) {
+      toast.error('Data kegiatan tidak valid')
+      return
+    }
+    setSubmittingIzin(true)
+    try {
+      await mintaPersetujuanDosenEksternal(selectedKegiatan.id)
+      toast.success('Berhasil!', {
+        description: 'Permintaan persetujuan telah dikirimkan ke Dosen PA Anda.',
+      })
+      navigate('/mahasiswa/persetujuan-dosen')
+    } catch (err) {
+      console.error(err)
+      toast.error(err?.response?.data?.message || err?.message || 'Gagal meminta persetujuan dosen')
+    } finally {
+      setSubmittingIzin(false)
+    }
+  }
+
   const isDirty = !!(formData.namaKegiatan || formData.penyelenggara || formData.kategoriId)
 
   return (
@@ -185,19 +225,41 @@ function AjukanKegiatanForm() {
           <div>
             <div className="flex items-center gap-1.5">
               <h2 className="text-2xl font-extrabold text-base-content">
-                {isRevisi ? 'Perbaiki & ajukan ulang' : isEditDraft ? 'Edit draft kegiatan' : 'Pengajuan kegiatan'}
+                {isModeTerdaftar
+                  ? 'Pengajuan kegiatan terdaftar'
+                  : isRevisi
+                  ? 'Perbaiki & ajukan ulang'
+                  : isEditDraft
+                  ? 'Edit draft kegiatan'
+                  : 'Pengajuan kegiatan'}
               </h2>
-              <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.</>} />
+              <InfoTooltip
+                message={
+                  isModeTerdaftar ? (
+                    <>
+                      Kegiatan ini sudah <strong>terdaftar dan disetujui</strong> di sistem. Silakan klik <strong>Minta persetujuan dosen</strong> untuk mengajukan izin ke Dosen PA Anda.
+                    </>
+                  ) : (
+                    <>
+                      Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit.
+                    </>
+                  )
+                }
+              />
             </div>
             <p className="mt-1 text-sm text-base-content/60">
-              {isRevisi
+              {isModeTerdaftar
+                ? 'Detail kegiatan eksternal yang sudah terdaftar di sistem. Data kegiatan tidak dapat diubah.'
+                : isRevisi
                 ? 'Perbaiki data sesuai catatan revisi, lalu ajukan ulang.'
                 : isEditDraft
                 ? 'Perbarui data draft, simpan, atau langsung ajukan.'
                 : 'Isi data kegiatan eksternal yang ingin diajukan ke Admin Ditmawa.'}
             </p>
           </div>
-          {isRevisi ? (
+          {isModeTerdaftar ? (
+            <span className="badge badge-primary badge-sm">Terdaftar</span>
+          ) : isRevisi ? (
             <StatusBadge status="revisi" />
           ) : draftId ? (
             <StatusBadge status="draft" />
@@ -216,7 +278,8 @@ function AjukanKegiatanForm() {
                 name="kategoriId"
                 value={formData.kategoriId}
                 onChange={handleChange}
-                className="select mt-1 w-full"
+                disabled={isModeTerdaftar}
+                className="select mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
               >
                 <option value="">Pilih jenis kegiatan</option>
                 {kategoriList.map((k) => (
@@ -235,8 +298,9 @@ function AjukanKegiatanForm() {
                   name="namaKegiatan"
                   value={formData.namaKegiatan}
                   onChange={handleChange}
+                  disabled={isModeTerdaftar}
                   placeholder="Masukkan nama kegiatan"
-                  className="input mt-1 w-full"
+                  className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
               </div>
               <div>
@@ -248,8 +312,9 @@ function AjukanKegiatanForm() {
                   name="penyelenggara"
                   value={formData.penyelenggara}
                   onChange={handleChange}
+                  disabled={isModeTerdaftar}
                   placeholder="Masukkan penyelenggara..."
-                  className="input mt-1 w-full"
+                  className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
               </div>
             </div>
@@ -262,8 +327,8 @@ function AjukanKegiatanForm() {
                 name="skalaId"
                 value={formData.skalaId}
                 onChange={handleChange}
-                disabled={!formData.kategoriId}
-                className="select mt-1 w-full disabled:bg-base-200"
+                disabled={isModeTerdaftar || !formData.kategoriId}
+                className="select mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
               >
                 <option value="">
                   {formData.kategoriId ? 'Pilih skala kegiatan' : 'Pilih jenis kegiatan terlebih dahulu'}
@@ -278,6 +343,7 @@ function AjukanKegiatanForm() {
               label="Tanggal Pelaksanaan"
               value={formData.tanggalPelaksanaan}
               onChange={handleDateChange}
+              disabled={isModeTerdaftar}
               placeholder="Pilih tanggal"
             />
 
@@ -287,9 +353,10 @@ function AjukanKegiatanForm() {
                 name="deskripsiKegiatan"
                 value={formData.deskripsiKegiatan}
                 onChange={handleChange}
+                disabled={isModeTerdaftar}
                 rows={3}
                 placeholder="Jelaskan peran dan manfaat kegiatan..."
-                className="input mt-1 w-full"
+                className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
               />
             </div>
 
@@ -301,8 +368,9 @@ function AjukanKegiatanForm() {
                   name="linkWebsite"
                   value={formData.linkWebsite}
                   onChange={handleChange}
+                  disabled={isModeTerdaftar}
                   placeholder="https://..."
-                  className="input mt-1 w-full"
+                  className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
               </div>
               <div>
@@ -312,39 +380,66 @@ function AjukanKegiatanForm() {
                   name="emailPenyelenggara"
                   value={formData.emailPenyelenggara}
                   onChange={handleChange}
+                  disabled={isModeTerdaftar}
                   placeholder="unand@gmail.com"
-                  className="input mt-1 w-full"
+                  className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
               </div>
             </div>
 
             {/* Action buttons */}
             <div className="flex flex-col gap-3 border-t border-base-300 pt-4 sm:flex-row sm:justify-end">
-              {/* Simpan draft — hanya tampil jika bukan mode revisi */}
-              {!isRevisi && (
-                <button
-                  type="button"
-                  disabled={loading || !isDirty}
-                  onClick={handleSimpanDraft}
-                  className="btn btn-outline btn-primary btn-sm"
-                >{draftId ? 'Perbarui draft' : 'Simpan draft'}
-                </button>
+              {isModeTerdaftar ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={submittingIzin}
+                    onClick={handleMintaPersetujuanDosen}
+                    className="btn btn-primary btn-sm"
+                  >
+                    {submittingIzin ? 'Mengirim…' : 'Minta persetujuan dosen'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
+                    className={batalBtnClass}
+                  >
+                    Batal
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Simpan draft — hanya tampil jika bukan mode revisi */}
+                  {!isRevisi && (
+                    <button
+                      type="button"
+                      disabled={loading || !isDirty}
+                      onClick={handleSimpanDraft}
+                      className="btn btn-outline btn-primary btn-sm"
+                    >
+                      {draftId ? 'Perbarui draft' : 'Simpan draft'}
+                    </button>
+                  )}
+
+                  {/* Ajukan */}
+                  <button
+                    type="button"
+                    disabled={loading || !isDirty}
+                    onClick={() => setShowKirimConfirm(true)}
+                    className="btn btn-primary btn-sm"
+                  >
+                    {loading ? 'Mengirim…' : isRevisi ? 'Ajukan ulang' : 'Ajukan'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate('/mahasiswa/kegiatan-eksternal')}
+                    className={batalBtnClass}
+                  >
+                    Batal
+                  </button>
+                </>
               )}
-
-              {/* Ajukan */}
-              <button
-                type="button"
-                disabled={loading || !isDirty}
-                onClick={() => setShowKirimConfirm(true)}
-                className="btn btn-primary btn-sm"
-              >{loading ? 'Mengirim…' : isRevisi ? 'Ajukan ulang' : 'Ajukan'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate('/mahasiswa/kegiatan-eksternal')} className={batalBtnClass}>
-                Batal
-              </button>
             </div>
           </div>
         </div>
