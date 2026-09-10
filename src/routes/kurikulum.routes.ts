@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticateJWT, authorizeRole } from '../middlewares/auth.middleware';
 import {
   getAllKurikulum, getKurikulumAktif, getKurikulumById, createKurikulum,
-  aktivasiKurikulum, nonAktifKurikulum, deleteKurikulum,
+  updateKurikulum, aktivasiKurikulum, nonAktifKurikulum, deleteKurikulum,
   createCapaian, updateCapaian, deleteCapaian,
   createSubCapaian, updateSubCapaian, deleteSubCapaian,
 } from '../controllers/pimpinan/ditmawa/kurikulum.controller';
@@ -15,6 +15,7 @@ router.get('/', authorizeRole('pimpinan_ditmawa'), getAllKurikulum);
 router.get('/aktif', getKurikulumAktif);   // semua role bisa baca kurikulum aktif
 router.get('/:id', authorizeRole('pimpinan_ditmawa'), getKurikulumById);
 router.post('/', authorizeRole('pimpinan_ditmawa'), createKurikulum);
+router.put('/:id', authorizeRole('pimpinan_ditmawa'), updateKurikulum);
 router.put('/:id/aktivasi', authorizeRole('pimpinan_ditmawa'), aktivasiKurikulum);
 router.put('/:id/non-aktif', authorizeRole('pimpinan_ditmawa'), nonAktifKurikulum);
 router.put('/:id/nonaktifkan', authorizeRole('pimpinan_ditmawa'), nonAktifKurikulum);

@@ -185,6 +185,59 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
   }
 };
 
+// PUT /api/kurikulum/:id — Update kurikulum (misal nama kurikulum)
+export const updateKurikulum = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const aktorId = BigInt(req.user!.id);
+    const data = updateKurikulumSchema.parse(req.body);
+
+    const kurikulum = await prisma.kurikulum.findFirst({ where: { id: Number(id), deletedAt: null } });
+    if (!kurikulum) {
+      res.status(404).json({ success: false, message: 'Kurikulum tidak ditemukan' });
+      return;
+    }
+
+    if (data.angkatanMulai !== undefined) {
+      await assertAngkatanMulaiUnique(data.angkatanMulai, Number(id));
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const resUpdate = await tx.kurikulum.update({
+        where: { id: Number(id) },
+        data: {
+          ...(data.nama !== undefined ? { nama: data.nama } : {}),
+          ...(data.tahunAkademik !== undefined ? { tahunAkademik: data.tahunAkademik } : {}),
+          ...(data.angkatanMulai !== undefined ? { angkatanMulai: data.angkatanMulai } : {}),
+          ...(data.versi !== undefined ? { versi: data.versi } : {}),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          entitas: 'kurikulum',
+          entitasId: BigInt(resUpdate.id),
+          aksi: 'update',
+          statusBaru: resUpdate.status,
+          aktorId,
+        },
+      });
+
+      return resUpdate;
+    });
+
+    res.json({ success: true, message: 'Kurikulum berhasil diperbarui', data: updated });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
+      res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
+    } else {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    }
+  }
+};
+
 // PUT /api/kurikulum/:id/aktivasi — Aktifkan kurikulum tanpa menonaktifkan yang lama
 export const aktivasiKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
