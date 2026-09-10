@@ -1,10 +1,11 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Plus, Search, Pencil } from 'lucide-react'
 import DataTable from '../../components/dashboard/DataTable'
 import { TableCard, TableFrame } from '../../components/dashboard/TableFrame'
 import Modal from '../../components/ui/Modal'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import ActionMenu from '../ui/ActionMenu'
 import { batalBtnClass } from '../../components/ui/buttonStyles'
 import { getFakultasList } from '../../services/fakultasService'
 import { createStaffAccount, getStaffAccounts, updateStaffAccount } from '../../services/staffService'
@@ -175,22 +176,20 @@ export default function StaffAccountManager({
       render: (row) => <StatusBadge status={row.status} />,
     },
     {
-      key: 'actions',
+      key: 'aksi',
       label: 'Aksi',
       align: 'center',
       stopPropagation: true,
       render: (row) => (
-        <div className="flex items-center justify-center">
-          <button
-            type="button"
-            title="Edit Akun"
-            onClick={() => startEdit(row)}
-            className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 flex items-center gap-1 font-medium"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            <span>Edit</span>
-          </button>
-        </div>
+        <ActionMenu
+          items={[
+            {
+              label: 'Edit',
+              icon: <Pencil className="h-4 w-4" />,
+              onClick: () => startEdit(row),
+            },
+          ]}
+        />
       ),
     },
   ]

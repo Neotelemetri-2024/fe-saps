@@ -25,6 +25,11 @@ export async function createKurikulum(data) {
   return res?.data || res
 }
 
+export async function updateKurikulum(id, data) {
+  const res = await put(`/api/kurikulum/${id}`, data)
+  return res?.data || res
+}
+
 export async function aktivasiKurikulum(id) {
   const res = await put(`/api/kurikulum/${id}/aktivasi`)
   return res?.data || res

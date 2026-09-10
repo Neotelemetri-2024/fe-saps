@@ -9,6 +9,7 @@ import {
   getKurikulum,
   getKurikulumById,
   createKurikulum,
+  updateKurikulum,
   aktivasiKurikulum,
   nonaktifkanKurikulum,
   hapusKurikulum,
@@ -83,6 +84,10 @@ function ManajemenKurikulum() {
 
   const [showTambahKurikulum, setShowTambahKurikulum] = useState(false)
   const [kurForm, setKurForm] = useState({ tahun: `${new Date().getFullYear()}`, angkatanMulai: new Date().getFullYear(), nama: '' })
+
+  const [editKurikulumTarget, setEditKurikulumTarget] = useState(null)
+  const [editNamaForm, setEditNamaForm] = useState('')
+  const [savingEditNama, setSavingEditNama] = useState(false)
 
   const [showTambahCapaian, setShowTambahCapaian] = useState(false)
   const [capaianForm, setCapaianForm] = useState({ nama: '', jumlahPoin: '' })
@@ -292,6 +297,35 @@ function ManajemenKurikulum() {
       if (created?.id) setActiveKurId(created.id)
     } catch (err) {
       toast.error('Gagal menambahkan kurikulum', { description: err.message })
+    }
+  }
+
+  const handleUpdateNamaKurikulum = async (e) => {
+    e?.preventDefault()
+    if (!editKurikulumTarget) return
+    const namaTrimmed = String(editNamaForm || '').trim()
+    if (!namaTrimmed) {
+      toast.error('Nama kurikulum tidak boleh kosong.')
+      return
+    }
+
+    setSavingEditNama(true)
+    try {
+      await updateKurikulum(editKurikulumTarget.id, { nama: namaTrimmed })
+      toast.success('Nama kurikulum berhasil diperbarui.')
+      setKurikulum((prev) =>
+        prev.map((k) => (k.id === editKurikulumTarget.id ? { ...k, nama: namaTrimmed } : k))
+      )
+      if (activeKur?.id === editKurikulumTarget.id) {
+        setActiveKurId(editKurikulumTarget.id)
+      }
+      setEditKurikulumTarget(null)
+      setEditNamaForm('')
+      loadList()
+    } catch (err) {
+      toast.error('Gagal memperbarui nama kurikulum', { description: err.message })
+    } finally {
+      setSavingEditNama(false)
     }
   }
 
@@ -559,6 +593,49 @@ const handleEditSubCapaian = async () => {
             Simpan
           </button>
         </div>
+      </Modal>
+
+      {/* Modal Edit Nama Kurikulum */}
+      <Modal
+        isOpen={Boolean(editKurikulumTarget)}
+        onClose={() => {
+          if (!savingEditNama) setEditKurikulumTarget(null)
+        }}
+        title="Edit Nama Kurikulum"
+      >
+        <form onSubmit={handleUpdateNamaKurikulum} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-base-content">
+              Nama Kurikulum <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
+              value={editNamaForm}
+              onChange={(e) => setEditNamaForm(e.target.value)}
+              placeholder="Contoh: Kurikulum Merdeka 2025"
+              className="input w-full"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              disabled={savingEditNama}
+              onClick={() => setEditKurikulumTarget(null)}
+              className={batalBtnClass}
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={savingEditNama}
+              className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              {savingEditNama ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* Modal Tambah Capaian */}
@@ -880,6 +957,14 @@ const handleEditSubCapaian = async () => {
                     <ToggleSwitch checked={kur.status === 'aktif'} onChange={() => handleToggleStatus(kur.id)} />
                     <ActionMenu
                       items={[
+                        {
+                          label: 'Edit Nama',
+                          icon: <Pencil className="h-4 w-4" />,
+                          onClick: () => {
+                            setEditKurikulumTarget(kur)
+                            setEditNamaForm(kur.nama)
+                          },
+                        },
                         {
                           label: 'Hapus Kurikulum',
                           icon: <Trash2 className="h-4 w-4" />,
