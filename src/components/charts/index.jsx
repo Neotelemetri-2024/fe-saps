@@ -247,28 +247,41 @@ export function HorizontalBarChart({
         horizontal: true,
         borderRadius: 4,
         barHeight: '58%',
+        dataLabels: { position: 'top' },
       },
     },
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: true,
+      formatter: (val) => `${Number(val).toFixed(1)}%`,
+      offsetX: 24,
+      style: { fontSize: '10px', colors: [skin.foreColor] },
+    },
     stroke: { width: 0 },
     xaxis: {
+      categories: labels,
       max,
       min: 0,
-      labels: { style: { fontSize: '10px', colors: skin.muted } },
+      labels: { style: { fontSize: '10px', colors: skin.muted }, formatter: (v) => `${v}%` },
       axisBorder: { color: skin.grid },
     },
     yaxis: {
-      labels: { style: { fontSize: '10px', colors: skin.muted } },
+      labels: {
+        style: { fontSize: '10px', colors: skin.foreColor, fontWeight: 500 },
+        maxWidth: 180,
+      },
     },
     grid: { borderColor: skin.grid, strokeDashArray: 3 },
     legend: { show: false },
-    tooltip: { theme: skin.tooltipTheme },
+    tooltip: {
+      theme: skin.tooltipTheme,
+      y: { formatter: (val) => `${Number(val).toFixed(2)}%` },
+    },
   }
 
   return (
     <ApexChart
       options={options}
-      series={[{ name: 'Nilai', data: values }]}
+      series={[{ name: 'Capaian', data: values }]}
       type="bar"
       height={h}
       width="100%"
