@@ -81,33 +81,29 @@ export interface Iku3ActivityDetailItem {
   status: string;
 }
 
-// Helper: Penentuan rentang tanggal Tahun Kalender & Triwulan (Hal. 96 & 142 Kepmen 358/2025)
+// Helper: Penentuan rentang tanggal Tahun Kalender & Triwulan (Akumulasi Kumulatif Tahunan - Hal. 96 & 142 Kepmen 358/2025)
 function getDateRange(tahun: number, triwulan?: number): { startDate: Date; endDate: Date; labelTriwulan: string } {
-  let startMonth = 0; // Januari
+  const startMonth = 0; // Januari (Akumulasi selalu dimulai dari awal tahun kalender)
   let endMonth = 11; // Desember
   let endDay = 31;
   let labelTriwulan = 'Semua Triwulan (1 Tahun)';
 
   if (triwulan === 1) {
-    startMonth = 0; // Jan
     endMonth = 2; // Mar
     endDay = 31;
-    labelTriwulan = 'Triwulan I (Q1: Jan - Mar)';
+    labelTriwulan = 'Triwulan I (Akumulasi Jan - Mar)';
   } else if (triwulan === 2) {
-    startMonth = 3; // Apr
     endMonth = 5; // Jun
     endDay = 30;
-    labelTriwulan = 'Triwulan II (Q2: Apr - Jun)';
+    labelTriwulan = 'Triwulan II (Akumulasi Jan - Jun)';
   } else if (triwulan === 3) {
-    startMonth = 6; // Jul
     endMonth = 8; // Sep
     endDay = 30;
-    labelTriwulan = 'Triwulan III (Q3: Jul - Sep)';
+    labelTriwulan = 'Triwulan III (Akumulasi Jan - Sep)';
   } else if (triwulan === 4) {
-    startMonth = 9; // Okt
     endMonth = 11; // Des
     endDay = 31;
-    labelTriwulan = 'Triwulan IV (Q4: Okt - Des)';
+    labelTriwulan = 'Triwulan IV (Akumulasi Jan - Des)';
   }
 
   const startDate = new Date(Date.UTC(tahun, startMonth, 1, 0, 0, 0));
