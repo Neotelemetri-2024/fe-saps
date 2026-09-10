@@ -113,7 +113,7 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
         totalTarget: prog.totalTarget,
         isLulus: prog.isLulus,
         statusKelulusan: prog.statusKelulusan,
-        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'on_track'
+        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'baik'
       });
     }
 
@@ -229,7 +229,7 @@ export const getDaftarMahasiswaBimbingan = async (req: Request, res: Response, n
         totalTarget: prog.totalTarget,
         isLulus: prog.isLulus,
         statusKelulusan: prog.statusKelulusan,
-        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'on_track'
+        status: prog.isLulus ? 'lulus' : perluPerhatian ? 'perlu_perhatian' : 'baik'
       };
     }));
 
