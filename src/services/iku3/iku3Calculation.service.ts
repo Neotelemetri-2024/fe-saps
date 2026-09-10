@@ -120,7 +120,7 @@ export async function calculateIku3Dashboard(filter: Iku3Filter): Promise<Iku3Da
   const { startDate, endDate, labelTriwulan } = getDateRange(tahun, filter.triwulan);
 
   // 1. Ambil Target Tahunan & Triwulan dari Database (atau fallback default)
-  const targetDb = await prisma.iku3Target.findFirst({
+  const targetDb: any = await prisma.iku3Target.findFirst({
     where: { tahun, deletedAt: null },
   });
   let targetVal = targetDb ? Number(targetDb.targetPersen) : DEFAULT_TARGET_IKU3_2026;

@@ -159,7 +159,7 @@ export const getTargetsIku3 = async (req: Request, res: Response, next: NextFunc
 
     res.status(200).json({
       success: true,
-      data: targets.map(t => ({
+      data: targets.map((t: any) => ({
         id: t.id,
         tahun: t.tahun,
         targetPersen: Number(t.targetPersen),
