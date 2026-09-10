@@ -11,6 +11,7 @@ import ActionMenu from '../../components/ui/ActionMenu'
 import {
   getKegiatanById,
   getPesertaKegiatan,
+  getPesertaKegiatanFull,
   updatePesertaKegiatan,
   importPesertaCSV,
   downloadTemplatePeserta,
@@ -102,8 +103,12 @@ function ManajemenPesertaEvent() {
             }
           }
         }
-        const peserta = await getPesertaKegiatan(id)
-        setPesertaList((Array.isArray(peserta) ? peserta : []).map(mapPesertaRow))
+        const full = await getPesertaKegiatanFull(id)
+        if (Array.isArray(full?.peranTersedia) && full.peranTersedia.length > 0) {
+          setPeranOptions(full.peranTersedia)
+        }
+        const peserta = Array.isArray(full?.peserta) ? full.peserta : []
+        setPesertaList(peserta.map(mapPesertaRow))
       })
       .catch((err) => toast.error('Gagal memuat data', { description: err.message }))
       .finally(() => setLoading(false))

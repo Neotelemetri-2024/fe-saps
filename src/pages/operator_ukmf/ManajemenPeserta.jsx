@@ -104,6 +104,9 @@ function ManajemenPeserta() {
           }
         }
         const full = await getPesertaKegiatanFull(id)
+        if (Array.isArray(full?.peranTersedia) && full.peranTersedia.length > 0) {
+          setPeranOptions(full.peranTersedia)
+        }
         const list = Array.isArray(full.peserta) ? full.peserta : []
         setPesertaData(list.map(mapPesertaRow))
         setSubmitted(full.statusSubmit === 'sudah_submit')
