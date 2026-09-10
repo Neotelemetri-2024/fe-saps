@@ -27,10 +27,11 @@ function formatDate(val) {
 
 function statusMahasiswa(m) {
   if (m.isLulus || m.status === 'lulus') return 'lulus'
+  if (m.status === 'baik' || m.status === 'on_track') return 'baik'
   if (m.status === 'perlu_perhatian' || (m.capaianPersen != null && m.capaianPersen < 50)) {
     return 'perlu_perhatian'
   }
-  return m.status || 'on_track'
+  return m.status || 'baik'
 }
 
 function normalizeMahasiswa(item) {

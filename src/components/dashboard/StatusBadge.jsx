@@ -37,7 +37,7 @@ const statusConfig = {
   sah: { tone: 'success', label: 'Sah' },
   lulus: { tone: 'success', label: 'Lulus' },
   baik: { tone: 'success', label: 'Baik' },
-  on_track: { tone: 'success', label: 'On Track' },
+  on_track: { tone: 'success', label: 'Baik' },
   perlu_perhatian: { tone: 'error', label: 'Perlu Perhatian' },
   belum_lulus: { tone: 'warning', label: 'Belum memenuhi syarat' },
 }
