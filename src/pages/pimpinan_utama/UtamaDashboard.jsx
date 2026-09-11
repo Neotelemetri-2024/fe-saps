@@ -122,7 +122,7 @@ function PimpinanUtamaDashboard() {
               Selamat Datang<br />{user?.nama || 'Pimpinan Utama'}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-base-content/60">
-              Pantau capaian poin mahasiswa lintas fakultas dan evaluasi kurikulum SAPS di tingkat universitas.
+              Pantau capaian poin mahasiswa lintas fakultas dan evaluasi kurikulum MY UNAND STUDENT CONNECT di tingkat universitas.
             </p>
           </div>
           {kurikulumOptions.length > 0 ? (
@@ -228,7 +228,7 @@ function PimpinanUtamaDashboard() {
         <PanduanCard
           className="max-w-lg"
           title="Manual Book User Pimpinan Utama"
-          description="Dapatkan panduan lengkap penggunaan dashboard SAPS untuk Pimpinan Utama."
+          description="Dapatkan panduan lengkap penggunaan dashboard MY UNAND STUDENT CONNECT untuk Pimpinan Utama."
         />
       </div>
     </DashboardLayout>

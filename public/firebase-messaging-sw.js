@@ -24,7 +24,7 @@ if (firebaseConfig.apiKey && firebaseConfig.messagingSenderId) {
     console.log('[FCM][SW] Notifikasi masuk (background):', payload)
     const notification = payload?.notification || {}
     const data = payload?.data || {}
-    const title = notification.title || data.title || 'SAPS'
+    const title = notification.title || data.title || 'MY UNAND STUDENT CONNECT'
     const body = notification.body || data.body || ''
     const icon = notification.icon || data.icon || '/favicon.svg'
 

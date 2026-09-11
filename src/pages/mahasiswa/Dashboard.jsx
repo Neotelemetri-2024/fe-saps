@@ -327,7 +327,7 @@ function MahasiswaDashboard() {
         <PanduanCard
           className="max-w-lg"
           title="Manual Book User Mahasiswa"
-          description="Panduan Penggunaan Website SAPS untuk Mahasiswa"
+          description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT untuk Mahasiswa"
         />
       </div>
     </DashboardLayout>

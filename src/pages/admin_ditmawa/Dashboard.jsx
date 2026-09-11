@@ -284,7 +284,7 @@ function AdminDitmawaDashboard() {
         <PanduanCard
           className="max-w-lg"
           title="Manual Book User Admin Ditmawa"
-          description="Panduan Penggunaan Website SAPS 2026 untuk Admin Ditmawa"
+          description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT 2026 untuk Admin Ditmawa"
         />
       </div>
     </DashboardLayout>

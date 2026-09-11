@@ -68,7 +68,7 @@ function LaporanEksekutif() {
       <div className="space-y-5">
         <div>
           <h2 className="text-2xl font-extrabold text-base-content sm:text-3xl">Laporan Eksekutif</h2>
-          <p className="mt-1 text-sm text-base-content/60">Preview dan unduh laporan evaluasi sistem SAPS.</p>
+          <p className="mt-1 text-sm text-base-content/60">Preview dan unduh laporan evaluasi sistem MY UNAND STUDENT CONNECT.</p>
         </div>
 
         {/* Filter & Download */}

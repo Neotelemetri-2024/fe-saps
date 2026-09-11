@@ -102,7 +102,7 @@ function PimpinanFakultasDashboard() {
             {user?.nama || 'Pimpinan Fakultas'}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-base-content/60">
-            Pantau capaian mahasiswa per program studi, kelola persetujuan kegiatan, dan evaluasi kurikulum SAPS di tingkat fakultas.
+            Pantau capaian mahasiswa per program studi, kelola persetujuan kegiatan, dan evaluasi kurikulum MY UNAND STUDENT CONNECT di tingkat fakultas.
           </p>
         </div>
 
@@ -233,7 +233,7 @@ function PimpinanFakultasDashboard() {
         <PanduanCard
           className="max-w-lg"
           title="Manual Book User Pimpinan Fakultas"
-          description="Panduan Penggunaan Website SAPS untuk Pimpinan Fakultas"
+          description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT untuk Pimpinan Fakultas"
         />
       </div>
     </DashboardLayout>

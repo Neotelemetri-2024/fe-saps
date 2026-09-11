@@ -41,7 +41,7 @@ function findKategoriEntries(riwayatPerKategori = {}, keys) {
 const CAPTION_STORAGE_KEY = 'saps_linkedin_caption'
 
 function defaultShareCaption(nama) {
-  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di SAPS — Sistem Akademik Poin Sistem, Universitas Andalas.`
+  return `Halo, saya ${nama}! Berikut CV & portofolio kegiatan kemahasiswaan saya yang tercatat di MY UNAND STUDENT CONNECT, Universitas Andalas.`
 }
 
 function GenerateCV() {

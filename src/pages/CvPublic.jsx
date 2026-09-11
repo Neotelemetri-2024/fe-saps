@@ -26,7 +26,7 @@ function CvPublic() {
       <PublicStatus
         title="CV tidak ditemukan"
         description="Tautan tidak berlaku atau data sudah tidak tersedia."
-        actions={<Link to="/login" className="btn btn-primary btn-sm">Masuk ke SAPS</Link>}
+        actions={<Link to="/login" className="btn btn-primary btn-sm">Masuk ke MY UNAND STUDENT CONNECT</Link>}
       />
     )
   }
@@ -127,7 +127,7 @@ function CvPublic() {
         ))}
 
         <p className="mt-8 text-center text-[10px] text-[#6b7280]">
-          Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas — Sistem SAPS
+          Diverifikasi oleh Direktorat Kemahasiswaan Universitas Andalas — Sistem MY UNAND STUDENT CONNECT
         </p>
       </div>
     </div>

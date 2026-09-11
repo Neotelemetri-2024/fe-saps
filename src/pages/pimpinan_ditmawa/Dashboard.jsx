@@ -83,7 +83,7 @@ function Dashboard() {
             {user?.nama || 'Pimpinan Ditmawa'}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-base-content/60">
-            Pantau perkembangan mahasiswa, evaluasi kurikulum SAPS, dan kelola kegiatan kemahasiswaan Universitas Andalas.
+            Pantau perkembangan mahasiswa, evaluasi kurikulum MY UNAND STUDENT CONNECT, dan kelola kegiatan kemahasiswaan Universitas Andalas.
           </p>
         </div>
 
@@ -288,7 +288,7 @@ function Dashboard() {
         <PanduanCard
           className="max-w-sm"
           title="Manual Book User Pimpinan Ditmawa"
-          description="Panduan Penggunaan Website SAPS 2026 untuk Pimpinan Ditmawa"
+          description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT 2026 untuk Pimpinan Ditmawa"
         />
     </div>
   )

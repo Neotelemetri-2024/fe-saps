@@ -130,7 +130,7 @@ function UKMFDashboard() {
         <PanduanCard
           className="max-w-sm"
           title="Manual Book User UKMF"
-          description="Panduan Penggunaan Website SAPS 2026 untuk UKMF"
+          description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT 2026 untuk UKMF"
         />
       </div>
     </DashboardLayout>

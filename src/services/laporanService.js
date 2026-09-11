@@ -45,7 +45,7 @@ export async function downloadExcelLaporan(filter = {}) {
 
   const blob = await res.blob()
   const contentDisposition = res.headers.get('Content-Disposition')
-    let filename = 'Laporan_SAPS.csv'
+    let filename = 'Laporan_MY_UNAND_STUDENT_CONNECT.csv'
   if (contentDisposition) {
     const match = contentDisposition.match(/filename="?([^";]+)"?/)
     if (match && match[1]) {
@@ -89,7 +89,7 @@ export async function downloadPdfLaporan(filter = {}) {
 
   const blob = await res.blob()
   const contentDisposition = res.headers.get('Content-Disposition')
-  let filename = 'Laporan_Resmi_SAPS.pdf'
+  let filename = 'Laporan_Resmi_MY_UNAND_STUDENT_CONNECT.pdf'
   if (contentDisposition) {
     const match = contentDisposition.match(/filename="?([^";]+)"?/)
     if (match && match[1]) {

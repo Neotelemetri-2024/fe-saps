@@ -152,7 +152,7 @@ function Sidebar({ menuItems, collapsed, onToggle }) {
           <div className="flex flex-1 items-center gap-3 overflow-hidden">
             <img src={logoUnand} alt="Logo" className="h-9 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-tight text-base-content">SAPS UNAND</p>
+              <p className="truncate text-sm font-semibold leading-tight text-base-content">MY UNAND STUDENT CONNECT</p>
               <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
             </div>
           </div>
@@ -190,7 +190,7 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
           <div className="flex items-center gap-3">
             <img src={logoUnand} alt="Logo" className="h-9 w-auto object-contain" />
             <div>
-              <p className="text-sm font-semibold leading-tight text-base-content">SAPS</p>
+              <p className="text-sm font-semibold leading-tight text-base-content">MY UNAND STUDENT CONNECT</p>
               <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
             </div>
           </div>

@@ -145,7 +145,7 @@ function DosenPADashboard() {
           <div className="flex flex-col gap-4">
             <PanduanCard
               title="Manual Book User Dosen PA"
-              description="Panduan Penggunaan Website SAPS untuk Dosen PA"
+              description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT untuk Dosen PA"
             />
 
             <div className="card flex-1 bg-base-100 p-5">

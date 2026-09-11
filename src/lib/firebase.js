@@ -87,7 +87,7 @@ export async function setupFirebaseMessaging() {
     // Tanpa ini, notifikasi FCM tidak akan tampil sama sekali saat tab dibuka.
     onMessage(messaging, async (payload) => {
       console.log('[FCM] Notifikasi masuk (foreground):', payload)
-      const title = payload?.notification?.title || payload?.data?.title || 'SAPS'
+      const title = payload?.notification?.title || payload?.data?.title || 'MY UNAND STUDENT CONNECT'
       const body = payload?.notification?.body || payload?.data?.body || ''
 
       // Tampilkan sebagai toast (sonner) karena tab sedang aktif dilihat user.

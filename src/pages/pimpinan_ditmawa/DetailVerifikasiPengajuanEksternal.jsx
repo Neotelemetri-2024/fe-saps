@@ -36,20 +36,17 @@ function normalizeKegiatanDetail(k) {
   const latestApproval = approval[0]
   const mhsKurikulumNama = mhs.kurikulum?.nama || (typeof mhs.kurikulum === 'string' ? mhs.kurikulum : null) || k.kurikulumNama || k.kurikulum?.nama || null
   const allKc = k.kegiatanCapaian || []
-  const matched = mhsKurikulumNama
-    ? allKc.filter((kc) => kc.subCapaian?.capaian?.kurikulum?.nama === mhsKurikulumNama)
-    : []
-  const targetKc = matched.length > 0 ? matched : allKc
-  const kurikulumDisplay = mhsKurikulumNama || targetKc[0]?.subCapaian?.capaian?.kurikulum?.nama || '-'
-
   const capaianMap = new Map()
   const subCapaianList = []
 
-  targetKc.forEach((kc) => {
+  allKc.forEach((kc) => {
+    const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || '-'
     const capNama = kc.subCapaian?.capaian?.nama
-    const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumDisplay
-    if (capNama && !capaianMap.has(capNama)) {
-      capaianMap.set(capNama, { label: capNama, kurikulum: kurNama })
+    if (capNama) {
+      const capKey = `${kurNama}___${capNama}`
+      if (!capaianMap.has(capKey)) {
+        capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
+      }
     }
     if (kc.subCapaian?.nama) {
       subCapaianList.push({
@@ -78,11 +75,11 @@ function normalizeKegiatanDetail(k) {
     deskripsi: k.deskripsi || '',
     status: k.status,
     alasan: latestApproval?.alasan || '',
-    kurikulumNama: kurikulumDisplay,
+    kurikulumNama: k.kurikulumNama || k.kurikulum?.nama || '-',
     capaian: Array.from(capaianMap.values()),
     subCapaian: subCapaianList,
-    kurikulum: kurikulumDisplay,
-    kegiatanCapaian: targetKc,
+    kurikulum: k.kurikulumNama || k.kurikulum?.nama || '-',
+    kegiatanCapaian: allKc,
   }
 }
 

@@ -68,7 +68,7 @@ function GenerateSertifikat() {
             {loading ? 'Memuat data…' : 'Generate Sertifikat'}
           </button>
           <p className="text-sm text-base-content/60">
-            Buat sertifikat capaian kegiatan kemahasiswaan Anda berdasarkan data yang tercatat di SAPS.
+            Buat sertifikat capaian kegiatan kemahasiswaan Anda berdasarkan data yang tercatat di MY UNAND STUDENT CONNECT.
           </p>
         </div>
 
@@ -110,7 +110,7 @@ function GenerateSertifikat() {
                 </p>
 
                 <p className="mt-8 max-w-xl text-sm leading-relaxed text-[#374151]">
-                  Telah menyelesaikan dan mencatatkan kegiatan kemahasiswaan melalui Sistem Akademik Poin Sistem (SAPS)
+                  Telah menyelesaikan dan mencatatkan kegiatan kemahasiswaan melalui MY UNAND STUDENT CONNECT
                   Universitas Andalas dengan rekapitulasi sebagai berikut.
                 </p>
 

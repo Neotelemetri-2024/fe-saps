@@ -150,7 +150,7 @@ function LoginPage() {
             Selamat Datang!
           </h1>
           <p className="mt-6 max-w-md text-sm leading-relaxed text-primary/80">
-            SAPS mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara terintegrasi.
+            MY UNAND STUDENT CONNECT mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara terintegrasi.
           </p>
         </div>
       </div>
@@ -160,7 +160,7 @@ function LoginPage() {
           <div className="flex items-center gap-2 lg:hidden">
             <img src={logoUnand} alt="Universitas Andalas" className="h-9 w-9 object-contain" />
             <div>
-              <p className="text-sm font-semibold text-base-content">SAPS</p>
+              <p className="text-sm font-semibold text-base-content">MY UNAND STUDENT CONNECT</p>
               <p className="text-xs text-base-content/60">Universitas Andalas</p>
             </div>
           </div>
@@ -172,7 +172,7 @@ function LoginPage() {
           <div className="mx-auto w-full max-w-md">
             <div className="hidden flex-col items-center gap-1 pb-8 text-center lg:flex">
               <img src={logoUnand} alt="Logo Universitas Andalas" className="h-11 w-11 object-contain" />
-              <p className="text-xl font-extrabold text-primary">SAPS</p>
+              <p className="text-xl font-extrabold text-primary">MY UNAND STUDENT CONNECT</p>
               <p className="text-sm text-base-content/60">Universitas Andalas</p>
             </div>
 

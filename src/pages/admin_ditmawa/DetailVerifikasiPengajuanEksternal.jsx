@@ -58,23 +58,18 @@ function normalizeKegiatanDetail(k) {
     mahasiswaKurikulum: k.mahasiswaKurikulum || null,
     mahasiswaKurikulumId: k.mahasiswaKurikulum?.id || mhs.kurikulum?.id || k.kurikulum?.id || null,
     ...(() => {
-      const mhsKur = k.mahasiswaKurikulum || null
-      const mhsKurikulumNama = mhsKur?.nama || mhs.kurikulum?.nama || (typeof mhs.kurikulum === 'string' ? mhs.kurikulum : null) || k.kurikulumNama || k.kurikulum?.nama || null
       const allKc = k.kegiatanCapaian || []
-      const matched = mhsKurikulumNama
-        ? allKc.filter((kc) => kc.subCapaian?.capaian?.kurikulum?.nama === mhsKurikulumNama)
-        : []
-      const targetKc = matched.length > 0 ? matched : allKc
-      const kurikulumDisplay = mhsKurikulumNama || targetKc[0]?.subCapaian?.capaian?.kurikulum?.nama || '-'
-
       const capaianMap = new Map()
       const subCapaianList = []
 
-      targetKc.forEach((kc) => {
+      allKc.forEach((kc) => {
+        const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || k.kurikulumNama || k.kurikulum?.nama || '-'
         const capNama = kc.subCapaian?.capaian?.nama
-        const kurNama = kc.subCapaian?.capaian?.kurikulum?.nama || kurikulumDisplay
-        if (capNama && !capaianMap.has(capNama)) {
-          capaianMap.set(capNama, { label: capNama, kurikulum: kurNama })
+        if (capNama) {
+          const capKey = `${kurNama}___${capNama}`
+          if (!capaianMap.has(capKey)) {
+            capaianMap.set(capKey, { label: capNama, kurikulum: kurNama })
+          }
         }
         if (kc.subCapaian?.nama) {
           subCapaianList.push({
@@ -87,11 +82,11 @@ function normalizeKegiatanDetail(k) {
       })
 
       return {
-        kurikulum: kurikulumDisplay,
-        kurikulumNama: kurikulumDisplay,
+        kurikulum: k.kurikulumNama || k.kurikulum?.nama || '-',
+        kurikulumNama: k.kurikulumNama || k.kurikulum?.nama || '-',
         capaian: Array.from(capaianMap.values()),
         subCapaian: subCapaianList,
-        kegiatanCapaian: targetKc,
+        kegiatanCapaian: allKc,
       }
     })(),
   }
@@ -127,37 +122,21 @@ function DetailVerifikasiPengajuanEksternal() {
       .finally(() => setLoading(false))
   }, [id])
 
-  // Load kurikulum saat form pemetaan muncul — KHUSUS KEGIATAN EKSTERNAL: HANYA KURIKULUM MAHASISWA PENGAJU
+  // Load seluruh kurikulum aktif saat form pemetaan muncul
   useEffect(() => {
-    if (!showCapaianForm || !item) return
+    if (!showCapaianForm) return
     if (kurikulumList.length > 0) return
-
-    // Jika item sudah memiliki mahasiswaKurikulum lengkap dengan capaian dan subCapaian
-    if (item.mahasiswaKurikulum && Array.isArray(item.mahasiswaKurikulum.capaian) && item.mahasiswaKurikulum.capaian.length > 0) {
-      setKurikulumList([item.mahasiswaKurikulum])
-      setSelectedKurikulumIds([item.mahasiswaKurikulum.id])
-      return
-    }
 
     setLoadingKur(true)
     getKurikulumAktif()
       .then((kur) => {
         const list = Array.isArray(kur) ? kur : (kur ? [kur] : [])
-        // Filter hanya kurikulum mahasiswa pengaju
-        let targetKur = null
-        if (item.mahasiswaKurikulumId) {
-          targetKur = list.find((k) => k.id === item.mahasiswaKurikulumId)
-        }
-        if (!targetKur && item.kurikulumNama) {
-          targetKur = list.find((k) => k.nama?.toLowerCase() === item.kurikulumNama?.toLowerCase())
-        }
-        const finalList = targetKur ? [targetKur] : (list.length > 0 ? [list[0]] : [])
-        setKurikulumList(finalList)
-        setSelectedKurikulumIds(finalList.map((k) => k.id))
+        setKurikulumList(list)
+        setSelectedKurikulumIds(list.map((k) => k.id))
       })
       .catch(() => toast.error('Gagal memuat kurikulum'))
       .finally(() => setLoadingKur(false))
-  }, [showCapaianForm, item, kurikulumList.length])
+  }, [showCapaianForm, kurikulumList.length])
 
   const backToList = () => navigate('/admin_ditmawa/verifikasi-pengajuan-eksternal')
 
@@ -317,23 +296,16 @@ function DetailVerifikasiPengajuanEksternal() {
         {canAct && showCapaianForm && (
           <div className="card border border-base-300 bg-base-100 p-5 space-y-5">
             <div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-base-content">Pemetaan capaian kurikulum</h3>
-                {item.kurikulumNama && item.kurikulumNama !== '-' && (
-                  <span className="badge badge-outline badge-primary text-xs font-medium">
-                    {item.kurikulumNama} (Kurikulum Mahasiswa)
-                  </span>
-                )}
-              </div>
+              <h3 className="text-sm font-semibold text-base-content">Pemetaan capaian kurikulum</h3>
               <p className="mt-0.5 text-sm text-base-content/60">
-                Tentukan capaian kurikulum yang dicapai mahasiswa ({item.namaMahasiswa}) melalui kegiatan ini sebelum meneruskan ke pimpinan. Khusus kegiatan eksternal, pemetaan disesuaikan dengan kurikulum mahasiswa pengaju.
+                Petakan capaian untuk semua kurikulum yang sedang aktif agar mahasiswa dengan kurikulum berbeda dapat memperoleh pembagian poin sesuai kurikulumnya masing-masing. Total alokasi bobot setiap kurikulum harus tepat 100%.
               </p>
             </div>
 
             {loadingKur ? (
-              <p className="text-sm text-base-content/50">Memuat kurikulum mahasiswa…</p>
+              <p className="text-sm text-base-content/50">Memuat kurikulum aktif…</p>
             ) : kurikulumList.length === 0 ? (
-              <p className="text-sm text-error">Kurikulum mahasiswa tidak ditemukan. Hubungi Super Admin.</p>
+              <p className="text-sm text-error">Tidak ada kurikulum aktif yang ditemukan. Hubungi Super Admin.</p>
             ) : (
               <PemetaanCapaianKurikulumSection
                 kurikulumList={kurikulumList}

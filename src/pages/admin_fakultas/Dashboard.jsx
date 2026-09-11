@@ -172,7 +172,7 @@ function Dashboard() {
             <PanduanCard
               className="w-full"
               title="Manual Book User Admin Fakultas"
-              description="Panduan Penggunaan Website SAPS untuk Admin Fakultas"
+              description="Panduan Penggunaan Website MY UNAND STUDENT CONNECT untuk Admin Fakultas"
             />
           </div>
         </div>
