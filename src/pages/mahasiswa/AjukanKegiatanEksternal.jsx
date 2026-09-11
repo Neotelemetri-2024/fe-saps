@@ -397,7 +397,7 @@ function AjukanKegiatanEksternal() {
           </button>
         </div>
 
-        <TableCard title="Ajukan Kegiatan Eksternal">
+        <TableCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex w-full items-center gap-2 rounded-lg border border-base-300 px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
               <Search className="h-3.5 w-3.5 shrink-0 text-base-content/60 sm:h-4 sm:w-4" />

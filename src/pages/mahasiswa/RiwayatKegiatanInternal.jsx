@@ -291,7 +291,7 @@ function RiwayatKegiatanInternal() {
           Rekap kegiatan internal. Poin cair otomatis setelah izin Dosen PA disetujui serta kehadiran & peran diverifikasi UKM.
         </p>
 
-        <TableCard title="Riwayat Kegiatan Internal">
+        <TableCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative flex w-full sm:flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
