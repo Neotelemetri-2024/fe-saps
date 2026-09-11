@@ -243,7 +243,7 @@ function DashboardChrome({ role, userName, userRole, children }) {
 
         <footer className="shrink-0 border-t border-base-300 bg-base-100 px-2 py-3">
           <p className="px-3 py-2.5 text-center text-sm text-base-content/60">
-            &copy; {new Date().getFullYear()} Universitas Andalas. Sistem Aktivitas dan Poin Mahasiswa.
+            &copy; {new Date().getFullYear()} Universitas Andalas - Developed by Neo Telemetri.
           </p>
         </footer>
       </div>

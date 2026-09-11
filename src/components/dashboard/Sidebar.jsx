@@ -149,11 +149,18 @@ function Sidebar({ menuItems, collapsed, onToggle }) {
     >
       <div className="flex h-16 shrink-0 items-center border-b border-base-300 px-3">
         {!collapsed && (
-          <div className="flex flex-1 items-center gap-3 overflow-hidden">
+          <div className="flex flex-1 items-center gap-2.5 overflow-hidden min-w-0 pr-1">
             <img src={logoUnand} alt="Logo" className="h-9 w-auto shrink-0 object-contain" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-tight text-base-content">MY UNAND STUDENT CONNECT</p>
-              <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold leading-tight tracking-tight text-base-content whitespace-nowrap">
+                MY UNAND
+              </p>
+              <p className="text-[11px] font-bold leading-tight text-base-content/85 whitespace-nowrap">
+                STUDENT CONNECT
+              </p>
+              <p className="text-[9px] text-base-content/50 leading-none mt-0.5 whitespace-nowrap">
+                Universitas Andalas
+              </p>
             </div>
           </div>
         )}
@@ -185,16 +192,23 @@ function MobileSidebar({ menuItems, isOpen, onClose }) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={onClose} />
-      <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-base-300 bg-base-100 lg:hidden">
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-base-300 px-4">
-          <div className="flex items-center gap-3">
-            <img src={logoUnand} alt="Logo" className="h-9 w-auto object-contain" />
-            <div>
-              <p className="text-sm font-semibold leading-tight text-base-content">MY UNAND STUDENT CONNECT</p>
-              <p className="text-[10px] text-base-content/60">Universitas Andalas</p>
+      <aside className="fixed left-0 top-0 z-50 flex h-screen w-[280px] flex-col border-r border-base-300 bg-base-100 lg:hidden">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-base-300 px-3.5 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <img src={logoUnand} alt="Logo" className="h-9 w-auto shrink-0 object-contain" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold leading-tight tracking-tight text-base-content whitespace-nowrap">
+                MY UNAND
+              </p>
+              <p className="text-[11px] font-bold leading-tight text-base-content/85 whitespace-nowrap">
+                STUDENT CONNECT
+              </p>
+              <p className="text-[9px] text-base-content/50 leading-none mt-0.5 whitespace-nowrap">
+                Universitas Andalas
+              </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-square btn-xs" aria-label="Tutup menu">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-square btn-xs shrink-0" aria-label="Tutup menu">
             <X className="h-4 w-4" />
           </button>
         </div>
