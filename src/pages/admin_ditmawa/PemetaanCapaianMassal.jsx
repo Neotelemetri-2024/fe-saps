@@ -415,7 +415,6 @@ function PemetaanCapaianMassal() {
                         alokasi: typeof aloks === 'function' ? aloks(k.alokasi || []) : aloks,
                       }))
                     }
-                    compact={true}
                   />
 
                   {/* Navigasi Antar Kegiatan */}

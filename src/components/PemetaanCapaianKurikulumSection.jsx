@@ -86,23 +86,35 @@ export default function PemetaanCapaianKurikulumSection({
         const isOpen = openCapaianKurId === kur.id
 
         return (
-          <div key={kur.id} className="space-y-5">
+          <div key={kur.id} className="rounded-xl border border-base-300 bg-base-100 p-4 space-y-4 shadow-sm">
             {/* Header kurikulum */}
-            {!compact && (
-              <div className="border-b border-base-300 pb-3">
-                <p className="text-sm font-semibold text-base-content">{kur.nama}</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-200 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="badge badge-primary badge-sm font-semibold">
+                  {kur.nama}
+                </span>
                 {kur.tahunMulai && (
-                  <p className="mt-0.5 text-xs text-base-content/50">
+                  <span className="text-xs text-base-content/60">
                     Tahun {kur.tahunMulai}/{kur.tahunMulai + 1}
-                  </p>
+                  </span>
                 )}
               </div>
-            )}
+              <div className="text-xs">
+                {alokasiForKur.length > 0 ? (
+                  <span className={`font-semibold ${Math.abs(totalBobotKur - 100) < 0.01 ? 'text-success' : 'text-warning'}`}>
+                    Total: {totalBobotKur}% {Math.abs(totalBobotKur - 100) < 0.01 ? '✓' : '(Belum 100%)'}
+                  </span>
+                ) : (
+                  <span className="text-base-content/40">Belum ada alokasi</span>
+                )}
+              </div>
+            </div>
 
             {/* Pilih Capaian */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-base-content">
-                Capaian <span className="text-error">*</span>
+              <label className="text-sm font-medium text-base-content flex items-center justify-between">
+                <span>Capaian <span className="text-error">*</span></span>
+                <span className="text-xs text-base-content/60 font-normal">{kur.nama}</span>
               </label>
               <div className="relative">
                 <button
