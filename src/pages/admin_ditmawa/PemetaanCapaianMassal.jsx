@@ -69,28 +69,8 @@ function normalizeKegiatan(k) {
   }
 }
 
-function getKurikulumForKegiatan(kegiatan, kurList = []) {
-  if (!kegiatan) return []
-  if (kegiatan.mahasiswaKurikulum && Array.isArray(kegiatan.mahasiswaKurikulum.capaian) && kegiatan.mahasiswaKurikulum.capaian.length > 0) {
-    return [kegiatan.mahasiswaKurikulum]
-  }
-  if (kegiatan.kurikulumId) {
-    const match = kurList.find((k) => k.id === kegiatan.kurikulumId)
-    if (match) return [match]
-  }
-  if (kegiatan.kurikulumNama && kegiatan.kurikulumNama !== '-') {
-    const match = kurList.find((k) => k.nama?.toLowerCase() === kegiatan.kurikulumNama.toLowerCase())
-    if (match) return [match]
-  }
-  return kurList.length > 0 ? [kurList[0]] : []
-}
-
 function buildForm(kegiatan, kurList = []) {
-  const targetKurList = getKurikulumForKegiatan(kegiatan, kurList)
-  const kurIds =
-    kegiatan.existingKurIds && kegiatan.existingKurIds.length > 0
-      ? kegiatan.existingKurIds
-      : targetKurList.map((k) => k.id)
+  const kurIds = kurList.map((k) => k.id)
   return {
     kurikulumIds: kurIds,
     capaianIds: kegiatan.existingCapaianIds || [],
@@ -162,29 +142,29 @@ function PemetaanCapaianMassal() {
   const active = kegiatans[activeIndex] || null
 
   const isLengkap = (kegiatan) => {
-    if (!kegiatan) return false
-    const targetKurList = getKurikulumForKegiatan(kegiatan, kurikulumList)
-    if (targetKurList.length === 0) return false
-    const kur = targetKurList[0]
-    const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-    const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
-    if (kurAlokasi.length === 0) return false
-    const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
-    return Math.abs(sum - 100) < 0.01
+    if (!kegiatan || kurikulumList.length === 0) return false
+    for (const kur of kurikulumList) {
+      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+      const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
+      if (kurAlokasi.length === 0) return false
+      const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+      if (Math.abs(sum - 100) > 0.01) return false
+    }
+    return true
   }
 
-  const getBobotStatus = (kegiatan) => {
-    if (!kegiatan) return 'kosong'
-    const targetKurList = getKurikulumForKegiatan(kegiatan, kurikulumList)
-    if (targetKurList.length === 0) return 'kosong'
-    const kur = targetKurList[0]
-    const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
-    const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
-    if (kurAlokasi.length === 0) return 'kosong'
-    const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
-    if (Math.abs(sum - 100) < 0.01) return 'pas'
-    if (sum < 100) return 'kurang'
-    return 'lebih'
+  const getKurikulumStatus = (kegiatan) => {
+    if (!kegiatan || kurikulumList.length === 0) return { complete: 0, total: 0 }
+    let complete = 0
+    for (const kur of kurikulumList) {
+      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+      const kurAlokasi = (kegiatan.alokasi || []).filter((a) => kurSubIds.includes(a.subCapaianId))
+      if (kurAlokasi.length > 0) {
+        const sum = kurAlokasi.reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+        if (Math.abs(sum - 100) < 0.01) complete += 1
+      }
+    }
+    return { complete, total: kurikulumList.length }
   }
 
   const allLengkap = kegiatans.length > 0 && kegiatans.every(isLengkap)
@@ -198,23 +178,39 @@ function PemetaanCapaianMassal() {
 
   const handleBagiRata = () => {
     if (!active || !active.alokasi || active.alokasi.length === 0) return
-    const count = active.alokasi.length
-    const base = Math.floor(100 / count)
-    const remainder = 100 - base * count
+    const newAlokasi = [...active.alokasi]
+
+    for (const kur of kurikulumList) {
+      const kurSubIds = (kur.capaian || []).flatMap((c) => (c.subCapaian || []).map((sc) => sc.id))
+      const indices = []
+      newAlokasi.forEach((a, idx) => {
+        if (kurSubIds.includes(a.subCapaianId)) {
+          indices.push(idx)
+        }
+      })
+      if (indices.length > 0) {
+        const count = indices.length
+        const base = Math.floor(100 / count)
+        const remainder = 100 - base * count
+        indices.forEach((idx, i) => {
+          newAlokasi[idx] = {
+            ...newAlokasi[idx],
+            alokasiPersen: i === 0 ? base + remainder : base,
+          }
+        })
+      }
+    }
 
     updateActive((k) => ({
       ...k,
-      alokasi: (k.alokasi || []).map((a, idx) => ({
-        ...a,
-        alokasiPersen: idx === 0 ? base + remainder : base,
-      })),
+      alokasi: newAlokasi,
     }))
   }
 
   const handleSubmit = async () => {
     const belumLengkap = kegiatans.filter((k) => !isLengkap(k))
     if (belumLengkap.length > 0) {
-      toast.error(`Ada ${belumLengkap.length} kegiatan yang belum lengkap. Total bobot tiap kegiatan harus tepat 100%.`)
+      toast.error(`Ada ${belumLengkap.length} kegiatan yang belum lengkap. Total bobot setiap kurikulum aktif harus tepat 100%.`)
       return
     }
     setSubmitting(true)
@@ -269,8 +265,6 @@ function PemetaanCapaianMassal() {
     )
   }
 
-  const activeSum = (active?.alokasi || []).reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
-
   return (
     <DashboardLayout role="admin_ditmawa" userName={user?.nama || 'Admin Ditmawa'} userRole="Admin Ditmawa">
       <div className="space-y-5">
@@ -306,7 +300,7 @@ function PemetaanCapaianMassal() {
                 {kegiatans.map((k, idx) => {
                   const lengkap = isLengkap(k)
                   const isActive = idx === activeIndex
-                  const kSum = (k.alokasi || []).reduce((s, a) => s + (Number(a.alokasiPersen) || 0), 0)
+                  const kStatus = getKurikulumStatus(k)
 
                   return (
                     <button
@@ -329,7 +323,7 @@ function PemetaanCapaianMassal() {
                           <span className="shrink-0 text-xs font-medium text-success">✓ Lengkap</span>
                         ) : (
                           <span className="shrink-0 text-xs text-base-content/40">
-                            {kSum > 0 ? `${kSum}%` : 'Belum'}
+                            {kStatus.complete > 0 ? `${kStatus.complete}/${kStatus.total}` : 'Belum'}
                           </span>
                         )}
                       </div>
@@ -341,10 +335,6 @@ function PemetaanCapaianMassal() {
                       <p className="truncate text-xs text-base-content/40">
                         {k.prodi}{k.skala && k.skala !== '-' ? ` · ${k.skala}` : ''}
                       </p>
-
-                      {k.kurikulumNama && k.kurikulumNama !== '-' && (
-                        <p className="truncate text-xs text-base-content/35 italic">{k.kurikulumNama}</p>
-                      )}
                     </button>
                   )
                 })}
@@ -369,16 +359,11 @@ function PemetaanCapaianMassal() {
                 <div className="card border border-base-300 bg-base-100 p-5 space-y-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-base-300 pb-3">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-base-content">
-                          Pemetaan Capaian Kurikulum
-                        </h3>
-                        <span className="badge badge-outline badge-primary text-xs">
-                          {active.kurikulumNama}
-                        </span>
-                      </div>
+                      <h3 className="text-sm font-semibold text-base-content">
+                        Pemetaan Capaian Kurikulum
+                      </h3>
                       <p className="mt-0.5 text-xs text-base-content/60">
-                        Pilih capaian dan tentukan alokasi bobot sub-capaian untuk mahasiswa pengaju ({active.mahasiswa}).
+                        Pilih capaian dan tentukan alokasi bobot sub-capaian untuk seluruh kurikulum yang sedang aktif.
                       </p>
                     </div>
 
@@ -389,24 +374,27 @@ function PemetaanCapaianMassal() {
                           onClick={handleBagiRata}
                           className="btn btn-ghost btn-xs text-primary hover:bg-base-200"
                         >
-                          Bagi Rata (100%)
+                          Bagi Rata (100% per Kurikulum)
                         </button>
                       )}
                       {isLengkap(active) ? (
                         <span className="badge badge-success badge-sm">
-                          Bobot 100% (Lengkap)
+                          Semua Kurikulum 100% (Lengkap)
                         </span>
                       ) : (
                         <span className="badge badge-warning badge-sm badge-outline">
-                          {activeSum > 0 ? `Bobot ${activeSum}% (Belum 100%)` : 'Belum Ada Bobot'}
+                          {(() => {
+                            const st = getKurikulumStatus(active)
+                            return st.complete > 0 ? `${st.complete}/${st.total} Kurikulum Lengkap` : 'Belum Lengkap'
+                          })()}
                         </span>
                       )}
                     </div>
                   </div>
 
                   <PemetaanCapaianKurikulumSection
-                    kurikulumList={getKurikulumForKegiatan(active, kurikulumList)}
-                    selectedKurikulumIds={active.kurikulumIds || []}
+                    kurikulumList={kurikulumList}
+                    selectedKurikulumIds={active.kurikulumIds || kurikulumList.map((k) => k.id)}
                     setSelectedKurikulumIds={(ids) =>
                       updateActive((k) => ({
                         ...k,
