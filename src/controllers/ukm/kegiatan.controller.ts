@@ -603,7 +603,7 @@ export const importPesertaUKM = async (req: Request, res: Response, next: NextFu
 
         // Jika NIM belum terdaftar, tolak dan beri pesan error
         if (!mahasiswa) {
-          errors.push({ nim: p.nim, error: 'Belum terdaftar di sistem SAPS. Mahasiswa harus login/register terlebih dahulu sebelum bisa di-import.' });
+          errors.push({ nim: p.nim, error: 'Belum terdaftar di sistem MY UNAND STUDENT CONNECT. Mahasiswa harus login/register terlebih dahulu sebelum bisa di-import.' });
           continue;
         }
 
@@ -718,7 +718,7 @@ export const downloadTemplatePesertaUKM = async (req: Request, res: Response, ne
     const peranList = await getValidPeranForKegiatan(kegiatanTarget);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'SAPS UNAND';
+    workbook.creator = 'MY UNAND STUDENT CONNECT UNAND';
     workbook.created = new Date();
 
     // Sheet 1: Data Peserta
@@ -1255,7 +1255,7 @@ export const tambahPesertaManual = async (req: Request, res: Response, next: Nex
     });
 
     if (!mahasiswa) {
-      return res.status(404).json({ success: false, message: 'Mahasiswa tidak ditemukan di sistem SAPS.' });
+      return res.status(404).json({ success: false, message: 'Mahasiswa tidak ditemukan di sistem MY UNAND STUDENT CONNECT.' });
     }
 
     const { peranId, hadir, peranVerifId } = req.body;

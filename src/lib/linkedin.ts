@@ -129,7 +129,7 @@ async function createImagePost(params: {
       content: {
         media: {
           id: params.imageUrn,
-          altText: 'CV & portofolio kegiatan kemahasiswaan SAPS Universitas Andalas',
+          altText: 'CV & portofolio kegiatan kemahasiswaan MY UNAND STUDENT CONNECT Universitas Andalas',
         },
       },
       lifecycleState: 'PUBLISHED',

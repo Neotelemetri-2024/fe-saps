@@ -31,7 +31,7 @@ export async function generateExcelLaporan(data: LaporanDataResult): Promise<Buf
   const printed = formatTanggal()
 
   const parts = [
-    csvRow(['Laporan SAPS']),
+    csvRow(['Laporan MY UNAND STUDENT CONNECT']),
     csvRow([data.scopeNama]),
     csvRow([`${data.kurikulum.nama} | Target ${data.kurikulum.targetPoin} poin | ${printed}`]),
     '',

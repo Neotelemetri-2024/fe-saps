@@ -1019,38 +1019,15 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
 
     // Hanya timpa capaian jika Admin mengirim alokasi baru (kegiatan eksternal mahasiswa)
     if (body.keputusan === 'setuju' && body.alokasi && body.alokasi.length > 0) {
-      if (kegiatan.asal === 'eksternal') {
-        let kurMhs: any = null;
-        try {
-          kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
-        } catch (e) {
-          // ignore
+      let kurikulumAktifList;
+      try {
+        kurikulumAktifList = await assertAlokasiCoversActiveKurikulum(body.alokasi, prisma);
+      } catch (err) {
+        if (err instanceof CurriculumResolutionError) {
+          res.status(400).json({ success: false, message: err.message });
+          return;
         }
-        if (kurMhs) {
-          const subIds = body.alokasi.map(a => a.subCapaianId);
-          const validSubs = await prisma.subCapaian.findMany({
-            where: {
-              id: { in: subIds },
-              capaian: { kurikulumId: kurMhs.id },
-            },
-            select: { id: true },
-          });
-          if (validSubs.length !== subIds.length) {
-            res.status(400).json({
-              success: false,
-              message: `Sub capaian yang dipilih harus sesuai dengan kurikulum mahasiswa (${kurMhs.nama})`,
-            });
-            return;
-          }
-          const totalPersen = body.alokasi.reduce((sum, a) => sum + (a.alokasiPersen || 0), 0);
-          if (Math.abs(totalPersen - 100) > 0.01) {
-            res.status(400).json({
-              success: false,
-              message: `Total bobot untuk ${kurMhs.nama} harus tepat 100% (saat ini ${totalPersen}%)`,
-            });
-            return;
-          }
-        }
+        throw err;
       }
 
       await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: Number(id) } });
@@ -1063,16 +1040,12 @@ export const verifikasiKegiatan = async (req: Request, res: Response): Promise<v
       });
 
       if (kegiatan.asal === 'eksternal') {
-        try {
-          const kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
-          if (kurMhs && kegiatan.kurikulumId !== kurMhs.id) {
-            await prisma.kegiatan.update({
-              where: { id: Number(id) },
-              data: { kurikulumId: kurMhs.id },
-            });
-          }
-        } catch (e) {
-          // ignore
+        const defaultKurikulumId = kurikulumAktifList[0]?.id ?? null;
+        if (defaultKurikulumId && kegiatan.kurikulumId !== defaultKurikulumId) {
+          await prisma.kegiatan.update({
+            where: { id: Number(id) },
+            data: { kurikulumId: defaultKurikulumId },
+          });
         }
       }
     }

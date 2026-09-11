@@ -339,7 +339,7 @@ export const dashboardPimpinanDitmawa = async (req: Request, res: Response): Pro
         mahasiswaAktif: mahasiswaAktifCount,
         totalFakultas: totalFakultasCount,
         totalOrmawaAktif: totalOrmawaCount,
-        kurikulumAktif: kurikulumAktif?.nama || 'Kurikulum SAPS 2024',
+        kurikulumAktif: kurikulumAktif?.nama || 'Kurikulum MY UNAND STUDENT CONNECT',
         targetPoinKurikulum: targetKurikulum,
         antreanProposalKegiatan: antreanProposalKegiatanCount,
         antreanKlaim: antreanKlaimCount,

@@ -66,7 +66,7 @@ export const downloadExcelLaporan = async (req: Request, res: Response, next: Ne
 
     const safeScope = data.scopeNama.replace(/[^a-zA-Z0-9_-]/g, '_');
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `Laporan_SAPS_${safeScope}_${dateStr}.csv`;
+    const filename = `Laporan_MY_UNAND_STUDENT_CONNECT_${safeScope}_${dateStr}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -107,7 +107,7 @@ export const downloadPdfLaporan = async (req: Request, res: Response, next: Next
 
     const safeScope = data.scopeNama.replace(/[^a-zA-Z0-9_-]/g, '_');
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `Laporan_SAPS_${safeScope}_${dateStr}.pdf`;
+    const filename = `Laporan_MY_UNAND_STUDENT_CONNECT_${safeScope}_${dateStr}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

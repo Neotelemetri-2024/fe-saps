@@ -194,7 +194,7 @@ export async function generateIku3ExcelReport(filter: Iku3Filter): Promise<Buffe
 
   // 5. Buat Workbook dengan ExcelJS
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'SAPS Universitas Andalas';
+  workbook.creator = 'MY UNAND STUDENT CONNECT Universitas Andalas';
   workbook.created = new Date();
 
   const primaryGreen = '1E7E34';
