@@ -559,6 +559,24 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
           message: `Kegiatan eksternal wajib diisi pemetaan capaian kurikulum sebelum diteruskan: ${tanpaPemetaan.map((k) => `"${k.nama}"`).join(', ')}`,
         });
       }
+
+      // Validasi setiap alokasi agar mencakup seluruh kurikulum aktif dengan bobot tepat 100%
+      for (const k of kegiatans) {
+        const alok = alokasiMap.get(k.id);
+        if (alok && alok.length > 0) {
+          try {
+            await assertAlokasiCoversActiveKurikulum(alok, prisma);
+          } catch (err) {
+            if (err instanceof CurriculumResolutionError) {
+              return res.status(400).json({
+                success: false,
+                message: `Kegiatan "${k.nama}": ${err.message}`,
+              });
+            }
+            throw err;
+          }
+        }
+      }
     }
 
     const userPeran = req.user!.peran;
@@ -585,18 +603,14 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
       // Simpan pemetaan capaian bila dikirim (kegiatan eksternal mahasiswa)
       const alokasi = alokasiByKegiatan.get(kegiatan.id);
       if (body.keputusan === 'setuju' && alokasi && alokasi.length > 0) {
-        if (kegiatan.asal === 'eksternal') {
-          try {
-            const kurMhs = await resolveKurikulumMahasiswa(kegiatan.dibuatOleh, prisma, { includeStructure: false, requireActive: false });
-            if (kurMhs && kegiatan.kurikulumId !== kurMhs.id) {
-              await prisma.kegiatan.update({
-                where: { id: kegiatan.id },
-                data: { kurikulumId: kurMhs.id },
-              });
-            }
-          } catch (e) {
-            // ignore
+        let kurikulumAktifList;
+        try {
+          kurikulumAktifList = await assertAlokasiCoversActiveKurikulum(alokasi, prisma);
+        } catch (err) {
+          if (err instanceof CurriculumResolutionError) {
+            return res.status(400).json({ success: false, message: `Kegiatan "${kegiatan.nama}": ${err.message}` });
           }
+          throw err;
         }
 
         await prisma.kegiatanCapaian.deleteMany({ where: { kegiatanId: kegiatan.id } });
@@ -607,6 +621,16 @@ export const verifikasiKegiatanBulk = async (req: Request, res: Response, next: 
             alokasiPersen: a.alokasiPersen,
           })),
         });
+
+        if (kegiatan.asal === 'eksternal') {
+          const defaultKurikulumId = kurikulumAktifList[0]?.id ?? null;
+          if (defaultKurikulumId && kegiatan.kurikulumId !== defaultKurikulumId) {
+            await prisma.kegiatan.update({
+              where: { id: kegiatan.id },
+              data: { kurikulumId: defaultKurikulumId },
+            });
+          }
+        }
       }
 
       await prisma.kegiatan.update({
