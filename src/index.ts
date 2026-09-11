@@ -25,6 +25,7 @@ import pesertaRoutes from './routes/peserta.routes';
 import { getPublicCvOgPage, getPublicCvImage } from './controllers/mahasiswa/cv.controller';
 import { linkedinCallback } from './controllers/mahasiswa/linkedin.controller';
 import { initializeFirebase } from './lib/fcm';
+import { initSiaScheduler } from './services/sia/siaScheduler.service';
 
 dotenv.config();
 
@@ -174,4 +175,8 @@ app.listen(port, () => {
   console.log(`[server]: Running at http://localhost:${port}`);
   console.log(`[server]: Swagger UI at http://localhost:${port}/api-docs`);
   console.log(`[server]: Schema: 29 tabel (MySQL)`);
+
+  // Inisialisasi background scheduler untuk sinkronisasi otomatis SIA
+  initSiaScheduler();
 });
+

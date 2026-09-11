@@ -13,6 +13,7 @@ import {
   syncAll,
   cleanupDummyData,
 } from '../../../services/sia/siaSync.service';
+import { getSchedulerStatus } from '../../../services/sia/siaScheduler.service';
 
 /**
  * POST /api/umum/sia/sync
@@ -127,5 +128,22 @@ export const siaCleanup = async (req: Request, res: Response): Promise<void> => 
   } catch (err: any) {
     console.error('[SIA Cleanup Controller]', err);
     res.status(500).json({ success: false, message: `Gagal: ${err.message}` });
+  }
+};
+
+/**
+ * GET /api/umum/sia/status
+ * Menampilkan status sinkronisasi terakhir & scheduler background cron job.
+ */
+export const getSiaSyncStatus = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const status = getSchedulerStatus();
+    res.json({
+      success: true,
+      message: 'Status sinkronisasi dan scheduler SIA berhasil diambil.',
+      data: status,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: `Gagal membaca status: ${err.message}` });
   }
 };

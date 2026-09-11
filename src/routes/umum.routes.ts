@@ -29,6 +29,7 @@ import {
   siaSyncMahasiswa,
   siaSyncKelasMbkm,
   siaCleanup,
+  getSiaSyncStatus,
 } from "../controllers/admin/ditmawa/siaSync.controller";
 
 const router = Router();
@@ -91,6 +92,7 @@ router.get(
 );
 
 // ─── SINKRONISASI DATA SIA (Admin & Pimpinan Ditmawa) ─────────────────────────
+router.get("/sia/status", authorizeRole("admin_ditmawa", "pimpinan_ditmawa", "pimpinan_utama"), getSiaSyncStatus);
 router.post("/sia/sync", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncAll);
 router.post("/sia/sync/fakultas", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncFakultas);
 router.post("/sia/sync/prodi", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncProdi);

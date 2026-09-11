@@ -119,9 +119,35 @@ export interface SyncKelasMbkmResult {
   errors: string[];
 }
 
+// ─── Concurrency & Sync State Management ────────────────────────────────────
+let isSyncInProgress = false;
+let lastSyncTime: Date | null = null;
+let lastSyncStatus: 'idle' | 'running' | 'success' | 'failed' = 'idle';
+let lastSyncError: string | null = null;
+let lastSyncSummary: any = null;
+
+export function getSyncStatus() {
+  return {
+    isSyncInProgress,
+    lastSyncTime,
+    lastSyncStatus,
+    lastSyncError,
+    lastSyncSummary,
+  };
+}
+
+// ─── Helper: chunk array for parallel batching ──────────────────────────────
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 // ─── Helper: hash password ──────────────────────────────────────────────────
 async function hashPassword(plain: string): Promise<string> {
-  const salt = await bcrypt.genSalt(12);
+  const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plain, salt);
 }
 
@@ -268,75 +294,99 @@ export async function syncDosenPA(): Promise<SyncResult> {
       await syncFakultas();
     }
 
-    for (const [nip, dosen] of deduped) {
-      try {
-        const email = `${nip}@dosen.unand.ac.id`;
-        const nidn = (dosen.dsnNidn || nip).trim();
+    // Preload semua fakultas ke Map untuk lookup in-memory tanpa query per dosen
+    const allFakultas = await prisma.fakultas.findMany({ select: { id: true, nama: true } });
+    const fakByNameLower = new Map<string, number>();
+    for (const f of allFakultas) {
+      fakByNameLower.set(f.nama.trim().toLowerCase(), f.id);
+    }
 
-        // Susun nama lengkap dengan gelar depan dan belakang jika tersedia
-        const gelarDepan = (dosen.pegGelarDepan || '').trim();
-        const gelarBelakang = (dosen.pegGelarBelakang || '').trim();
-        const namaUtama = (dosen.pegNama || dosen.dosenNama || '').trim();
+    const BATCH_SIZE = 50;
+    const entries = Array.from(deduped.entries());
+    const chunks = chunkArray(entries, BATCH_SIZE);
 
-        let namaLengkap = namaUtama;
-        if (gelarDepan) namaLengkap = `${gelarDepan} ${namaLengkap}`;
-        if (gelarBelakang) namaLengkap = `${namaLengkap}, ${gelarBelakang}`;
+    console.log(`[SIA Sync] Memproses ${entries.length} Dosen PA dalam ${chunks.length} batch (${BATCH_SIZE} dosen/batch)...`);
 
-        let fakultasId = siaFakIdToSapsId.get(dosen.fakId) || null;
-        if (!fakultasId && dosen.fakNamaResmi) {
-          const fak = await prisma.fakultas.findFirst({
-            where: { nama: { contains: dosen.fakNamaResmi } },
-          });
-          if (fak) fakultasId = fak.id;
-        }
+    for (let i = 0; i < chunks.length; i++) {
+      const batch = chunks[i];
+      await Promise.all(
+        batch.map(async ([nip, dosen]) => {
+          try {
+            const email = `${nip}@dosen.unand.ac.id`;
+            const nidn = (dosen.dsnNidn || nip).trim();
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+            // Susun nama lengkap dengan gelar depan dan belakang jika tersedia
+            const gelarDepan = (dosen.pegGelarDepan || '').trim();
+            const gelarBelakang = (dosen.pegGelarBelakang || '').trim();
+            const namaUtama = (dosen.pegNama || dosen.dosenNama || '').trim();
 
-        if (existingUser) {
-          if (existingUser.nama !== namaLengkap) {
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { nama: namaLengkap },
-            });
-            result.updated++;
-          } else {
-            result.skipped++;
+            let namaLengkap = namaUtama;
+            if (gelarDepan) namaLengkap = `${gelarDepan} ${namaLengkap}`;
+            if (gelarBelakang) namaLengkap = `${namaLengkap}, ${gelarBelakang}`;
+
+            let fakultasId = siaFakIdToSapsId.get(dosen.fakId) || null;
+            if (!fakultasId && dosen.fakNamaResmi) {
+              const lowerFak = dosen.fakNamaResmi.trim().toLowerCase();
+              fakultasId = fakByNameLower.get(lowerFak) || null;
+              if (!fakultasId) {
+                for (const [fName, fId] of fakByNameLower.entries()) {
+                  if (fName.includes(lowerFak) || lowerFak.includes(fName)) {
+                    fakultasId = fId;
+                    break;
+                  }
+                }
+              }
+            }
+
+            const existingUser = await prisma.user.findUnique({ where: { email } });
+
+            if (existingUser) {
+              if (existingUser.nama !== namaLengkap) {
+                await prisma.user.update({
+                  where: { id: existingUser.id },
+                  data: { nama: namaLengkap },
+                });
+                result.updated++;
+              } else {
+                result.skipped++;
+              }
+
+              const existingDosen = await prisma.dosen.findUnique({ where: { userId: existingUser.id } });
+              if (!existingDosen) {
+                await prisma.dosen.create({
+                  data: { userId: existingUser.id, nidn, fakultasId },
+                });
+              } else if (existingDosen.fakultasId !== fakultasId || existingDosen.nidn !== nidn) {
+                await prisma.dosen.update({
+                  where: { userId: existingUser.id },
+                  data: { fakultasId, nidn },
+                });
+              }
+
+              siaDosenNipToSapsUserId.set(nip, existingUser.id);
+            } else {
+              const passwordHash = await hashPassword(`Unand#${nip}`);
+              const newUser = await prisma.user.create({
+                data: {
+                  nama: namaLengkap,
+                  email,
+                  passwordHash,
+                  peran: 'dosen',
+                },
+              });
+
+              await prisma.dosen.create({
+                data: { userId: newUser.id, nidn, fakultasId },
+              });
+
+              siaDosenNipToSapsUserId.set(nip, newUser.id);
+              result.created++;
+            }
+          } catch (err: any) {
+            result.errors.push(`Dosen NIP ${nip}: ${err.message}`);
           }
-
-          const existingDosen = await prisma.dosen.findUnique({ where: { userId: existingUser.id } });
-          if (!existingDosen) {
-            await prisma.dosen.create({
-              data: { userId: existingUser.id, nidn, fakultasId },
-            });
-          } else if (existingDosen.fakultasId !== fakultasId || existingDosen.nidn !== nidn) {
-            await prisma.dosen.update({
-              where: { userId: existingUser.id },
-              data: { fakultasId, nidn },
-            });
-          }
-
-          siaDosenNipToSapsUserId.set(nip, existingUser.id);
-        } else {
-          const passwordHash = await hashPassword(`Unand#${nip}`);
-          const newUser = await prisma.user.create({
-            data: {
-              nama: namaLengkap,
-              email,
-              passwordHash,
-              peran: 'dosen',
-            },
-          });
-
-          await prisma.dosen.create({
-            data: { userId: newUser.id, nidn, fakultasId },
-          });
-
-          siaDosenNipToSapsUserId.set(nip, newUser.id);
-          result.created++;
-        }
-      } catch (err: any) {
-        result.errors.push(`Dosen NIP ${nip}: ${err.message}`);
-      }
+        })
+      );
     }
   } catch (err: any) {
     result.errors.push(`Fetch error: ${err.message}`);
@@ -381,87 +431,159 @@ export async function syncMahasiswa(): Promise<SyncResult> {
       await syncProdi();
     }
 
-    for (const [nim, mhs] of deduped) {
-      try {
-        const prodiKode = (mhs.prodiKode || '').trim();
-        const prodiNama = (mhs.prodiNamaResmi || mhs.prodiNama || '').trim();
+    // Preload semua program studi ke memory untuk lookup super cepat tanpa query DB per mahasiswa
+    const allProdiList = await prisma.programStudi.findMany({ select: { id: true, nama: true } });
+    const prodiByNameLower = new Map<string, number>();
+    for (const p of allProdiList) {
+      prodiByNameLower.set(p.nama.trim().toLowerCase(), p.id);
+    }
 
-        let prodiId = siaProdiKodeToSapsId.get(prodiKode);
-        if (!prodiId && prodiNama) {
-          const prodi = await prisma.programStudi.findFirst({
-            where: { nama: { contains: prodiNama } },
-          });
-          if (prodi) prodiId = prodi.id;
+    // Preload Dosen PA jika map masih kosong
+    if (siaDosenNipToSapsUserId.size === 0) {
+      const allDosenUsers = await prisma.user.findMany({
+        where: { peran: 'dosen' },
+        select: { id: true, email: true },
+      });
+      for (const u of allDosenUsers) {
+        const nip = u.email.split('@')[0];
+        if (nip) siaDosenNipToSapsUserId.set(nip, u.id);
+      }
+    }
+
+    // ─── Load semua kurikulum aktif, diurutkan dari angkatan_mulai terbesar ────
+    // Logika: mahasiswa angkatan X → pakai kurikulum dengan angkatan_mulai ≤ X
+    //         yang paling besar (terdekat). Jika tidak ada yang cocok, pakai
+    //         kurikulum aktif apa saja sebagai fallback.
+    const semuaKurikulum = await prisma.kurikulum.findMany({
+      where: { deletedAt: null },
+      orderBy: { angkatanMulai: 'desc' },
+    });
+
+    function cariKurikulumId(angkatan: number | null): number | null {
+      if (!angkatan || semuaKurikulum.length === 0) {
+        // Fallback: pakai kurikulum aktif pertama jika ada
+        const aktif = semuaKurikulum.find(k => k.status === 'aktif');
+        return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
+      }
+      // Cari kurikulum yang angkatanMulai ≤ angkatan mahasiswa, yang terdekat
+      for (const k of semuaKurikulum) {
+        if (k.angkatanMulai !== null && k.angkatanMulai <= angkatan) {
+          return k.id;
         }
+      }
+      // Jika tidak ada yang ≤ angkatan, fallback ke kurikulum aktif
+      const aktif = semuaKurikulum.find(k => k.status === 'aktif');
+      return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
+    }
 
-        if (!prodiId) {
-          result.errors.push(`Mahasiswa "${mhs.mhsNama}" (NIM: ${nim}): Prodi "${prodiNama || prodiKode}" tidak ditemukan`);
-          continue;
-        }
+    console.log(`[SIA Sync] Kurikulum tersedia: ${semuaKurikulum.length} (untuk auto-assign ke mahasiswa)`);
 
-        const email = `${nim}@student.unand.ac.id`;
-        const angkatan = parseInt(mhs.mhsAngkatan || '', 10) || null;
+    const BATCH_SIZE = 50;
+    const entries = Array.from(deduped.entries());
+    const chunks = chunkArray(entries, BATCH_SIZE);
 
-        // Cari Dosen PA jika ada NIP dosen PA
-        const dosenPaNip = (mhs.dsnpaPegNip || mhs.dosenPaNip || '').trim();
-        let dosenPaId: bigint | null = null;
+    console.log(`[SIA Sync] Memproses ${entries.length} mahasiswa dalam ${chunks.length} batch (${BATCH_SIZE} mahasiswa/batch)...`);
 
-        if (dosenPaNip) {
-          if (siaDosenNipToSapsUserId.has(dosenPaNip)) {
-            dosenPaId = siaDosenNipToSapsUserId.get(dosenPaNip)!;
-          } else {
-            const dosenUser = await prisma.user.findUnique({
-              where: { email: `${dosenPaNip}@dosen.unand.ac.id` },
-            });
-            if (dosenUser) {
-              dosenPaId = dosenUser.id;
-              siaDosenNipToSapsUserId.set(dosenPaNip, dosenUser.id);
+    for (let batchIndex = 0; batchIndex < chunks.length; batchIndex++) {
+      const batch = chunks[batchIndex];
+
+      await Promise.all(
+        batch.map(async ([nim, mhs]) => {
+          try {
+            const prodiKode = (mhs.prodiKode || '').trim();
+            const prodiNama = (mhs.prodiNamaResmi || mhs.prodiNama || '').trim();
+
+            let prodiId = siaProdiKodeToSapsId.get(prodiKode);
+            if (!prodiId && prodiNama) {
+              const lowerName = prodiNama.toLowerCase();
+              prodiId = prodiByNameLower.get(lowerName);
+              if (!prodiId) {
+                for (const [pName, pId] of prodiByNameLower.entries()) {
+                  if (pName.includes(lowerName) || lowerName.includes(pName)) {
+                    prodiId = pId;
+                    break;
+                  }
+                }
+              }
             }
+
+            if (!prodiId) {
+              result.errors.push(`Mahasiswa "${mhs.mhsNama}" (NIM: ${nim}): Prodi "${prodiNama || prodiKode}" tidak ditemukan`);
+              return;
+            }
+
+            const email = `${nim}@student.unand.ac.id`;
+            const angkatan = parseInt(mhs.mhsAngkatan || '', 10) || null;
+
+            // Auto-assign kurikulum berdasarkan angkatan
+            const kurikulumId = cariKurikulumId(angkatan);
+
+            // Cari Dosen PA jika ada NIP dosen PA
+            const dosenPaNip = (mhs.dsnpaPegNip || mhs.dosenPaNip || '').trim();
+            let dosenPaId: bigint | null = null;
+
+            if (dosenPaNip) {
+              if (siaDosenNipToSapsUserId.has(dosenPaNip)) {
+                dosenPaId = siaDosenNipToSapsUserId.get(dosenPaNip)!;
+              } else {
+                const dosenUser = await prisma.user.findUnique({
+                  where: { email: `${dosenPaNip}@dosen.unand.ac.id` },
+                });
+                if (dosenUser) {
+                  dosenPaId = dosenUser.id;
+                  siaDosenNipToSapsUserId.set(dosenPaNip, dosenUser.id);
+                }
+              }
+            }
+
+            const existingUser = await prisma.user.findUnique({ where: { email } });
+
+            if (existingUser) {
+              if (existingUser.nama !== mhs.mhsNama) {
+                await prisma.user.update({
+                  where: { id: existingUser.id },
+                  data: { nama: mhs.mhsNama },
+                });
+              }
+
+              const existingMhs = await prisma.mahasiswa.findUnique({ where: { userId: existingUser.id } });
+              if (!existingMhs) {
+                await prisma.mahasiswa.create({
+                  data: { userId: existingUser.id, nim, prodiId, angkatan, dosenPaId, kurikulumId },
+                });
+              } else {
+                await prisma.mahasiswa.update({
+                  where: { userId: existingUser.id },
+                  data: { prodiId, angkatan, dosenPaId, kurikulumId },
+                });
+              }
+
+              result.updated++;
+            } else {
+              const passwordHash = await hashPassword(`Unand#${nim}`);
+              const newUser = await prisma.user.create({
+                data: {
+                  nama: mhs.mhsNama,
+                  email,
+                  passwordHash,
+                  peran: 'mahasiswa',
+                },
+              });
+
+              await prisma.mahasiswa.create({
+                data: { userId: newUser.id, nim, prodiId, angkatan, dosenPaId, kurikulumId },
+              });
+
+              result.created++;
+            }
+          } catch (err: any) {
+            result.errors.push(`Mahasiswa "${mhs.mhsNama}" (NIM: ${nim}): ${err.message}`);
           }
-        }
+        })
+      );
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-
-        if (existingUser) {
-          if (existingUser.nama !== mhs.mhsNama) {
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { nama: mhs.mhsNama },
-            });
-          }
-
-          const existingMhs = await prisma.mahasiswa.findUnique({ where: { userId: existingUser.id } });
-          if (!existingMhs) {
-            await prisma.mahasiswa.create({
-              data: { userId: existingUser.id, nim, prodiId, angkatan, dosenPaId },
-            });
-          } else {
-            await prisma.mahasiswa.update({
-              where: { userId: existingUser.id },
-              data: { prodiId, angkatan, dosenPaId },
-            });
-          }
-
-          result.updated++;
-        } else {
-          const passwordHash = await hashPassword(`Unand#${nim}`);
-          const newUser = await prisma.user.create({
-            data: {
-              nama: mhs.mhsNama,
-              email,
-              passwordHash,
-              peran: 'mahasiswa',
-            },
-          });
-
-          await prisma.mahasiswa.create({
-            data: { userId: newUser.id, nim, prodiId, angkatan, dosenPaId },
-          });
-
-          result.created++;
-        }
-      } catch (err: any) {
-        result.errors.push(`Mahasiswa "${mhs.mhsNama}" (NIM: ${nim}): ${err.message}`);
+      if ((batchIndex + 1) % 10 === 0 || batchIndex === chunks.length - 1) {
+        console.log(`[SIA Sync] Progress mahasiswa: batch ${batchIndex + 1}/${chunks.length} selesai (${result.created} baru, ${result.updated} update)`);
       }
     }
   } catch (err: any) {
@@ -541,23 +663,45 @@ export async function syncKelasMbkm(klsSemId?: string): Promise<SyncKelasMbkmRes
 // 6. SYNC ALL (Berurutan: Fakultas → Prodi → Dosen → Mahasiswa → Kelas MBKM)
 // =============================================================================
 export async function syncAll(klsSemId?: string): Promise<(SyncResult | SyncKelasMbkmResult)[]> {
+  if (isSyncInProgress) {
+    throw new Error('Sinkronisasi SIA sedang berjalan di latar belakang. Silakan tunggu hingga proses saat ini selesai.');
+  }
+
+  isSyncInProgress = true;
+  lastSyncStatus = 'running';
+  lastSyncError = null;
+
   console.log('[SIA Sync] ═══════════════════════════════════════════════════');
-  console.log('[SIA Sync] Memulai sinkronisasi penuh dari API SIA...');
+  console.log('[SIA Sync] Memulai sinkronisasi penuh dari API SIA (Batch Parallel)...');
   console.log('[SIA Sync] ═══════════════════════════════════════════════════');
 
+  const startTime = Date.now();
   const results: (SyncResult | SyncKelasMbkmResult)[] = [];
 
-  results.push(await syncFakultas());
-  results.push(await syncProdi());
-  results.push(await syncDosenPA());
-  results.push(await syncMahasiswa());
-  results.push(await syncKelasMbkm(klsSemId));
+  try {
+    results.push(await syncFakultas());
+    results.push(await syncProdi());
+    results.push(await syncDosenPA());
+    results.push(await syncMahasiswa());
+    results.push(await syncKelasMbkm(klsSemId));
 
-  console.log('[SIA Sync] ═══════════════════════════════════════════════════');
-  console.log('[SIA Sync] Sinkronisasi selesai!');
-  console.log('[SIA Sync] ═══════════════════════════════════════════════════');
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log('[SIA Sync] ═══════════════════════════════════════════════════');
+    console.log(`[SIA Sync] Sinkronisasi selesai dalam ${duration} detik!`);
+    console.log('[SIA Sync] ═══════════════════════════════════════════════════');
 
-  return results;
+    lastSyncTime = new Date();
+    lastSyncStatus = 'success';
+    lastSyncSummary = results;
+    return results;
+  } catch (err: any) {
+    lastSyncStatus = 'failed';
+    lastSyncError = err.message;
+    console.error('[SIA Sync Error]', err.message);
+    throw err;
+  } finally {
+    isSyncInProgress = false;
+  }
 }
 
 // =============================================================================
