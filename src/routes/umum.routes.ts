@@ -21,6 +21,15 @@ import {
   getOrganisasi,
 } from "../controllers/shared/referensi.controller";
 import { getPublicCv } from "../controllers/mahasiswa/cv.controller";
+import {
+  siaSyncAll,
+  siaSyncFakultas,
+  siaSyncProdi,
+  siaSyncDosenPA,
+  siaSyncMahasiswa,
+  siaSyncKelasMbkm,
+  siaCleanup,
+} from "../controllers/admin/ditmawa/siaSync.controller";
 
 const router = Router();
 
@@ -80,5 +89,14 @@ router.get(
   authorizeRole("mahasiswa", "dosen", "admin_ditmawa", "pimpinan_ditmawa", "pimpinan_utama"),
   getPortofolio,
 );
+
+// ─── SINKRONISASI DATA SIA (Admin & Pimpinan Ditmawa) ─────────────────────────
+router.post("/sia/sync", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncAll);
+router.post("/sia/sync/fakultas", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncFakultas);
+router.post("/sia/sync/prodi", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncProdi);
+router.post("/sia/sync/dosen", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncDosenPA);
+router.post("/sia/sync/mahasiswa", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncMahasiswa);
+router.post("/sia/sync/kelas-mbkm", authorizeRole("admin_ditmawa", "pimpinan_ditmawa"), siaSyncKelasMbkm);
+router.post("/sia/cleanup", authorizeRole("pimpinan_ditmawa"), siaCleanup);
 
 export default router;
