@@ -27,6 +27,11 @@ function assertConfigured(): void {
   }
 }
 
+// Izinkan sertifikat internal kampus jika self-signed / internal CA
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === undefined) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 /**
  * Mendapatkan token autentikasi dari API SIA.
  * Jika token masih valid di cache, mengembalikan token dari cache.
@@ -40,16 +45,28 @@ export async function getSiaToken(): Promise<string> {
     return cachedToken;
   }
 
-  console.log('[SIA] Meminta token baru dari API SIA...');
+  const tokenUrl = `${SIA_BASE_URL.replace(/\/$/, '')}/auth/get-token`;
+  console.log(`[SIA] Meminta token baru dari: ${tokenUrl}`);
 
-  const response = await fetch(`${SIA_BASE_URL}/auth/get-token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userid: SIA_USER_ID, pin: SIA_PIN }),
-  });
+  let response: globalThis.Response;
+  try {
+    response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userid: SIA_USER_ID, pin: SIA_PIN }),
+    });
+  } catch (err: any) {
+    const cause = err?.cause ? ` (Detail: ${err.cause.code || err.cause.message || err.cause})` : '';
+    throw new Error(`[SIA] Gagal menghubungi ${tokenUrl}: ${err.message}${cause}`);
+  }
 
   if (!response.ok) {
-    throw new Error(`[SIA] Gagal mendapatkan token: HTTP ${response.status} ${response.statusText}`);
+    const errorBody = await response.text().catch(() => '');
+    throw new Error(
+      `[SIA] Gagal mendapatkan token: HTTP ${response.status} ${response.statusText}${
+        errorBody ? ` - ${errorBody}` : ''
+      }`
+    );
   }
 
   const result = (await response.json()) as {
@@ -84,18 +101,24 @@ export async function siaFetch<T = any>(
   assertConfigured();
 
   const token = await getSiaToken();
-  const url = `${SIA_BASE_URL}${endpoint}`;
+  const url = `${SIA_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
   console.log(`[SIA] Fetching: ${url}`);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: body ? JSON.stringify(body) : JSON.stringify({}),
-  });
+  let response: globalThis.Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: body ? JSON.stringify(body) : JSON.stringify({}),
+    });
+  } catch (err: any) {
+    const cause = err?.cause ? ` (Detail: ${err.cause.code || err.cause.message || err.cause})` : '';
+    throw new Error(`[SIA] Gagal request ke ${url}: ${err.message}${cause}`);
+  }
 
   if (!response.ok) {
     // Jika 401/403, kemungkinan token expired — invalidate cache
