@@ -50,10 +50,15 @@ app.use(cors({
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 200 : 2000,
+  max: process.env.NODE_ENV === 'production' ? 500 : 2000,
   message: 'Too many requests from this IP, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { ip: false, xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    const rawIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    return rawIp.replace(/:\d+$/, '');
+  },
 });
 app.use('/api/', limiter);
 

@@ -550,45 +550,52 @@ export const updateFcmToken = async (
   }
 };
 
-// ==================== SSO UNAND (KEYCLOAK) ====================
+import * as oidc from 'openid-client';
 
-const SSO_AUTH_URL = process.env.SSO_AUTH_URL || 'https://sso.unand.ac.id/auth/realms/unand/protocol/openid-connect/auth';
-const SSO_TOKEN_URL = process.env.SSO_TOKEN_URL || 'https://sso.unand.ac.id/auth/realms/unand/protocol/openid-connect/token';
-const SSO_USERINFO_URL = process.env.SSO_USERINFO_URL || 'https://sso.unand.ac.id/auth/realms/unand/protocol/openid-connect/userinfo';
-const SSO_LOGOUT_URL = process.env.SSO_LOGOUT_URL || 'https://sso.unand.ac.id/auth/realms/unand/protocol/openid-connect/logout';
-const SSO_CLIENT_ID = process.env.SSO_CLIENT_ID || 'saps-unand';
-const SSO_CLIENT_SECRET = process.env.SSO_CLIENT_SECRET || '';
-const SSO_REDIRECT_URI = process.env.SSO_REDIRECT_URI || 'https://api-studentconnect.unand.ac.id/api/auth/callback';
+// ==================== SSO UNAND (KEYCLOAK DTI) ====================
+
+const KEYCLOAK_BASE_URL = process.env.KEYCLOAK_BASE_URL || 'https://sso.unand.ac.id/auth';
+const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || process.env.SSO_CLIENT_ID || 'saps-unand';
+const KEYCLOAK_CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET || process.env.SSO_CLIENT_SECRET || '7whZVUugIp7AEjMThqRuaApbCIjMjyns';
+const KEYCLOAK_CALLBACK_URL = process.env.KEYCLOAK_CALLBACK_URL || process.env.SSO_REDIRECT_URI || 'https://api-studentconnect.unand.ac.id/api/auth/callback';
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://studentconnect.unand.ac.id').replace(/\/$/, '');
+const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || 'unand';
 
-// In-memory PKCE state cache dengan TTL 15 menit
-interface SsoStateRecord {
-  verifier: string;
+interface SsoTransactionRecord {
+  codeVerifier: string;
   frontendUrl?: string;
-  expiresAt: number;
+  createdAt: number;
 }
-const ssoStateMap = new Map<string, SsoStateRecord>();
+const ssoTransactions = new Map<string, SsoTransactionRecord>();
 
-function cleanExpiredSsoStates() {
+const cleanupSsoTransactions = () => {
   const now = Date.now();
-  for (const [key, value] of ssoStateMap.entries()) {
-    if (value.expiresAt < now) {
-      ssoStateMap.delete(key);
+  const maxAge = 10 * 60 * 1000; // 10 menit
+  for (const [state, transaction] of ssoTransactions.entries()) {
+    if (now - transaction.createdAt > maxAge) {
+      ssoTransactions.delete(state);
     }
   }
-}
+};
 
-function base64UrlEncode(buffer: Buffer): string {
-  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
+const getKeycloakConfig = async () => {
+  const issuerUrl = `${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}`;
+  return await oidc.discovery(new URL(issuerUrl), KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET);
+};
 
 /**
  * GET /api/auth/sso
- * Mengarahkan user ke Keycloak SSO UNAND dengan parameter PKCE & state
+ *
+ * Memulai login SSO melalui Keycloak UNAND (DTI).
+ * Menggunakan Authorization Code Flow + PKCE + state.
  */
 export const ssoLogin = async (req: Request, res: Response): Promise<void> => {
   try {
-    cleanExpiredSsoStates();
+    cleanupSsoTransactions();
+    const config = await getKeycloakConfig();
+    const codeVerifier = oidc.randomPKCECodeVerifier();
+    const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
+    const state = oidc.randomState();
 
     const referer = req.headers.referer || req.headers.origin;
     let targetFrontend = FRONTEND_URL;
@@ -601,39 +608,35 @@ export const ssoLogin = async (req: Request, res: Response): Promise<void> => {
       } catch {}
     }
 
-    const state = crypto.randomBytes(24).toString('hex');
-    const verifier = base64UrlEncode(crypto.randomBytes(32));
-    const challenge = base64UrlEncode(crypto.createHash('sha256').update(verifier).digest());
-
-    ssoStateMap.set(state, {
-      verifier,
+    ssoTransactions.set(state, {
+      codeVerifier,
       frontendUrl: targetFrontend,
-      expiresAt: Date.now() + 15 * 60 * 1000,
+      createdAt: Date.now(),
     });
 
-    const params = new URLSearchParams({
-      client_id: SSO_CLIENT_ID,
-      redirect_uri: SSO_REDIRECT_URI,
-      response_type: 'code',
+    const authorizationUrl = oidc.buildAuthorizationUrl(config, {
+      redirect_uri: KEYCLOAK_CALLBACK_URL,
       scope: 'openid profile email',
-      state,
-      code_challenge: challenge,
+      response_type: 'code',
+      code_challenge: codeChallenge,
       code_challenge_method: 'S256',
-      prompt: 'login', // Memaksa Keycloak selalu menampilkan halaman login username & password
+      state,
+      prompt: 'login',
     });
 
-    res.redirect(`${SSO_AUTH_URL}?${params.toString()}`);
+    res.redirect(authorizationUrl.href);
   } catch (error) {
-    console.error('[SSO Login Error]', error);
-    res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent('Gagal menginisiasi login SSO.')}`);
+    console.error('SSO Login Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal terhubung ke SSO Universitas Andalas.',
+    });
   }
 };
 
 /**
  * GET /api/auth/sso/mock
- * Endpoint khusus pengujian SSO di environment Local Development.
- * Menjalankan alur JIT Auto-Provisioning & pembuatan session yang sama persis seperti SSO Keycloak nyata,
- * tanpa memerlukan whitelist domain/IP di server Keycloak UNAND.
+ * Endpoint khusus pengujian SSO di environment Local Development (Offline).
  */
 export const ssoMockLogin = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -667,10 +670,8 @@ export const ssoMockLogin = async (req: Request, res: Response): Promise<void> =
 
     let peran: 'mahasiswa' | 'dosen' | 'staff' = role === 'dosen' ? 'dosen' : 'mahasiswa';
 
-    // Auto-Provisioning / JIT User Sync di database
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      console.log(`[SSO Mock Local] Auto-provisioning user: ${email} (${peran})`);
       user = await prisma.user.create({
         data: {
           nama,
@@ -736,10 +737,10 @@ export const ssoMockLogin = async (req: Request, res: Response): Promise<void> =
       peran: user.peran,
       nama: user.nama,
       email: user.email,
+      nim: user.peran === 'mahasiswa' ? username : undefined,
     };
 
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
-
     res.redirect(`${targetFrontend}/login?sso=success&token=${encodeURIComponent(token)}`);
   } catch (err: any) {
     console.error('[SSO Mock Error]', err);
@@ -749,112 +750,73 @@ export const ssoMockLogin = async (req: Request, res: Response): Promise<void> =
 
 /**
  * GET /api/auth/callback
- * Menerima callback dari Keycloak SSO UNAND:
- * 1. Tukar authorization code dengan access_token/id_token
- * 2. Ambil user profile dari userinfo endpoint atau id_token
- * 3. Auto-provisioning: jika user belum ada di db_saps, buat otomatis (Mahasiswa / Dosen)
- * 4. Generate JWT token SAPS
- * 5. Redirect ke Frontend: /login?sso=success&token=...
+ *
+ * Callback dari Keycloak setelah autentikasi berhasil.
+ * 1. Validasi state & PKCE codeVerifier
+ * 2. Tukar authorization code menjadi tokens via openid-client
+ * 3. Ambil user claims (email, name, preferred_username)
+ * 4. Menerapkan saran DTI: Gunakan Session SSO langsung tanpa penolakan database internal
+ * 5. Terbitkan session token SAPS (JWT)
+ * 6. Redirect ke Frontend dashboard
  */
 export const ssoCallback = async (req: Request, res: Response): Promise<void> => {
-  const { code, state, error, error_description } = req.query;
-
-  const stateStr = typeof state === 'string' ? state : '';
-  const cachedState = stateStr ? ssoStateMap.get(stateStr) : undefined;
-  const clientFrontendUrl = cachedState?.frontendUrl || FRONTEND_URL;
-  const codeVerifier = cachedState?.verifier;
-  if (stateStr) {
-    ssoStateMap.delete(stateStr);
-  }
-
-  if (error) {
-    console.error('[SSO Callback Error dari IdP]', error, error_description);
-    res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent(String(error_description || error))}`);
-    return;
-  }
-
-  if (!code || typeof code !== 'string') {
-    res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Kode otorisasi SSO tidak ditemukan.')}`);
-    return;
-  }
-
   try {
-    cleanExpiredSsoStates();
-
-    // 1. Tukarkan authorization code ke Keycloak Token Endpoint
-    const tokenRequestBody: Record<string, string> = {
-      grant_type: 'authorization_code',
-      client_id: SSO_CLIENT_ID,
-      code,
-      redirect_uri: SSO_REDIRECT_URI,
-    };
-    if (codeVerifier) {
-      tokenRequestBody.code_verifier = codeVerifier;
+    cleanupSsoTransactions();
+    const state = typeof req.query.state === 'string' ? req.query.state : '';
+    if (!state) {
+      res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent('State SSO tidak ditemukan.')}`);
+      return;
     }
-    if (SSO_CLIENT_SECRET) {
-      tokenRequestBody.client_secret = SSO_CLIENT_SECRET;
+    const transaction = ssoTransactions.get(state);
+    if (!transaction) {
+      res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent('Sesi login SSO tidak valid atau sudah kedaluwarsa.')}`);
+      return;
+    }
+    ssoTransactions.delete(state);
+
+    const clientFrontendUrl = transaction.frontendUrl || FRONTEND_URL;
+
+    const config = await getKeycloakConfig();
+    const currentUrl = new URL(KEYCLOAK_CALLBACK_URL);
+    for (const [key, value] of Object.entries(req.query)) {
+      if (typeof value === 'string') {
+        currentUrl.searchParams.set(key, value);
+      }
     }
 
-    const tokenRes = await fetch(SSO_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(tokenRequestBody).toString(),
+    const tokens = await oidc.authorizationCodeGrant(config, currentUrl, {
+      pkceCodeVerifier: transaction.codeVerifier,
+      expectedState: state,
+      idTokenExpected: true,
     });
 
-    if (!tokenRes.ok) {
-      const errText = await tokenRes.text();
-      console.error('[SSO Token Exchange Gagal]', tokenRes.status, errText);
-      res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Gagal menukarkan token SSO ke server UNAND.')}`);
+    const claims = tokens.claims();
+    if (!claims) {
+      res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Data pengguna dari SSO tidak ditemukan.')}`);
       return;
     }
 
-    const tokenData: any = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-    const idToken = tokenData.id_token;
+    const email = typeof claims.email === 'string' ? claims.email.trim().toLowerCase() : '';
+    const username = typeof claims.preferred_username === 'string' ? claims.preferred_username.trim() : '';
+    let nama = typeof claims.name === 'string' && claims.name.trim()
+      ? claims.name.trim()
+      : (typeof claims.given_name === 'string' && claims.given_name.trim()
+        ? claims.given_name.trim()
+        : username || email.split('@')[0] || 'Pengguna UNAND');
 
-    // 2. Ambil data profil user dari Keycloak UserInfo atau decoded id_token
-    let ssoProfile: any = {};
-    if (accessToken) {
-      try {
-        const userInfoRes = await fetch(SSO_USERINFO_URL, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (userInfoRes.ok) {
-          ssoProfile = await userInfoRes.json();
-        }
-      } catch (uiErr) {
-        console.warn('[SSO UserInfo Warning]', uiErr);
-      }
-    }
-
-    // Fallback baca payload dari id_token jika userinfo kosong/parsial
-    if ((!ssoProfile.email || !ssoProfile.name) && idToken) {
-      try {
-        const parts = idToken.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-          ssoProfile = { ...payload, ...ssoProfile };
-        }
-      } catch (pErr) {
-        console.warn('[SSO ID Token Parse Warning]', pErr);
-      }
-    }
-
-    const email = (ssoProfile.email || ssoProfile.preferred_username || '').trim().toLowerCase();
-    const nama = ssoProfile.name || ssoProfile.given_name || ssoProfile.preferred_username || email.split('@')[0] || 'Pengguna UNAND';
-    const username = (ssoProfile.preferred_username || '').trim();
+    console.log('[SSO] User dari Keycloak:', {
+      email,
+      preferred_username: username,
+      name: nama,
+      sub: claims.sub,
+    });
 
     if (!email) {
-      res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Email tidak ditemukan dari akun SSO Anda.')}`);
+      res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Email tidak tersedia pada akun SSO.')}`);
       return;
     }
 
-    // 3. Deteksi Peran (Role) secara cerdas:
-    // - Jika email @student.unand.ac.id atau username / email berformat NIM (10 digit): Mahasiswa
-    // - Jika email @unand.ac.id atau username berformat NIP (18 digit): Dosen
-    // - Fallback default: Mahasiswa
+    // Deteksi Peran (Role) secara cerdas dari klaim SSO:
     const isStudentEmail = email.endsWith('@student.unand.ac.id');
     const isNimUsername = /^\d{10}$/.test(username);
     const isNimEmail = /^\d{10}/.test(email);
@@ -866,16 +828,16 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
       peran = 'dosen';
     }
 
-    // 4. Bangun Identitas Pengguna dari Session Login SSO (Sesuai Arahan DTI: Gunakan Session SSO)
+    // SESUAI ARAHAN DTI: Gunakan Session SSO langsung tanpa menolak jika belum ada di database
     let userIdStr = username || email;
     let finalPeran = peran;
+    let staffJabatan: string | undefined;
+    let organisasiId: number | undefined;
+    let namaOrganisasi: string | undefined;
 
-    // Sinkronisasi DB Ringan (Graceful & Non-blocking agar tidak membebani atau menolak user)
+    // Sinkronisasi DB Ringan (Graceful & Non-blocking agar modul kegiatan & poin tetap berfungsi)
     try {
-      let user = await prisma.user.findUnique({
-        where: { email },
-      });
-
+      let user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
         user = await prisma.user.create({
           data: {
@@ -888,22 +850,39 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
         });
       } else {
         if (!user.aktif) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { aktif: true },
-          });
+          res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Akun StudentConnect Anda dinonaktifkan. Hubungi admin.')}`);
+          return;
         }
         finalPeran = user.peran as any;
+        if (user.nama) nama = user.nama;
       }
 
       userIdStr = user.id.toString();
 
-      // Sinkronkan data relasi mahasiswa/dosen untuk integritas modul SAPS
-      if (user.peran === 'mahasiswa') {
-        const existingMhs = await prisma.mahasiswa.findUnique({
+      // Penanganan role spesifik seperti staff & operator_org sesuai DTI
+      if (user.peran === 'staff') {
+        const staff = await prisma.staff.findUnique({
           where: { userId: user.id },
+          select: { jabatan: true },
         });
-
+        if (staff?.jabatan) {
+          staffJabatan = staff.jabatan;
+        }
+      } else if (user.peran === 'operator_org') {
+        const operator = await prisma.organisasiOperator.findUnique({
+          where: { userId: user.id },
+          include: {
+            organisasi: {
+              select: { id: true, nama: true },
+            },
+          },
+        });
+        if (operator) {
+          organisasiId = operator.organisasiId;
+          namaOrganisasi = operator.organisasi.nama;
+        }
+      } else if (user.peran === 'mahasiswa') {
+        const existingMhs = await prisma.mahasiswa.findUnique({ where: { userId: user.id } });
         if (!existingMhs) {
           let nim = username;
           if (!/^\d{10}$/.test(nim)) {
@@ -915,9 +894,7 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
           let angkatan = new Date().getFullYear();
           if (/^\d{2}/.test(nim)) {
             const prefixYear = parseInt(nim.substring(0, 2), 10);
-            if (prefixYear >= 15 && prefixYear <= 40) {
-              angkatan = 2000 + prefixYear;
-            }
+            if (prefixYear >= 15 && prefixYear <= 40) angkatan = 2000 + prefixYear;
           }
 
           const defaultProdi = await prisma.programStudi.findFirst();
@@ -935,10 +912,7 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
           });
         }
       } else if (user.peran === 'dosen') {
-        const existingDosen = await prisma.dosen.findUnique({
-          where: { userId: user.id },
-        });
-
+        const existingDosen = await prisma.dosen.findUnique({ where: { userId: user.id } });
         if (!existingDosen) {
           const defaultFakultas = await prisma.fakultas.findFirst();
           await prisma.dosen.create({
@@ -951,26 +925,26 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
         }
       }
     } catch (syncErr) {
-      // Jika database sedang sibuk/ada kendala, login SSO TETAP BERHASIL dengan session token
-      console.warn('[SSO Session Handled Gracefully]', syncErr);
+      console.warn('[SSO DB Graceful Sync]', syncErr);
     }
 
-    // 5. Generate JWT Token SAPS dari Session SSO
     const tokenPayload: Record<string, any> = {
       id: userIdStr,
       peran: finalPeran,
       nama,
       email,
-      nim: finalPeran === 'mahasiswa' ? username : undefined,
+      nim: finalPeran === 'mahasiswa' ? (username || undefined) : undefined,
+      jabatan: staffJabatan,
+      organisasiId,
+      namaOrganisasi,
     };
 
-    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+    const appToken = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
 
-    // 6. Redirect ke Frontend dengan session token
-    res.redirect(`${clientFrontendUrl}/login?sso=success&token=${encodeURIComponent(token)}`);
-  } catch (err: any) {
-    console.error('[SSO Callback Fatal Error]', err);
-    res.redirect(`${clientFrontendUrl}/login?error=${encodeURIComponent('Terjadi kesalahan saat memproses login SSO: ' + (err?.message || 'Server error'))}`);
+    res.redirect(`${clientFrontendUrl}/login?sso=success&token=${encodeURIComponent(appToken)}`);
+  } catch (error: any) {
+    console.error('SSO Callback Error:', error);
+    res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent('Login SSO gagal: ' + (error?.message || 'Silakan coba kembali.'))}`);
   }
 };
 
@@ -980,7 +954,6 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
  */
 export const ssoLogout = async (_req: Request, res: Response): Promise<void> => {
   const postLogoutRedirect = `${FRONTEND_URL}/login`;
-  const logoutUrl = `${SSO_LOGOUT_URL}?post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirect)}&client_id=${encodeURIComponent(SSO_CLIENT_ID)}`;
+  const logoutUrl = `${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/logout?post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirect)}&client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}`;
   res.redirect(logoutUrl);
 };
-
