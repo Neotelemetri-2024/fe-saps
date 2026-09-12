@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { login } from '../services/authService'
+import { login, handleSsoLogin } from '../services/authService'
 import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import logoUnand from '../assets/logo_unand.png'
 import fotoUnand from '../assets/foto-unand.jpeg'
@@ -16,8 +16,51 @@ function LoginPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const sso = searchParams.get('sso')
+    const token = searchParams.get('token')
+    const error = searchParams.get('error')
+
+    if (error) {
+      setErrorMsg(decodeURIComponent(error))
+      window.history.replaceState({}, document.title, '/login')
+      return
+    }
+
+    if (sso === 'success' && token) {
+      setLoading(true)
+      setErrorMsg('')
+      handleSsoLogin(token)
+        .then((user) => {
+          toast.success('Login SSO berhasil')
+          const roleRoutes = {
+            mahasiswa: '/mahasiswa/dashboard',
+            dosen: '/dosen/dashboard',
+            dosen_pa: '/dosen/dashboard',
+            pimpinan_fakultas: '/pimpinan_fakultas/dashboard',
+            pimpinan_ditmawa: '/pimpinan_ditmawa/dashboard',
+            admin_ditmawa: '/admin_ditmawa/dashboard',
+            admin_fakultas: '/admin_fakultas/dashboard',
+            operator_ukm: '/operator_ukm/dashboard',
+            operator_ukmf: '/operator_ukmf/dashboard',
+            pimpinan_utama: '/pimpinan_utama/dashboard',
+          }
+          const dest = roleRoutes[user.role] || '/mahasiswa/dashboard'
+          window.history.replaceState({}, document.title, '/login')
+          navigate(dest, { replace: true })
+        })
+        .catch((err) => {
+          console.error('SSO Login Error:', err)
+          setErrorMsg(err.message || 'Gagal menyelesaikan login SSO.')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+      return
+    }
+
     localStorage.removeItem('saps_current_user')
-  }, [])
+  }, [navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -108,7 +151,13 @@ function LoginPage() {
 
       <button
         type="button"
-        onClick={() => toast.info('Login SSO Unand belum tersedia')}
+        onClick={() => {
+          setLoading(true)
+          setErrorMsg('')
+          const ssoUrl = import.meta.env.VITE_SSO_LOGIN_URL || 'https://api-studentconnect.unand.ac.id/api/auth/sso'
+          window.location.href = ssoUrl
+        }}
+        disabled={loading}
         className="btn btn-outline btn-primary w-full"
       >
         Masuk dengan SSO Unand

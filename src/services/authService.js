@@ -2,16 +2,30 @@ import { post, get, put } from './apiClient'
 import { setupFirebaseMessaging, isFirebaseConfigured } from '../lib/firebase'
 
 const USER_STORAGE_KEY = 'saps_current_user'
+const SSO_LOGOUT_URL = 'https://sso.unand.ac.id/auth/realms/unand/protocol/openid-connect/logout'
+
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return {}
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const jsonStr = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonStr)
+  } catch (err) {
+    console.warn('[JWT Decode Warning]', err)
+    return {}
+  }
+}
 
 /**
  * BE memakai peran generik:
- *   "operator_org" → UKM atau UKMF (dibedakan dari /api/auth/me)
- *   "admin_org"    → admin_ditmawa atau admin_fakultas
- *
- * Tipe organisasi (UKM/UKMF) dikembalikan oleh GET /api/auth/me di path
- * bertingkat: data.organisasiOperator.organisasi.tipe (enum "UKM" | "UKMF").
- * Fallback ke field flat (tipeOrganisasi/tipe/organisasi.tipe/tingkat) untuk
- * jaga-jaga bila bentuk respons backend berubah di kemudian hari.
+ *   'operator_org' (UKM atau UKMF, dibedakan dari /api/auth/me)
+ *   'admin_org'    (admin_ditmawa atau admin_fakultas)
  */
 function resolveRoleFromMe(peranRaw, meData) {
   const tipe = (
@@ -25,13 +39,11 @@ function resolveRoleFromMe(peranRaw, meData) {
   ).toLowerCase()
 
   if (peranRaw === 'operator_org') {
-    // ukmf identifiers
     if (['ukmf', 'fakultas', 'ukmf_org'].includes(tipe)) return 'operator_ukmf'
     return 'operator_ukm'
   }
 
   if (peranRaw === 'staff') {
-    // fallback: jabatan staff langsung dari getMe (mis. admin_ditmawa, pimpinan_fakultas, dst)
     const jabatan = (meData?.staff?.jabatan || '').toLowerCase()
     if (jabatan) return jabatan
   }
@@ -44,6 +56,11 @@ function resolveRoleFromMe(peranRaw, meData) {
   return peranRaw
 }
 
+/**
+ * Login Akun Internal (Email/Username + Password)
+ * Digunakan untuk: Pimpinan Ditmawa, Pimpinan Utama, Pimpinan Fakultas,
+ * Admin Ditmawa/Fakultas, Operator UKM & UKMF.
+ */
 export async function login(email, password) {
   if (!password) throw new Error('Password wajib diisi')
 
@@ -57,10 +74,10 @@ export async function login(email, password) {
   const token = res.data?.token
   const userData = res.data?.user || {}
 
-  // Simpan token sementara agar get() bisa pakai Authorization header
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ token }))
+  // Simpan token sementara
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ token, authProvider: 'internal' }))
 
-  // Ambil detail profil untuk resolve role generik
+  // Ambil detail profil
   let meData = {}
   try {
     const meRes = await get('/api/auth/me')
@@ -92,33 +109,109 @@ export async function login(email, password) {
     role,
     userRole: userData.jabatan || userData.peran || role,
     token,
+    authProvider: 'internal',
   }
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
 
-  // Registrasi FCM token setelah login sukses (non-blocking, gagal diam-diam).
+  // Registrasi FCM token setelah login sukses (non-blocking).
   if (isFirebaseConfigured()) {
     setupFirebaseMessaging()
       .then((fcmToken) => {
-        if (!fcmToken) {
-          console.warn('[FCM] Tidak ada token FCM didapat, token TIDAK dikirim ke backend.')
-          return
-        }
-        return put('/api/auth/fcm-token', { fcmToken }).then(() => {
-          console.log('[FCM] Token berhasil disimpan ke backend.')
-        })
+        if (!fcmToken) return
+        return put('/api/auth/fcm-token', { fcmToken })
       })
       .catch((err) => {
         console.error('[FCM] Gagal registrasi/simpan token FCM:', err)
       })
-  } else {
-    console.warn('[FCM] isFirebaseConfigured() = false, cek VITE_FIREBASE_* di .env.')
   }
 
   return user
 }
 
+/**
+ * Login SSO UNAND (OAuth2 Keycloak)
+ * Digunakan untuk: Mahasiswa & Dosen umum kampus.
+ * Menggunakan session claim SSO & auto-provisioning tanpa gatekeeper database internal.
+ */
+export async function handleSsoLogin(token) {
+  if (!token) throw new Error('Token SSO tidak ditemukan.')
+
+  // Simpan token sementara
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ token, authProvider: 'sso' }))
+
+  const tokenPayload = decodeJwtPayload(token)
+  console.log('[SSO Token Payload]', tokenPayload)
+
+  // Ambil detail profil jika sudah ada di internal DB (enrichment)
+  let meData = {}
+  try {
+    const meRes = await get('/api/auth/me')
+    meData = meRes?.data || meRes || {}
+    console.log('[SSO /api/auth/me]', JSON.stringify(meData, null, 2))
+  } catch (e) {
+    console.warn('[SSO /api/auth/me] menggunakan fallback token payload:', e?.message)
+  }
+
+  const peranRaw = (
+    meData?.staff?.jabatan ||
+    meData?.peran ||
+    tokenPayload?.jabatan ||
+    tokenPayload?.peran ||
+    tokenPayload?.role ||
+    'mahasiswa'
+  ).toString().trim()
+
+  const role = resolveRoleFromMe(peranRaw, meData) || peranRaw || 'mahasiswa'
+
+  const user = {
+    id: meData.id || tokenPayload.id || tokenPayload.sub || null,
+    email: meData.email || tokenPayload.email || '',
+    nama: meData.nama || tokenPayload.nama || tokenPayload.name || 'Pengguna UNAND',
+    peran: meData.peran || tokenPayload.peran || peranRaw,
+    jabatan: meData.staff?.jabatan || tokenPayload.jabatan || null,
+    organisasiId: meData.organisasiOperator?.organisasi?.id ?? tokenPayload.organisasiId ?? null,
+    namaOrganisasi: meData.organisasiOperator?.organisasi?.nama ?? tokenPayload.namaOrganisasi ?? null,
+    tipeOrganisasi: meData.organisasiOperator?.organisasi?.tipe ?? meData.tipeOrganisasi ?? null,
+    kurikulumId: meData.mahasiswa?.kurikulum?.id ?? null,
+    kurikulumNama: meData.mahasiswa?.kurikulum?.nama ?? null,
+    role,
+    userRole: meData.staff?.jabatan || meData.peran || role,
+    token,
+    authProvider: 'sso',
+  }
+
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+
+  if (isFirebaseConfigured()) {
+    setupFirebaseMessaging()
+      .then((fcmToken) => {
+        if (!fcmToken) return
+        return put('/api/auth/fcm-token', { fcmToken })
+      })
+      .catch((err) => {
+        console.error('[FCM SSO] error:', err)
+      })
+  }
+
+  return user
+}
+
+/**
+ * Logout Cerdas (Smart Logout)
+ * - Jika akun SSO: redirect ke Keycloak logout endpoint
+ * - Jika akun internal (Pimpinan, Admin, UKM/UKMF): kembali ke /login
+ */
 export function logout() {
+  const user = getCurrentUser()
+  const isSso = user?.authProvider === 'sso'
   localStorage.removeItem(USER_STORAGE_KEY)
+
+  if (isSso) {
+    const postLogout = encodeURIComponent(window.location.origin + '/login')
+    window.location.href = SSO_LOGOUT_URL + '?post_logout_redirect_uri=' + postLogout + '&client_id=saps-unand'
+  } else {
+    window.location.href = '/login'
+  }
 }
 
 export function getCurrentUser() {
@@ -135,7 +228,7 @@ export function isAuthenticated() {
   return u !== null && !!u.role
 }
 
-/** GET /api/mahasiswa/kurikulum — ambil kurikulum mahasiswa yang sedang login */
+/** GET /api/mahasiswa/kurikulum */
 export async function getKurikulumMahasiswa() {
   try {
     const res = await get('/api/mahasiswa/kurikulum')
@@ -143,7 +236,6 @@ export async function getKurikulumMahasiswa() {
     if (data) {
       const kurikulumId = data.id ?? null
       const kurikulumNama = data.nama ?? null
-      // Sinkronkan ke localStorage
       try {
         const raw = localStorage.getItem(USER_STORAGE_KEY)
         if (raw) {
@@ -159,12 +251,11 @@ export async function getKurikulumMahasiswa() {
   }
 }
 
-/** PUT /api/auth/profil — perbarui profil (nama, email, nomorTelepon, alamat, prodiId?) */
+/** PUT /api/auth/profil */
 export async function updateProfil(payload) {
   const res = await put('/api/auth/profil', payload)
   const data = res?.data || res
 
-  // Sinkronkan nama/email di localStorage agar header/sidebar ikut berubah
   try {
     const raw = localStorage.getItem(USER_STORAGE_KEY)
     if (raw && data) {
@@ -184,7 +275,7 @@ export async function updateProfil(payload) {
   return data
 }
 
-/** PUT /api/auth/ganti-password — ganti password sendiri */
+/** PUT /api/auth/ganti-password */
 export async function gantiPassword(payload) {
   const res = await put('/api/auth/ganti-password', payload)
   return res?.data || res
