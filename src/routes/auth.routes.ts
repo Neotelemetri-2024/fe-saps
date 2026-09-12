@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, getMe, updateProfil, gantiPassword, updateFcmToken, ssoLogin, ssoCallback, ssoLogout } from '../controllers/auth.controller';
+import { login, getMe, updateProfil, gantiPassword, updateFcmToken, ssoLogin, ssoCallback, ssoLogout, ssoMockLogin } from '../controllers/auth.controller';
 import { authenticateJWT } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -11,6 +11,7 @@ router.post('/login', login);                      // POST /api/auth/login      
 router.get('/sso', ssoLogin);                       // GET  /api/auth/sso          — Inisiasi SSO Keycloak
 router.get('/callback', ssoCallback);              // GET  /api/auth/callback     — Callback SSO Keycloak
 router.get('/sso/logout', ssoLogout);              // GET  /api/auth/sso/logout   — Logout SSO Keycloak
+router.get('/sso/mock', ssoMockLogin);             // GET  /api/auth/sso/mock     — Simulasi SSO UNAND (Local Dev)
 
 // Sesi & Profil (Butuh Token)
 router.get('/me', authenticateJWT, getMe);          // GET  /api/auth/me           — Butuh token
