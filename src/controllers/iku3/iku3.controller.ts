@@ -150,13 +150,31 @@ export const getActivitiesIku3 = async (req: Request, res: Response, next: NextF
 // GET /api/iku3/targets — Ambil Daftar Target Tahunan
 export const getTargetsIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const targets = await prisma.iku3Target.findMany({
+    let targets = await prisma.iku3Target.findMany({
       where: { deletedAt: null },
       orderBy: { tahun: 'desc' },
       include: {
         pengubah: { select: { id: true, nama: true } },
       },
     });
+
+    if (targets.length === 0) {
+      await prisma.iku3Target.upsert({
+        where: { tahun: 2026 },
+        update: {},
+        create: {
+          tahun: 2026,
+          targetPersen: 50.00,
+          keterangan: 'Target Resmi IKU 3 Tahun Anggaran 2026 (Kepmen 358/2025)',
+        },
+      });
+
+      targets = await prisma.iku3Target.findMany({
+        where: { deletedAt: null },
+        orderBy: { tahun: 'desc' },
+        include: { pengubah: { select: { id: true, nama: true } } },
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -239,10 +257,44 @@ export const getRulesIku3 = async (req: Request, res: Response, next: NextFuncti
     const whereClause: any = { aktif: true, deletedAt: null };
     if (jenis) whereClause.jenis = String(jenis);
 
-    const rules = await prisma.iku3BobotRule.findMany({
+    let rules = await prisma.iku3BobotRule.findMany({
       where: whereClause,
       orderBy: [{ tahunMulai: 'desc' }, { jenis: 'asc' }, { id: 'asc' }],
     });
+
+    // Auto-seed default Kepmen 358/2025 rules jika tabel di database masih kosong
+    if (rules.length === 0) {
+      const defaultIku3Rules = [
+        // Prestasi Internasional
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara 1', bobot: 1.00, keterangan: 'Juara 1 Tingkat Internasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara 2/3/Favorit', bobot: 0.50, keterangan: 'Juara 2, 3, atau Favorit Internasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Juara Harapan', bobot: 0.30, keterangan: 'Juara Harapan Internasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Internasional', peran: 'Finalis', bobot: 0.20, keterangan: 'Finalis Internasional' },
+        // Prestasi Nasional
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara 1', bobot: 0.60, keterangan: 'Juara 1 Tingkat Nasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara 2/3/Favorit', bobot: 0.30, keterangan: 'Juara 2, 3, atau Favorit Nasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Juara Harapan', bobot: 0.20, keterangan: 'Juara Harapan Nasional' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Nasional', peran: 'Finalis', bobot: 0.10, keterangan: 'Finalis Nasional' },
+        // Prestasi Provinsi
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara 1', bobot: 0.40, keterangan: 'Juara 1 Tingkat Provinsi' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara 2/3/Favorit', bobot: 0.20, keterangan: 'Juara 2, 3, atau Favorit Provinsi' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Juara Harapan', bobot: 0.10, keterangan: 'Juara Harapan Provinsi' },
+        { tahunMulai: 2026, jenis: 'prestasi', skala: 'Provinsi', peran: 'Finalis', bobot: 0.05, keterangan: 'Finalis Provinsi' },
+        // Pembelajaran di Luar Kampus
+        { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 0, sksMax: 5, bobot: 0.40, keterangan: 'Pembelajaran Luar Kampus <= 5 SKS' },
+        { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 6, sksMax: 10, bobot: 0.60, keterangan: 'Pembelajaran Luar Kampus 6-10 SKS' },
+        { tahunMulai: 2026, jenis: 'pembelajaran', sksMin: 11, sksMax: null, bobot: 1.00, keterangan: 'Pembelajaran Luar Kampus >= 10 SKS (MBKM Penuh)' },
+      ];
+
+      for (const r of defaultIku3Rules) {
+        await prisma.iku3BobotRule.create({ data: r as any });
+      }
+
+      rules = await prisma.iku3BobotRule.findMany({
+        where: whereClause,
+        orderBy: [{ tahunMulai: 'desc' }, { jenis: 'asc' }, { id: 'asc' }],
+      });
+    }
 
     res.status(200).json({
       success: true,
