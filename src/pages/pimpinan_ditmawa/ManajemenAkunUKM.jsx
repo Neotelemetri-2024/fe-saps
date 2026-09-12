@@ -59,6 +59,13 @@ function TambahAkunModal({ onClose, onSave }) {
     }
   }
 
+  const ukmSlug = form.namaUkm.trim()
+    ? form.namaUkm.toLowerCase().replace(/^(ukm\s*|\s*)+/i, '').replace(/[^a-z0-9]/g, '')
+    : ''
+  const emailPlaceholder = ukmSlug
+    ? `Contoh: ukm.${ukmSlug}@unand.ac.id`
+    : 'Contoh: ukm.[nama]@unand.ac.id'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl">
@@ -76,7 +83,7 @@ function TambahAkunModal({ onClose, onSave }) {
           <div>
             <label className="block text-sm text-base-content">Email <span className="text-red-600">*</span></label>
             <input type="email" name="email" value={form.email} onChange={handleChange}
-              placeholder="Contoh: operator.ukm@unand.ac.id" autoComplete="new-password"
+              placeholder={emailPlaceholder} autoComplete="new-password"
               className="mt-1 input w-full" />
           </div>
           <div>

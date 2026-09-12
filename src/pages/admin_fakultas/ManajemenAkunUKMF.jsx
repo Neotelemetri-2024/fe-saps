@@ -81,6 +81,13 @@ function TambahAkunModal({ onClose, onSave }) {
     }
   }
 
+  const ukmfSlug = (form.namaUkm || '').trim()
+    ? (form.namaUkm || '').toLowerCase().replace(/^(ukmf\s*|ukm\s*|\s*)+/i, '').replace(/[^a-z0-9]/g, '')
+    : ''
+  const emailPlaceholder = ukmfSlug
+    ? `Contoh: ukmf.${ukmfSlug}@unand.ac.id`
+    : 'Contoh: ukmf.[nama]@unand.ac.id'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-base-100 p-5 shadow-xl sm:p-8">
@@ -133,7 +140,7 @@ function TambahAkunModal({ onClose, onSave }) {
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="Contoh: operator.ukmf@unand.ac.id"
+              placeholder={emailPlaceholder}
               autoComplete="new-password"
               className="mt-1 w-full rounded-lg border border-base-300 px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
