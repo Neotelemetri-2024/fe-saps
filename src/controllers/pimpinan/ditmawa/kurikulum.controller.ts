@@ -174,13 +174,21 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
     });
 
     res.status(201).json({ success: true, data: newKurikulum });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
       res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
+    } else if (error?.message === 'ANGKATAN_MULAI_DUPLICATE' || error?.code === 'P2002') {
+      res.status(400).json({
+        success: false,
+        message: 'Angkatan mulai tersebut sudah digunakan oleh kurikulum lain. Setiap angkatan hanya boleh memiliki satu kurikulum.',
+      });
     } else {
-      console.error(error);
-      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+      console.error('[createKurikulum Error]:', error);
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Terjadi kesalahan pada server',
+      });
     }
   }
 };
@@ -227,13 +235,21 @@ export const updateKurikulum = async (req: Request, res: Response): Promise<void
     });
 
     res.json({ success: true, message: 'Kurikulum berhasil diperbarui', data: updated });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
       res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
+    } else if (error?.message === 'ANGKATAN_MULAI_DUPLICATE' || error?.code === 'P2002') {
+      res.status(400).json({
+        success: false,
+        message: 'Angkatan mulai tersebut sudah digunakan oleh kurikulum lain.',
+      });
     } else {
-      console.error(error);
-      res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+      console.error('[updateKurikulum Error]:', error);
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Terjadi kesalahan pada server',
+      });
     }
   }
 };
