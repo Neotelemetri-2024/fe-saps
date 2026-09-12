@@ -13,7 +13,8 @@
     "seed:dummy": "tsx prisma/seed-dummy-pimpinan.ts",
     "seed:all": "tsx prisma/seed-all-pimpinan.ts",
     "seed:pimpinan-utama": "tsx prisma/seed-pimpinan-utama.ts",
-    "sync:sia": "tsx src/scripts/syncSia.ts"
+    "sync:sia": "tsx src/scripts/syncSia.ts",
+    "clean:sia": "tsx src/scripts/cleanSiaData.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
