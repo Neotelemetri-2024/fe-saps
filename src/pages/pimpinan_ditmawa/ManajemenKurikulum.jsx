@@ -86,8 +86,12 @@ function ManajemenKurikulum() {
   const [kurForm, setKurForm] = useState({ tahun: `${new Date().getFullYear()}`, angkatanMulai: new Date().getFullYear(), nama: '' })
 
   const [editKurikulumTarget, setEditKurikulumTarget] = useState(null)
-  const [editNamaForm, setEditNamaForm] = useState('')
-  const [savingEditNama, setSavingEditNama] = useState(false)
+  const [editKurikulumForm, setEditKurikulumForm] = useState({
+    nama: '',
+    tahun: '',
+    angkatanMulai: '',
+  })
+  const [savingEditKurikulum, setSavingEditKurikulum] = useState(false)
 
   const [showTambahCapaian, setShowTambahCapaian] = useState(false)
   const [capaianForm, setCapaianForm] = useState({ nama: '', jumlahPoin: '' })
@@ -300,32 +304,41 @@ function ManajemenKurikulum() {
     }
   }
 
-  const handleUpdateNamaKurikulum = async (e) => {
+  const handleUpdateKurikulum = async (e) => {
     e?.preventDefault()
     if (!editKurikulumTarget) return
-    const namaTrimmed = String(editNamaForm || '').trim()
+    const namaTrimmed = String(editKurikulumForm.nama || '').trim()
+    const tahunTrimmed = String(editKurikulumForm.tahun || '').trim()
+    const angkatanVal = editKurikulumForm.angkatanMulai !== '' ? parseInt(editKurikulumForm.angkatanMulai, 10) : undefined
+
     if (!namaTrimmed) {
       toast.error('Nama kurikulum tidak boleh kosong.')
       return
     }
+    if (!tahunTrimmed) {
+      toast.error('Tahun akademik wajib diisi (Contoh: 2024 atau 2024/2025).')
+      return
+    }
+    if (angkatanVal !== undefined && (isNaN(angkatanVal) || angkatanVal < 1900 || angkatanVal > 2200)) {
+      toast.error('Tahun angkatan mulai harus berupa angka tahun yang valid (antara 1900 - 2200).')
+      return
+    }
 
-    setSavingEditNama(true)
+    setSavingEditKurikulum(true)
     try {
-      await updateKurikulum(editKurikulumTarget.id, { nama: namaTrimmed })
-      toast.success('Nama kurikulum berhasil diperbarui.')
-      setKurikulum((prev) =>
-        prev.map((k) => (k.id === editKurikulumTarget.id ? { ...k, nama: namaTrimmed } : k))
-      )
-      if (activeKur?.id === editKurikulumTarget.id) {
-        setActiveKurId(editKurikulumTarget.id)
+      const payload = {
+        nama: namaTrimmed,
+        tahunAkademik: tahunTrimmed,
+        ...(angkatanVal !== undefined ? { angkatanMulai: angkatanVal } : {}),
       }
+      await updateKurikulum(editKurikulumTarget.id, payload)
+      toast.success('Kurikulum berhasil diperbarui.')
       setEditKurikulumTarget(null)
-      setEditNamaForm('')
       loadList()
     } catch (err) {
-      toast.error('Gagal memperbarui nama kurikulum', { description: err.message })
+      toast.error('Gagal memperbarui kurikulum', { description: err.message })
     } finally {
-      setSavingEditNama(false)
+      setSavingEditKurikulum(false)
     }
   }
 
@@ -595,33 +608,73 @@ const handleEditSubCapaian = async () => {
         </div>
       </Modal>
 
-      {/* Modal Edit Nama Kurikulum */}
+      {/* Modal Edit Kurikulum */}
       <Modal
         isOpen={Boolean(editKurikulumTarget)}
         onClose={() => {
-          if (!savingEditNama) setEditKurikulumTarget(null)
+          if (!savingEditKurikulum) setEditKurikulumTarget(null)
         }}
-        title="Edit Nama Kurikulum"
+        title="Edit Kurikulum"
       >
-        <form onSubmit={handleUpdateNamaKurikulum} className="space-y-4">
+        <form onSubmit={handleUpdateKurikulum} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-base-content">
               Nama Kurikulum <span className="text-error">*</span>
             </label>
             <input
               type="text"
-              value={editNamaForm}
-              onChange={(e) => setEditNamaForm(e.target.value)}
-              placeholder="Contoh: Kurikulum Merdeka 2025"
+              value={editKurikulumForm.nama}
+              onChange={(e) => setEditKurikulumForm((p) => ({ ...p, nama: e.target.value }))}
+              placeholder="Contoh: Kurikulum Merdeka 2024"
               className="input w-full"
               autoFocus
               required
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-base-content">
+              Tahun Akademik <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
+              value={editKurikulumForm.tahun}
+              onChange={(e) => setEditKurikulumForm((p) => ({ ...p, tahun: e.target.value }))}
+              placeholder="Contoh: 2024 atau 2024/2025"
+              className="input w-full"
+              required
+            />
+            <p className="mt-1 text-xs text-base-content/50">
+              Format: 2024 atau 2024/2025
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-base-content">
+              Mulai Berlaku untuk Angkatan <span className="text-error">*</span>
+            </label>
+            <input
+              type="number"
+              min="2000"
+              max="2100"
+              step="1"
+              value={editKurikulumForm.angkatanMulai}
+              onChange={(e) =>
+                setEditKurikulumForm((p) => ({
+                  ...p,
+                  angkatanMulai: e.target.value === '' ? '' : parseInt(e.target.value, 10),
+                }))
+              }
+              placeholder="Contoh: 2024"
+              className="input w-full"
+              required
+            />
+            <p className="mt-1 text-xs text-base-content/50">
+              Berlaku untuk mahasiswa angkatan ini dan seterusnya sampai kurikulum baru dengan tahun mulai lebih besar.
+            </p>
+          </div>
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
-              disabled={savingEditNama}
+              disabled={savingEditKurikulum}
               onClick={() => setEditKurikulumTarget(null)}
               className={batalBtnClass}
             >
@@ -629,10 +682,10 @@ const handleEditSubCapaian = async () => {
             </button>
             <button
               type="submit"
-              disabled={savingEditNama}
+              disabled={savingEditKurikulum}
               className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
             >
-              {savingEditNama ? 'Menyimpan...' : 'Simpan'}
+              {savingEditKurikulum ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
         </form>
@@ -958,11 +1011,15 @@ const handleEditSubCapaian = async () => {
                     <ActionMenu
                       items={[
                         {
-                          label: 'Edit Nama',
+                          label: 'Edit Kurikulum',
                           icon: <Pencil className="h-4 w-4" />,
                           onClick: () => {
                             setEditKurikulumTarget(kur)
-                            setEditNamaForm(kur.nama)
+                            setEditKurikulumForm({
+                              nama: kur.nama || '',
+                              tahun: kur.tahun && kur.tahun !== '-' ? kur.tahun : '',
+                              angkatanMulai: kur.angkatanMulai ?? '',
+                            })
                           },
                         },
                         {
