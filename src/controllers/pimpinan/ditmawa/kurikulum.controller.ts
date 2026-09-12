@@ -20,11 +20,16 @@ async function assertAngkatanMulaiUnique(angkatanMulai: number, excludeId?: numb
   const duplicate = await prisma.kurikulum.findFirst({
     where: {
       angkatanMulai,
+      deletedAt: null,
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
     },
-    select: { id: true },
+    select: { id: true, nama: true },
   });
-  if (duplicate) throw new Error('ANGKATAN_MULAI_DUPLICATE');
+  if (duplicate) {
+    const err: any = new Error('ANGKATAN_MULAI_DUPLICATE');
+    err.duplicateName = duplicate.nama;
+    throw err;
+  }
 }
 
 async function getReadinessProblem(kurikulumId: number): Promise<string | null> {
@@ -148,13 +153,26 @@ export const getKurikulumById = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// POST /api/kurikulum â€” Buat kurikulum baru (draft)
+// POST /api/kurikulum — Buat kurikulum baru (draft)
 export const createKurikulum = async (req: Request, res: Response): Promise<void> => {
   try {
     const dibuatOleh = BigInt(req.user!.id);
     const data = createKurikulumSchema.parse(req.body);
 
     await assertAngkatanMulaiUnique(data.angkatanMulai);
+
+    // Lepas angkatan_mulai pada kurikulum yang sudah dihapus (soft-deleted)
+    // agar tidak bertabrakan dengan UNIQUE index di database MySQL
+    await prisma.kurikulum.updateMany({
+      where: {
+        angkatanMulai: data.angkatanMulai,
+        NOT: { deletedAt: null },
+      },
+      data: {
+        angkatanMulai: null,
+      },
+    });
+
     const newKurikulum = await prisma.$transaction(async (tx) => {
       const created = await tx.kurikulum.create({
         data: {
@@ -179,9 +197,10 @@ export const createKurikulum = async (req: Request, res: Response): Promise<void
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
       res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else if (error?.message === 'ANGKATAN_MULAI_DUPLICATE' || error?.code === 'P2002') {
+      const kurName = error?.duplicateName ? ` ("${error.duplicateName}")` : '';
       res.status(400).json({
         success: false,
-        message: 'Angkatan mulai tersebut sudah digunakan oleh kurikulum lain. Setiap angkatan hanya boleh memiliki satu kurikulum.',
+        message: `Angkatan mulai tersebut sudah digunakan oleh kurikulum aktif/tersimpan lain${kurName}. Setiap angkatan hanya boleh memiliki satu kurikulum.`,
       });
     } else {
       console.error('[createKurikulum Error]:', error);
@@ -208,6 +227,16 @@ export const updateKurikulum = async (req: Request, res: Response): Promise<void
 
     if (data.angkatanMulai !== undefined) {
       await assertAngkatanMulaiUnique(data.angkatanMulai, Number(id));
+
+      await prisma.kurikulum.updateMany({
+        where: {
+          angkatanMulai: data.angkatanMulai,
+          NOT: { deletedAt: null },
+        },
+        data: {
+          angkatanMulai: null,
+        },
+      });
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -240,9 +269,10 @@ export const updateKurikulum = async (req: Request, res: Response): Promise<void
       const errorMsg = error.issues.map((i) => i.message).join(', ') || 'Validasi gagal';
       res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
     } else if (error?.message === 'ANGKATAN_MULAI_DUPLICATE' || error?.code === 'P2002') {
+      const kurName = error?.duplicateName ? ` ("${error.duplicateName}")` : '';
       res.status(400).json({
         success: false,
-        message: 'Angkatan mulai tersebut sudah digunakan oleh kurikulum lain.',
+        message: `Angkatan mulai tersebut sudah digunakan oleh kurikulum${kurName}.`,
       });
     } else {
       console.error('[updateKurikulum Error]:', error);
@@ -277,6 +307,16 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
     }
     if (kurikulum.angkatanMulai != null) {
       await assertAngkatanMulaiUnique(kurikulum.angkatanMulai, Number(id));
+
+      await prisma.kurikulum.updateMany({
+        where: {
+          angkatanMulai: kurikulum.angkatanMulai,
+          NOT: { deletedAt: null },
+        },
+        data: {
+          angkatanMulai: null,
+        },
+      });
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -299,12 +339,16 @@ export const aktivasiKurikulum = async (req: Request, res: Response): Promise<vo
 
     res.json({ success: true, data: updated, message: 'Kurikulum berhasil diaktifkan' });
   } catch (error: any) {
-    if (error?.message === 'ANGKATAN_MULAI_DUPLICATE') {
-      res.status(400).json({ success: false, message: 'Angkatan mulai sudah dipakai kurikulum lain' });
+    if (error?.message === 'ANGKATAN_MULAI_DUPLICATE' || error?.code === 'P2002') {
+      const kurName = error?.duplicateName ? ` ("${error.duplicateName}")` : '';
+      res.status(400).json({
+        success: false,
+        message: `Angkatan mulai sudah dipakai oleh kurikulum aktif/tersimpan lain${kurName}.`,
+      });
       return;
     }
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+    console.error('[aktivasiKurikulum Error]:', error);
+    res.status(500).json({ success: false, message: error?.message || 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -352,9 +396,9 @@ export const nonAktifKurikulum = async (req: Request, res: Response): Promise<vo
     });
 
     res.json({ success: true, data: updated, message: 'Kurikulum berhasil dinonaktifkan' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  } catch (error: any) {
+    console.error('[nonAktifKurikulum Error]:', error);
+    res.status(500).json({ success: false, message: error?.message || 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -374,10 +418,13 @@ export const deleteKurikulum = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Soft delete kurikulum
+    // Soft delete kurikulum dan lepas angkatan_mulai agar tidak memblokir angkatan tersebut di masa depan
     await prisma.kurikulum.update({
       where: { id: Number(id) },
-      data: { deletedAt: new Date() },
+      data: {
+        deletedAt: new Date(),
+        angkatanMulai: null,
+      },
     });
 
     await logAudit({
@@ -389,9 +436,9 @@ export const deleteKurikulum = async (req: Request, res: Response): Promise<void
     });
 
     res.json({ success: true, message: 'Kurikulum berhasil dihapus' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  } catch (error: any) {
+    console.error('[deleteKurikulum Error]:', error);
+    res.status(500).json({ success: false, message: error?.message || 'Terjadi kesalahan pada server' });
   }
 };
 
