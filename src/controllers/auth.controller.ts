@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma";
 import { JWT_SECRET } from "../middlewares/auth.middleware";
-import { resolveKurikulumMahasiswa } from "../services/kurikulumResolver.service";
+import { resolveKurikulumMahasiswa, resolveKurikulumIdForAngkatan } from "../services/kurikulumResolver.service";
 import { z } from "zod";
 
 // ==================== VALIDASI ====================
@@ -791,10 +791,8 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
         const defaultProdi = await prisma.programStudi.findFirst();
         const prodiId = defaultProdi?.id || 1;
 
-        // Ambil kurikulum aktif jika ada
-        const kurikulumAktif = await prisma.kurikulum.findFirst({
-          where: { status: 'aktif' },
-        });
+        // Tentukan kurikulum yang sesuai berdasarkan angkatan mahasiswa
+        const kurikulumId = await resolveKurikulumIdForAngkatan(angkatan);
 
         await prisma.mahasiswa.create({
           data: {
@@ -802,7 +800,7 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
             nim,
             angkatan,
             prodiId,
-            kurikulumId: kurikulumAktif?.id || null,
+            kurikulumId,
           },
         });
       }
