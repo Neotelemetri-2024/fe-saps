@@ -160,17 +160,18 @@ export function CurriculumAchievementCard({
 
   return (
     <SectionCard title="Capaian Kurikulum">
-      {buckets.map((bucket, bIdx) => (
-        <div key={bIdx} className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="badge badge-primary badge-sm font-semibold">Kurikulum</span>
-            <span className="text-sm font-bold text-base-content">{bucket.name}</span>
-          </div>
+      <div className="divide-y divide-base-300">
+        {buckets.map((bucket, bIdx) => (
+          <section key={bIdx} className="py-4 first:pt-0 last:pb-0">
+            <div>
+              <p className="text-xs text-base-content/60">Kurikulum</p>
+              <h3 className="mt-0.5 text-sm font-semibold text-base-content">{bucket.name}</h3>
+            </div>
 
-          {bucket.groups.length > 0 ? (
-            <div className="space-y-3 pl-3 border-l-2 border-base-300">
-              {bucket.groups.map((group) => (
-                <div key={group.name} className="space-y-1.5">
+            {bucket.groups.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {bucket.groups.map((group) => (
+                  <div key={group.name} className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-base-content">{group.name}</p>
                     {group.items.length > 0 ? (
@@ -193,17 +194,21 @@ export function CurriculumAchievementCard({
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-xs text-base-content/40 italic">Belum ada sub capaian.</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-base-content/50">Belum ada pemetaan capaian kurikulum.</p>
-          )}
-        </div>
-      ))}
+                    ) : (
+                      <p className="text-xs text-base-content/50">Belum ada sub capaian.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-md bg-base-200 px-4 py-3">
+                <p className="text-sm font-medium text-base-content">Pemetaan belum tersedia</p>
+                <p className="mt-0.5 text-xs text-base-content/60">Kegiatan ini belum memiliki capaian dan sub-capaian kurikulum.</p>
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
     </SectionCard>
   )
 }

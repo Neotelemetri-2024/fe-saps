@@ -188,7 +188,7 @@ function AjukanKegiatanEksternal() {
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
       <Modal isOpen={!!alasanModal} onClose={() => setAlasanModal(null)}>
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-base-content">{alasanModal?.judul}</h3>
+          <h3 className="text-base font-semibold text-base-content">{alasanModal?.judul}</h3>
           <p className="text-sm text-base-content/60 whitespace-pre-wrap">{alasanModal?.isi || 'Tidak ada keterangan.'}</p>
           <button
             type="button"
@@ -216,155 +216,122 @@ function AjukanKegiatanEksternal() {
         title="Pilih Kegiatan Eksternal"
         size="xl"
       >
-        <div className="space-y-4">
-          <p className="text-xs sm:text-sm text-base-content/70">
-            Pilih kegiatan yang telah terdaftar di sistem atau daftarkan kegiatan baru jika kegiatan yang Anda ikuti belum terdaftar.
+        <div className="space-y-5">
+          <p className="text-sm leading-relaxed text-base-content/70">
+            Cari kegiatan yang sudah terdaftar. Jika belum tersedia, lanjutkan dengan mendaftarkan kegiatan baru.
           </p>
 
-          {/* Kotak Pencarian */}
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
-            <input
-              type="text"
-              value={modalSearch}
-              onChange={(e) => setModalSearch(e.target.value)}
-              placeholder="Cari nama kegiatan, skala, atau penyelenggara..."
-              className="input input-sm sm:input-md w-full pl-10 text-xs sm:text-sm"
-            />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="cari-kegiatan-eksternal" className="text-sm font-medium text-base-content">Kegiatan terdaftar</label>
+              <span className="text-xs text-base-content/50">{kegiatanTerdaftarList.length} kegiatan</span>
+            </div>
+            <label className="input input-sm flex w-full items-center gap-2 sm:input-md" htmlFor="cari-kegiatan-eksternal">
+              <Search className="h-4 w-4 shrink-0 text-base-content/40" />
+              <input
+                id="cari-kegiatan-eksternal"
+                type="search"
+                value={modalSearch}
+                onChange={(e) => setModalSearch(e.target.value)}
+                placeholder="Cari nama, skala, tahun, atau penyelenggara"
+                className="grow text-sm"
+              />
+            </label>
           </div>
 
-          {/* Daftar Pilihan Kegiatan */}
-          <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
-            {/* Opsi Khusus: Belum Terdaftar */}
-            <div
-              onClick={() => setSelectedKegiatanId('BELUM_TERDAFTAR')}
-              className={`cursor-pointer rounded-xl border p-3 transition-all ${
-                selectedKegiatanId === 'BELUM_TERDAFTAR'
-                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                  : 'border-base-300 bg-base-100 hover:border-base-400 hover:bg-base-200/50'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                    selectedKegiatanId === 'BELUM_TERDAFTAR' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/70'
-                  }`}>
-                    <Plus className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-base-content">
-                      Kegiatan Saya Belum Terdaftar
-                    </h4>
-                    <p className="text-xs text-base-content/60">
-                      Daftarkan kegiatan baru untuk diverifikasi oleh Admin Ditmawa
-                    </p>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="pilihKegiatanRadio"
-                  checked={selectedKegiatanId === 'BELUM_TERDAFTAR'}
-                  onChange={() => setSelectedKegiatanId('BELUM_TERDAFTAR')}
-                  className="radio radio-primary radio-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 py-1">
-              <div className="h-px flex-1 bg-base-200" />
-              <span className="text-[11px] font-semibold tracking-wider text-base-content/40 uppercase">
-                Kegiatan Terdaftar ({kegiatanTerdaftarList.length})
-              </span>
-              <div className="h-px flex-1 bg-base-200" />
-            </div>
+          <div className="max-h-72 overflow-y-auto rounded-md border border-base-300 bg-base-100">
 
             {loadingTerdaftar ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-base-content/60">
-                <span className="loading loading-spinner loading-md text-primary mb-2"></span>
-                Memuat daftar kegiatan terdaftar...
+              <div className="space-y-3 p-4" aria-label="Memuat kegiatan terdaftar">
+                {[0, 1, 2].map((item) => (
+                  <div key={item} className="space-y-2 border-b border-base-300 pb-3 last:border-b-0 last:pb-0">
+                    <div className="skeleton h-4 w-3/4" />
+                    <div className="skeleton h-3 w-1/2" />
+                  </div>
+                ))}
               </div>
             ) : modalFilteredKegiatan.length > 0 ? (
               modalFilteredKegiatan.map((keg) => {
                 const isSelected = String(selectedKegiatanId) === String(keg.id)
                 return (
-                  <div
+                  <label
                     key={keg.id}
-                    onClick={() => setSelectedKegiatanId(keg.id)}
-                    className={`cursor-pointer rounded-xl border p-3 transition-all ${
-                      isSelected
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                        : 'border-base-200 bg-base-100 hover:border-base-300 hover:bg-base-200/40'
+                    className={`flex min-h-20 cursor-pointer items-start gap-3 border-b border-base-300 px-4 py-3 transition-colors last:border-b-0 ${
+                      isSelected ? 'bg-primary/5' : 'hover:bg-base-200'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="badge badge-sm badge-neutral font-medium">
-                            {keg.tahun}
-                          </span>
-                          <span className="badge badge-sm badge-outline font-medium">
-                            {keg.skalaNama}
-                          </span>
-                          {keg.kategoriNama && (
-                            <span className="badge badge-sm badge-ghost text-base-content/70">
-                              {keg.kategoriNama}
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="text-xs sm:text-sm font-bold text-base-content leading-snug">
-                          {keg.nama}
-                        </h4>
-                        <p className="text-xs text-base-content/60 flex items-center gap-1">
-                          <span className="font-medium text-base-content/80">Penyelenggara:</span>{' '}
-                          {keg.penyelenggara || '-'}
-                        </p>
-                      </div>
-                      <input
-                        type="radio"
-                        name="pilihKegiatanRadio"
-                        checked={isSelected}
-                        onChange={() => setSelectedKegiatanId(keg.id)}
-                        className="radio radio-primary radio-sm mt-1"
-                      />
-                    </div>
-                  </div>
+                    <input
+                      type="radio"
+                      name="pilihKegiatanRadio"
+                      checked={isSelected}
+                      onChange={() => setSelectedKegiatanId(keg.id)}
+                      className="radio radio-primary radio-sm mt-0.5 shrink-0"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium leading-snug text-base-content">{keg.nama}</span>
+                      <span className="mt-1 block text-xs text-base-content/60">{keg.penyelenggara || 'Penyelenggara belum dicantumkan'}</span>
+                      <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-base-content/50">
+                        <span>{keg.tahun || '-'}</span>
+                        <span>{keg.skalaNama || '-'}</span>
+                        {keg.kategoriNama ? <span>{keg.kategoriNama}</span> : null}
+                      </span>
+                    </span>
+                  </label>
                 )
               })
             ) : (
-              <div className="rounded-xl border border-dashed border-base-300 py-6 text-center text-xs sm:text-sm text-base-content/50">
-                {modalSearch
-                  ? `Tidak ada kegiatan yang cocok dengan "${modalSearch}". Silakan pilih "Kegiatan Saya Belum Terdaftar" di atas.`
-                  : 'Belum ada kegiatan eksternal yang terdaftar.'}
+              <div className="px-4 py-8 text-center">
+                <p className="text-sm font-medium text-base-content">{modalSearch ? 'Kegiatan tidak ditemukan' : 'Belum ada kegiatan terdaftar'}</p>
+                <p className="mt-1 text-xs text-base-content/60">
+                  {modalSearch ? 'Ubah kata pencarian atau pilih kegiatan belum terdaftar.' : 'Pilih kegiatan belum terdaftar untuk melanjutkan.'}
+                </p>
               </div>
             )}
+
+            <div className="flex flex-col gap-3 border-t border-base-300 bg-base-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-base-content">Kegiatan belum terdaftar?</p>
+                <p className="mt-0.5 text-xs text-base-content/60">Isi data kegiatan baru untuk diverifikasi Admin Ditmawa.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPilihModal(false)
+                  navigate('/mahasiswa/kegiatan-eksternal/ajukan', { state: { mode: 'baru' } })
+                }}
+                className="btn btn-primary min-h-11 shrink-0 sm:btn-sm sm:min-h-0"
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Kegiatan
+              </button>
+            </div>
           </div>
 
           {/* Kotak Informasi Dinamis */}
           {selectedKegiatanId && selectedKegiatanId !== 'BELUM_TERDAFTAR' && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-950 shadow-xs">
-              <Info className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+            <div className="flex items-start gap-2.5 rounded-md border border-base-300 bg-base-200 p-3.5 text-xs text-base-content/70">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-base-content/60" />
               <div className="leading-relaxed">
-                <span className="font-bold text-emerald-900">Informasi Kegiatan Terdaftar: </span>
+                <span className="font-medium text-base-content">Kegiatan terdaftar: </span>
                 Kegiatan ini sudah diverifikasi di sistem. Anda tidak perlu memasukkan ulang detail kegiatan dan dapat langsung meminta persetujuan Dosen PA.
               </div>
             </div>
           )}
           {selectedKegiatanId === 'BELUM_TERDAFTAR' && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs text-sky-950 shadow-xs">
-              <Info className="h-4 w-4 shrink-0 text-sky-600 mt-0.5" />
+            <div className="flex items-start gap-2.5 rounded-md border border-base-300 bg-base-200 p-3.5 text-xs text-base-content/70">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-base-content/60" />
               <div className="leading-relaxed">
-                <span className="font-bold text-sky-900">Informasi Kegiatan Baru: </span>
+                <span className="font-medium text-base-content">Kegiatan baru: </span>
                 Anda akan diarahkan ke formulir pendaftaran kegiatan eksternal baru untuk diajukan dan diverifikasi oleh Admin Ditmawa.
               </div>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="mt-5 flex items-center justify-end gap-2 border-t border-base-200 pt-4">
+          <div className="flex flex-col-reverse gap-2 border-t border-base-300 pt-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => setShowPilihModal(false)}
-              className={batalBtnClass}
+              className={`${batalBtnClass} min-h-11 sm:min-h-0`}
             >
               Batal
             </button>
@@ -372,7 +339,7 @@ function AjukanKegiatanEksternal() {
               type="button"
               disabled={!selectedKegiatanId}
               onClick={handleLanjutPilihKegiatan}
-              className="btn btn-primary btn-sm px-6"
+              className="btn btn-primary min-h-11 px-6 sm:btn-sm sm:min-h-0"
             >
               Selanjutnya
             </button>
@@ -383,7 +350,7 @@ function AjukanKegiatanEksternal() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-lg font-bold text-base-content sm:text-2xl">Daftar Pengajuan</h2>
+            <h2 className="text-xl font-semibold text-base-content sm:text-2xl">Kegiatan Eksternal</h2>
             <InfoTooltip message={<>Kegiatan berstatus <strong>draft</strong> dapat diedit atau dihapus. Setelah <strong>Kirim</strong>, kegiatan tidak dapat diedit. Kegiatan yang sudah <strong>disetujui</strong> admin dipindah ke halaman Persetujuan Dosen.</>} />
           </div>
           <button
@@ -392,28 +359,28 @@ function AjukanKegiatanEksternal() {
             className="btn btn-primary btn-sm"
           >
             <Plus className="h-4 w-4" />
-            <span className="sm:hidden">Ajukan Baru</span>
-            <span className="hidden sm:inline">Tambah Ajukan Kegiatan</span>
+            <span className="sm:hidden">Ajukan</span>
+            <span className="hidden sm:inline">Ajukan Kegiatan</span>
           </button>
         </div>
 
         <TableCard>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="flex w-full items-center gap-2 rounded-lg border border-base-300 px-3 py-2 sm:w-auto sm:flex-1 sm:px-4">
+            <label className="input input-sm flex w-full items-center gap-2 sm:w-auto sm:flex-1">
               <Search className="h-3.5 w-3.5 shrink-0 text-base-content/60 sm:h-4 sm:w-4" />
               <input
-                type="text"
+                type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kegiatan..."
-                className="w-full text-xs outline-none sm:text-sm"
+                className="grow text-sm"
               />
-            </div>
+            </label>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={filterKategori}
                 onChange={(e) => setFilterKategori(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
+                className="select select-sm min-w-0 flex-1 text-sm"
               >
                 <option value="">Semua Kategori</option>
                 {jenisOptions.map((j) => (
@@ -423,7 +390,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterSkala}
                 onChange={(e) => setFilterSkala(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
+                className="select select-sm min-w-0 flex-1 text-sm"
               >
                 <option value="">Semua Skala</option>
                 {[...new Set(data.map((r) => r.skala).filter((s) => s && s !== '-'))].sort().map((s) => (
@@ -433,7 +400,7 @@ function AjukanKegiatanEksternal() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-base-300 px-3 py-2 text-xs text-base-content outline-none sm:text-sm"
+                className="select select-sm min-w-0 flex-1 text-sm"
               >
                 <option value="">Semua Status</option>
                 {statusOptions.map((s) => (

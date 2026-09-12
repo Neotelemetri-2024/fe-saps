@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Download, Printer, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Printer, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { getCurrentUser } from '../../services/authService'
@@ -331,6 +331,7 @@ const SAMPLE_BREAKDOWN_RIGHT = [
 function GenerateSertifikat() {
   const user = getCurrentUser()
   const [loading, setLoading] = useState(true)
+  const [generated, setGenerated] = useState(false)
   const [useSampleData, setUseSampleData] = useState(false)
   const [portofolioData, setPortofolioData] = useState(null)
 
@@ -417,49 +418,44 @@ function GenerateSertifikat() {
       `}</style>
 
       <div className="space-y-6">
-        {/* Top Control Bar (Hidden on Print) */}
-        <div className="print-hidden flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-base-300 bg-base-100 p-4 sm:p-5 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-base-content">
-                Sertifikat SAPS Mahasiswa
-              </h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Resmi Terakreditasi
-              </span>
-            </div>
-            <p className="mt-1 text-xs sm:text-sm text-base-content/60">
-              Pratinjau sertifikat resmi <i>Student Activities Performance System</i> (SAPS) Universitas Andalas format A4 Landscape.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={loadData}
-              disabled={loading}
-              className="btn btn-outline btn-sm gap-1.5"
-              title="Perbarui data dari server"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Muat Ulang
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrint}
-              disabled={loading}
-              className="btn btn-primary btn-sm gap-2 text-white shadow-sm hover:opacity-90"
-            >
-              <Printer className="h-4 w-4" />
-              Cetak / Download PDF
-            </button>
-          </div>
+        <div className="print-hidden space-y-2">
+          <button
+            type="button"
+            onClick={() => setGenerated(true)}
+            disabled={loading}
+            className="btn btn-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
+          >
+            {loading ? 'Memuat data…' : 'Generate Sertifikat'}
+          </button>
+          <p className="text-sm text-base-content/60">Buat sertifikat aktivitas mahasiswa dari data portofolio Anda secara otomatis.</p>
         </div>
 
-        {/* Certificate Display Area (Desktop Landscape Canvas & Responsive Container) */}
-        <div className="overflow-x-auto rounded-xl border border-base-300 bg-slate-100/80 p-3 sm:p-6 lg:p-10 dark:bg-slate-900/40">
+        {generated && (
+          <div className="space-y-4">
+            <div className="print-hidden flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={loadData}
+                disabled={loading}
+                className="btn btn-outline btn-sm gap-1.5"
+                title="Perbarui data dari server"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                Muat Ulang
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                disabled={loading}
+                className="btn btn-primary btn-sm gap-2 text-white shadow-sm hover:opacity-90"
+              >
+                <Printer className="h-4 w-4" />
+                Cetak / Download PDF
+              </button>
+            </div>
+
+            {/* Certificate Display Area (Desktop Landscape Canvas & Responsive Container) */}
+            <div className="overflow-x-auto rounded-md border border-base-300 bg-slate-100/80 p-3 sm:p-6 lg:p-10 dark:bg-slate-900/40">
           <div className="mx-auto min-w-[960px] max-w-[1050px]">
             {/* The A4 Landscape Certificate Sheet */}
             <div
@@ -702,6 +698,8 @@ function GenerateSertifikat() {
             </div>
           </div>
         </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )
