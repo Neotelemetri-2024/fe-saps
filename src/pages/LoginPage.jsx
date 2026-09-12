@@ -176,10 +176,7 @@ function LoginPage() {
         />
 
         {/* Green gradients strictly at perimeter edges - center of photo is 100% untouched and clear */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#134c26]/70 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-80 bg-gradient-to-r from-[#165b2d]/75 via-[#165b2d]/25 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#0e3b1d]/85 via-[#0e3b1d]/35 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#165b2d]/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#187a39]/65 via-[#238b45]/20 to-transparent" />
 
         {/* Top Header & Title */}
         <div className="relative z-10 space-y-12 xl:space-y-16">
