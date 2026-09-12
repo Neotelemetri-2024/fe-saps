@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { login, handleSsoLogin } from '../services/authService'
-import { User, Lock, Eye, EyeOff, GraduationCap, School, X, Sparkles, UserCheck } from 'lucide-react'
+import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import logoUnand from '../assets/logo_unand.png'
 import fotoUnand from '../assets/foto-unand.jpeg'
 import AccessibilityMenu from '../components/dashboard/AccessibilityMenu'
@@ -14,13 +14,6 @@ function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
-
-  // State untuk Modal Simulasi SSO UNAND di Local Development
-  const [showMockSsoModal, setShowMockSsoModal] = useState(false)
-  const [mockRole, setMockRole] = useState('mahasiswa')
-  const [mockNim, setMockNim] = useState('2411522001')
-  const [mockNama, setMockNama] = useState('Sheva Ramadhan')
-  const [useCustomMock, setUseCustomMock] = useState(false)
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
@@ -100,30 +93,10 @@ function LoginPage() {
   }
 
   const handleSsoClick = () => {
-    setErrorMsg('')
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    if (isLocal) {
-      // Buka modal simulasi SSO agar user bisa memilih akun & mengulang login secara realistis
-      setShowMockSsoModal(true)
-      return
-    }
-
-    // Di production / server publik: arahkan ke server autentikasi SSO UNAND
     setLoading(true)
+    setErrorMsg('')
     const ssoUrl = import.meta.env.VITE_SSO_LOGIN_URL || 'https://api-studentconnect.unand.ac.id/api/auth/sso'
     window.location.href = ssoUrl
-  }
-
-  const executeMockSsoLogin = (role, nim, nama) => {
-    setLoading(true)
-    setShowMockSsoModal(false)
-    const params = new URLSearchParams({
-      role: role || 'mahasiswa',
-      nim: nim || '2411522001',
-      nama: nama || 'Sheva Ramadhan',
-      frontend: window.location.origin,
-    })
-    window.location.href = `http://localhost:3000/api/auth/sso/mock?${params.toString()}`
   }
 
   const form = (
@@ -258,175 +231,6 @@ function LoginPage() {
           </div>
         </div>
       </div>
-
-      {/* MODAL SIMULASI SSO UNAND (KHUSUS LOCAL DEVELOPMENT) */}
-      {showMockSsoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="card w-full max-w-lg border border-base-300 bg-base-100 shadow-2xl overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-base-200 bg-emerald-700 px-5 py-4 text-white">
-              <div className="flex items-center gap-3">
-                <img src={logoUnand} alt="UNAND" className="h-8 w-8 object-contain drop-shadow" />
-                <div>
-                  <h3 className="text-base font-bold leading-tight">Portal SSO Universitas Andalas</h3>
-                  <p className="text-xs text-emerald-100">Simulasi Autentikasi Pengguna (Local Dev)</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowMockSsoModal(false)}
-                className="btn btn-ghost btn-sm btn-circle text-white hover:bg-emerald-800"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="space-y-4 p-5">
-              <p className="text-xs leading-relaxed text-base-content/70">
-                Silakan pilih profil akun untuk masuk ke sistem SAPS melalui Single Sign-On (SSO):
-              </p>
-
-              {/* Preset Cards */}
-              <div className="space-y-2.5">
-                {/* 1. Mahasiswa 2024 (Sheva Ramadhan) */}
-                <button
-                  type="button"
-                  onClick={() => executeMockSsoLogin('mahasiswa', '2411522001', 'Sheva Ramadhan')}
-                  className="flex w-full items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-left transition hover:border-emerald-400 hover:bg-emerald-100/70"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
-                      <GraduationCap className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-base-content">Sheva Ramadhan</span>
-                        <span className="badge badge-success badge-xs text-[10px] text-white">Akt 2024</span>
-                      </div>
-                      <p className="text-xs text-base-content/70 font-mono">NIM: 2411522001</p>
-                    </div>
-                  </div>
-                  <span className="btn btn-xs btn-success text-white">Masuk &rarr;</span>
-                </button>
-
-                {/* 2. Mahasiswa Baru 2026 */}
-                <button
-                  type="button"
-                  onClick={() => executeMockSsoLogin('mahasiswa', '2611521001', 'Mahasiswa Baru 2026')}
-                  className="flex w-full items-center justify-between rounded-xl border border-sky-200 bg-sky-50/60 p-3.5 text-left transition hover:border-sky-400 hover:bg-sky-100/70"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-base-content">Mahasiswa Baru 2026</span>
-                        <span className="badge badge-info badge-xs text-[10px] text-white">Akt 2026</span>
-                      </div>
-                      <p className="text-xs text-base-content/70 font-mono">NIM: 2611521001 (Auto-Kurikulum)</p>
-                    </div>
-                  </div>
-                  <span className="btn btn-xs btn-info text-white">Masuk &rarr;</span>
-                </button>
-
-                {/* 3. Dosen */}
-                <button
-                  type="button"
-                  onClick={() => executeMockSsoLogin('dosen', '198501012010121001', 'Dr. Dosen Teladan, M.Kom')}
-                  className="flex w-full items-center justify-between rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-left transition hover:border-amber-400 hover:bg-amber-100/70"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600 text-white shadow-sm">
-                      <School className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-base-content">Dr. Dosen Teladan, M.Kom</span>
-                        <span className="badge badge-warning badge-xs text-[10px]">Dosen</span>
-                      </div>
-                      <p className="text-xs text-base-content/70 font-mono">NIP: 198501012010121001</p>
-                    </div>
-                  </div>
-                  <span className="btn btn-xs btn-warning">Masuk &rarr;</span>
-                </button>
-              </div>
-
-              {/* Toggle Custom Input Form */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setUseCustomMock((v) => !v)}
-                  className="text-xs font-semibold text-emerald-700 hover:underline"
-                >
-                  {useCustomMock ? '▲ Sembunyikan form input kustom' : '▼ Atau masuk dengan NIM / NIP kustom lainnya…'}
-                </button>
-
-                {useCustomMock && (
-                  <div className="mt-3 space-y-3 rounded-lg border border-base-200 bg-base-200/40 p-3.5">
-                    <div>
-                      <label className="block text-xs font-medium text-base-content mb-1">Peran Akun</label>
-                      <select
-                        className="select select-bordered select-sm w-full text-xs"
-                        value={mockRole}
-                        onChange={(e) => setMockRole(e.target.value)}
-                      >
-                        <option value="mahasiswa">Mahasiswa</option>
-                        <option value="dosen">Dosen</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-base-content mb-1">
-                        {mockRole === 'dosen' ? 'NIP' : 'NIM'}
-                      </label>
-                      <input
-                        type="text"
-                        className="input input-bordered input-sm w-full text-xs font-mono"
-                        value={mockNim}
-                        onChange={(e) => setMockNim(e.target.value)}
-                        placeholder={mockRole === 'dosen' ? 'Contoh: 198501012010121001' : 'Contoh: 2411522001'}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-base-content mb-1">Nama Lengkap</label>
-                      <input
-                        type="text"
-                        className="input input-bordered input-sm w-full text-xs"
-                        value={mockNama}
-                        onChange={(e) => setMockNama(e.target.value)}
-                        placeholder="Contoh: Budi Pratama"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => executeMockSsoLogin(mockRole, mockNim, mockNama)}
-                      className="btn btn-emerald btn-sm w-full bg-emerald-700 text-white hover:bg-emerald-800"
-                    >
-                      <UserCheck className="h-4 w-4 mr-1" />
-                      Masuk dengan Akun Kustom
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex justify-end border-t border-base-200 bg-base-200/30 px-5 py-3">
-              <button
-                type="button"
-                onClick={() => setShowMockSsoModal(false)}
-                className="btn btn-ghost btn-sm"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
