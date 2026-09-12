@@ -866,122 +866,103 @@ export const ssoCallback = async (req: Request, res: Response): Promise<void> =>
       peran = 'dosen';
     }
 
-    // 4. Auto-Provisioning / JIT User Sync (Sesuai Arahan DTI: Jangan tolak akun baru)
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // 4. Bangun Identitas Pengguna dari Session Login SSO (Sesuai Arahan DTI: Gunakan Session SSO)
+    let userIdStr = username || email;
+    let finalPeran = peran;
 
-    if (!user) {
-      // User baru pertama kali login SSO -> Buat di database internal
-      console.log(`[SSO JIT Auto-Provisioning] Mendaftarkan user baru: ${email} (${peran})`);
-      user = await prisma.user.create({
-        data: {
-          nama,
-          email,
-          passwordHash: await hashPassword(crypto.randomUUID()),
-          peran: peran as any,
-          aktif: true,
-        },
+    // Sinkronisasi DB Ringan (Graceful & Non-blocking agar tidak membebani atau menolak user)
+    try {
+      let user = await prisma.user.findUnique({
+        where: { email },
       });
-    } else {
-      // User sudah ada -> pastikan aktif & update nama jika sebelumnya belum rapi
-      if (!user.aktif) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { aktif: true },
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            nama,
+            email,
+            passwordHash: await hashPassword(crypto.randomUUID()),
+            peran: peran as any,
+            aktif: true,
+          },
         });
+      } else {
+        if (!user.aktif) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { aktif: true },
+          });
+        }
+        finalPeran = user.peran as any;
       }
-      peran = user.peran as any;
-    }
 
-    // Pastikan entitas detail terkait peran sudah ada
-    if (user.peran === 'mahasiswa') {
-      const existingMhs = await prisma.mahasiswa.findUnique({
-        where: { userId: user.id },
-      });
+      userIdStr = user.id.toString();
 
-      if (!existingMhs) {
-        // Ekstrak NIM dari username atau email
-        let nim = username;
-        if (!/^\d{10}$/.test(nim)) {
-          const match = email.match(/^(\d{10})/);
-          if (match) nim = match[1];
-        }
-        if (!nim) {
-          nim = `NIM${user.id.toString().padStart(8, '0')}`;
-        }
+      // Sinkronkan data relasi mahasiswa/dosen untuk integritas modul SAPS
+      if (user.peran === 'mahasiswa') {
+        const existingMhs = await prisma.mahasiswa.findUnique({
+          where: { userId: user.id },
+        });
 
-        // Tentukan angkatan (misal dari 2 digit pertama NIM: "241152..." -> 2024)
-        let angkatan = new Date().getFullYear();
-        if (/^\d{2}/.test(nim)) {
-          const prefixYear = parseInt(nim.substring(0, 2), 10);
-          if (prefixYear >= 15 && prefixYear <= 40) {
-            angkatan = 2000 + prefixYear;
+        if (!existingMhs) {
+          let nim = username;
+          if (!/^\d{10}$/.test(nim)) {
+            const match = email.match(/^(\d{10})/);
+            if (match) nim = match[1];
           }
+          nim = nim || `NIM${user.id.toString().padStart(8, '0')}`;
+
+          let angkatan = new Date().getFullYear();
+          if (/^\d{2}/.test(nim)) {
+            const prefixYear = parseInt(nim.substring(0, 2), 10);
+            if (prefixYear >= 15 && prefixYear <= 40) {
+              angkatan = 2000 + prefixYear;
+            }
+          }
+
+          const defaultProdi = await prisma.programStudi.findFirst();
+          const prodiId = defaultProdi?.id || 1;
+          const kurikulumId = await resolveKurikulumIdForAngkatan(angkatan);
+
+          await prisma.mahasiswa.create({
+            data: {
+              userId: user.id,
+              nim,
+              angkatan,
+              prodiId,
+              kurikulumId,
+            },
+          });
         }
-
-        // Ambil prodi default jika belum ditentukan
-        const defaultProdi = await prisma.programStudi.findFirst();
-        const prodiId = defaultProdi?.id || 1;
-
-        // Tentukan kurikulum yang sesuai berdasarkan angkatan mahasiswa
-        const kurikulumId = await resolveKurikulumIdForAngkatan(angkatan);
-
-        await prisma.mahasiswa.create({
-          data: {
-            userId: user.id,
-            nim,
-            angkatan,
-            prodiId,
-            kurikulumId,
-          },
+      } else if (user.peran === 'dosen') {
+        const existingDosen = await prisma.dosen.findUnique({
+          where: { userId: user.id },
         });
-      }
-    } else if (user.peran === 'dosen') {
-      const existingDosen = await prisma.dosen.findUnique({
-        where: { userId: user.id },
-      });
 
-      if (!existingDosen) {
-        const defaultFakultas = await prisma.fakultas.findFirst();
-        await prisma.dosen.create({
-          data: {
-            userId: user.id,
-            nidn: username || `NIDN-${user.id}`,
-            fakultasId: defaultFakultas?.id || 1,
-          },
-        });
+        if (!existingDosen) {
+          const defaultFakultas = await prisma.fakultas.findFirst();
+          await prisma.dosen.create({
+            data: {
+              userId: user.id,
+              nidn: username || `NIDN-${user.id}`,
+              fakultasId: defaultFakultas?.id || 1,
+            },
+          });
+        }
       }
+    } catch (syncErr) {
+      // Jika database sedang sibuk/ada kendala, login SSO TETAP BERHASIL dengan session token
+      console.warn('[SSO Session Handled Gracefully]', syncErr);
     }
 
-    // 5. Generate JWT Token SAPS yang sah
+    // 5. Generate JWT Token SAPS dari Session SSO
     const tokenPayload: Record<string, any> = {
-      id: user.id.toString(),
-      peran: user.peran,
-      nama: user.nama,
-      email: user.email,
+      id: userIdStr,
+      peran: finalPeran,
+      nama,
+      email,
+      nim: finalPeran === 'mahasiswa' ? username : undefined,
     };
-
-    if (user.peran === 'staff') {
-      const staff = await prisma.staff.findUnique({
-        where: { userId: user.id },
-        select: { jabatan: true },
-      });
-      if (staff) {
-        tokenPayload.jabatan = staff.jabatan;
-      }
-    }
-
-    if (user.peran === 'operator_org') {
-      const operator = await prisma.organisasiOperator.findUnique({
-        where: { userId: user.id },
-        include: { organisasi: { select: { id: true, nama: true } } },
-      });
-      if (operator) {
-        tokenPayload.organisasiId = operator.organisasiId;
-        tokenPayload.namaOrganisasi = operator.organisasi.nama;
-      }
-    }
 
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
 
