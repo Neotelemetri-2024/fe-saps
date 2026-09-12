@@ -76,15 +76,16 @@ function TambahAkunModal({ onClose, onSave }) {
           <div>
             <label className="block text-sm text-base-content">Email <span className="text-red-600">*</span></label>
             <input type="email" name="email" value={form.email} onChange={handleChange}
-              placeholder="operator@unand.ac.id"
-              autoComplete="off"
+              placeholder="Contoh: operator.ukm@unand.ac.id"
+              autoComplete="new-password"
               className="mt-1 input w-full" />
           </div>
           <div>
             <label className="block text-sm text-base-content">Password <span className="text-red-600">*</span></label>
             <div className="relative mt-1">
               <input type={showPwd ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="Minimal 8 karakter"
+                autoComplete="new-password"
                 className="input w-full pr-10" />
               <button type="button" onClick={() => setShowPwd(!showPwd)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
@@ -96,7 +97,8 @@ function TambahAkunModal({ onClose, onSave }) {
             <label className="block text-sm text-base-content">Konfirmasi Password <span className="text-red-600">*</span></label>
             <div className="relative mt-1">
               <input type={showConfirmPwd ? 'text' : 'password'} name="konfirmasiPassword" value={form.konfirmasiPassword} onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="Ulangi password"
+                autoComplete="new-password"
                 className="input w-full pr-10" />
               <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
@@ -161,7 +163,8 @@ function ResetPasswordModal({ item, onClose, onReset }) {
           <label className="block text-sm text-base-content">Password Baru <span className="text-red-600">*</span></label>
           <div className="relative mt-1">
             <input type={showPwd ? 'text' : 'password'} value={newPwd} onChange={(e) => setNewPwd(e.target.value)}
-              placeholder="Masukkan password baru"
+              placeholder="Minimal 8 karakter"
+              autoComplete="new-password"
               className="w-full rounded-lg border border-base-300 px-3 py-2 pr-10 text-sm outline-none focus:border-brand-dark" />
             <button type="button" onClick={() => setShowPwd(!showPwd)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">

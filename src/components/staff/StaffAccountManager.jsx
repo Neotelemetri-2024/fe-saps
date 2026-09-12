@@ -312,6 +312,7 @@ export default function StaffAccountManager({
                 className="input w-full"
                 required
                 placeholder="nama@unand.ac.id"
+                autoComplete="new-password"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -327,6 +328,7 @@ export default function StaffAccountManager({
                 required={!editing}
                 minLength={form.password ? 8 : undefined}
                 placeholder={editing ? '•••••••• (tidak diubah)' : 'Minimal 8 karakter'}
+                autoComplete="new-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
@@ -339,6 +341,7 @@ export default function StaffAccountManager({
                 className="input w-full"
                 required={!editing || Boolean(form.password)}
                 placeholder="Ulangi password"
+                autoComplete="new-password"
                 value={form.konfirmasiPassword}
                 onChange={(e) => setForm({ ...form, konfirmasiPassword: e.target.value })}
               />

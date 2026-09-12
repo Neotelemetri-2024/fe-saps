@@ -133,8 +133,8 @@ function TambahAkunModal({ onClose, onSave }) {
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="operator@unand.ac.id"
-              autoComplete="off"
+              placeholder="Contoh: operator.ukmf@unand.ac.id"
+              autoComplete="new-password"
               className="mt-1 w-full rounded-lg border border-base-300 px-3 py-2.5 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
             />
           </div>
@@ -154,7 +154,7 @@ function TambahAkunModal({ onClose, onSave }) {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="Minimal 8 karakter"
                 autoComplete="new-password"
                 className="w-full rounded-lg border border-base-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
@@ -193,7 +193,7 @@ function TambahAkunModal({ onClose, onSave }) {
                 name="konfirmasiPassword"
                 value={form.konfirmasiPassword}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="Ulangi password"
                 autoComplete="new-password"
                 className="w-full rounded-lg border border-base-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               />
