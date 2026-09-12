@@ -10,6 +10,8 @@ import {
   upsertTargetIku3,
   getRulesIku3,
   updateRuleIku3,
+  createRuleIku3,
+  deleteRuleIku3,
   exportIku3Excel,
 } from '../controllers/iku3/iku3.controller';
 
@@ -42,6 +44,8 @@ router.get('/rules', authorizeRole(...VIEW_ROLES), getRulesIku3);
 router.post('/targets', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), upsertTargetIku3);
 
 // 4. Manajemen Bobot Dinamis (Khusus Super Admin Pimpinan & Admin Ditmawa)
+router.post('/rules', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), createRuleIku3);
 router.put('/rules/:id', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), updateRuleIku3);
+router.delete('/rules/:id', authorizeRole('pimpinan_ditmawa', 'admin_ditmawa'), deleteRuleIku3);
 
 export default router;

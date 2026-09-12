@@ -376,6 +376,136 @@ export const updateRuleIku3 = async (req: Request, res: Response, next: NextFunc
   }
 };
 
+// POST /api/iku3/rules — Tambah Aturan Bobot Dinamis Baru (Khusus Ditmawa)
+export const createRuleIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { jenis, skala, peran, sksMin, sksMax, bobot, keterangan, tahunMulai } = req.body;
+    const userId = req.user?.id ? BigInt(req.user.id) : null;
+
+    if (!jenis || (jenis !== 'pembelajaran' && jenis !== 'prestasi')) {
+      res.status(400).json({ success: false, message: 'Jenis aturan wajib dipilih (pembelajaran atau prestasi).' });
+      return;
+    }
+
+    if (bobot === undefined || bobot === null || isNaN(Number(bobot))) {
+      res.status(400).json({ success: false, message: 'Nilai bobot wajib diisi berupa angka.' });
+      return;
+    }
+
+    const bobotNum = Number(bobot);
+    if (bobotNum < 0 || bobotNum > 1) {
+      res.status(400).json({ success: false, message: 'Nilai bobot harus berada dalam rentang 0.00 sampai 1.00.' });
+      return;
+    }
+
+    const targetTahunMulai = tahunMulai ? Number(tahunMulai) : 2026;
+
+    let minVal: number | null = null;
+    let maxVal: number | null = null;
+
+    if (jenis === 'pembelajaran') {
+      if (sksMin !== undefined && sksMin !== null && sksMin !== '') {
+        minVal = Number(sksMin);
+        if (isNaN(minVal) || minVal < 0) {
+          res.status(400).json({ success: false, message: 'SKS minimal harus berupa bilangan bulat >= 0.' });
+          return;
+        }
+      }
+      if (sksMax !== undefined && sksMax !== null && sksMax !== '') {
+        maxVal = Number(sksMax);
+        if (isNaN(maxVal) || maxVal < 0) {
+          res.status(400).json({ success: false, message: 'SKS maksimal harus berupa bilangan bulat >= 0.' });
+          return;
+        }
+      }
+      if (minVal !== null && maxVal !== null && minVal > maxVal) {
+        res.status(400).json({ success: false, message: 'SKS minimal tidak boleh lebih besar dari SKS maksimal.' });
+        return;
+      }
+    }
+
+    if (jenis === 'prestasi') {
+      if (!skala || !String(skala).trim()) {
+        res.status(400).json({ success: false, message: 'Tingkat / skala prestasi wajib diisi (misal: Internasional, Nasional, Provinsi).' });
+        return;
+      }
+      if (!peran || !String(peran).trim()) {
+        res.status(400).json({ success: false, message: 'Posisi capaian / peran wajib diisi (misal: Juara 1, Finalis).' });
+        return;
+      }
+    }
+
+    const created = await prisma.iku3BobotRule.create({
+      data: {
+        jenis,
+        skala: jenis === 'prestasi' ? String(skala).trim() : null,
+        peran: jenis === 'prestasi' ? String(peran).trim() : null,
+        sksMin: jenis === 'pembelajaran' ? minVal : null,
+        sksMax: jenis === 'pembelajaran' ? maxVal : null,
+        bobot: bobotNum,
+        keterangan: keterangan ? String(keterangan).trim() : null,
+        tahunMulai: targetTahunMulai,
+        aktif: true,
+        diubahOleh: userId,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Aturan bobot IKU 3 berhasil ditambahkan.',
+      data: {
+        id: created.id,
+        tahunMulai: created.tahunMulai,
+        jenis: created.jenis,
+        skala: created.skala,
+        peran: created.peran,
+        sksMin: created.sksMin,
+        sksMax: created.sksMax,
+        bobot: Number(created.bobot),
+        keterangan: created.keterangan,
+        aktif: created.aktif,
+      },
+    });
+  } catch (error) {
+    console.error('[createRuleIku3]', error);
+    next(error);
+  }
+};
+
+// DELETE /api/iku3/rules/:id — Hapus Aturan Bobot Dinamis (Soft-Delete)
+export const deleteRuleIku3 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id ? BigInt(req.user.id) : null;
+
+    const existing = await prisma.iku3BobotRule.findFirst({
+      where: { id: Number(id), deletedAt: null },
+    });
+
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Aturan bobot tidak ditemukan.' });
+      return;
+    }
+
+    await prisma.iku3BobotRule.update({
+      where: { id: Number(id) },
+      data: {
+        deletedAt: new Date(),
+        aktif: false,
+        diubahOleh: userId,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Aturan bobot berhasil dihapus.',
+    });
+  } catch (error) {
+    console.error('[deleteRuleIku3]', error);
+    next(error);
+  }
+};
+
 // GET /api/iku3/export — Download Laporan IKU 3 Format Excel (.xlsx)
 export const exportIku3Excel = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
