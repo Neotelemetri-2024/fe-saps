@@ -206,16 +206,14 @@ export function logout() {
   const isSso = user?.authProvider === 'sso'
   localStorage.removeItem(USER_STORAGE_KEY)
 
-  if (isSso) {
-    // Selalu logout dari server Keycloak SSO UNAND agar sesi kredensial direset
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    const postLogout = encodeURIComponent(
-      isLocal
-        ? 'https://studentconnect.unand.ac.id/login'
-        : window.location.origin + '/login'
-    )
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+  if (isSso && !isLocal) {
+    // Di production: logout dari server Keycloak SSO UNAND resmi
+    const postLogout = encodeURIComponent(window.location.origin + '/login')
     window.location.href = SSO_LOGOUT_URL + '?post_logout_redirect_uri=' + postLogout + '&client_id=saps-unand'
   } else {
+    // Di local dev atau akun internal: langsung kembali ke /login
     window.location.href = '/login'
   }
 }
