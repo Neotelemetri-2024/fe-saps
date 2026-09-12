@@ -619,6 +619,7 @@ export const ssoLogin = async (req: Request, res: Response): Promise<void> => {
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',
+      prompt: 'login', // Memaksa Keycloak selalu menampilkan halaman login username & password
     });
 
     res.redirect(`${SSO_AUTH_URL}?${params.toString()}`);
@@ -655,13 +656,13 @@ export const ssoMockLogin = async (req: Request, res: Response): Promise<void> =
     let username = typeof req.query.nim === 'string' ? req.query.nim.trim() : '';
 
     if (role === 'dosen') {
-      email = email || 'dosen.teladan@unand.ac.id';
-      nama = nama || 'Dr. Dosen Teladan, M.Kom';
       username = username || '198501012010121001';
+      nama = nama || 'Dr. Dosen Teladan, M.Kom';
+      email = email || `${username}@unand.ac.id`;
     } else {
-      email = email || '2411522001@student.unand.ac.id';
-      nama = nama || 'Sheva Ramadhan (Mahasiswa SSO)';
       username = username || '2411522001';
+      nama = nama || (username === '2411522001' ? 'Sheva Ramadhan' : `Mahasiswa (${username})`);
+      email = email || `${username}@student.unand.ac.id`;
     }
 
     let peran: 'mahasiswa' | 'dosen' | 'staff' = role === 'dosen' ? 'dosen' : 'mahasiswa';
