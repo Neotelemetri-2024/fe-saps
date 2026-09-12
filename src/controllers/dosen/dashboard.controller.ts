@@ -20,7 +20,21 @@ export const getDashboardDosen = async (req: Request, res: Response, next: NextF
     });
 
     if (!dosen) {
-      return res.status(404).json({ success: false, message: 'Profil dosen tidak ditemukan' });
+      return res.status(200).json({
+        success: true,
+        data: {
+          dosen: {
+            nama: req.user?.nama || 'Dosen',
+            fakultas: '-',
+            nidn: '-',
+          },
+          totalMahasiswa: 0,
+          pendingApproval: 0,
+          mahasiswaPerluPerhatian: 0,
+          mahasiswaBimbingan: [],
+          rekapKategori: [],
+        },
+      });
     }
 
     // Total Mahasiswa Bimbingan

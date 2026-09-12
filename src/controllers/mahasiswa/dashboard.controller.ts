@@ -160,12 +160,64 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (!mahasiswa) {
-      return res.status(404).json({ success: false, message: 'Profil mahasiswa tidak ditemukan' });
+      return res.status(200).json({
+        success: true,
+        data: {
+          nama: req.user?.nama || 'Mahasiswa',
+          prodi: '-',
+          nim: '-',
+          angkatan: new Date().getFullYear(),
+          kurikulumNama: 'Belum ada kurikulum',
+          totalPoin: 0,
+          totalPoinProgres: 0,
+          totalTarget: 0,
+          persentaseTotal: 0,
+          isLulus: false,
+          statusKelulusan: 'Belum Memenuhi Syarat Kelulusan',
+          tahap: 'Tahap I: Dasar',
+          progresTahunan: [],
+          progressTahun: [],
+          radarData: [
+            { label: 'Fondasi', value: 0 },
+            { label: 'Penguatan', value: 0 },
+            { label: 'Pemantapan', value: 0 },
+            { label: 'Aktualisasi', value: 0 },
+          ],
+          riwayatIzinPA: [],
+          riwayatEksternal: [],
+        },
+      });
     }
 
     const kurikulumAktif = await resolveKurikulumMahasiswa(mahasiswa);
     if (!kurikulumAktif) {
-      return res.status(400).json({ success: false, message: 'Kurikulum mahasiswa tidak ditemukan' });
+      return res.status(200).json({
+        success: true,
+        data: {
+          nama: mahasiswa.user?.nama || req.user?.nama || 'Mahasiswa',
+          prodi: mahasiswa.prodi?.nama || '-',
+          nim: mahasiswa.nim,
+          angkatan: mahasiswa.angkatan || new Date().getFullYear(),
+          kurikulumNama: 'Belum ada kurikulum',
+          totalPoin: 0,
+          totalPoinProgres: 0,
+          totalTarget: 0,
+          persentaseTotal: 0,
+          isLulus: false,
+          statusKelulusan: 'Belum Memenuhi Syarat Kelulusan',
+          tahap: 'Tahap I: Dasar',
+          progresTahunan: [],
+          progressTahun: [],
+          radarData: [
+            { label: 'Fondasi', value: 0 },
+            { label: 'Penguatan', value: 0 },
+            { label: 'Pemantapan', value: 0 },
+            { label: 'Aktualisasi', value: 0 },
+          ],
+          riwayatIzinPA: [],
+          riwayatEksternal: [],
+        },
+      });
     }
 
     // Ambil perolehan poin mahasiswa ini
