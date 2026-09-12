@@ -4,10 +4,8 @@ import { toast } from 'sonner'
 import { login } from '../services/authService'
 import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import logoUnand from '../assets/logo_unand.png'
-import GradientWaves from '../components/GradientWaves'
+import fotoUnand from '../assets/foto-unand.jpeg'
 import AccessibilityMenu from '../components/dashboard/AccessibilityMenu'
-import { useAppearance } from '../lib/appearance'
-import { isDarkTheme } from '../constants/theme'
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -16,8 +14,6 @@ function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
-  const { theme } = useAppearance()
-  const dark = isDarkTheme(theme)
 
   useEffect(() => {
     localStorage.removeItem('saps_current_user')
@@ -122,35 +118,45 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-base-200 font-sans lg:overflow-hidden lg:bg-base-100">
-      <div className={`relative hidden h-screen w-1/2 flex-col justify-center overflow-hidden lg:flex ${dark ? 'bg-black' : 'bg-white'}`}>
-        <GradientWaves
-          horizonColor={dark ? '#16a34a' : '#009219'}
-          waveColor={dark ? '#22c55e' : '#006e0b'}
-          crestColor={dark ? '#4ade80' : '#017a2d'}
-          speed={0.4}
-          amplitude={2.5}
-          waveScale={0.6}
-          waveRatio={0.9}
-          swell={35}
-          turbulence={20}
-          tilt={1.11}
-          zoom={0.55}
-          height={6.5}
-          fogDepth={18}
-          detail="medium"
-          brightness={dark ? 1.2 : 1}
-          opacity={1}
-          mouseInteraction
-          parallaxStrength={0.5}
-          grain
-          grainIntensity={0.025}
+      <div className="relative hidden h-screen w-1/2 flex-col justify-between overflow-hidden p-10 xl:p-14 lg:flex">
+        {/* Background Image */}
+        <img
+          src={fotoUnand}
+          alt="Gedung Rektorat Universitas Andalas"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="pointer-events-none relative z-10 flex flex-col items-center px-16 text-center">
-          <h1 className="text-5xl font-extrabold leading-tight text-primary">
-            Selamat Datang!
-          </h1>
-          <p className="mt-6 max-w-md text-sm leading-relaxed text-primary/80">
-            MY UNAND STUDENT CONNECT mengelola pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara terintegrasi.
+
+        {/* Green gradients strictly at perimeter edges - center of photo is 100% untouched and clear */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#134c26]/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-80 bg-gradient-to-r from-[#165b2d]/75 via-[#165b2d]/25 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#0e3b1d]/85 via-[#0e3b1d]/35 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#165b2d]/30 to-transparent" />
+
+        {/* Top Header & Title */}
+        <div className="relative z-10 space-y-12 xl:space-y-16">
+          {/* Logo & University Name */}
+          <div className="flex items-center gap-3.5">
+            <img src={logoUnand} alt="Logo Universitas Andalas" className="h-12 w-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]" />
+            <span className="text-xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              Universitas Andalas
+            </span>
+          </div>
+
+          {/* System Title */}
+          <div>
+            <h1 className="text-4xl xl:text-5xl font-extrabold leading-[1.18] tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+              MY UNAND<br />STUDENT CONNECT
+            </h1>
+          </div>
+        </div>
+
+        {/* Bottom Description & Copyright */}
+        <div className="relative z-10 space-y-5">
+          <p className="max-w-md text-sm xl:text-base leading-relaxed text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+            Platform terintegrasi pengelolaan pengajuan kegiatan, verifikasi poin, dan rekapitulasi capaian mahasiswa secara transparan, akuntabel, dan terintegrasi.
+          </p>
+          <p className="text-xs text-white/80 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+            &copy; {new Date().getFullYear()} Universitas Andalas - Developed by Neo Telemetri.
           </p>
         </div>
       </div>
@@ -170,12 +176,6 @@ function LoginPage() {
 
         <div className="flex flex-1 flex-col justify-center px-4 py-6 sm:px-8 lg:px-20 lg:py-10">
           <div className="mx-auto w-full max-w-md">
-            <div className="hidden flex-col items-center gap-1 pb-8 text-center lg:flex">
-              <img src={logoUnand} alt="Logo Universitas Andalas" className="h-11 w-11 object-contain" />
-              <p className="text-xl font-extrabold text-primary">MY UNAND STUDENT CONNECT</p>
-              <p className="text-sm text-base-content/60">Universitas Andalas</p>
-            </div>
-
             <div className="card border border-base-300 bg-base-100 p-5 sm:p-6 lg:border-0 lg:bg-transparent lg:p-0">
               <h2 className="text-2xl font-extrabold text-base-content">Masuk</h2>
               <p className="mt-1 text-sm text-base-content/60">
