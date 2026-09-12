@@ -1,11 +1,11 @@
 -- ==============================================================================
 -- DUMMY DATA: 10 AKUN MAHASISWA & 10 AKUN DOSEN PA (10 FAKULTAS & JURUSAN BERBEDA)
 -- Password untuk SEMUA akun: password123
--- Hash Bcrypt: $2b$10$3euPcmQFCiblsZeEu5s7p.9ovhk8fvDFd8e6nLhR.p5L1rD4zU0U6
+-- Hash Bcrypt: $2b$10$z9SyfgQKdbrg9pIl0Ks1PeeNmrDBxLOKrlYNas8IJZXYgAqHc3gVq
 -- ==============================================================================
 
 -- 1. Set variabel password hash
-SET @PASSWORD_HASH = '$2b$10$3euPcmQFCiblsZeEu5s7p.9ovhk8fvDFd8e6nLhR.p5L1rD4zU0U6';
+SET @PASSWORD_HASH = '$2b$10$z9SyfgQKdbrg9pIl0Ks1PeeNmrDBxLOKrlYNas8IJZXYgAqHc3gVq';
 
 -- ------------------------------------------------------------------------------
 -- 2. Pastikan 10 Fakultas & Program Studi Tersedia
