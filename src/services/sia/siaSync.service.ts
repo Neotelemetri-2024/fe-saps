@@ -97,7 +97,23 @@ export interface SiaKelasMbkm {
 }
 
 // Status mahasiswa yang disinkronisasi ke SAPS (Aktif + BSS/Cuti)
-const ALLOWED_MHS_STATUS = ['aktif', 'bss'];
+const ALLOWED_MHS_STATUS = ['aktif', 'active', 'a', 'bss', 'cuti', 'berhenti sementara studi'];
+const EXCLUDED_MHS_STATUS = [
+  'lulus',
+  'l',
+  'graduated',
+  'tidak aktif',
+  'non aktif',
+  'non-aktif',
+  'ta',
+  'do',
+  'drop out',
+  'keluar',
+  'mengundurkan diri',
+  'dikeluarkan',
+  'wafat',
+  'meninggal',
+];
 
 // ─── Tipe Hasil Sinkronisasi ─────────────────────────────────────────────────
 export interface SyncResult {
@@ -420,25 +436,38 @@ export async function syncMahasiswa(options?: SyncMahasiswaOptions): Promise<Syn
       return result;
     }
 
-    // Default minAngkatan: 2020 (mahasiswa aktif 7 tahun terakhir) atau dari env
-    const minAngkatanEnv = process.env.SIA_SYNC_MIN_ANGKATAN ? parseInt(process.env.SIA_SYNC_MIN_ANGKATAN, 10) : 2020;
-    const minAngkatan = options?.minAngkatan !== undefined ? options.minAngkatan : minAngkatanEnv;
+    // Angkatan minimal HANYA jika dispesifikasikan eksplisit via opsi CLI / env (tanpa batasan default kaku 2020)
+    const minAngkatan = options?.minAngkatan ?? (process.env.SIA_SYNC_MIN_ANGKATAN ? parseInt(process.env.SIA_SYNC_MIN_ANGKATAN, 10) : undefined);
 
-    // Filter status mahasiswa (aktif & bss) dan angkatan aktif
+    // Filter status mahasiswa (hanya terima Aktif & BSS/Cuti, lewati Lulus & Tidak Aktif)
     const filtered = response.data.filter(m => {
-      if (m.mhsStatus && !ALLOWED_MHS_STATUS.includes(m.mhsStatus.trim().toLowerCase())) {
-        return false;
+      const rawStatus = (m.mhsStatus || (m as any).status || (m as any).statusMhs || (m as any).statusMahasiswa || (m as any).mhs_status || '').toString().trim().toLowerCase();
+
+      if (rawStatus) {
+        // Jika terdeteksi Lulus, DO, Mengundurkan Diri, atau Tidak Aktif -> skip!
+        if (EXCLUDED_MHS_STATUS.some(s => rawStatus === s || rawStatus.includes(s))) {
+          return false;
+        }
+        // Pastikan termasuk dalam status yang diizinkan (Aktif / BSS / Cuti)
+        if (!ALLOWED_MHS_STATUS.some(s => rawStatus === s || rawStatus.includes(s))) {
+          return false;
+        }
       }
+
+      // Filter angkatan HANYA jika diatur secara eksplisit oleh pengguna
       if (minAngkatan) {
         const angkatan = parseInt(m.mhsAngkatan || '', 10) || null;
         if (angkatan && angkatan < minAngkatan) {
           return false;
         }
       }
+
       return true;
     });
 
-    console.log(`[SIA Sync] Mahasiswa: ${response.data.length} total → ${filtered.length} setelah filter (Aktif + BSS, Angkatan ≥ ${minAngkatan || 'Semua'})`);
+    console.log(
+      `[SIA Sync] Mahasiswa: ${response.data.length} total → ${filtered.length} setelah filter (Aktif & BSS/Cuti${minAngkatan ? `, Angkatan ≥ ${minAngkatan}` : ', Semua Angkatan'})`
+    );
 
     // Deduplikasi berdasarkan NIM (mhsNiu di SIA atau mhsNim)
     const deduped = new Map<string, SiaMahasiswa>();
