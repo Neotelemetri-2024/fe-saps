@@ -211,6 +211,20 @@ export const ajukanDraftKegiatanEksternal = async (req: Request, res: Response, 
       data: { status: 'diajukan' }
     });
 
+    // Pastikan partisipasi mahasiswa tercatat
+    const partExists = await prisma.partisipasi.findFirst({
+      where: { kegiatanId: updated.id, mahasiswaId: userIdBig },
+    });
+    if (!partExists) {
+      await prisma.partisipasi.create({
+        data: {
+          kegiatanId: updated.id,
+          mahasiswaId: userIdBig,
+          status: 'terdaftar',
+        },
+      });
+    }
+
     res.json({
       success: true,
       message: 'Kegiatan berhasil diajukan',
@@ -227,7 +241,54 @@ export const ajukanKegiatanEksternal = async (req: Request, res: Response, next:
     const userIdBig = await requireMahasiswaUser(req, res);
     if (!userIdBig) return;
 
-    const { kategoriId, namaKegiatan, penyelenggara, skalaId, tanggalPelaksanaan, deskripsi, linkWebsite, emailPenyelenggara } = req.body;
+    const {
+      kategoriId,
+      namaKegiatan,
+      penyelenggara,
+      skalaId,
+      tanggalPelaksanaan,
+      deskripsi,
+      linkWebsite,
+      emailPenyelenggara,
+      forceNew,
+      existingKegiatanId,
+    } = req.body;
+
+    // ─── Kasus A: Menggunakan Kegiatan yang Sudah Terdaftar (Join Existing) ───
+    if (existingKegiatanId) {
+      const existing = await prisma.kegiatan.findUnique({
+        where: { id: parseInt(String(existingKegiatanId)) },
+        include: {
+          partisipasi: { where: { mahasiswaId: userIdBig } },
+        },
+      });
+
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'Kegiatan terdaftar tidak ditemukan.' });
+      }
+
+      if (existing.partisipasi && existing.partisipasi.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Anda sudah terdaftar dalam kegiatan ini. Silakan periksa Riwayat Pengajuan / Izin PA Anda.',
+        });
+      }
+
+      // Daftarkan mahasiswa ke kegiatan yang sudah ada
+      await prisma.partisipasi.create({
+        data: {
+          kegiatanId: existing.id,
+          mahasiswaId: userIdBig,
+          status: 'terdaftar',
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Berhasil bergabung dengan kegiatan terdaftar!',
+        data: { kegiatanId: existing.id.toString(), reused: true },
+      });
+    }
 
     if (!kategoriId || !namaKegiatan || !penyelenggara || !tanggalPelaksanaan || !skalaId) {
       return res.status(400).json({ success: false, message: 'Harap isi semua kolom wajib' });
@@ -236,28 +297,122 @@ export const ajukanKegiatanEksternal = async (req: Request, res: Response, next:
     const kur = await requireKurikulumMahasiswa(userIdBig, res);
     if (!kur) return;
 
+    const cleanNama = String(namaKegiatan).trim();
+    const cleanPenyelenggara = String(penyelenggara).trim();
+    const targetDate = new Date(tanggalPelaksanaan);
+    const targetYear = targetDate.getFullYear();
+
+    const startOfYear = new Date(targetYear, 0, 1);
+    const endOfYear = new Date(targetYear, 11, 31, 23, 59, 59, 999);
+
+    // ─── Kasus B (Hard Block): Mahasiswa yang Sama Mengajukan Ulang di Tahun yang Sama ───
+    const ownExisting = await prisma.kegiatan.findFirst({
+      where: {
+        dibuatOleh: userIdBig,
+        asal: 'eksternal',
+        deletedAt: null,
+        status: { notIn: ['dibatalkan', 'ditolak'] },
+        tanggalMulai: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+        OR: [
+          { nama: { equals: cleanNama } },
+          { nama: { contains: cleanNama } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (ownExisting) {
+      const tglFormatted = ownExisting.tanggalMulai
+        ? new Date(ownExisting.tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '-';
+      return res.status(409).json({
+        success: false,
+        code: 'DUPLICATE_OWN_SUBMISSION',
+        message: `Anda sudah pernah mengajukan kegiatan "${ownExisting.nama}" untuk periode ${targetYear} pada tanggal ${tglFormatted} (Status: ${mapStatus(ownExisting.status)}). Tidak dapat mengajukan kegiatan yang sama berulang kali.`,
+      });
+    }
+
+    // ─── Kasus C (Soft Warning): Kegiatan Serupa Pernah Diajukan Mahasiswa Lain ───
+    if (!forceNew) {
+      const similarKegiatan = await prisma.kegiatan.findFirst({
+        where: {
+          asal: 'eksternal',
+          deletedAt: null,
+          status: { in: ['diajukan', 'terverifikasi', 'disetujui', 'terpublikasi'] },
+          tanggalMulai: {
+            gte: startOfYear,
+            lte: endOfYear,
+          },
+          OR: [
+            { nama: { equals: cleanNama } },
+            { nama: { contains: cleanNama } },
+          ],
+        },
+        include: {
+          kategori: { select: { id: true, nama: true } },
+          skala: { select: { id: true, nama: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (similarKegiatan) {
+        return res.status(409).json({
+          success: false,
+          code: 'SIMILAR_ACTIVITY_EXISTS',
+          message: `Kegiatan serupa sudah pernah diajukan sebelumnya di tahun ${targetYear}: "${similarKegiatan.nama}" (${similarKegiatan.penyelenggaraExt || '-'}).`,
+          data: {
+            existingKegiatan: {
+              id: similarKegiatan.id,
+              nama: similarKegiatan.nama,
+              penyelenggara: similarKegiatan.penyelenggaraExt,
+              skalaId: similarKegiatan.skalaId,
+              skalaNama: similarKegiatan.skala?.nama,
+              kategoriId: similarKegiatan.kategoriId,
+              kategoriNama: similarKegiatan.kategori?.nama,
+              tanggalPelaksanaan: similarKegiatan.tanggalMulai,
+              tahun: targetYear,
+              status: mapStatus(similarKegiatan.status),
+            },
+          },
+        });
+      }
+    }
+
+    // ─── Kasus D: Buat Kegiatan Baru ───
     const kegiatan = await prisma.kegiatan.create({
       data: {
-        nama: namaKegiatan,
+        nama: cleanNama,
         kategoriId: parseInt(kategoriId),
         skalaId: parseInt(skalaId),
         asal: 'eksternal',
-        tanggalMulai: new Date(tanggalPelaksanaan),
-        tanggalSelesai: new Date(tanggalPelaksanaan),
-        penyelenggaraExt: penyelenggara,
-        deskripsi: deskripsi,
-        linkPenyelenggara: linkWebsite,
-        emailPenyelenggara: emailPenyelenggara,
+        tanggalMulai: targetDate,
+        tanggalSelesai: targetDate,
+        penyelenggaraExt: cleanPenyelenggara,
+        deskripsi: deskripsi || null,
+        linkPenyelenggara: linkWebsite || null,
+        emailPenyelenggara: emailPenyelenggara || null,
         kurikulumId: kur.id,
         dibuatOleh: userIdBig,
         status: 'diajukan',
-      }
+      },
+    });
+
+    // Otomatis daftarkan pembuat kegiatan ke tabel partisipasi
+    await prisma.partisipasi.create({
+      data: {
+        kegiatanId: kegiatan.id,
+        mahasiswaId: userIdBig,
+        status: 'terdaftar',
+      },
     });
 
     res.status(201).json({
       success: true,
       message: 'Pengajuan kegiatan berhasil dikirim',
-      data: { kegiatanId: kegiatan.id.toString() }
+      data: { kegiatanId: kegiatan.id.toString() },
     });
   } catch (error: any) {
     next(error);
@@ -333,20 +488,25 @@ export const getRiwayatPengajuan = async (req: Request, res: Response, next: Nex
 };
 
 
-// 7. Mengambil Daftar Kegiatan Eksternal yang Sudah Terdaftar & Disetujui
+// 7. Mengambil Daftar Kegiatan Eksternal yang Sudah Terdaftar (untuk Autocomplete & Katalog)
 export const getKegiatanEksternalTerdaftar = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { search } = req.query;
+    const { search, allStatus } = req.query;
+    const allowedStatuses = allStatus === 'true' || allStatus === '1'
+      ? ['diajukan', 'terverifikasi', 'disetujui', 'terpublikasi']
+      : ['disetujui', 'terpublikasi'];
+
     const where: any = {
       asal: 'eksternal',
-      status: { in: ['disetujui', 'terpublikasi'] },
+      status: { in: allowedStatuses },
       deletedAt: null,
     };
 
-    if (search) {
+    if (search && String(search).trim()) {
+      const q = String(search).trim();
       where.OR = [
-        { nama: { contains: String(search) } },
-        { penyelenggaraExt: { contains: String(search) } },
+        { nama: { contains: q } },
+        { penyelenggaraExt: { contains: q } },
       ];
     }
 
@@ -357,6 +517,7 @@ export const getKegiatanEksternalTerdaftar = async (req: Request, res: Response,
         skala: { select: { id: true, nama: true } },
       },
       orderBy: { tanggalMulai: 'desc' },
+      take: 20,
     });
 
     const result = data.map((k) => {
