@@ -268,14 +268,21 @@ function AjukanKegiatanForm() {
       // Kasus A: Bergabung ke kegiatan terdaftar (dari autocomplete atau modal saran)
       if (options.existingKegiatanId || selectedExistingKegiatan?.id) {
         const targetId = options.existingKegiatanId || selectedExistingKegiatan.id
-        await ajukanKegiatan({
+        const res = await ajukanKegiatan({
           ...buildPayload(),
           existingKegiatanId: targetId,
         })
+        const isApproved = res?.data?.isApproved || res?.isApproved
         toast.success('Berhasil!', {
-          description: 'Anda berhasil bergabung dengan kegiatan terdaftar.',
+          description: isApproved
+            ? 'Berhasil bergabung! Kegiatan ini sudah disetujui Ditmawa, Anda dapat langsung meminta persetujuan Dosen PA.'
+            : 'Anda berhasil bergabung dengan kegiatan terdaftar.',
         })
-        navigate('/mahasiswa/kegiatan-eksternal')
+        if (isApproved) {
+          navigate('/mahasiswa/persetujuan-dosen')
+        } else {
+          navigate('/mahasiswa/kegiatan-eksternal')
+        }
         return
       }
 
