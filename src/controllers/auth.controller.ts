@@ -80,6 +80,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       nama: user.nama,
     };
 
+    let staffJabatan: string | null = null;
+    let tipeOrganisasi: string | null = null;
+    let role: string = user.peran;
+
     // Jika staff, ambil jabatan spesifik
     if (user.peran === "staff") {
       const staff = await prisma.staff.findUnique({
@@ -87,7 +91,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         select: { jabatan: true },
       });
       if (staff) {
+        staffJabatan = staff.jabatan;
         tokenPayload.jabatan = staff.jabatan;
+        role = staff.jabatan;
       }
     }
 
@@ -95,11 +101,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (user.peran === "operator_org") {
       const operator = await prisma.organisasiOperator.findUnique({
         where: { userId: user.id },
-        include: { organisasi: { select: { id: true, nama: true } } },
+        include: { organisasi: { select: { id: true, nama: true, tipe: true } } },
       });
       if (operator) {
         tokenPayload.organisasiId = operator.organisasiId;
         tokenPayload.namaOrganisasi = operator.organisasi.nama;
+        tipeOrganisasi = operator.organisasi.tipe || null;
+        tokenPayload.tipeOrganisasi = tipeOrganisasi;
+        const tipeLower = (tipeOrganisasi || "").toLowerCase();
+        if (["ukmf", "fakultas", "ukmf_org"].includes(tipeLower)) {
+          role = "operator_ukmf";
+        } else {
+          role = "operator_ukm";
+        }
       }
     }
 
@@ -116,9 +130,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           nama: user.nama,
           email: user.email,
           peran: user.peran,
-          jabatan: tokenPayload.jabatan || null,
+          jabatan: staffJabatan,
+          role,
           organisasiId: tokenPayload.organisasiId || null,
           namaOrganisasi: tokenPayload.namaOrganisasi || null,
+          tipeOrganisasi,
         },
       },
     });
@@ -172,6 +188,8 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
             nim: true,
             angkatan: true,
             prodiId: true,
+            kurikulumId: true,
+            kurikulum: { select: { id: true, nama: true } },
             prodi: {
               select: {
                 id: true,
@@ -221,25 +239,36 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     }
 
     let userResponse: any = user;
-    if (user.peran === "mahasiswa" && user.id) {
-      try {
-        const kur = await resolveKurikulumMahasiswa(user.id, prisma, {
-          includeStructure: false,
-          requireActive: false,
-        });
-        if (kur && user.mahasiswa) {
-          userResponse = {
-            ...user,
-            mahasiswa: {
-              ...user.mahasiswa,
-              kurikulumId: kur.id,
-              kurikulumNama: kur.nama,
-              kurikulum: { id: kur.id, nama: kur.nama },
-            },
-          };
+    if (user.peran === "mahasiswa" && user.id && user.mahasiswa) {
+      if (user.mahasiswa.kurikulum) {
+        userResponse = {
+          ...user,
+          mahasiswa: {
+            ...user.mahasiswa,
+            kurikulumId: user.mahasiswa.kurikulum.id,
+            kurikulumNama: user.mahasiswa.kurikulum.nama,
+          },
+        };
+      } else {
+        try {
+          const kur = await resolveKurikulumMahasiswa(user.id, prisma, {
+            includeStructure: false,
+            requireActive: false,
+          });
+          if (kur) {
+            userResponse = {
+              ...user,
+              mahasiswa: {
+                ...user.mahasiswa,
+                kurikulumId: kur.id,
+                kurikulumNama: kur.nama,
+                kurikulum: { id: kur.id, nama: kur.nama },
+              },
+            };
+          }
+        } catch (err) {
+          // Abaikan jika tidak dapat di-resolve agar tidak menimbulkan error 500
         }
-      } catch (err) {
-        // Abaikan jika tidak dapat di-resolve agar tidak menimbulkan error 500
       }
     }
 
