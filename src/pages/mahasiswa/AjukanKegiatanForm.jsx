@@ -213,7 +213,10 @@ function AjukanKegiatanForm() {
 
   const handleClearExistingKegiatan = () => {
     setSelectedExistingKegiatan(null)
-    toast.info('Kaitan kegiatan dilepas. Anda dapat mengisi form secara mandiri.')
+    setFormData(EMPTY_FORM)
+    setSearchSuggestions([])
+    setShowSuggestions(false)
+    toast.info('Kaitan kegiatan dilepas. Formulir telah dikosongkan untuk pengisian mandiri.')
   }
 
   const handleClearNamaKegiatan = () => {
@@ -371,7 +374,8 @@ function AjukanKegiatanForm() {
     }
   }
 
-  const isDirty = !!(formData.namaKegiatan || formData.penyelenggara || formData.kategoriId)
+  const isLocked = isModeTerdaftar || !!selectedExistingKegiatan
+  const isDirty = !!(formData.namaKegiatan || formData.penyelenggara || formData.kategoriId || selectedExistingKegiatan)
 
   return (
     <DashboardLayout role="mahasiswa" userName={user?.nama || 'Mahasiswa'} userRole="Mahasiswa">
@@ -477,7 +481,7 @@ function AjukanKegiatanForm() {
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
                 <div className="leading-relaxed">
                   <span className="font-bold text-emerald-900">Kegiatan Terdaftar Dipilih: </span>
-                  Data form otomatis disesuaikan dengan <strong>{selectedExistingKegiatan.nama}</strong> ({selectedExistingKegiatan.penyelenggara || '-'}, {selectedExistingKegiatan.tahun || '-'}). Anda akan didaftarkan ke kegiatan ini tanpa membuat data master baru.
+                  Data form otomatis dikunci sesuai kegiatan terdaftar: <strong>{selectedExistingKegiatan.nama}</strong> ({selectedExistingKegiatan.penyelenggara || '-'}, {selectedExistingKegiatan.tahun || '-'}). Anda akan didaftarkan ke kegiatan ini tanpa membuat data baru.
                 </div>
               </div>
               <button
@@ -501,7 +505,7 @@ function AjukanKegiatanForm() {
                 name="kategoriId"
                 value={formData.kategoriId}
                 onChange={handleChange}
-                disabled={isModeTerdaftar}
+                disabled={isLocked}
                 className="select mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
               >
                 <option value="">Pilih jenis kegiatan</option>
@@ -535,12 +539,12 @@ function AjukanKegiatanForm() {
                     onFocus={() => {
                       if (searchSuggestions.length > 0) setShowSuggestions(true)
                     }}
-                    disabled={isModeTerdaftar}
+                    disabled={isLocked}
                     placeholder="Contoh: GEMASTIK XVII 2024"
                     className="input w-full pr-8 disabled:bg-base-200 disabled:text-base-content/80"
                     autoComplete="off"
                   />
-                  {formData.namaKegiatan && !isModeTerdaftar && (
+                  {formData.namaKegiatan && !isLocked && (
                     <button
                       type="button"
                       onClick={handleClearNamaKegiatan}
@@ -613,7 +617,7 @@ function AjukanKegiatanForm() {
                   name="penyelenggara"
                   value={formData.penyelenggara}
                   onChange={handleChange}
-                  disabled={isModeTerdaftar}
+                  disabled={isLocked}
                   placeholder="Masukkan penyelenggara..."
                   className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
@@ -628,7 +632,7 @@ function AjukanKegiatanForm() {
                 name="skalaId"
                 value={formData.skalaId}
                 onChange={handleChange}
-                disabled={isModeTerdaftar || !formData.kategoriId}
+                disabled={isLocked || !formData.kategoriId}
                 className="select mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
               >
                 <option value="">
@@ -644,7 +648,7 @@ function AjukanKegiatanForm() {
               label="Tanggal Pelaksanaan"
               value={formData.tanggalPelaksanaan}
               onChange={handleDateChange}
-              disabled={isModeTerdaftar}
+              disabled={isLocked}
               placeholder="Pilih tanggal"
             />
 
@@ -654,7 +658,7 @@ function AjukanKegiatanForm() {
                 name="deskripsiKegiatan"
                 value={formData.deskripsiKegiatan}
                 onChange={handleChange}
-                disabled={isModeTerdaftar}
+                disabled={isLocked}
                 rows={3}
                 placeholder="Jelaskan peran dan manfaat kegiatan..."
                 className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
@@ -669,7 +673,7 @@ function AjukanKegiatanForm() {
                   name="linkWebsite"
                   value={formData.linkWebsite}
                   onChange={handleChange}
-                  disabled={isModeTerdaftar}
+                  disabled={isLocked}
                   placeholder="https://..."
                   className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
@@ -681,7 +685,7 @@ function AjukanKegiatanForm() {
                   name="emailPenyelenggara"
                   value={formData.emailPenyelenggara}
                   onChange={handleChange}
-                  disabled={isModeTerdaftar}
+                  disabled={isLocked}
                   placeholder="unand@gmail.com"
                   className="input mt-1 w-full disabled:bg-base-200 disabled:text-base-content/80"
                 />
