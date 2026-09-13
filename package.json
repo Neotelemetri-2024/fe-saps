@@ -14,7 +14,9 @@
     "seed:all": "tsx prisma/seed-all-pimpinan.ts",
     "seed:pimpinan-utama": "tsx prisma/seed-pimpinan-utama.ts",
     "sync:sia": "tsx src/scripts/syncSia.ts",
-    "clean:sia": "tsx src/scripts/cleanSiaData.ts"
+    "sync:mbkm": "tsx src/scripts/syncMbkm.ts",
+    "clean:sia": "tsx src/scripts/cleanSiaData.ts",
+    "fix:kurikulum": "tsx src/scripts/fixKurikulumMahasiswa.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

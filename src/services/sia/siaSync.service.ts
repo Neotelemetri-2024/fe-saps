@@ -119,6 +119,16 @@ export interface SyncKelasMbkmResult {
   errors: string[];
 }
 
+export interface SyncMahasiswaOptions {
+  minAngkatan?: number; // default: 2020 atau dari env SIA_SYNC_MIN_ANGKATAN
+  limit?: number;        // batasi jumlah mahasiswa untuk testing cepat
+}
+
+export interface SyncAllOptions extends SyncMahasiswaOptions {
+  skipMahasiswa?: boolean;
+  skipMbkm?: boolean;
+}
+
 // ─── Concurrency & Sync State Management ────────────────────────────────────
 let isSyncInProgress = false;
 let lastSyncTime: Date | null = null;
@@ -397,9 +407,9 @@ export async function syncDosenPA(): Promise<SyncResult> {
 }
 
 // =============================================================================
-// 4. SYNC MAHASISWA (Saps: 03) — Filter Status Aktif & BSS
+// 4. SYNC MAHASISWA (Saps: 03) — Filter Status Aktif & BSS, Angkatan & Limit
 // =============================================================================
-export async function syncMahasiswa(): Promise<SyncResult> {
+export async function syncMahasiswa(options?: SyncMahasiswaOptions): Promise<SyncResult> {
   const result: SyncResult = { entity: 'Mahasiswa', created: 0, updated: 0, skipped: 0, errors: [] };
 
   try {
@@ -410,13 +420,25 @@ export async function syncMahasiswa(): Promise<SyncResult> {
       return result;
     }
 
-    // Filter status mahasiswa: jika mhsStatus disediakan, hanya terima "aktif" dan "bss"
+    // Default minAngkatan: 2020 (mahasiswa aktif 7 tahun terakhir) atau dari env
+    const minAngkatanEnv = process.env.SIA_SYNC_MIN_ANGKATAN ? parseInt(process.env.SIA_SYNC_MIN_ANGKATAN, 10) : 2020;
+    const minAngkatan = options?.minAngkatan !== undefined ? options.minAngkatan : minAngkatanEnv;
+
+    // Filter status mahasiswa (aktif & bss) dan angkatan aktif
     const filtered = response.data.filter(m => {
-      if (!m.mhsStatus) return true; // Jika dari SIA belum ada kolom status pada data testing, jangan buang
-      return ALLOWED_MHS_STATUS.includes(m.mhsStatus.trim().toLowerCase());
+      if (m.mhsStatus && !ALLOWED_MHS_STATUS.includes(m.mhsStatus.trim().toLowerCase())) {
+        return false;
+      }
+      if (minAngkatan) {
+        const angkatan = parseInt(m.mhsAngkatan || '', 10) || null;
+        if (angkatan && angkatan < minAngkatan) {
+          return false;
+        }
+      }
+      return true;
     });
 
-    console.log(`[SIA Sync] Mahasiswa: ${response.data.length} total → ${filtered.length} setelah filter (Aktif + BSS)`);
+    console.log(`[SIA Sync] Mahasiswa: ${response.data.length} total → ${filtered.length} setelah filter (Aktif + BSS, Angkatan ≥ ${minAngkatan || 'Semua'})`);
 
     // Deduplikasi berdasarkan NIM (mhsNiu di SIA atau mhsNim)
     const deduped = new Map<string, SiaMahasiswa>();
@@ -450,36 +472,53 @@ export async function syncMahasiswa(): Promise<SyncResult> {
       }
     }
 
-    // ─── Load semua kurikulum aktif, diurutkan dari angkatan_mulai terbesar ────
-    // Logika: mahasiswa angkatan X → pakai kurikulum dengan angkatan_mulai ≤ X
-    //         yang paling besar (terdekat). Jika tidak ada yang cocok, pakai
-    //         kurikulum aktif apa saja sebagai fallback.
+    // ─── Load semua kurikulum, diurutkan dari angkatan_mulai terbesar ────
     const semuaKurikulum = await prisma.kurikulum.findMany({
       where: { deletedAt: null },
       orderBy: { angkatanMulai: 'desc' },
     });
 
+    // Urutkan juga secara ASC untuk mencari kurikulum terawal/terdekat jika angkatan mahasiswa < kurikulum terawal
+    const kurikulumDenganAngkatanAsc = semuaKurikulum
+      .filter(k => k.angkatanMulai !== null)
+      .sort((a, b) => a.angkatanMulai! - b.angkatanMulai!);
+
     function cariKurikulumId(angkatan: number | null): number | null {
       if (!angkatan || semuaKurikulum.length === 0) {
-        // Fallback: pakai kurikulum aktif pertama jika ada
         const aktif = semuaKurikulum.find(k => k.status === 'aktif');
         return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
       }
-      // Cari kurikulum yang angkatanMulai ≤ angkatan mahasiswa, yang terdekat
+
+      // 1. Cari kurikulum yang angkatanMulai <= angkatan (terdekat di bawahnya)
       for (const k of semuaKurikulum) {
         if (k.angkatanMulai !== null && k.angkatanMulai <= angkatan) {
           return k.id;
         }
       }
-      // Jika tidak ada yang ≤ angkatan, fallback ke kurikulum aktif
+
+      // 2. Jika mahasiswa angkatannya lebih tua dari kurikulum paling awal (misal angkatan 2020-2023 sedangkan kurikulum paling awal 2024):
+      // Wajib mengikuti kurikulum paling awal / terdekat (yaitu Kurikulum 2024, BUKAN 2026!)
+      if (kurikulumDenganAngkatanAsc.length > 0) {
+        return kurikulumDenganAngkatanAsc[0].id;
+      }
+
+      // 3. Fallback ke kurikulum aktif jika tidak ada angkatanMulai
       const aktif = semuaKurikulum.find(k => k.status === 'aktif');
       return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
     }
 
     console.log(`[SIA Sync] Kurikulum tersedia: ${semuaKurikulum.length} (untuk auto-assign ke mahasiswa)`);
 
-    const BATCH_SIZE = 50;
-    const entries = Array.from(deduped.entries());
+    let entries = Array.from(deduped.entries());
+
+    // Batasi jumlah jika ada opsi limit
+    const limit = options?.limit ?? (process.env.SIA_SYNC_MHS_LIMIT ? parseInt(process.env.SIA_SYNC_MHS_LIMIT, 10) : undefined);
+    if (limit && limit > 0 && limit < entries.length) {
+      entries = entries.slice(0, limit);
+      console.log(`[SIA Sync] Dibatasi (limit): Memproses ${entries.length} mahasiswa pertama.`);
+    }
+
+    const BATCH_SIZE = 150;
     const chunks = chunkArray(entries, BATCH_SIZE);
 
     console.log(`[SIA Sync] Memproses ${entries.length} mahasiswa dalam ${chunks.length} batch (${BATCH_SIZE} mahasiswa/batch)...`);
@@ -662,7 +701,7 @@ export async function syncKelasMbkm(klsSemId?: string): Promise<SyncKelasMbkmRes
 // =============================================================================
 // 6. SYNC ALL (Berurutan: Fakultas → Prodi → Dosen → Mahasiswa → Kelas MBKM)
 // =============================================================================
-export async function syncAll(klsSemId?: string): Promise<(SyncResult | SyncKelasMbkmResult)[]> {
+export async function syncAll(klsSemId?: string, options?: SyncAllOptions): Promise<(SyncResult | SyncKelasMbkmResult)[]> {
   if (isSyncInProgress) {
     throw new Error('Sinkronisasi SIA sedang berjalan di latar belakang. Silakan tunggu hingga proses saat ini selesai.');
   }
@@ -672,7 +711,7 @@ export async function syncAll(klsSemId?: string): Promise<(SyncResult | SyncKela
   lastSyncError = null;
 
   console.log('[SIA Sync] ═══════════════════════════════════════════════════');
-  console.log('[SIA Sync] Memulai sinkronisasi penuh dari API SIA (Batch Parallel)...');
+  console.log('[SIA Sync] Memulai sinkronisasi dari API SIA (Batch Parallel)...');
   console.log('[SIA Sync] ═══════════════════════════════════════════════════');
 
   const startTime = Date.now();
@@ -682,8 +721,18 @@ export async function syncAll(klsSemId?: string): Promise<(SyncResult | SyncKela
     results.push(await syncFakultas());
     results.push(await syncProdi());
     results.push(await syncDosenPA());
-    results.push(await syncMahasiswa());
-    results.push(await syncKelasMbkm(klsSemId));
+
+    if (options?.skipMahasiswa) {
+      console.log('[SIA Sync] ⏩ Melewati tahap Mahasiswa (--skip-mahasiswa aktif)...');
+    } else {
+      results.push(await syncMahasiswa(options));
+    }
+
+    if (options?.skipMbkm) {
+      console.log('[SIA Sync] ⏩ Melewati tahap Kelas MBKM (--skip-mbkm aktif)...');
+    } else {
+      results.push(await syncKelasMbkm(klsSemId));
+    }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log('[SIA Sync] ═══════════════════════════════════════════════════');

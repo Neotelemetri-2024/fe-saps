@@ -1,9 +1,11 @@
 /**
  * Fix Kurikulum Mahasiswa
  * -----------------------
- * Script untuk mengisi kurikulum_id pada tabel mahasiswa yang masih NULL.
- * Logika: mahasiswa angkatan X → pakai kurikulum dengan angkatan_mulai ≤ X
- *         yang paling besar (terdekat). Jika tidak ada, fallback ke kurikulum aktif.
+ * Script untuk mengisi dan mengoreksi kurikulum_id pada tabel mahasiswa secara kilat (Group Batch Update).
+ * Logika:
+ *   1. Mahasiswa angkatan X → pakai kurikulum dengan angkatan_mulai ≤ X yang paling dekat.
+ *   2. Mahasiswa angkatan sebelum kurikulum terawal (misal mhs 2020-2023, kurikulum awal 2024):
+ *      Wajib mengikuti kurikulum paling awal / terdekat (yaitu Kurikulum 2024, BUKAN 2026).
  *
  * Jalankan: npx tsx src/scripts/fixKurikulumMahasiswa.ts
  */
@@ -11,17 +13,17 @@ import 'dotenv/config';
 import prisma from '../lib/prisma';
 
 async function main() {
-  console.log('🔧 Memperbaiki kurikulum_id mahasiswa yang NULL...\n');
+  console.log('🔧 Memeriksa dan memperbaiki kurikulum_id mahasiswa...\n');
 
-  // 1. Load semua kurikulum (non-deleted), urutkan dari angkatan_mulai terbesar
+  // 1. Load semua kurikulum (non-deleted), urutkan dari angkatan_mulai terbesar (DESC)
   const semuaKurikulum = await prisma.kurikulum.findMany({
     where: { deletedAt: null },
     orderBy: { angkatanMulai: 'desc' },
   });
 
-  console.log('📚 Kurikulum tersedia:');
+  console.log('📚 Kurikulum tersedia di database:');
   for (const k of semuaKurikulum) {
-    console.log(`   • [${k.id}] ${k.nama} — angkatan_mulai: ${k.angkatanMulai ?? 'NULL'} — status: ${k.status}`);
+    console.log(`   • [ID: ${k.id}] ${k.nama} — angkatan_mulai: ${k.angkatanMulai ?? 'NULL'} — status: ${k.status}`);
   }
 
   if (semuaKurikulum.length === 0) {
@@ -29,71 +31,101 @@ async function main() {
     return;
   }
 
-  // 2. Helper: cari kurikulum berdasarkan angkatan
+  // Urutkan juga secara ASC untuk mencari kurikulum terawal jika angkatan mahasiswa < kurikulum terawal
+  const kurikulumDenganAngkatanAsc = semuaKurikulum
+    .filter((k) => k.angkatanMulai !== null)
+    .sort((a, b) => a.angkatanMulai! - b.angkatanMulai!);
+
+  // 2. Helper: cari kurikulum berdasarkan angkatan dengan logika presisi
   function cariKurikulumId(angkatan: number | null): number | null {
     if (!angkatan || semuaKurikulum.length === 0) {
-      const aktif = semuaKurikulum.find(k => k.status === 'aktif');
+      const aktif = semuaKurikulum.find((k) => k.status === 'aktif');
       return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
     }
+
+    // A. Cari kurikulum yang angkatanMulai <= angkatan (terdekat di bawahnya)
     for (const k of semuaKurikulum) {
       if (k.angkatanMulai !== null && k.angkatanMulai <= angkatan) {
         return k.id;
       }
     }
-    const aktif = semuaKurikulum.find(k => k.status === 'aktif');
+
+    // B. Jika angkatan mahasiswa lebih tua dari kurikulum paling awal (misal mhs 2020-2023 sedangkan kurikulum awal 2024):
+    // Mengikuti kurikulum paling awal / terdekat (yaitu Kurikulum 2024, BUKAN 2026!)
+    if (kurikulumDenganAngkatanAsc.length > 0) {
+      return kurikulumDenganAngkatanAsc[0].id;
+    }
+
+    // C. Fallback ke kurikulum aktif
+    const aktif = semuaKurikulum.find((k) => k.status === 'aktif');
     return aktif?.id ?? semuaKurikulum[0]?.id ?? null;
   }
 
-  // 3. Ambil semua mahasiswa yang kurikulumId-nya NULL
-  const mahasiswaTanpaKurikulum = await prisma.mahasiswa.findMany({
-    where: { kurikulumId: null },
-    select: { userId: true, nim: true, angkatan: true },
+  // 3. Kelompokkan mahasiswa berdasarkan angkatan (super cepat, 1 query)
+  const angkatanGroups = await prisma.mahasiswa.groupBy({
+    by: ['angkatan'],
+    _count: { userId: true },
   });
 
-  console.log(`\n📊 Mahasiswa dengan kurikulum_id NULL: ${mahasiswaTanpaKurikulum.length}`);
+  const totalMhs = await prisma.mahasiswa.count();
+  console.log(`\n📊 Total Mahasiswa di database: ${totalMhs} orang terbagi dalam ${angkatanGroups.length} kelompok angkatan\n`);
 
-  if (mahasiswaTanpaKurikulum.length === 0) {
-    console.log('✅ Semua mahasiswa sudah memiliki kurikulum_id!');
-    return;
-  }
-
-  // 4. Update satu per satu
-  let updated = 0;
-  let skipped = 0;
+  let totalUpdated = 0;
   const perKurikulum: Record<string, number> = {};
 
-  for (const mhs of mahasiswaTanpaKurikulum) {
-    const kurikulumId = cariKurikulumId(mhs.angkatan);
-    if (!kurikulumId) {
-      skipped++;
+  for (const group of angkatanGroups) {
+    const angkatan = group.angkatan;
+    const count = group._count.userId;
+    const targetKurikulumId = cariKurikulumId(angkatan);
+
+    if (!targetKurikulumId) {
+      console.log(`⚠️ Angkatan ${angkatan ?? 'NULL'} (${count} mhs): Tidak ada kurikulum yang cocok.`);
       continue;
     }
 
-    await prisma.mahasiswa.update({
-      where: { userId: mhs.userId },
-      data: { kurikulumId },
+    const kObj = semuaKurikulum.find((k) => k.id === targetKurikulumId);
+    const kNama = kObj?.nama ?? `ID ${targetKurikulumId}`;
+    const kAngkatan = kObj?.angkatanMulai ?? '?';
+
+    // Batch update semua mahasiswa di angkatan ini yang kurikulumId-nya NULL atau belum sesuai
+    const updateRes = await prisma.mahasiswa.updateMany({
+      where: {
+        angkatan: angkatan,
+        OR: [
+          { kurikulumId: null },
+          { kurikulumId: { not: targetKurikulumId } },
+        ],
+      },
+      data: { kurikulumId: targetKurikulumId },
     });
 
-    const key = `kurikulum_${kurikulumId}`;
-    perKurikulum[key] = (perKurikulum[key] || 0) + 1;
-    updated++;
+    const key = `kurikulum_${targetKurikulumId}`;
+    perKurikulum[key] = (perKurikulum[key] || 0) + count;
+    totalUpdated += updateRes.count;
+
+    console.log(
+      `   • Angkatan ${String(angkatan ?? 'NULL').padEnd(5)} (${String(count).padStart(5)} mhs) → [ID: ${targetKurikulumId}] ${kNama} (Mulai ${kAngkatan}) [Diupdate: ${updateRes.count}]`
+    );
   }
 
-  // 5. Ringkasan
-  console.log(`\n✅ Selesai!`);
-  console.log(`   • Updated: ${updated} mahasiswa`);
-  console.log(`   • Skipped: ${skipped} mahasiswa`);
-  console.log('\n📋 Distribusi per kurikulum:');
+  // 4. Ringkasan
+  console.log(`\n====================================================`);
+  console.log(`🎉 PERBAIKAN KURIKULUM SELESAI!`);
+  console.log(`Total mahasiswa yang diupdate/dikoreksi: ${totalUpdated} mahasiswa`);
+
+  console.log('\n📋 Distribusi Akhir Seluruh Mahasiswa:');
   for (const [key, count] of Object.entries(perKurikulum)) {
-    const kId = parseInt(key.replace('kurikulum_', ''));
-    const kNama = semuaKurikulum.find(k => k.id === kId)?.nama ?? '?';
-    console.log(`   • ${kNama}: ${count} mahasiswa`);
+    const kId = parseInt(key.replace('kurikulum_', ''), 10);
+    const kObj = semuaKurikulum.find((k) => k.id === kId);
+    const kNama = kObj?.nama ?? `ID ${kId}`;
+    const kAngkatan = kObj?.angkatanMulai ?? '?';
+    console.log(`   • [ID: ${kId}] ${kNama} (Mulai Angkatan ${kAngkatan}) : ${count} mahasiswa`);
   }
 
-  // 6. Verifikasi akhir
+  // 5. Verifikasi sisa NULL
   const sisaNull = await prisma.mahasiswa.count({ where: { kurikulumId: null } });
-  const totalMhs = await prisma.mahasiswa.count();
-  console.log(`\n📊 Verifikasi: ${totalMhs} total mahasiswa, ${sisaNull} masih NULL kurikulum_id`);
+  console.log(`\n📊 Verifikasi: Sisa kurikulum_id NULL = ${sisaNull}`);
+  console.log(`====================================================\n`);
 }
 
 main()
