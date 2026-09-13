@@ -95,7 +95,11 @@ function LoginPage() {
   const handleSsoClick = () => {
     setLoading(true)
     setErrorMsg('')
-    const baseUrl = import.meta.env.VITE_SSO_LOGIN_URL || 'https://api-studentconnect.unand.ac.id/api/auth/sso'
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const defaultUrl = isLocal
+      ? 'http://localhost:3000/api/auth/sso/mock'
+      : 'https://api-studentconnect.unand.ac.id/api/auth/sso'
+    const baseUrl = import.meta.env.VITE_SSO_LOGIN_URL || defaultUrl
     const ssoUrl = `${baseUrl}?frontend=${encodeURIComponent(window.location.origin)}`
     window.location.href = ssoUrl
   }
