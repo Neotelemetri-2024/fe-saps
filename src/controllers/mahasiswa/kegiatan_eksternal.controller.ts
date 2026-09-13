@@ -283,10 +283,18 @@ export const ajukanKegiatanEksternal = async (req: Request, res: Response, next:
         },
       });
 
+      const isApproved = existing.status === 'disetujui' || existing.status === 'terpublikasi';
+
       return res.status(200).json({
         success: true,
-        message: 'Berhasil bergabung dengan kegiatan terdaftar!',
-        data: { kegiatanId: existing.id.toString(), reused: true },
+        message: isApproved
+          ? 'Berhasil bergabung! Kegiatan ini sudah disetujui Ditmawa. Anda dapat langsung meminta persetujuan Dosen PA.'
+          : 'Berhasil bergabung dengan kegiatan terdaftar!',
+        data: {
+          kegiatanId: existing.id.toString(),
+          reused: true,
+          isApproved,
+        },
       });
     }
 
@@ -426,7 +434,14 @@ export const getRiwayatPengajuan = async (req: Request, res: Response, next: Nex
     if (!userIdBig) return;
 
     const data = await prisma.kegiatan.findMany({
-      where: { dibuatOleh: userIdBig, asal: 'eksternal' },
+      where: {
+        asal: 'eksternal',
+        deletedAt: null,
+        OR: [
+          { dibuatOleh: userIdBig },
+          { partisipasi: { some: { mahasiswaId: userIdBig } } },
+        ],
+      },
       include: {
         kategori: { select: { id: true, nama: true } },
         skala: { select: { id: true, nama: true } },
